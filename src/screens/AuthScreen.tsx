@@ -305,7 +305,6 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: theme.spacing.lg,
     color: '#ffffff',
-    fontWeight: '700',
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
@@ -313,7 +312,6 @@ const styles = StyleSheet.create({
   subtitle: {
     color: '#ffffff',
     opacity: 0.95,
-    fontWeight: '500',
     textShadowColor: 'rgba(0, 0, 0, 0.08)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
@@ -345,7 +343,6 @@ const styles = StyleSheet.create({
   },
   appleButtonText: {
     color: '#ffffff',
-    fontWeight: '500',
   },
   // Google Button - White background with black text and colored logo
   googleButton: {
@@ -362,7 +359,6 @@ const styles = StyleSheet.create({
   },
   googleButtonText: {
     color: '#000000',
-    fontWeight: '500',
   },
   legalContainer: {
     paddingHorizontal: theme.spacing.md,
@@ -374,7 +370,7 @@ const styles = StyleSheet.create({
   },
   legalLink: {
     color: '#ffffff',
-    fontWeight: '600',
+    fontWeight: '500',
     textDecorationLine: 'underline',
   },
   loadingContainer: {

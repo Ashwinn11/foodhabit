@@ -75,11 +75,11 @@ export const typography = {
   /**
    * Large Title (34pt)
    * Use for: Main page headings, hero text
-   * Weight: Bold
+   * Weight: SemiBold (reduced from Bold for lighter appearance)
    * Example: "Settings", "Music"
    */
   largeTitle: {
-    fontFamily: fontFamily.bold,
+    fontFamily: fontFamily.semiBold,
     fontSize: fontSize[34],
     lineHeight: lineHeight[41],
     letterSpacing: letterSpacing.tight,
@@ -88,11 +88,11 @@ export const typography = {
   /**
    * Title 1 (28pt)
    * Use for: Primary section headings, important titles
-   * Weight: Bold
+   * Weight: SemiBold (reduced from Bold for lighter appearance)
    * Example: "Library", "For You"
    */
   title1: {
-    fontFamily: fontFamily.bold,
+    fontFamily: fontFamily.semiBold,
     fontSize: fontSize[28],
     lineHeight: lineHeight[34],
     letterSpacing: letterSpacing.tight,
@@ -101,11 +101,11 @@ export const typography = {
   /**
    * Title 2 (22pt)
    * Use for: Secondary section headings
-   * Weight: Bold
+   * Weight: SemiBold (reduced from Bold for lighter appearance)
    * Example: Card titles, modal headers
    */
   title2: {
-    fontFamily: fontFamily.bold,
+    fontFamily: fontFamily.semiBold,
     fontSize: fontSize[22],
     lineHeight: lineHeight[28],
     letterSpacing: letterSpacing.normal,
@@ -114,11 +114,11 @@ export const typography = {
   /**
    * Title 3 (20pt)
    * Use for: Tertiary headings, subsection titles
-   * Weight: SemiBold
+   * Weight: Medium (reduced from SemiBold for lighter appearance)
    * Example: List section headers
    */
   title3: {
-    fontFamily: fontFamily.semiBold,
+    fontFamily: fontFamily.medium,
     fontSize: fontSize[20],
     lineHeight: lineHeight[25],
     letterSpacing: letterSpacing.normal,
@@ -127,11 +127,11 @@ export const typography = {
   /**
    * Headline (17pt)
    * Use for: Emphasizing primary content, list item titles
-   * Weight: SemiBold
+   * Weight: Medium (reduced from SemiBold for lighter appearance)
    * Example: Item names in lists, emphasized text
    */
   headline: {
-    fontFamily: fontFamily.semiBold,
+    fontFamily: fontFamily.medium,
     fontSize: fontSize[17],
     lineHeight: lineHeight[22],
     letterSpacing: letterSpacing.normal,
