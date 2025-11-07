@@ -173,6 +173,9 @@ export const adaptiveFontSize = {
   xl: responsive({ small: 19, medium: 20, large: 20, default: 20 }),
   '2xl': responsive({ small: 22, medium: 24, large: 24, default: 24 }),
   '3xl': responsive({ small: 28, medium: 30, large: 32, default: 30 }),
+  '4xl': responsive({ small: 34, medium: 36, large: 38, default: 36 }),
+  '5xl': responsive({ small: 40, medium: 44, large: 48, default: 44 }),
+  '6xl': responsive({ small: 48, medium: 54, large: 60, default: 54 }),
 } as const;
 
 export type DeviceSize = 'small' | 'medium' | 'large' | 'tablet' | 'desktop';

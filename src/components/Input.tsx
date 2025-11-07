@@ -98,14 +98,14 @@ export const Input: React.FC<InputProps> = ({
     isFocused && styles.inputContainerFocused,
     error && styles.inputContainerError,
     disabled && styles.inputContainerDisabled,
-  ];
+  ].filter(Boolean) as ViewStyle[];
 
   const textInputStyle: TextStyle[] = [
     styles.input,
     leftIcon && styles.inputWithLeftIcon,
     rightIcon && styles.inputWithRightIcon,
     inputStyle,
-  ];
+  ].filter(Boolean) as TextStyle[];
 
   return (
     <View style={[styles.container, containerStyle]}>

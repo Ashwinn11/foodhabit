@@ -109,7 +109,7 @@ export const Text: React.FC<TextProps> = ({
     align && { textAlign: align },
     weight && { fontFamily: theme.fontFamily[weight] },
     style,
-  ];
+  ].filter(Boolean) as TextStyle[];
 
   return (
     <RNText

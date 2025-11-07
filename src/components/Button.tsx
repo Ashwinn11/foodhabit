@@ -127,7 +127,7 @@ export const Button: React.FC<ButtonProps> = ({
     fullWidth && styles.fullWidth,
     (disabled || loading) && styles.disabled,
     style,
-  ];
+  ].filter(Boolean) as ViewStyle[];
 
   const textStyleCombined: TextStyle[] = [
     styles.text,
@@ -135,7 +135,7 @@ export const Button: React.FC<ButtonProps> = ({
     styles[`text_${variant}`],
     (disabled || loading) && styles.textDisabled,
     textStyle,
-  ];
+  ].filter(Boolean) as TextStyle[];
 
   return (
     <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>

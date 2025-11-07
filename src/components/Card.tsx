@@ -100,7 +100,7 @@ export const Card: React.FC<CardProps> = ({
     styles[`variant_${variant}`],
     styles[`padding_${padding}`],
     style,
-  ];
+  ].filter(Boolean) as ViewStyle[];
 
   if (pressable && onPress) {
     return (

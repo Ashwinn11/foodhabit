@@ -81,7 +81,7 @@ export const Container: React.FC<ContainerProps> = ({
     padding && styles.padding,
     center && styles.center,
     style,
-  ];
+  ].filter(Boolean) as ViewStyle[];
 
   const content = scrollable ? (
     <ScrollView
