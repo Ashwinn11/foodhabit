@@ -160,6 +160,11 @@ export default function AuthScreen() {
       await signInWithApple();
     } catch (error) {
       // Error is handled by useAuth hook
+      console.log('Sign in error caught in AuthScreen');
+    } finally {
+      // Always reset loading state, even on success
+      // (on success, the screen will navigate away before this runs)
+      // This ensures the button returns to normal state if sign-in fails or is cancelled
       setLoadingButton(null);
     }
   };
@@ -171,6 +176,11 @@ export default function AuthScreen() {
       await signInWithGoogle();
     } catch (error) {
       // Error is handled by useAuth hook
+      console.log('Sign in error caught in AuthScreen');
+    } finally {
+      // Always reset loading state, even on success
+      // (on success, the screen will navigate away before this runs)
+      // This ensures the button returns to normal state if sign-in fails or is cancelled
       setLoadingButton(null);
     }
   };
