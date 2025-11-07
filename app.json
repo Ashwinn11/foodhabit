@@ -55,7 +55,13 @@
     },
     "plugins": [
       "expo-apple-authentication",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "react-native-reanimated",
+        {
+          "relativeSourceLocation": true
+        }
+      ]
     ]
   }
 }

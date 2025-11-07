@@ -1,11 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, Alert, Platform, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Button, Alert, Platform, TouchableOpacity, ActivityIndicator } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from './src/hooks/useAuth';
 import { useEffect, useState } from 'react';
-import { getSupabaseRedirectUrl, getAllRedirectUrls } from './src/config/supabase';
+import { getAllRedirectUrls } from './src/config/supabase';
 
-export default function App() {
+function AppContent() {
   const { user, loading, error, signInWithApple, signInWithGoogle, signOut, isAppleAuthAvailable } = useAuth();
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
 
@@ -58,15 +59,15 @@ export default function App() {
 
   if (loading && !user) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <ActivityIndicator size="large" color="#0000ff" />
         <Text style={styles.loadingText}>Loading...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <Text style={styles.title}>Food Habit</Text>
 
       {user ? (
@@ -119,7 +120,15 @@ export default function App() {
           </Text>
         </View>
       )}
-    </View>
+    </SafeAreaView>
+  );
+}
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppContent />
+    </SafeAreaProvider>
   );
 }
 
