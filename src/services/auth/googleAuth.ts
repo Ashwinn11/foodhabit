@@ -1,5 +1,6 @@
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 import { AuthUser, AuthError } from '../../types/auth';
 
 // Complete the browser session when returning from the browser
@@ -9,7 +10,29 @@ WebBrowser.maybeCompleteAuthSession();
 export interface GoogleAuthConfig {
   clientId: string; // Your Google OAuth client ID (web client ID for Expo)
   redirectUri?: string;
+  useProxy?: boolean; // Use Expo's auth proxy (for development with Expo Go)
 }
+
+/**
+ * Get the appropriate redirect URI based on the environment
+ * For Expo Go (development): Uses Expo's auth proxy
+ * For standalone builds: Uses custom scheme
+ */
+const getRedirectUri = (useProxy?: boolean): string => {
+  // For Expo Go development, use the proxy
+  if (useProxy === true) {
+    return AuthSession.makeRedirectUri({
+      useProxy: true,
+    });
+  }
+
+  // For standalone builds, use custom scheme
+  // This will generate: foodhabit://redirect
+  return AuthSession.makeRedirectUri({
+    scheme: 'foodhabit',
+    path: 'redirect',
+  });
+};
 
 /**
  * Sign in with Google using OAuth 2.0 (Web flow)
@@ -26,10 +49,10 @@ export interface GoogleAuthConfig {
  */
 export const signInWithGoogle = async (config: GoogleAuthConfig): Promise<AuthUser> => {
   try {
-    const redirectUri = config.redirectUri || AuthSession.makeRedirectUri({
-      scheme: 'foodhabit',
-      path: 'redirect',
-    });
+    const redirectUri = config.redirectUri || getRedirectUri(config.useProxy);
+
+    // Log the redirect URI for debugging
+    console.log('Google OAuth Redirect URI:', redirectUri);
 
     // Configure the auth request
     const authRequestConfig: AuthSession.AuthRequestConfig = {
@@ -115,10 +138,20 @@ export const signInWithGoogle = async (config: GoogleAuthConfig): Promise<AuthUs
 /**
  * Get the redirect URI for your app
  * Use this to configure your Google OAuth client
+ *
+ * @param useProxy - Set to true for Expo Go development, false for standalone builds
  */
-export const getGoogleRedirectUri = (): string => {
-  return AuthSession.makeRedirectUri({
-    scheme: 'foodhabit',
-    path: 'redirect',
-  });
+export const getGoogleRedirectUri = (useProxy: boolean = false): string => {
+  return getRedirectUri(useProxy);
+};
+
+/**
+ * Get all possible redirect URIs for configuration
+ * Use this to add all necessary URIs to Google Cloud Console
+ */
+export const getAllRedirectUris = (): { development: string; production: string } => {
+  return {
+    development: getRedirectUri(true),  // Expo Go with proxy
+    production: getRedirectUri(false),  // Standalone build
+  };
 };

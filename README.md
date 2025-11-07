@@ -91,6 +91,17 @@ Apple Sign In is already configured in the app. To use it in production:
 
 ### Google OAuth Setup
 
+Google OAuth uses **deep linking** to redirect back to your app after authentication. The setup differs between development (Expo Go) and production (standalone builds).
+
+#### Understanding Deep Links
+
+- **Expo Go (Development)**: Uses Expo's auth proxy (`https://auth.expo.io/@username/slug`)
+- **Standalone Builds (Production)**: Uses custom URL scheme (`foodhabit://redirect`)
+
+The app automatically detects the environment and uses the correct redirect URI.
+
+#### Step-by-Step Setup
+
 1. **Google Cloud Console**:
    - Go to [Google Cloud Console](https://console.cloud.google.com)
    - Create a new project or select existing one
@@ -100,20 +111,37 @@ Apple Sign In is already configured in the app. To use it in production:
    - Go to APIs & Services > Credentials
    - Click "Create Credentials" > "OAuth 2.0 Client ID"
    - Select "Web application" as application type
-   - Add authorized redirect URIs:
-     - For Expo Go: `https://auth.expo.io/@YOUR_EXPO_USERNAME/foodhabit`
-     - For standalone builds: Use the redirect URI from the app (see below)
 
-3. **Get Redirect URI**:
+3. **Get Your Redirect URIs**:
 
-   Run this in your app to get the correct redirect URI:
+   The app automatically logs both redirect URIs when it starts. Check your console output for:
 
-   ```typescript
-   import { getGoogleRedirectUri } from './src/services/auth/googleAuth';
-   console.log(getGoogleRedirectUri());
+   ```
+   === GOOGLE OAUTH REDIRECT URIs ===
+   Development (Expo Go): https://auth.expo.io/@your-username/foodhabit
+   Production (Standalone): foodhabit://redirect
+   ===================================
    ```
 
-4. **Update App.tsx**:
+   Or use the "Show Redirect URIs" button in development mode.
+
+   You can also get them programmatically:
+
+   ```typescript
+   import { getAllRedirectUris } from './src/services/auth/googleAuth';
+   const uris = getAllRedirectUris();
+   console.log(uris.development);  // For Expo Go
+   console.log(uris.production);   // For standalone builds
+   ```
+
+4. **Add Redirect URIs to Google Cloud Console**:
+   - In your OAuth 2.0 Client ID settings
+   - Under "Authorized redirect URIs", add **BOTH**:
+     - `https://auth.expo.io/@your-username/foodhabit` (for development)
+     - `foodhabit://redirect` (for production builds)
+   - Click "Save"
+
+5. **Update App.tsx**:
 
    Replace `YOUR_GOOGLE_CLIENT_ID_HERE` in `App.tsx` with your Web Client ID:
 
@@ -121,9 +149,48 @@ Apple Sign In is already configured in the app. To use it in production:
    const GOOGLE_CLIENT_ID = 'your-actual-client-id.apps.googleusercontent.com';
    ```
 
-5. **Testing**:
-   - Google OAuth works on iOS, Android, and Web
-   - Test on physical devices for best results
+6. **Deep Link Configuration**:
+
+   Already configured in `app.json`:
+   ```json
+   {
+     "scheme": "foodhabit",
+     "plugins": ["expo-web-browser"]
+   }
+   ```
+
+   This enables the `foodhabit://` URL scheme for production builds.
+
+#### Testing
+
+- **Development (Expo Go)**:
+  ```bash
+  npx expo start
+  ```
+  The app will automatically use Expo's auth proxy
+
+- **Production (Standalone Build)**:
+  ```bash
+  # iOS
+  eas build --platform ios --profile preview
+
+  # Android
+  eas build --platform android --profile preview
+  ```
+  The app will use the custom `foodhabit://` scheme
+
+#### Troubleshooting Deep Links
+
+- **"redirect_uri_mismatch" error**:
+  - Verify BOTH redirect URIs are added to Google Cloud Console
+  - Check the console logs to see which URI is being used
+  - Make sure there are no typos in the URIs
+
+- **Deep link not opening the app**:
+  - Ensure `scheme` is set in `app.json`
+  - For iOS: Check that `bundleIdentifier` matches
+  - For Android: Check that `package` matches
+  - Rebuild the app after changing the scheme
 
 ## Usage
 

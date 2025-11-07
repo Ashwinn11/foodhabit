@@ -1,12 +1,17 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, Alert, Platform } from 'react-native';
+import { StyleSheet, Text, View, Button, Alert, Platform, TouchableOpacity } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import Constants from 'expo-constants';
 import { useAuth } from './src/hooks/useAuth';
 import { useEffect, useState } from 'react';
+import { showRedirectUris, logRedirectUris } from './src/utils/showRedirectUris';
 
 // TODO: Replace with your Google OAuth Client ID
 // Get this from Google Cloud Console (console.cloud.google.com)
 const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE';
+
+// Detect if we're running in Expo Go (development)
+const isExpoGo = Constants.appOwnership === 'expo';
 
 export default function App() {
   const { user, loading, error, signInWithApple, signInWithGoogle, signOut, isAppleAuthAvailable } = useAuth();
@@ -14,6 +19,8 @@ export default function App() {
 
   useEffect(() => {
     checkAppleAuth();
+    // Log redirect URIs on startup for easy configuration
+    logRedirectUris();
   }, []);
 
   const checkAppleAuth = async () => {
@@ -42,7 +49,12 @@ export default function App() {
 
     await signInWithGoogle({
       clientId: GOOGLE_CLIENT_ID,
+      useProxy: isExpoGo, // Use Expo's auth proxy for Expo Go, custom scheme for standalone builds
     });
+  };
+
+  const handleShowRedirectUris = () => {
+    showRedirectUris();
   };
 
   return (
@@ -81,10 +93,24 @@ export default function App() {
               disabled={loading}
             />
           </View>
+
+          {__DEV__ && (
+            <TouchableOpacity onPress={handleShowRedirectUris} style={styles.debugButton}>
+              <Text style={styles.debugText}>Show Redirect URIs</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
       <StatusBar style="auto" />
+
+      {__DEV__ && (
+        <View style={styles.devInfo}>
+          <Text style={styles.devInfoText}>
+            Mode: {isExpoGo ? 'Expo Go (Dev)' : 'Standalone Build'}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -132,5 +158,27 @@ const styles = StyleSheet.create({
   userText: {
     fontSize: 16,
     marginVertical: 5,
+  },
+  debugButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 5,
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+  },
+  devInfo: {
+    position: 'absolute',
+    bottom: 40,
+    padding: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 5,
+  },
+  devInfoText: {
+    fontSize: 10,
+    color: '#666',
   },
 });
