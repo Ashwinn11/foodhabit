@@ -130,6 +130,7 @@ export default function AuthScreen() {
   }, [error]);
 
   const handleAppleSignIn = async () => {
+    haptics.patterns.buttonPress();
     await signInWithApple();
   };
 
@@ -141,11 +142,11 @@ export default function AuthScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        {/* Gradient Background */}
+        {/* Gradient Background - Light at top, heavy at bottom */}
         <LinearGradient
-          colors={['#ff7664', '#ff9a8a', '#ffb5a7']}
+          colors={['#ffb5a7', '#ff9a8a', '#ff7664']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 0, y: 1 }}
           style={StyleSheet.absoluteFillObject}
         />
 
@@ -166,11 +167,11 @@ export default function AuthScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Gradient Background */}
+      {/* Gradient Background - Light at top, heavy at bottom */}
       <LinearGradient
-        colors={['#ff7664', '#ff9a8a', '#ffb5a7']}
+        colors={['#ffb5a7', '#ff9a8a', '#ff7664']}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0, y: 1 }}
         style={StyleSheet.absoluteFillObject}
       />
 
@@ -180,48 +181,60 @@ export default function AuthScreen() {
       <AnimatedOrb delay={1500} size={180} initialX={SCREEN_WIDTH / 2} initialY={SCREEN_HEIGHT - 200} duration={16000} />
 
       {/* Main Content */}
-      <Container variant="plain" center style={styles.contentContainer}>
+      <Container variant="plain" style={styles.contentContainer}>
+        {/* Header at Top */}
         <Animated.View
           style={[
-            styles.content,
+            styles.header,
             {
               opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+              transform: [{ translateY: slideAnim }],
             },
           ]}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text variant="largeTitle" align="center" style={styles.title}>
-              Food Habit
-            </Text>
-            <Text variant="title3" align="center" style={styles.subtitle}>
-              Track your eating habits and build healthier routines
-            </Text>
-          </View>
+          <Text variant="largeTitle" align="center" style={styles.title}>
+            Food Habit
+          </Text>
+          <Text variant="title3" align="center" style={styles.subtitle}>
+            Track your eating habits and build healthier routines
+          </Text>
+        </Animated.View>
 
+        {/* Spacer */}
+        <View style={styles.spacer} />
+
+        {/* Footer with Auth Buttons and Legal */}
+        <Animated.View
+          style={[
+            styles.footer,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }],
+            },
+          ]}
+        >
           {/* Auth Buttons */}
           <View style={styles.authButtons}>
             {appleAuthAvailable && Platform.OS === 'ios' && (
               <TouchableOpacity
-                style={styles.authButton}
+                style={styles.appleButton}
                 onPress={handleAppleSignIn}
                 activeOpacity={0.8}
               >
-                <Ionicons name="logo-apple" size={24} color="#000000" />
-                <Text variant="headline" style={styles.authButtonText}>
+                <Ionicons name="logo-apple" size={24} color="#ffffff" />
+                <Text variant="headline" style={styles.appleButtonText}>
                   Continue with Apple
                 </Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity
-              style={styles.authButton}
+              style={styles.googleButton}
               onPress={handleGoogleSignIn}
               activeOpacity={0.8}
             >
-              <Ionicons name="logo-google" size={22} color="#000000" />
-              <Text variant="headline" style={styles.authButtonText}>
+              <Ionicons name="logo-google" size={24} color="#EA4335" />
+              <Text variant="headline" style={styles.googleButtonText}>
                 Continue with Google
               </Text>
             </TouchableOpacity>
@@ -254,15 +267,11 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     paddingHorizontal: theme.spacing['2xl'],
-  },
-  content: {
-    width: '100%',
-    maxWidth: 420,
-    paddingBottom: theme.spacing['4xl'],
+    paddingTop: theme.spacing['6xl'],
   },
   header: {
-    marginBottom: theme.spacing['5xl'],
     width: '100%',
+    paddingHorizontal: theme.spacing.md,
   },
   title: {
     marginBottom: theme.spacing.lg,
@@ -280,12 +289,37 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
+  spacer: {
+    flex: 1,
+  },
+  footer: {
+    width: '100%',
+    paddingBottom: theme.spacing['3xl'],
+  },
   authButtons: {
     width: '100%',
     gap: theme.spacing.md,
-    marginBottom: theme.spacing['3xl'],
+    marginBottom: theme.spacing['2xl'],
   },
-  authButton: {
+  // Apple Button - Black background with white text/icon
+  appleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000000',
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.borderRadius.pill,
+    gap: theme.spacing.md,
+    ...theme.shadows.lg,
+    height: 56,
+  },
+  appleButtonText: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  // Google Button - White background with black text and colored logo
+  googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -295,17 +329,18 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.pill,
     gap: theme.spacing.md,
     ...theme.shadows.lg,
+    height: 56,
   },
-  authButtonText: {
+  googleButtonText: {
     color: '#000000',
     fontWeight: '600',
   },
   legalContainer: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
   },
   legalText: {
     color: '#ffffff',
-    opacity: 0.85,
+    opacity: 0.9,
     lineHeight: 18,
   },
   legalLink: {
