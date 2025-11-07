@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, Dimensions } from 'react-native';
+import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, Dimensions, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useAuth } from '../hooks/useAuth';
-import { getAllRedirectUrls } from '../config/supabase';
-import { theme, r } from '../theme';
-import { Container, Text, Button } from '../components';
+import { theme, r, haptics } from '../theme';
+import { Container, Text } from '../components';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -135,31 +134,8 @@ export default function AuthScreen() {
   };
 
   const handleGoogleSignIn = async () => {
+    haptics.patterns.buttonPress();
     await signInWithGoogle();
-  };
-
-  const handleShowRedirectUrl = () => {
-    const urls = getAllRedirectUrls();
-
-    const message = `Add BOTH URLs to your Supabase project:\n\n1. Expo Go (Dev):\n${urls.expoGo}\n\n2. Standalone Build:\n${urls.standalone}\n\nCurrently using:\n${urls.current}\n\nGo to: Authentication > URL Configuration > Redirect URLs`;
-
-    Alert.alert(
-      'Supabase Redirect URLs',
-      message,
-      [
-        {
-          text: 'Copy to Console',
-          onPress: () => {
-            console.log('=== SUPABASE REDIRECT URLs ===');
-            console.log('Expo Go (Dev):', urls.expoGo);
-            console.log('Standalone:', urls.standalone);
-            console.log('Current:', urls.current);
-            console.log('============================');
-          }
-        },
-        { text: 'OK' },
-      ]
-    );
   };
 
   if (loading) {
@@ -207,71 +183,64 @@ export default function AuthScreen() {
       <Container variant="plain" center style={styles.contentContainer}>
         <Animated.View
           style={[
-            styles.glassContainer,
+            styles.content,
             {
               opacity: fadeAnim,
               transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
             },
           ]}
         >
-          {/* Glass Morphism Card */}
-          <BlurView intensity={20} tint="light" style={styles.glassCard}>
-            <View style={styles.content}>
-              {/* Header */}
-              <View style={styles.header}>
-                <Text variant="largeTitle" align="center" style={styles.title}>
-                  Food Habit
-                </Text>
-                <Text variant="callout" align="center" style={styles.subtitle}>
-                  Track your eating habits and build healthier routines
-                </Text>
-              </View>
-
-              {/* Auth Buttons */}
-              <View style={styles.authButtons}>
-                {appleAuthAvailable && Platform.OS === 'ios' && (
-                  <View style={styles.buttonContainer}>
-                    <AppleAuthentication.AppleAuthenticationButton
-                      buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                      cornerRadius={theme.borderRadius.pill}
-                      style={styles.appleButton}
-                      onPress={handleAppleSignIn}
-                    />
-                  </View>
-                )}
-
-                <Button
-                  title="Continue with Google"
-                  onPress={handleGoogleSignIn}
-                  variant="primary"
-                  size="large"
-                  fullWidth
-                  disabled={loading}
-                  loading={loading}
-                />
-
-                {__DEV__ && (
-                  <Button
-                    title="Show Redirect URL"
-                    onPress={handleShowRedirectUrl}
-                    variant="ghost"
-                    size="small"
-                    style={styles.debugButton}
-                  />
-                )}
-              </View>
-            </View>
-          </BlurView>
-        </Animated.View>
-
-        {__DEV__ && (
-          <BlurView intensity={15} tint="dark" style={styles.devInfo}>
-            <Text variant="caption2" style={styles.devInfoText}>
-              Using Supabase Auth
+          {/* Header */}
+          <View style={styles.header}>
+            <Text variant="largeTitle" align="center" style={styles.title}>
+              Food Habit
             </Text>
-          </BlurView>
-        )}
+            <Text variant="title3" align="center" style={styles.subtitle}>
+              Track your eating habits and build healthier routines
+            </Text>
+          </View>
+
+          {/* Auth Buttons */}
+          <View style={styles.authButtons}>
+            {appleAuthAvailable && Platform.OS === 'ios' && (
+              <TouchableOpacity
+                style={styles.authButton}
+                onPress={handleAppleSignIn}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="logo-apple" size={24} color="#000000" />
+                <Text variant="headline" style={styles.authButtonText}>
+                  Continue with Apple
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.authButton}
+              onPress={handleGoogleSignIn}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="logo-google" size={22} color="#000000" />
+              <Text variant="headline" style={styles.authButtonText}>
+                Continue with Google
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Legal Text */}
+          <View style={styles.legalContainer}>
+            <Text variant="caption1" align="center" style={styles.legalText}>
+              By continuing, you agree to our{' '}
+              <Text variant="caption1" style={styles.legalLink}>
+                Terms of Service
+              </Text>
+              {' '}and{' '}
+              <Text variant="caption1" style={styles.legalLink}>
+                Privacy Policy
+              </Text>
+            </Text>
+          </View>
+        </Animated.View>
       </Container>
     </View>
   );
@@ -284,48 +253,65 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  glassContainer: {
-    width: '100%',
-    maxWidth: 420,
-  },
-  glassCard: {
-    borderRadius: theme.borderRadius['2xl'],
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    ...theme.shadows.xl,
+    paddingHorizontal: theme.spacing['2xl'],
   },
   content: {
-    padding: theme.spacing['3xl'],
     width: '100%',
+    maxWidth: 420,
+    paddingBottom: theme.spacing['4xl'],
   },
   header: {
-    marginBottom: theme.spacing['3xl'],
+    marginBottom: theme.spacing['5xl'],
     width: '100%',
   },
   title: {
     marginBottom: theme.spacing.lg,
-    color: '#1a1a1a',
+    color: '#ffffff',
     fontWeight: '700',
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   subtitle: {
-    color: '#4a4a4a',
-    opacity: 0.9,
+    color: '#ffffff',
+    opacity: 0.95,
+    fontWeight: '500',
+    textShadowColor: 'rgba(0, 0, 0, 0.08)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   authButtons: {
     width: '100%',
-    gap: theme.spacing.lg,
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing['3xl'],
   },
-  buttonContainer: {
-    width: '100%',
-    marginBottom: theme.spacing.sm,
+  authButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.borderRadius.pill,
+    gap: theme.spacing.md,
+    ...theme.shadows.lg,
   },
-  appleButton: {
-    width: '100%',
-    height: 56,
+  authButtonText: {
+    color: '#000000',
+    fontWeight: '600',
+  },
+  legalContainer: {
+    paddingHorizontal: theme.spacing.lg,
+  },
+  legalText: {
+    color: '#ffffff',
+    opacity: 0.85,
+    lineHeight: 18,
+  },
+  legalLink: {
+    color: '#ffffff',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   loadingContainer: {
     flex: 1,
@@ -336,23 +322,6 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.lg,
     color: '#ffffff',
     fontSize: 17,
-  },
-  debugButton: {
-    marginTop: theme.spacing.md,
-  },
-  devInfo: {
-    position: 'absolute',
-    bottom: theme.spacing['2xl'],
-    alignSelf: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.pill,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  devInfoText: {
-    color: '#ffffff',
   },
   // Animated orb styles
   orb: {
