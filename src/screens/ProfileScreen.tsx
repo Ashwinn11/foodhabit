@@ -24,11 +24,13 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
 }) => (
   <TouchableOpacity style={styles.settingsRow} onPress={onPress} activeOpacity={0.7}>
     <View style={styles.settingsRowLeft}>
-      <Ionicons
-        name={icon}
-        size={22}
-        color={iconColor}
-      />
+      <View style={[styles.iconContainer, { backgroundColor: iconColor }]}>
+        <Ionicons
+          name={icon}
+          size={20}
+          color={theme.colors.brand.white}
+        />
+      </View>
       <Text
         variant="body"
         style={[styles.settingsLabel, destructive && styles.destructiveText]}
@@ -270,6 +272,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   settingsLabel: {
     marginLeft: theme.spacing.md,
     flex: 1,
@@ -279,8 +288,8 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: theme.colors.border,
-    marginLeft: theme.spacing.lg + 22 + theme.spacing.md, // Icon width + icon margin
+    backgroundColor: theme.colors.border.main,
+    marginLeft: theme.spacing.lg + 32 + theme.spacing.md, // Icon container width + icon margin
   },
   footer: {
     alignItems: 'center',
