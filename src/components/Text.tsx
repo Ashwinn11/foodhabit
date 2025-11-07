@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text.tertiary,
   },
   color_quaternary: {
-    color: theme.colors.text.quaternary,
+    color: theme.colors.text.disabled,
   },
   color_disabled: {
     color: theme.colors.text.disabled,

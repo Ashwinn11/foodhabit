@@ -17,14 +17,16 @@ export default function HomeScreen() {
   return (
     <Container variant="grouped" scrollable>
       <View style={styles.header}>
-        <Text variant="h5" color="secondary" style={styles.greeting}>
-          {getGreeting()}
-        </Text>
-        {user?.name && (
-          <Text variant="h2" style={styles.userName}>
-            {user.name}
+        <View style={styles.greetingRow}>
+          <Text variant="h5" color="secondary">
+            {getGreeting()}
           </Text>
-        )}
+          {user?.user_metadata?.name && (
+            <Text variant="h5" style={styles.userNameText}>
+              {user.user_metadata.name as string}
+            </Text>
+          )}
+        </View>
       </View>
 
       <Card variant="filled" padding="large" style={styles.welcomeCard}>
@@ -75,11 +77,13 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: r.adaptiveSpacing['2xl'],
   },
-  greeting: {
-    marginBottom: theme.spacing.xs,
+  greetingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
   },
-  userName: {
-    marginTop: theme.spacing.xs,
+  userNameText: {
+    color: theme.colors.brand.primary,
   },
   welcomeCard: {
     marginBottom: r.adaptiveSpacing['2xl'],

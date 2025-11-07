@@ -1,10 +1,8 @@
-import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
-import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
-import { Platform } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase, getSupabaseRedirectUrl } from '../../config/supabase';
-import { AuthUser, AuthError, AuthProvider } from '../../types/auth';
+import type { AuthError } from '../../types/auth';
 
 // Complete the browser session when returning from the browser
 WebBrowser.maybeCompleteAuthSession();

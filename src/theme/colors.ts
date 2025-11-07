@@ -4,7 +4,7 @@
  */
 
 export const colors = {
-  // Brand Colors - STRICT (only these colors allowed)
+  // Brand Colors - STRICT (only these 6 colors allowed in the entire app)
   brand: {
     primary: '#ff7664',    // Coral/Red - Primary brand color
     secondary: '#9bcbab',  // Mint Green - Secondary color
@@ -13,6 +13,7 @@ export const colors = {
     black: '#000000',      // Pure Black
     white: '#ffffff',      // Pure White
   },
+
 
   // Legacy mappings for backwards compatibility
   primary: {

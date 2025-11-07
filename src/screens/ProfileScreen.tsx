@@ -33,7 +33,10 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
       </View>
       <Text
         variant="body"
-        style={[styles.settingsLabel, destructive && styles.destructiveText]}
+        style={StyleSheet.flatten([
+          styles.settingsLabel,
+          ...(destructive ? [styles.destructiveText] : []),
+        ])}
       >
         {label}
       </Text>
@@ -45,7 +48,7 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
 );
 
 export default function ProfileScreen() {
-  const { user, session, signOut } = useAuth();
+  const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -115,7 +118,7 @@ export default function ProfileScreen() {
   return (
     <Container variant="grouped" scrollable>
       <View style={styles.header}>
-        <Text variant="largeTitle" style={styles.title}>Profile</Text>
+        <Text variant="h6" color="secondary" style={styles.title}>Profile</Text>
       </View>
 
       {/* Profile Header */}
@@ -220,7 +223,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   title: {
-    fontWeight: '700',
+    // No style override - use the variant typography
   },
   profileHeader: {
     alignItems: 'center',
@@ -239,11 +242,10 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: theme.colors.brand.white,
-    fontWeight: '600',
+    ...theme.typography.button,
   },
   displayName: {
     marginBottom: theme.spacing.xs,
-    fontWeight: '600',
   },
   email: {
     marginBottom: theme.spacing.xs,
@@ -275,7 +277,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: theme.borderRadius.circle,
     alignItems: 'center',
     justifyContent: 'center',
   },

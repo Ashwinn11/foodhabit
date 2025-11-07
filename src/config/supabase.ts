@@ -73,8 +73,7 @@ export const getSupabaseRedirectUrl = (): string => {
 
       // Return exp:// as fallback (will fail OAuth but app won't crash)
       return AuthSession.makeRedirectUri({
-        scheme: undefined,
-        useProxy: true,
+        scheme: 'exp',
         path: 'auth/callback',
       });
     }

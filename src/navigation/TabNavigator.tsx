@@ -1,30 +1,36 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { theme, r } from '../theme';
 
 const Tab = createBottomTabNavigator();
 
-// Custom tab icon with colored container for active state
+// Custom tab icon with white color for active state, reduced opacity for inactive
 const TabIcon: React.FC<{
   focused: boolean;
   iconName: keyof typeof Ionicons.glyphMap;
   size: number;
 }> = ({ focused, iconName, size }) => {
-  if (focused) {
-    return (
-      <View style={styles.activeIconContainer}>
-        <Ionicons name={iconName} size={size - 4} color={theme.colors.brand.white} />
-      </View>
-    );
-  }
-  return <Ionicons name={iconName} size={size} color={theme.colors.brand.black} />;
+  const color = theme.colors.brand.white;
+  const opacity = focused ? 1 : 0.5;
+
+  return (
+    <Ionicons
+      name={iconName}
+      size={size}
+      color={color}
+      style={{ opacity }}
+    />
+  );
 };
 
-export default function TabNavigator() {
+export default function TabNavigator(): React.ReactElement {
+  const previousRouteRef = useRef<string | undefined>(undefined);
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -41,27 +47,45 @@ export default function TabNavigator() {
 
           return <TabIcon focused={focused} iconName={iconName} size={size} />;
         },
-        tabBarActiveTintColor: theme.colors.brand.primary,
-        tabBarInactiveTintColor: theme.colors.brand.black,
+        tabBarActiveTintColor: theme.colors.brand.white,
+        tabBarInactiveTintColor: theme.colors.brand.white,
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: theme.colors.brand.white,
-          borderRadius: theme.borderRadius.xl,
-          marginHorizontal: theme.spacing.lg,
+          backgroundColor: theme.colors.brand.black,
+          borderRadius: theme.borderRadius.pill, // Pill shape
+          marginHorizontal: r.scaleWidth(50), // Smaller margin for longer bar
           marginBottom: Platform.OS === 'ios' ? theme.spacing.lg : theme.spacing.md,
           height: Platform.OS === 'ios' ? 70 : 60,
           paddingBottom: Platform.OS === 'ios' ? theme.spacing.md : theme.spacing.sm,
           paddingTop: theme.spacing.sm,
           borderTopWidth: 0,
           ...theme.shadows.lg,
+          alignSelf: 'center',
         },
         tabBarLabelStyle: {
           ...theme.typography.caption,
           fontSize: r.adaptiveFontSize.xs,
-          fontWeight: '600',
         },
         headerShown: false,
         tabBarHideOnKeyboard: true,
+      })}
+      screenListeners={({ route }) => ({
+        tabPress: async () => {
+          // Get the previous route
+          const previousRoute = previousRouteRef.current;
+          previousRouteRef.current = route.name;
+
+          // Only trigger haptic if we're switching to a different tab
+          if (previousRoute !== route.name) {
+            // Trigger iOS-like spring haptic feedback
+            if (Platform.OS === 'ios') {
+              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            } else {
+              // For Android, use selection feedback
+              await Haptics.selectionAsync();
+            }
+          }
+        },
       })}
     >
       <Tab.Screen
@@ -81,14 +105,3 @@ export default function TabNavigator() {
     </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  activeIconContainer: {
-    backgroundColor: theme.colors.brand.primary,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

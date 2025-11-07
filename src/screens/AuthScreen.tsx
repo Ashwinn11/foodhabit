@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, Dimensions, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import * as AppleAuthentication from 'expo-apple-authentication';
 import { useAuth } from '../hooks/useAuth';
-import { theme, r, haptics } from '../theme';
+import { theme, haptics } from '../theme';
 import { Container, Text } from '../components';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -173,9 +172,13 @@ export default function AuthScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Gradient Background - Light at top, heavy at bottom */}
+      {/* Gradient Background - Primary color with opacity variations */}
       <LinearGradient
-        colors={['#ffb5a7', '#ff9a8a', '#ff7664']}
+        colors={[
+          `${theme.colors.brand.primary}B3`, // 70% opacity
+          `${theme.colors.brand.primary}D9`, // 85% opacity
+          theme.colors.brand.primary,        // 100% opacity
+        ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={StyleSheet.absoluteFillObject}
@@ -257,7 +260,7 @@ export default function AuthScreen() {
               {loadingButton === 'google' ? (
                 <ActivityIndicator size="small" color={theme.colors.brand.black} />
               ) : (
-                <Ionicons name="logo-google" size={24} color="#EA4335" />
+                <Ionicons name="logo-google" size={24} color={theme.colors.brand.primary} />
               )}
               <Text variant="headline" style={styles.googleButtonText}>
                 {loadingButton === 'google' ? 'Signing in...' : 'Continue with Google'}
@@ -378,7 +381,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: theme.spacing.lg,
     color: theme.colors.brand.white,
-    fontSize: 17,
+    ...theme.typography.body,
   },
   // Animated orb styles
   orb: {
@@ -403,6 +406,6 @@ const styles = StyleSheet.create({
   decorCircle: {
     position: 'absolute',
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 9999,
+    borderRadius: theme.borderRadius.circle,
   },
 });
