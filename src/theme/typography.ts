@@ -1,12 +1,20 @@
 /**
- * Typography system using Poppins font family
- * Font weights and sizes following iOS and Material Design guidelines
+ * Apple Design System - Typography
+ * Following Apple Human Interface Guidelines text styles
+ * Semantic approach with proper visual hierarchy
+ *
+ * Apple's typography system uses 11 semantic text styles:
+ * - Large Title, Title 1-3, Headline, Body, Callout, Subheadline, Footnote, Caption 1-2
+ *
+ * Font Selection:
+ * - SF Pro Display: 20pt or larger (we use Poppins SemiBold/Bold)
+ * - SF Pro Text: Smaller than 20pt (we use Poppins Regular/Medium)
  */
 
 import { TextStyle } from 'react-native';
 
 /**
- * Font families
+ * Font families (Poppins as SF Pro alternative)
  */
 export const fontFamily = {
   regular: 'Poppins_400Regular',
@@ -17,176 +25,265 @@ export const fontFamily = {
 } as const;
 
 /**
- * Font sizes based on iOS and Material Design type scale
+ * Font sizes based on Apple's iOS text styles
  */
 export const fontSize = {
-  xs: 12,
-  sm: 14,
-  md: 16,
-  lg: 18,
-  xl: 20,
-  '2xl': 24,
-  '3xl': 30,
-  '4xl': 36,
-  '5xl': 48,
-  '6xl': 60,
+  11: 11,  // Caption 2
+  12: 12,  // Caption 1
+  13: 13,  // Footnote
+  15: 15,  // Subheadline
+  16: 16,  // Callout
+  17: 17,  // Body, Headline
+  20: 20,  // Title 3
+  22: 22,  // Title 2
+  28: 28,  // Title 1
+  34: 34,  // Large Title
 } as const;
 
 /**
- * Line heights for optimal readability
+ * Line heights (leading) for optimal readability
+ * Based on Apple's specifications
  */
 export const lineHeight = {
-  tight: 1.2,
-  normal: 1.5,
-  relaxed: 1.75,
+  13: 13,   // Caption 2
+  16: 16,   // Caption 1
+  18: 18,   // Footnote
+  20: 20,   // Subheadline
+  21: 21,   // Callout
+  22: 22,   // Body, Headline
+  25: 25,   // Title 3
+  28: 28,   // Title 2
+  34: 34,   // Title 1
+  41: 41,   // Large Title
 } as const;
 
 /**
- * Letter spacing values
+ * Letter spacing (tracking) values
+ * Apple uses specific tracking for different sizes
  */
 export const letterSpacing = {
-  tight: -0.5,
-  normal: 0,
-  wide: 0.5,
-  wider: 1,
+  tight: -0.41,    // Large sizes (tighter)
+  normal: 0,       // Standard text
+  wide: 0.38,      // Small sizes (wider for legibility)
 } as const;
 
 /**
- * Typography variants
+ * Apple's Semantic Text Styles
+ * Use these instead of raw h1, h2, etc. for semantic clarity
  */
 export const typography = {
-  // Headings
-  h1: {
+  /**
+   * Large Title (34pt)
+   * Use for: Main page headings, hero text
+   * Weight: Bold
+   * Example: "Settings", "Music"
+   */
+  largeTitle: {
     fontFamily: fontFamily.bold,
-    fontSize: fontSize['4xl'],
-    lineHeight: fontSize['4xl'] * lineHeight.tight,
+    fontSize: fontSize[34],
+    lineHeight: lineHeight[41],
     letterSpacing: letterSpacing.tight,
   } as TextStyle,
 
-  h2: {
+  /**
+   * Title 1 (28pt)
+   * Use for: Primary section headings, important titles
+   * Weight: Bold
+   * Example: "Library", "For You"
+   */
+  title1: {
     fontFamily: fontFamily.bold,
-    fontSize: fontSize['3xl'],
-    lineHeight: fontSize['3xl'] * lineHeight.tight,
+    fontSize: fontSize[28],
+    lineHeight: lineHeight[34],
     letterSpacing: letterSpacing.tight,
   } as TextStyle,
 
-  h3: {
+  /**
+   * Title 2 (22pt)
+   * Use for: Secondary section headings
+   * Weight: Bold
+   * Example: Card titles, modal headers
+   */
+  title2: {
+    fontFamily: fontFamily.bold,
+    fontSize: fontSize[22],
+    lineHeight: lineHeight[28],
+    letterSpacing: letterSpacing.normal,
+  } as TextStyle,
+
+  /**
+   * Title 3 (20pt)
+   * Use for: Tertiary headings, subsection titles
+   * Weight: SemiBold
+   * Example: List section headers
+   */
+  title3: {
     fontFamily: fontFamily.semiBold,
-    fontSize: fontSize['2xl'],
-    lineHeight: fontSize['2xl'] * lineHeight.normal,
+    fontSize: fontSize[20],
+    lineHeight: lineHeight[25],
     letterSpacing: letterSpacing.normal,
   } as TextStyle,
 
-  h4: {
+  /**
+   * Headline (17pt)
+   * Use for: Emphasizing primary content, list item titles
+   * Weight: SemiBold
+   * Example: Item names in lists, emphasized text
+   */
+  headline: {
     fontFamily: fontFamily.semiBold,
-    fontSize: fontSize.xl,
-    lineHeight: fontSize.xl * lineHeight.normal,
+    fontSize: fontSize[17],
+    lineHeight: lineHeight[22],
     letterSpacing: letterSpacing.normal,
   } as TextStyle,
 
-  h5: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: fontSize.lg,
-    lineHeight: fontSize.lg * lineHeight.normal,
-    letterSpacing: letterSpacing.normal,
-  } as TextStyle,
-
-  h6: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: fontSize.md,
-    lineHeight: fontSize.md * lineHeight.normal,
-    letterSpacing: letterSpacing.normal,
-  } as TextStyle,
-
-  // Body text
-  bodyLarge: {
-    fontFamily: fontFamily.regular,
-    fontSize: fontSize.lg,
-    lineHeight: fontSize.lg * lineHeight.relaxed,
-    letterSpacing: letterSpacing.normal,
-  } as TextStyle,
-
+  /**
+   * Body (17pt)
+   * Use for: Main body text, primary content
+   * Weight: Regular
+   * Example: Article text, descriptions, messages
+   * Most commonly used text style
+   */
   body: {
     fontFamily: fontFamily.regular,
-    fontSize: fontSize.md,
-    lineHeight: fontSize.md * lineHeight.normal,
+    fontSize: fontSize[17],
+    lineHeight: lineHeight[22],
     letterSpacing: letterSpacing.normal,
   } as TextStyle,
 
-  bodySmall: {
+  /**
+   * Callout (16pt)
+   * Use for: Supplementary text, secondary content
+   * Weight: Regular
+   * Example: Secondary descriptions, annotations
+   */
+  callout: {
     fontFamily: fontFamily.regular,
-    fontSize: fontSize.sm,
-    lineHeight: fontSize.sm * lineHeight.normal,
+    fontSize: fontSize[16],
+    lineHeight: lineHeight[21],
     letterSpacing: letterSpacing.normal,
   } as TextStyle,
 
-  // Buttons (Apple style - no uppercase, natural case)
-  button: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: fontSize.lg,
-    lineHeight: fontSize.lg * lineHeight.tight,
-    letterSpacing: letterSpacing.normal,
-  } as TextStyle,
-
-  buttonLarge: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: fontSize.xl,
-    lineHeight: fontSize.xl * lineHeight.tight,
-    letterSpacing: letterSpacing.normal,
-  } as TextStyle,
-
-  buttonSmall: {
-    fontFamily: fontFamily.semiBold,
-    fontSize: fontSize.md,
-    lineHeight: fontSize.md * lineHeight.tight,
-    letterSpacing: letterSpacing.normal,
-  } as TextStyle,
-
-  // Labels (Apple-style text hierarchy)
-  label: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.md,
-    lineHeight: fontSize.md * lineHeight.normal,
-    letterSpacing: letterSpacing.normal,
-  } as TextStyle,
-
-  labelSmall: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.sm,
-    lineHeight: fontSize.sm * lineHeight.normal,
-    letterSpacing: letterSpacing.normal,
-  } as TextStyle,
-
-  // Caption
-  caption: {
+  /**
+   * Subheadline (15pt)
+   * Use for: List item subtitles, additional details
+   * Weight: Regular
+   * Example: Secondary info in lists, metadata
+   */
+  subheadline: {
     fontFamily: fontFamily.regular,
-    fontSize: fontSize.xs,
-    lineHeight: fontSize.xs * lineHeight.normal,
+    fontSize: fontSize[15],
+    lineHeight: lineHeight[20],
     letterSpacing: letterSpacing.normal,
   } as TextStyle,
 
-  // Subtitle (Apple-style secondary heading)
-  subtitle1: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.lg,
-    lineHeight: fontSize.lg * lineHeight.normal,
-    letterSpacing: letterSpacing.normal,
-  } as TextStyle,
-
-  subtitle2: {
-    fontFamily: fontFamily.medium,
-    fontSize: fontSize.md,
-    lineHeight: fontSize.md * lineHeight.normal,
-    letterSpacing: letterSpacing.normal,
-  } as TextStyle,
-
-  // Footnote (Apple's small secondary text)
+  /**
+   * Footnote (13pt)
+   * Use for: Small informational text, attributions
+   * Weight: Regular
+   * Example: Timestamps, bylines, legal text
+   */
   footnote: {
     fontFamily: fontFamily.regular,
-    fontSize: fontSize.xs,
-    lineHeight: fontSize.xs * lineHeight.normal,
+    fontSize: fontSize[13],
+    lineHeight: lineHeight[18],
+    letterSpacing: letterSpacing.normal,
+  } as TextStyle,
+
+  /**
+   * Caption 1 (12pt)
+   * Use for: Very small text, image captions
+   * Weight: Regular
+   * Example: Photo captions, tiny labels
+   */
+  caption1: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize[12],
+    lineHeight: lineHeight[16],
+    letterSpacing: letterSpacing.normal,
+  } as TextStyle,
+
+  /**
+   * Caption 2 (11pt)
+   * Use for: The smallest readable text
+   * Weight: Regular
+   * Example: Fine print, minimum size labels
+   * Minimum recommended size per Apple HIG
+   */
+  caption2: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize[11],
+    lineHeight: lineHeight[13],
+    letterSpacing: letterSpacing.wide,
+  } as TextStyle,
+
+  // Additional semantic styles for specific use cases
+
+  /**
+   * Body Emphasized
+   * Use for: Emphasized body text without changing hierarchy
+   * Weight: Medium
+   */
+  bodyEmphasized: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize[17],
+    lineHeight: lineHeight[22],
+    letterSpacing: letterSpacing.normal,
+  } as TextStyle,
+
+  /**
+   * Callout Emphasized
+   * Use for: Emphasized callout text
+   * Weight: Medium
+   */
+  calloutEmphasized: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize[16],
+    lineHeight: lineHeight[21],
     letterSpacing: letterSpacing.normal,
   } as TextStyle,
 } as const;
 
-export type Typography = typeof typography;
+/**
+ * Legacy aliases for backward compatibility
+ * These map to Apple's semantic styles
+ * Prefer using semantic names (largeTitle, body, etc.) over these
+ */
+export const legacyTypography = {
+  h1: typography.largeTitle,
+  h2: typography.title1,
+  h3: typography.title2,
+  h4: typography.title3,
+  h5: typography.headline,
+  h6: typography.headline,
+
+  bodyLarge: typography.body,
+  body: typography.callout,
+  bodySmall: typography.subheadline,
+
+  button: typography.headline,
+  buttonLarge: typography.headline,
+  buttonSmall: typography.body,
+
+  label: typography.callout,
+  labelSmall: typography.subheadline,
+
+  caption: typography.caption1,
+
+  subtitle1: typography.body,
+  subtitle2: typography.callout,
+
+  footnote: typography.footnote,
+} as const;
+
+/**
+ * Complete typography object (semantic + legacy)
+ */
+export const allTypography = {
+  ...typography,
+  ...legacyTypography,
+} as const;
+
+export type Typography = typeof allTypography;
+export type SemanticTextStyle = keyof typeof typography;
+export type LegacyTextStyle = keyof typeof legacyTypography;

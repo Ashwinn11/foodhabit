@@ -12,7 +12,7 @@ export * from './haptics';
 
 import { colors } from './colors';
 import { spacing, borderRadius, shadows } from './spacing';
-import { typography, fontFamily, fontSize, lineHeight, letterSpacing } from './typography';
+import { allTypography as typography, fontFamily, fontSize, lineHeight, letterSpacing } from './typography';
 import {
   screen,
   scaleWidth,
