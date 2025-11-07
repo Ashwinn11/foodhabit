@@ -1,3 +1,5 @@
+import { Session, User } from '@supabase/supabase-js';
+
 export interface AuthUser {
   id: string;
   email: string | null;
@@ -6,6 +8,9 @@ export interface AuthUser {
   familyName?: string;
   photo?: string;
   provider: 'apple' | 'google';
+  // Supabase session data
+  session?: Session;
+  supabaseUser?: User;
 }
 
 export interface AuthError {
@@ -13,26 +18,10 @@ export interface AuthError {
   code?: string;
 }
 
-export interface AppleAuthResponse {
-  user: string;
-  email: string | null;
-  fullName: {
-    givenName: string | null;
-    familyName: string | null;
-  } | null;
-  identityToken: string | null;
-  authorizationCode: string | null;
-}
+export type AuthProvider = 'apple' | 'google';
 
-export interface GoogleAuthResponse {
-  type: 'success' | 'error' | 'cancel';
-  authentication?: {
-    accessToken: string;
-    idToken?: string;
-    refreshToken?: string;
-  };
-  params?: {
-    access_token?: string;
-    id_token?: string;
-  };
+export interface SupabaseAuthResult {
+  session: Session | null;
+  user: User | null;
+  error: Error | null;
 }

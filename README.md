@@ -1,6 +1,6 @@
 # Food Habit
 
-A React Native Expo application with Apple Sign In (native) and Google OAuth (web) authentication.
+A React Native Expo application with Apple Sign In and Google OAuth authentication using Supabase.
 
 ## Bundle ID
 
@@ -9,54 +9,86 @@ A React Native Expo application with Apple Sign In (native) and Google OAuth (we
 
 ## Features
 
+- **Supabase Authentication**: Managed authentication with automatic token refresh
 - **Apple Sign In**: Native iOS authentication with Apple ID
-- **Google OAuth**: Web-based OAuth 2.0 authentication
-- TypeScript support
-- Custom authentication hook (`useAuth`)
-- Organized service architecture
+- **Google OAuth**: Seamless Google Sign In
+- **TypeScript**: Full type safety
+- **Session Management**: Automatic session persistence and refresh
+- **Custom Auth Hook**: Easy-to-use `useAuth` hook
+- **Deep Linking**: Proper redirect handling for OAuth flows
 
 ## Project Structure
 
 ```
 foodhabit/
 ├── src/
+│   ├── config/
+│   │   └── supabase.ts         # Supabase client configuration
 │   ├── hooks/
 │   │   └── useAuth.ts          # Main authentication hook
 │   ├── services/
 │   │   └── auth/
-│   │       ├── appleAuth.ts    # Apple Sign In service
-│   │       ├── googleAuth.ts   # Google OAuth service
+│   │       ├── supabaseAuth.ts # Supabase auth service
 │   │       └── index.ts        # Auth services barrel export
-│   └── types/
-│       └── auth.ts             # TypeScript types for auth
-├── App.tsx                     # Main app with auth example
-├── app.json                    # Expo configuration
+│   ├── types/
+│   │   └── auth.ts             # TypeScript types for auth
+│   └── utils/
+│       └── showRedirectUris.ts # Helper for showing redirect URLs
+├── App.tsx                      # Main app with auth example
+├── app.json                     # Expo configuration
+├── SUPABASE_SETUP.md           # Detailed Supabase setup guide
 └── package.json
 ```
 
-## Getting Started
-
-### Prerequisites
+## Prerequisites
 
 - Node.js (v16 or newer)
 - npm or yarn
 - Expo CLI
-- iOS Simulator (for Apple Sign In testing) or physical iOS device
-- Android Emulator or physical Android device (for Google OAuth testing)
+- Supabase account (free tier available)
+- Apple Developer account (for Apple Sign In)
+- Google Cloud account (for Google OAuth)
 
-### Installation
+## Quick Start
 
-1. Install dependencies:
+### 1. Install Dependencies
 
 ```bash
 npm install
 ```
 
-2. Configure OAuth providers (see below)
+### 2. Setup Supabase Project
 
-3. Run the app:
+1. Go to [supabase.com](https://supabase.com) and create a new project
+2. Go to Project Settings > API
+3. Copy your Project URL and anon/public key
+
+### 3. Configure Environment Variables
+
+1. Copy the example file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` with your Supabase credentials:
+   ```env
+   EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+   ```
+
+### 4. Setup Auth Providers
+
+Follow the detailed guide in [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) to configure:
+- Apple Sign In
+- Google OAuth
+- Redirect URLs
+
+### 5. Run the App
 
 ```bash
+# Start development server
+npm start
+
 # iOS
 npm run ios
 
@@ -69,132 +101,30 @@ npm run web
 
 ## Authentication Setup
 
-### Apple Sign In Setup
+For detailed setup instructions, see [SUPABASE_SETUP.md](./SUPABASE_SETUP.md).
 
-Apple Sign In is already configured in the app. To use it in production:
+### Quick Overview
 
-1. **Apple Developer Account**:
-   - Log in to [Apple Developer](https://developer.apple.com)
-   - Go to Certificates, Identifiers & Profiles
-   - Create or edit your App ID (`com.foodhabit.com`)
-   - Enable "Sign In with Apple" capability
+#### Apple Sign In
 
-2. **Expo Configuration**:
-   - Already configured in `app.json`:
-     - `ios.bundleIdentifier`: `com.foodhabit.com`
-     - `ios.usesAppleSignIn`: `true`
-     - Plugin: `expo-apple-authentication`
+1. Enable "Sign in with Apple" in Apple Developer Portal for `com.foodhabit.com`
+2. Create an auth key in Apple Developer Portal
+3. Configure Apple provider in Supabase with Team ID, Key ID, and auth key
 
-3. **Testing**:
-   - Apple Sign In only works on physical iOS devices or iOS Simulator
-   - Does not work on Android or Web
+#### Google OAuth
 
-### Google OAuth Setup
+1. Create OAuth client in Google Cloud Console
+2. Configure Google provider in Supabase with Client ID and Secret
+3. Add Supabase callback URL to Google OAuth client
 
-Google OAuth uses **deep linking** to redirect back to your app after authentication. The setup differs between development (Expo Go) and production (standalone builds).
+#### Deep Links
 
-#### Understanding Deep Links
-
-- **Expo Go (Development)**: Uses Expo's auth proxy (`https://auth.expo.io/@username/slug`)
-- **Standalone Builds (Production)**: Uses custom URL scheme (`foodhabit://redirect`)
-
-The app automatically detects the environment and uses the correct redirect URI.
-
-#### Step-by-Step Setup
-
-1. **Google Cloud Console**:
-   - Go to [Google Cloud Console](https://console.cloud.google.com)
-   - Create a new project or select existing one
-   - Enable Google+ API or Google Identity Services
-
-2. **Create OAuth Credentials**:
-   - Go to APIs & Services > Credentials
-   - Click "Create Credentials" > "OAuth 2.0 Client ID"
-   - Select "Web application" as application type
-
-3. **Get Your Redirect URIs**:
-
-   The app automatically logs both redirect URIs when it starts. Check your console output for:
-
-   ```
-   === GOOGLE OAUTH REDIRECT URIs ===
-   Development (Expo Go): https://auth.expo.io/@your-username/foodhabit
-   Production (Standalone): foodhabit://redirect
-   ===================================
-   ```
-
-   Or use the "Show Redirect URIs" button in development mode.
-
-   You can also get them programmatically:
-
-   ```typescript
-   import { getAllRedirectUris } from './src/services/auth/googleAuth';
-   const uris = getAllRedirectUris();
-   console.log(uris.development);  // For Expo Go
-   console.log(uris.production);   // For standalone builds
-   ```
-
-4. **Add Redirect URIs to Google Cloud Console**:
-   - In your OAuth 2.0 Client ID settings
-   - Under "Authorized redirect URIs", add **BOTH**:
-     - `https://auth.expo.io/@your-username/foodhabit` (for development)
-     - `foodhabit://redirect` (for production builds)
-   - Click "Save"
-
-5. **Update App.tsx**:
-
-   Replace `YOUR_GOOGLE_CLIENT_ID_HERE` in `App.tsx` with your Web Client ID:
-
-   ```typescript
-   const GOOGLE_CLIENT_ID = 'your-actual-client-id.apps.googleusercontent.com';
-   ```
-
-6. **Deep Link Configuration**:
-
-   Already configured in `app.json`:
-   ```json
-   {
-     "scheme": "foodhabit",
-     "plugins": ["expo-web-browser"]
-   }
-   ```
-
-   This enables the `foodhabit://` URL scheme for production builds.
-
-#### Testing
-
-- **Development (Expo Go)**:
-  ```bash
-  npx expo start
-  ```
-  The app will automatically use Expo's auth proxy
-
-- **Production (Standalone Build)**:
-  ```bash
-  # iOS
-  eas build --platform ios --profile preview
-
-  # Android
-  eas build --platform android --profile preview
-  ```
-  The app will use the custom `foodhabit://` scheme
-
-#### Troubleshooting Deep Links
-
-- **"redirect_uri_mismatch" error**:
-  - Verify BOTH redirect URIs are added to Google Cloud Console
-  - Check the console logs to see which URI is being used
-  - Make sure there are no typos in the URIs
-
-- **Deep link not opening the app**:
-  - Ensure `scheme` is set in `app.json`
-  - For iOS: Check that `bundleIdentifier` matches
-  - For Android: Check that `package` matches
-  - Rebuild the app after changing the scheme
+1. Add `foodhabit://auth/callback` to Supabase Redirect URLs
+2. App is pre-configured with `foodhabit` URL scheme
 
 ## Usage
 
-### Using the Authentication Hook
+### Basic Example
 
 ```typescript
 import { useAuth } from './src/hooks/useAuth';
@@ -209,26 +139,23 @@ function MyComponent() {
     signOut
   } = useAuth();
 
-  // Sign in with Apple
-  const handleAppleSignIn = async () => {
-    await signInWithApple();
-  };
-
-  // Sign in with Google
-  const handleGoogleSignIn = async () => {
-    await signInWithGoogle({
-      clientId: 'YOUR_GOOGLE_CLIENT_ID',
-    });
-  };
+  if (loading) {
+    return <ActivityIndicator />;
+  }
 
   if (user) {
-    return <Text>Welcome {user.name}!</Text>;
+    return (
+      <View>
+        <Text>Welcome {user.name}!</Text>
+        <Button title="Sign Out" onPress={signOut} />
+      </View>
+    );
   }
 
   return (
     <View>
-      <Button title="Sign in with Apple" onPress={handleAppleSignIn} />
-      <Button title="Sign in with Google" onPress={handleGoogleSignIn} />
+      <Button title="Sign in with Apple" onPress={signInWithApple} />
+      <Button title="Sign in with Google" onPress={signInWithGoogle} />
     </View>
   );
 }
@@ -236,77 +163,171 @@ function MyComponent() {
 
 ### User Object
 
-After successful authentication, the user object contains:
+After successful authentication:
 
 ```typescript
 {
-  id: string;              // User ID from provider
-  email: string | null;    // User email
-  name?: string;           // Full name
-  givenName?: string;      // First name
-  familyName?: string;     // Last name
-  photo?: string;          // Profile photo URL (Google only)
+  id: string;                    // Supabase user ID
+  email: string | null;          // User email
+  name?: string;                 // Full name
+  givenName?: string;            // First name
+  familyName?: string;           // Last name
+  photo?: string;                // Profile photo URL
   provider: 'apple' | 'google';  // Auth provider
+  session?: Session;             // Supabase session
+  supabaseUser?: User;           // Full Supabase user object
 }
+```
+
+### useAuth Hook API
+
+```typescript
+const {
+  user,                    // Current authenticated user or null
+  loading,                 // Loading state (true during auth operations)
+  error,                   // Error object if auth fails
+  signInWithApple,        // () => Promise<void>
+  signInWithGoogle,       // () => Promise<void>
+  signOut,                // () => Promise<void>
+  isAppleAuthAvailable    // () => Promise<boolean>
+} = useAuth();
+```
+
+## How It Works
+
+### Supabase Integration
+
+1. **Native Apple Sign In** (iOS only):
+   - Uses native Apple Authentication
+   - Exchanges identity token with Supabase
+   - Returns Supabase user with session
+
+2. **Google OAuth**:
+   - Opens browser with Supabase OAuth URL
+   - User authenticates with Google
+   - Supabase handles token exchange
+   - Redirects back to app via deep link
+   - Session automatically created
+
+3. **Session Management**:
+   - Supabase handles token refresh automatically
+   - Sessions persist across app restarts (when storage configured)
+   - Auth state changes trigger `useAuth` updates
+
+### Deep Linking Flow
+
+```
+User taps "Sign in with Google"
+    ↓
+App opens browser with Supabase OAuth URL
+    ↓
+User authenticates with Google
+    ↓
+Google redirects to Supabase
+    ↓
+Supabase creates session
+    ↓
+Supabase redirects to: foodhabit://auth/callback
+    ↓
+App receives deep link
+    ↓
+Session extracted from URL
+    ↓
+User authenticated!
 ```
 
 ## Building for Production
 
 ### iOS
 
-1. **App Store Connect**:
-   - Create app with bundle ID `com.foodhabit.com`
-   - Enable "Sign In with Apple" capability
+1. Configure in `app.json`:
+   ```json
+   {
+     "ios": {
+       "bundleIdentifier": "com.foodhabit.com",
+       "usesAppleSignIn": true
+     }
+   }
+   ```
 
-2. **Build**:
+2. Build with EAS:
    ```bash
    eas build --platform ios
    ```
 
 ### Android
 
-1. **Google Play Console**:
-   - Create app with package name `com.foodhabit.com`
+1. Configure in `app.json`:
+   ```json
+   {
+     "android": {
+       "package": "com.foodhabit.com"
+     }
+   }
+   ```
 
-2. **Build**:
+2. Build with EAS:
    ```bash
    eas build --platform android
    ```
 
 ## Troubleshooting
 
-### Apple Sign In
+### Common Issues
 
-- **Error: "Apple Sign In not available"**
-  - Apple Sign In only works on iOS 13+ devices
-  - Ensure you're testing on a physical device or iOS Simulator
+#### Environment Variables Not Loading
 
-### Google OAuth
+- Restart Expo with: `npx expo start --clear`
+- Verify `.env` file is in the root directory
+- Check variable names start with `EXPO_PUBLIC_`
 
-- **Error: "redirect_uri_mismatch"**
-  - Verify the redirect URI in Google Cloud Console matches exactly
-  - Use `getGoogleRedirectUri()` to get the correct URI
+#### Apple Sign In Not Available
 
-- **Error: "invalid_client"**
-  - Check that your Google Client ID is correct
-  - Ensure you're using the Web Client ID, not iOS or Android client ID
+- Only works on iOS 13+
+- Only available on physical devices or iOS Simulator
+- Check Apple Developer Portal configuration
+
+#### Google OAuth Fails
+
+- Verify Supabase callback URL is in Google Cloud Console
+- Check Client ID and Secret in Supabase
+- Ensure Google+ API is enabled
+
+#### Deep Link Not Working
+
+- Verify `foodhabit://auth/callback` is in Supabase Redirect URLs
+- For standalone builds, rebuild after changing scheme
+- Check console logs for redirect URL issues
+
+### Debug Tools
+
+- **Development Mode**: Shows "Show Supabase Redirect URL" button
+- **Console Logging**: All auth operations logged to console
+- **Supabase Dashboard**: View auth logs and user sessions
+
+## Security
+
+- Environment variables are not committed (in `.gitignore`)
+- Supabase handles token encryption and storage
+- Anon key is safe for client-side use (RLS protects data)
+- Consider implementing Row Level Security (RLS) for database access
 
 ## Dependencies
 
-- `expo`: Latest SDK
+- `@supabase/supabase-js`: Supabase client library
 - `expo-apple-authentication`: Native Apple Sign In
-- `expo-auth-session`: OAuth 2.0 authentication
-- `expo-crypto`: Cryptographic functions for auth
-- `expo-web-browser`: Web browser for OAuth flows
-- `react-native`: React Native framework
+- `expo-auth-session`: OAuth session management
+- `expo-web-browser`: OAuth browser flows
+- `react-native-url-polyfill`: URL polyfill for React Native
+
+## Resources
+
+- [Supabase Setup Guide](./SUPABASE_SETUP.md) - Detailed setup instructions
+- [Supabase Documentation](https://supabase.com/docs)
+- [Expo Authentication](https://docs.expo.dev/guides/authentication/)
+- [Apple Sign In Docs](https://developer.apple.com/sign-in-with-apple/)
+- [Google OAuth Docs](https://developers.google.com/identity/protocols/oauth2)
 
 ## License
 
 MIT
-
-## Support
-
-For issues and questions:
-- Check the [Expo documentation](https://docs.expo.dev)
-- Review [Apple Sign In docs](https://docs.expo.dev/versions/latest/sdk/apple-authentication/)
-- Review [Google OAuth docs](https://developers.google.com/identity/protocols/oauth2)

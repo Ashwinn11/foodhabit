@@ -1,3 +1,2 @@
-// Export all auth services
-export * from './appleAuth';
-export * from './googleAuth';
+// Export Supabase auth services
+export * from './supabaseAuth';

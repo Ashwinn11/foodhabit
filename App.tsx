@@ -1,17 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, Alert, Platform, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Button, Alert, Platform, TouchableOpacity, ActivityIndicator } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import Constants from 'expo-constants';
 import { useAuth } from './src/hooks/useAuth';
 import { useEffect, useState } from 'react';
-import { showRedirectUris, logRedirectUris } from './src/utils/showRedirectUris';
-
-// TODO: Replace with your Google OAuth Client ID
-// Get this from Google Cloud Console (console.cloud.google.com)
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE';
-
-// Detect if we're running in Expo Go (development)
-const isExpoGo = Constants.appOwnership === 'expo';
+import { getSupabaseRedirectUrl } from './src/config/supabase';
 
 export default function App() {
   const { user, loading, error, signInWithApple, signInWithGoogle, signOut, isAppleAuthAvailable } = useAuth();
@@ -19,8 +11,6 @@ export default function App() {
 
   useEffect(() => {
     checkAppleAuth();
-    // Log redirect URIs on startup for easy configuration
-    logRedirectUris();
   }, []);
 
   const checkAppleAuth = async () => {
@@ -39,23 +29,29 @@ export default function App() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
-      Alert.alert(
-        'Configuration Required',
-        'Please update GOOGLE_CLIENT_ID in App.tsx with your Google OAuth client ID from Google Cloud Console.'
-      );
-      return;
-    }
-
-    await signInWithGoogle({
-      clientId: GOOGLE_CLIENT_ID,
-      useProxy: isExpoGo, // Use Expo's auth proxy for Expo Go, custom scheme for standalone builds
-    });
+    await signInWithGoogle();
   };
 
-  const handleShowRedirectUris = () => {
-    showRedirectUris();
+  const handleShowRedirectUrl = () => {
+    const redirectUrl = getSupabaseRedirectUrl();
+    Alert.alert(
+      'Supabase Redirect URL',
+      `Add this URL to your Supabase project:\n\n${redirectUrl}\n\nGo to: Authentication > URL Configuration > Redirect URLs`,
+      [
+        { text: 'Copy to Console', onPress: () => console.log('Redirect URL:', redirectUrl) },
+        { text: 'OK' },
+      ]
+    );
   };
+
+  if (loading && !user) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -68,7 +64,7 @@ export default function App() {
           {user.email && <Text style={styles.userText}>Email: {user.email}</Text>}
           <Text style={styles.userText}>Provider: {user.provider}</Text>
 
-          <Button title="Sign Out" onPress={signOut} />
+          <Button title="Sign Out" onPress={signOut} disabled={loading} />
         </View>
       ) : (
         <View style={styles.authButtons}>
@@ -95,8 +91,8 @@ export default function App() {
           </View>
 
           {__DEV__ && (
-            <TouchableOpacity onPress={handleShowRedirectUris} style={styles.debugButton}>
-              <Text style={styles.debugText}>Show Redirect URIs</Text>
+            <TouchableOpacity onPress={handleShowRedirectUrl} style={styles.debugButton}>
+              <Text style={styles.debugText}>Show Supabase Redirect URL</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -107,7 +103,7 @@ export default function App() {
       {__DEV__ && (
         <View style={styles.devInfo}>
           <Text style={styles.devInfoText}>
-            Mode: {isExpoGo ? 'Expo Go (Dev)' : 'Standalone Build'}
+            Using Supabase Auth
           </Text>
         </View>
       )}
@@ -158,6 +154,11 @@ const styles = StyleSheet.create({
   userText: {
     fontSize: 16,
     marginVertical: 5,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
   debugButton: {
     marginTop: 20,
