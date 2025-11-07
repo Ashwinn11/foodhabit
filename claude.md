@@ -134,13 +134,16 @@ https://docs.expo.dev/versions/latest/
 
 #### Installed Packages (Reference)
 
+**Dependencies:**
 ```json
 {
   "@expo-google-fonts/poppins": "^0.4.1",
   "@expo/vector-icons": "^15.0.3",
   "@react-native-async-storage/async-storage": "2.2.0",
+  "@react-navigation/bottom-tabs": "^7.8.2",
+  "@react-navigation/native": "^7.1.19",
   "@supabase/supabase-js": "^2.80.0",
-  "expo": "^54.0.0",
+  "expo": "~54.0.22",
   "expo-apple-authentication": "~8.0.7",
   "expo-auth-session": "~7.0.8",
   "expo-blur": "~15.0.7",
@@ -150,14 +153,70 @@ https://docs.expo.dev/versions/latest/
   "expo-haptics": "~15.0.7",
   "expo-linear-gradient": "~15.0.7",
   "expo-store-review": "~9.0.8",
-  "expo-web-browser": "~15.0.7",
-  "react": "18.3.1",
-  "react-native": "0.81.2",
+  "expo-web-browser": "~15.0.9",
+  "react": "19.1.0",
+  "react-native": "0.81.5",
   "react-native-gesture-handler": "~2.28.0",
   "react-native-reanimated": "~4.1.1",
   "react-native-safe-area-context": "~5.6.0",
-  "react-native-url-polyfill": "^2.0.0"
+  "react-native-screens": "~4.16.0",
+  "react-native-url-polyfill": "^3.0.0"
 }
+```
+
+**DevDependencies (CRITICAL):**
+```json
+{
+  "@types/react": "~19.1.0",
+  "babel-preset-expo": "^54.0.6",
+  "typescript": "~5.9.2"
+}
+```
+
+**IMPORTANT**: `babel-preset-expo` is a REQUIRED devDependency. Without it, Metro bundler will fail with "Cannot find module 'babel-preset-expo'". Always ensure it's installed.
+
+---
+
+### Babel Configuration
+
+**RULE**: `babel-preset-expo` MUST be installed as a devDependency.
+
+#### Required Babel Setup
+
+1. Install babel-preset-expo:
+```bash
+npm install --save-dev babel-preset-expo
+```
+
+2. Verify babel.config.js:
+```javascript
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: ['babel-preset-expo'],
+    plugins: [
+      // React Native Reanimated plugin must be listed last
+      'react-native-reanimated/plugin',
+    ],
+  };
+};
+```
+
+**Documentation**: https://docs.expo.dev/guides/customizing-metro/
+
+#### Troubleshooting Babel Errors
+
+If you see "Cannot find module 'babel-preset-expo'":
+
+```bash
+# Install babel-preset-expo
+npm install --save-dev babel-preset-expo
+
+# Clear Metro cache
+rm -rf node_modules/.cache .expo
+
+# Restart Metro
+npx expo start --clear
 ```
 
 ---
