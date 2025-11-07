@@ -120,29 +120,34 @@ export const getAllRedirectUrls = () => {
   };
 };
 
-// Log the redirect URLs for easy configuration
-const urls = getAllRedirectUrls();
-console.log('=== SUPABASE REDIRECT URLs ===');
-console.log(`Current mode: ${isExpoGo ? 'Expo Go (Development)' : 'Standalone Build'}`);
-console.log('\n🔑 CRITICAL: Google OAuth requires proper URLs (NOT exp://)');
-console.log('\nAdd BOTH URLs to your Supabase project:');
-console.log(`✅ Expo Go (Dev): ${urls.expoGo}`);
-if (urls.expoUsername === 'YOUR_EXPO_USERNAME') {
-  console.log('');
-  console.log('⚠️  ═══════════════════════════════════════════════════');
-  console.log('⚠️  SETUP REQUIRED: Configure Expo Username');
-  console.log('⚠️  ═══════════════════════════════════════════════════');
-  console.log('   1. Run: npx expo whoami');
-  console.log('   2. Copy your username');
-  console.log('   3. Open: app.json');
-  console.log('   4. Replace: "owner": "YOUR_EXPO_USERNAME"');
-  console.log('      With: "owner": "your-actual-username"');
-  console.log('   5. Restart: npx expo start --clear');
-  console.log('');
-  console.log('   ❌ Without this, Google OAuth will NOT work!');
-  console.log('⚠️  ═══════════════════════════════════════════════════');
-}
-console.log(`✅ Standalone: ${urls.standalone}`);
-console.log('\n📍 Currently using:', urls.current);
-console.log('\n📖 Setup: https://docs.expo.dev/guides/authentication/#google');
-console.log('===============================');
+/**
+ * Log OAuth configuration details (only on app initialization)
+ * Call this from your root component to get setup guidance
+ */
+export const logOAuthConfig = () => {
+  const urls = getAllRedirectUrls();
+  console.log('\n=== SUPABASE REDIRECT URLs ===');
+  console.log(`Current mode: ${isExpoGo ? 'Expo Go (Development)' : 'Standalone Build'}`);
+  console.log('\n🔑 CRITICAL: Google OAuth requires proper URLs (NOT exp://)');
+  console.log('\nAdd BOTH URLs to your Supabase project:');
+  console.log(`✅ Expo Go (Dev): ${urls.expoGo}`);
+  if (urls.expoUsername === 'YOUR_EXPO_USERNAME') {
+    console.log('');
+    console.log('⚠️  ═══════════════════════════════════════════════════');
+    console.log('⚠️  SETUP REQUIRED: Configure Expo Username');
+    console.log('⚠️  ═══════════════════════════════════════════════════');
+    console.log('   1. Run: npx expo whoami');
+    console.log('   2. Copy your username');
+    console.log('   3. Open: app.json');
+    console.log('   4. Replace: "owner": "YOUR_EXPO_USERNAME"');
+    console.log('      With: "owner": "your-actual-username"');
+    console.log('   5. Restart: npx expo start --clear');
+    console.log('');
+    console.log('   ❌ Without this, Google OAuth will NOT work!');
+    console.log('⚠️  ═══════════════════════════════════════════════════');
+  }
+  console.log(`✅ Standalone: ${urls.standalone}`);
+  console.log('\n📍 Currently using:', urls.current);
+  console.log('\n📖 Setup: https://docs.expo.dev/guides/authentication/#google');
+  console.log('===============================\n');
+};

@@ -1,6 +1,7 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
+import * as Crypto from 'expo-crypto';
 import { Platform } from 'react-native';
 import { supabase, getSupabaseRedirectUrl } from '../../config/supabase';
 import { AuthUser, AuthError, AuthProvider } from '../../types/auth';
@@ -10,7 +11,13 @@ WebBrowser.maybeCompleteAuthSession();
 
 /**
  * Sign in with Apple using Supabase
- * This uses native Apple Sign In and exchanges the token with Supabase
+ * This uses native Apple Sign In and exchanges the token with Supabase.
+ *
+ * IMPORTANT: Apple Sign In has unique behaviors:
+ * - Full name is ONLY provided on first sign in
+ * - Subsequent sign ins: fullName will be null, must use stored metadata
+ * - User ID remains constant across sign ins
+ * - Nonce is required for security to prevent replay attacks
  */
 export const signInWithApple = async (): Promise<AuthUser> => {
   try {
@@ -30,12 +37,21 @@ export const signInWithApple = async (): Promise<AuthUser> => {
       } as AuthError;
     }
 
-    // Get Apple credentials
+    // CRITICAL: Generate cryptographic nonce to prevent replay attacks
+    // The nonce must be:
+    // 1. Random and unique for each sign-in attempt
+    // 2. Hashed (SHA256) when sent to Apple
+    // 3. Raw when sent to Supabase for verification
+    const rawNonce = generateRandomNonce();
+    const hashedNonce = await hashNonce(rawNonce);
+
+    // Get Apple credentials with hashed nonce
     const credential = await AppleAuthentication.signInAsync({
       requestedScopes: [
         AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
         AppleAuthentication.AppleAuthenticationScope.EMAIL,
       ],
+      nonce: hashedNonce, // Pass hashed nonce to Apple
     });
 
     // Check for required token
@@ -46,17 +62,18 @@ export const signInWithApple = async (): Promise<AuthUser> => {
       } as AuthError;
     }
 
-    // Sign in to Supabase with Apple token
+    // Sign in to Supabase with Apple token and raw nonce
+    // Supabase will verify that the nonce in the token matches the one we provide
     const { data, error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
       token: credential.identityToken,
-      nonce: credential.user, // Use user ID as nonce
+      nonce: rawNonce, // Pass raw nonce for Supabase verification
     });
 
     if (error) {
       throw {
-        message: error.message,
-        code: error.status?.toString(),
+        message: error.message || 'Failed to sign in with Supabase',
+        code: error.status?.toString() || 'SUPABASE_ERROR',
       } as AuthError;
     }
 
@@ -68,6 +85,8 @@ export const signInWithApple = async (): Promise<AuthUser> => {
     }
 
     // Create AuthUser from Supabase user
+    // Note: credential.fullName is only populated on FIRST sign in
+    // On subsequent sign ins, use the stored user metadata
     const authUser: AuthUser = {
       id: data.user.id,
       email: data.user.email || credential.email || null,
@@ -83,7 +102,10 @@ export const signInWithApple = async (): Promise<AuthUser> => {
 
     return authUser;
   } catch (error: any) {
+    console.error('Apple Sign In error:', error);
+
     if (error.code === 'ERR_REQUEST_CANCELED') {
+      console.log('User canceled Apple Sign In');
       throw {
         message: 'Sign in was canceled',
         code: error.code,
@@ -102,14 +124,47 @@ export const signInWithApple = async (): Promise<AuthUser> => {
 };
 
 /**
+ * Generate a random nonce for security
+ * The nonce prevents replay attacks by ensuring each sign-in is unique
+ */
+const generateRandomNonce = (): string => {
+  // Generate a random string suitable for use as a nonce
+  // Using Math.random() with a large character set
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let nonce = '';
+  for (let i = 0; i < 32; i++) {
+    nonce += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return nonce;
+};
+
+/**
+ * Hash a nonce using SHA256
+ * Apple requires the nonce to be hashed before sending it to their authentication service
+ */
+const hashNonce = async (nonce: string): Promise<string> => {
+  try {
+    const hashed = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      nonce
+    );
+    return hashed;
+  } catch (error) {
+    console.error('Error hashing nonce:', error);
+    throw {
+      message: 'Failed to hash nonce for Apple Sign In',
+      code: 'HASH_ERROR',
+    } as AuthError;
+  }
+};
+
+/**
  * Sign in with Google using Supabase OAuth
  * This uses Supabase's built-in OAuth flow
  */
 export const signInWithGoogle = async (): Promise<AuthUser> => {
   try {
     const redirectUrl = getSupabaseRedirectUrl();
-
-    console.log('Starting Google OAuth with redirect URL:', redirectUrl);
 
     // Start the OAuth flow with Supabase
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -134,8 +189,6 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
       } as AuthError;
     }
 
-    console.log('Opening OAuth URL in browser...');
-
     // Open the OAuth URL in a browser
     const result = await WebBrowser.openAuthSessionAsync(
       data.url,
@@ -156,11 +209,8 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
       } as AuthError;
     }
 
-    console.log('OAuth redirect received, parsing URL...');
-
     // Extract the URL from the result
     const responseUrl = result.url;
-    console.log('Response URL received');
 
     // Parse URL parameters
     const url = new URL(responseUrl);
@@ -180,20 +230,11 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
     const access_token = params.get('access_token');
     const refresh_token = params.get('refresh_token');
 
-    console.log('URL contains:', {
-      hasCode: !!code,
-      hasAccessToken: !!access_token,
-      hasRefreshToken: !!refresh_token,
-    });
-
     // If we have an authorization code, exchange it for a session
     if (code) {
-      console.log('Exchanging code for session...');
-
       const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
       if (exchangeError) {
-        console.error('Code exchange error:', exchangeError);
         throw {
           message: exchangeError.message,
           code: 'EXCHANGE_ERROR',
@@ -221,31 +262,55 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
         supabaseUser: user,
       };
 
-      console.log('Google sign in successful (code exchange)');
       return authUser;
     }
 
     // If we have tokens directly, set the session
     if (access_token && refresh_token) {
-      console.log('Setting session with tokens...');
-
-      const { data: sessionData, error: setError } = await supabase.auth.setSession({
+      // Add timeout protection to prevent infinite hanging
+      const setSessionPromise = supabase.auth.setSession({
         access_token,
         refresh_token,
       });
 
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('setSession timeout - request took too long')), 15000)
+      );
+
+      let sessionData;
+      let setError = null;
+
+      try {
+        const result = await Promise.race([setSessionPromise, timeoutPromise]) as any;
+        sessionData = result;
+        if (result?.error) {
+          setError = result.error;
+        }
+      } catch (timeoutError) {
+        throw {
+          message: 'Session setup timed out. Check your network connection and Supabase configuration.',
+          code: 'SESSION_TIMEOUT',
+        } as AuthError;
+      }
+
       if (setError) {
-        console.error('Set session error:', setError);
         throw {
           message: setError.message,
           code: 'SET_SESSION_ERROR',
         } as AuthError;
       }
 
-      if (!sessionData.session || !sessionData.session.user) {
+      if (!sessionData || !sessionData.session) {
         throw {
           message: 'No session returned after setting tokens',
           code: 'NO_SESSION',
+        } as AuthError;
+      }
+
+      if (!sessionData.session.user) {
+        throw {
+          message: 'No user in session after setting tokens',
+          code: 'NO_USER_IN_SESSION',
         } as AuthError;
       }
 
@@ -263,7 +328,6 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
         supabaseUser: user,
       };
 
-      console.log('Google sign in successful (token)');
       return authUser;
     }
 
