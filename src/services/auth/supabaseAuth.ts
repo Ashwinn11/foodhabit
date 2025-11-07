@@ -159,19 +159,32 @@ const hashNonce = async (nonce: string): Promise<string> => {
 };
 
 /**
- * Sign in with Google using Supabase OAuth
- * This uses Supabase's built-in OAuth flow
+ * Sign in with Google using Supabase OAuth with PKCE flow
+ *
+ * PKCE (Proof Key for Code Exchange) is the modern, secure OAuth flow that:
+ * - Returns an authorization code instead of tokens directly
+ * - Exchanges the code for tokens server-side (more secure)
+ * - Prevents timeout issues from setSession() calls
+ * - Is faster and more reliable
  */
 export const signInWithGoogle = async (): Promise<AuthUser> => {
   try {
     const redirectUrl = getSupabaseRedirectUrl();
+    console.log('🔐 Starting Google OAuth with PKCE flow...');
+    console.log('📍 Redirect URL:', redirectUrl);
 
-    // Start the OAuth flow with Supabase
+    // Start the OAuth flow with Supabase using PKCE (authorization code flow)
+    // queryParams with 'code' forces PKCE flow instead of implicit token flow
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: redirectUrl,
         skipBrowserRedirect: false,
+        // Force PKCE flow - ensures we always get an authorization code
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
       },
     });
 
@@ -212,7 +225,7 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
     // Extract the URL from the result
     const responseUrl = result.url;
 
-    // Parse URL parameters
+    // Parse URL parameters (code should be in query string for PKCE flow)
     const url = new URL(responseUrl);
     const params = new URLSearchParams(url.search || url.hash.replace('#', '?'));
 
@@ -225,117 +238,56 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
       } as AuthError;
     }
 
-    // Get auth code or tokens from URL
+    // Get authorization code from URL (PKCE flow)
     const code = params.get('code');
-    const access_token = params.get('access_token');
-    const refresh_token = params.get('refresh_token');
 
-    // If we have an authorization code, exchange it for a session
-    if (code) {
-      const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-
-      if (exchangeError) {
-        throw {
-          message: exchangeError.message,
-          code: 'EXCHANGE_ERROR',
-        } as AuthError;
-      }
-
-      if (!sessionData.session || !sessionData.session.user) {
-        throw {
-          message: 'No session returned after code exchange',
-          code: 'NO_SESSION',
-        } as AuthError;
-      }
-
-      const user = sessionData.session.user;
-
-      const authUser: AuthUser = {
-        id: user.id,
-        email: user.email || null,
-        name: user.user_metadata?.full_name || user.user_metadata?.name || undefined,
-        givenName: user.user_metadata?.given_name || undefined,
-        familyName: user.user_metadata?.family_name || undefined,
-        photo: user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined,
-        provider: 'google',
-        session: sessionData.session,
-        supabaseUser: user,
-      };
-
-      return authUser;
+    if (!code) {
+      throw {
+        message: 'No authorization code in OAuth callback URL. Make sure your Supabase project is configured for PKCE flow.',
+        code: 'NO_AUTH_CODE',
+      } as AuthError;
     }
 
-    // If we have tokens directly, set the session
-    if (access_token && refresh_token) {
-      // Add timeout protection to prevent infinite hanging
-      const setSessionPromise = supabase.auth.setSession({
-        access_token,
-        refresh_token,
-      });
+    // Exchange the authorization code for a session
+    // This is fast and reliable compared to setSession()
+    console.log('🔄 Exchanging authorization code for session...');
+    const exchangeStartTime = Date.now();
 
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('setSession timeout - request took too long')), 15000)
-      );
+    const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
-      let sessionData;
-      let setError = null;
+    const exchangeTime = Date.now() - exchangeStartTime;
+    console.log(`✅ Code exchange completed in ${exchangeTime}ms`);
 
-      try {
-        const result = await Promise.race([setSessionPromise, timeoutPromise]) as any;
-        sessionData = result;
-        if (result?.error) {
-          setError = result.error;
-        }
-      } catch (timeoutError) {
-        throw {
-          message: 'Session setup timed out. Check your network connection and Supabase configuration.',
-          code: 'SESSION_TIMEOUT',
-        } as AuthError;
-      }
-
-      if (setError) {
-        throw {
-          message: setError.message,
-          code: 'SET_SESSION_ERROR',
-        } as AuthError;
-      }
-
-      if (!sessionData || !sessionData.session) {
-        throw {
-          message: 'No session returned after setting tokens',
-          code: 'NO_SESSION',
-        } as AuthError;
-      }
-
-      if (!sessionData.session.user) {
-        throw {
-          message: 'No user in session after setting tokens',
-          code: 'NO_USER_IN_SESSION',
-        } as AuthError;
-      }
-
-      const user = sessionData.session.user;
-
-      const authUser: AuthUser = {
-        id: user.id,
-        email: user.email || null,
-        name: user.user_metadata?.full_name || user.user_metadata?.name || undefined,
-        givenName: user.user_metadata?.given_name || undefined,
-        familyName: user.user_metadata?.family_name || undefined,
-        photo: user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined,
-        provider: 'google',
-        session: sessionData.session,
-        supabaseUser: user,
-      };
-
-      return authUser;
+    if (exchangeError) {
+      throw {
+        message: exchangeError.message,
+        code: 'EXCHANGE_ERROR',
+      } as AuthError;
     }
 
-    // If no code or tokens, something went wrong
-    throw {
-      message: 'No authorization code or tokens in OAuth callback URL',
-      code: 'NO_AUTH_DATA',
-    } as AuthError;
+    if (!sessionData.session || !sessionData.session.user) {
+      throw {
+        message: 'No session returned after code exchange',
+        code: 'NO_SESSION',
+      } as AuthError;
+    }
+
+    const user = sessionData.session.user;
+    console.log('👤 User authenticated:', user.email);
+
+    const authUser: AuthUser = {
+      id: user.id,
+      email: user.email || null,
+      name: user.user_metadata?.full_name || user.user_metadata?.name || undefined,
+      givenName: user.user_metadata?.given_name || undefined,
+      familyName: user.user_metadata?.family_name || undefined,
+      photo: user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined,
+      provider: 'google',
+      session: sessionData.session,
+      supabaseUser: user,
+    };
+
+    return authUser;
   } catch (error: any) {
     console.error('Google Sign In error:', error);
 
