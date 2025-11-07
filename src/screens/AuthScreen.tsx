@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, Dimensions, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useAuth } from '../hooks/useAuth';
@@ -8,6 +9,47 @@ import { theme, r, haptics } from '../theme';
 import { Container, Text } from '../components';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Wave pattern component
+const WavePattern: React.FC = () => {
+  return (
+    <View style={StyleSheet.absoluteFillObject}>
+      {/* Top Wave */}
+      <Svg
+        height="200"
+        width={SCREEN_WIDTH}
+        style={styles.waveTop}
+        viewBox={`0 0 ${SCREEN_WIDTH} 200`}
+      >
+        <Path
+          d={`M0,100 Q${SCREEN_WIDTH / 4},60 ${SCREEN_WIDTH / 2},100 T${SCREEN_WIDTH},100 L${SCREEN_WIDTH},0 L0,0 Z`}
+          fill="rgba(255, 255, 255, 0.08)"
+        />
+        <Path
+          d={`M0,120 Q${SCREEN_WIDTH / 4},80 ${SCREEN_WIDTH / 2},120 T${SCREEN_WIDTH},120 L${SCREEN_WIDTH},0 L0,0 Z`}
+          fill="rgba(255, 255, 255, 0.05)"
+        />
+      </Svg>
+
+      {/* Bottom Wave */}
+      <Svg
+        height="250"
+        width={SCREEN_WIDTH}
+        style={styles.waveBottom}
+        viewBox={`0 0 ${SCREEN_WIDTH} 250`}
+      >
+        <Path
+          d={`M0,100 Q${SCREEN_WIDTH / 4},140 ${SCREEN_WIDTH / 2},100 T${SCREEN_WIDTH},100 L${SCREEN_WIDTH},250 L0,250 Z`}
+          fill="rgba(255, 255, 255, 0.08)"
+        />
+        <Path
+          d={`M0,80 Q${SCREEN_WIDTH / 4},120 ${SCREEN_WIDTH / 2},80 T${SCREEN_WIDTH},80 L${SCREEN_WIDTH},250 L0,250 Z`}
+          fill="rgba(255, 255, 255, 0.05)"
+        />
+      </Svg>
+    </View>
+  );
+};
 
 // Floating animated orb component for background
 const AnimatedOrb: React.FC<{ delay?: number; size?: number; initialX?: number; initialY?: number; duration?: number }> = ({
@@ -150,6 +192,9 @@ export default function AuthScreen() {
           style={StyleSheet.absoluteFillObject}
         />
 
+        {/* Wave Pattern */}
+        <WavePattern />
+
         {/* Animated Orbs */}
         <AnimatedOrb delay={0} size={250} initialX={-50} initialY={-100} duration={15000} />
         <AnimatedOrb delay={800} size={200} initialX={SCREEN_WIDTH - 150} initialY={SCREEN_HEIGHT / 2} duration={18000} />
@@ -174,6 +219,9 @@ export default function AuthScreen() {
         end={{ x: 0, y: 1 }}
         style={StyleSheet.absoluteFillObject}
       />
+
+      {/* Wave Pattern */}
+      <WavePattern />
 
       {/* Animated Orbs */}
       <AnimatedOrb delay={0} size={250} initialX={-50} initialY={-100} duration={15000} />
@@ -316,7 +364,7 @@ const styles = StyleSheet.create({
   },
   appleButtonText: {
     color: '#ffffff',
-    fontWeight: '600',
+    fontWeight: '500',
   },
   // Google Button - White background with black text and colored logo
   googleButton: {
@@ -333,7 +381,7 @@ const styles = StyleSheet.create({
   },
   googleButtonText: {
     color: '#000000',
-    fontWeight: '600',
+    fontWeight: '500',
   },
   legalContainer: {
     paddingHorizontal: theme.spacing.md,
@@ -362,5 +410,16 @@ const styles = StyleSheet.create({
   orb: {
     position: 'absolute',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  // Wave pattern styles
+  waveTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  waveBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
   },
 });
