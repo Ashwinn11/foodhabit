@@ -21,6 +21,8 @@ WebBrowser.maybeCompleteAuthSession();
  */
 export const signInWithApple = async (): Promise<AuthUser> => {
   try {
+    console.log('🍎 Starting Apple Sign In...');
+
     // Check if Apple Auth is available
     if (Platform.OS !== 'ios') {
       throw {
@@ -45,6 +47,7 @@ export const signInWithApple = async (): Promise<AuthUser> => {
     const rawNonce = generateRandomNonce();
     const hashedNonce = await hashNonce(rawNonce);
 
+    console.log('📱 Requesting Apple credentials...');
     // Get Apple credentials with hashed nonce
     const credential = await AppleAuthentication.signInAsync({
       requestedScopes: [
@@ -53,6 +56,8 @@ export const signInWithApple = async (): Promise<AuthUser> => {
       ],
       nonce: hashedNonce, // Pass hashed nonce to Apple
     });
+
+    console.log('✅ Apple credentials received');
 
     // Check for required token
     if (!credential.identityToken) {
@@ -64,11 +69,17 @@ export const signInWithApple = async (): Promise<AuthUser> => {
 
     // Sign in to Supabase with Apple token and raw nonce
     // Supabase will verify that the nonce in the token matches the one we provide
+    console.log('🔄 Signing in to Supabase with Apple token...');
+    const supabaseStartTime = Date.now();
+
     const { data, error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
       token: credential.identityToken,
       nonce: rawNonce, // Pass raw nonce for Supabase verification
     });
+
+    const supabaseTime = Date.now() - supabaseStartTime;
+    console.log(`✅ Supabase sign-in completed in ${supabaseTime}ms`);
 
     if (error) {
       throw {
@@ -100,6 +111,7 @@ export const signInWithApple = async (): Promise<AuthUser> => {
       supabaseUser: data.user,
     };
 
+    console.log('👤 User authenticated:', authUser.email);
     return authUser;
   } catch (error: any) {
     console.error('Apple Sign In error:', error);

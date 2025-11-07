@@ -29,30 +29,47 @@ export const useAuth = (): UseAuthReturn => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<AuthError | null>(null);
 
+  // Track state changes for debugging
+  useEffect(() => {
+    console.log('🔄 [useAuth] State changed:', {
+      hasUser: !!user,
+      userEmail: user?.email,
+      loading,
+      hasError: !!error,
+    });
+  }, [user, loading, error]);
+
   // Check for existing session on mount
   useEffect(() => {
+    console.log('🚀 [useAuth] Initializing auth hook...');
     checkUser();
 
-    // Listen to auth state changes
+    // Listen to auth state changes from Supabase
+    console.log('👂 [useAuth] Setting up auth state listener...');
     const subscription = onAuthStateChange((authUser) => {
+      console.log('📣 [useAuth] Auth state changed from listener:', authUser?.email || 'null');
       setUser(authUser);
       setLoading(false);
     });
 
     // Cleanup subscription on unmount
     return () => {
+      console.log('🧹 [useAuth] Cleaning up auth listener');
       subscription.unsubscribe();
     };
   }, []);
 
   const checkUser = async () => {
+    console.log('🔍 [useAuth] Checking for existing user session...');
     try {
       const currentUser = await getCurrentUser();
+      console.log('✅ [useAuth] User session check complete:', currentUser?.email || 'no session');
       setUser(currentUser);
     } catch (err) {
-      console.error('Error checking user:', err);
+      console.error('❌ [useAuth] Error checking user:', err);
     } finally {
       setLoading(false);
+      console.log('✅ [useAuth] Initial loading complete');
     }
   };
 
@@ -69,32 +86,46 @@ export const useAuth = (): UseAuthReturn => {
   };
 
   const handleSignInWithApple = async () => {
-    setLoading(true);
     setError(null);
+    console.log('⏱️  [useAuth] Starting Apple sign-in...');
 
     try {
       const authUser = await signInWithApple();
+      console.log('✅ [useAuth] Apple sign-in successful, updating state...');
+      console.log('👤 [useAuth] User:', authUser.email);
+
+      // CRITICAL: Update both user and loading states immediately
+      // This ensures App.tsx navigation logic works correctly
       setUser(authUser);
+      setLoading(false); // Ensure loading is false after successful auth
+
+      console.log('✅ [useAuth] State updated - user authenticated and loading=false');
     } catch (err: any) {
+      console.error('❌ [useAuth] Apple Sign In error:', err);
       setError(err as AuthError);
-      console.error('Apple Sign In error:', err);
-    } finally {
-      setLoading(false);
+      throw err; // Re-throw so AuthScreen's finally block can handle it
     }
   };
 
   const handleSignInWithGoogle = async () => {
-    setLoading(true);
     setError(null);
+    console.log('⏱️  [useAuth] Starting Google sign-in...');
 
     try {
       const authUser = await signInWithGoogle();
+      console.log('✅ [useAuth] Google sign-in successful, updating state...');
+      console.log('👤 [useAuth] User:', authUser.email);
+
+      // CRITICAL: Update both user and loading states immediately
+      // This ensures App.tsx navigation logic works correctly
       setUser(authUser);
+      setLoading(false); // Ensure loading is false after successful auth
+
+      console.log('✅ [useAuth] State updated - user authenticated and loading=false');
     } catch (err: any) {
+      console.error('❌ [useAuth] Google Sign In error:', err);
       setError(err as AuthError);
-      console.error('Google Sign In error:', err);
-    } finally {
-      setLoading(false);
+      throw err; // Re-throw so AuthScreen's finally block can handle it
     }
   };
 
