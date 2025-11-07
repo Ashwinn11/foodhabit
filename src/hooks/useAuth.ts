@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
-import { Session } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from '../config/supabase';
 import { signInWithApple as appleSignIn, signInWithGoogle as googleSignIn } from '../services/auth/supabaseAuth';
 
 export interface UseAuthReturn {
   session: Session | null;
+  user: User | null;
   loading: boolean;
   signInWithApple: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -25,12 +26,22 @@ export const useAuth = (): UseAuthReturn => {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session ? 'exists' : 'none');
+      if (session?.user) {
+        console.log('User ID:', session.user.id);
+        console.log('User email:', session.user.email);
+      }
       setSession(session);
       setLoading(false);
     });
 
     // Listen for auth changes - this is the single source of truth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session ? 'has session' : 'no session');
+      if (session?.user) {
+        console.log('User ID:', session.user.id);
+        console.log('User email:', session.user.email);
+      }
       setSession(session);
     });
 
@@ -61,6 +72,7 @@ export const useAuth = (): UseAuthReturn => {
 
   return {
     session,
+    user: session?.user ?? null,
     loading,
     signInWithApple: handleSignInWithApple,
     signInWithGoogle: handleSignInWithGoogle,
