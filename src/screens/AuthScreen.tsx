@@ -107,6 +107,7 @@ const AnimatedOrb: React.FC<{ delay?: number; size?: number; initialX?: number; 
 export default function AuthScreen() {
   const { loading, error, signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
+  const [loadingButton, setLoadingButton] = useState<'apple' | 'google' | null>(null);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -154,15 +155,28 @@ export default function AuthScreen() {
 
   const handleAppleSignIn = async () => {
     haptics.patterns.buttonPress();
-    await signInWithApple();
+    setLoadingButton('apple');
+    try {
+      await signInWithApple();
+    } catch (error) {
+      // Error is handled by useAuth hook
+      setLoadingButton(null);
+    }
   };
 
   const handleGoogleSignIn = async () => {
     haptics.patterns.buttonPress();
-    await signInWithGoogle();
+    setLoadingButton('google');
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      // Error is handled by useAuth hook
+      setLoadingButton(null);
+    }
   };
 
-  if (loading) {
+  // Only show full-screen loading during initial session check, not during sign-in
+  if (loading && loadingButton === null) {
     return (
       <View style={styles.container}>
         {/* Gradient Background - Light at top, heavy at bottom */}
@@ -184,7 +198,7 @@ export default function AuthScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#ffffff" />
           <Text variant="body" style={styles.loadingText}>
-            Signing in...
+            Loading...
           </Text>
         </View>
       </View>
@@ -246,25 +260,41 @@ export default function AuthScreen() {
           <View style={styles.authButtons}>
             {appleAuthAvailable && Platform.OS === 'ios' && (
               <TouchableOpacity
-                style={styles.appleButton}
+                style={[
+                  styles.appleButton,
+                  loadingButton !== null && styles.buttonDisabled,
+                ]}
                 onPress={handleAppleSignIn}
+                disabled={loadingButton !== null}
                 activeOpacity={0.8}
               >
-                <Ionicons name="logo-apple" size={24} color="#ffffff" />
+                {loadingButton === 'apple' ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Ionicons name="logo-apple" size={24} color="#ffffff" />
+                )}
                 <Text variant="headline" style={styles.appleButtonText}>
-                  Continue with Apple
+                  {loadingButton === 'apple' ? 'Signing in...' : 'Continue with Apple'}
                 </Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity
-              style={styles.googleButton}
+              style={[
+                styles.googleButton,
+                loadingButton !== null && styles.buttonDisabled,
+              ]}
               onPress={handleGoogleSignIn}
+              disabled={loadingButton !== null}
               activeOpacity={0.8}
             >
-              <Ionicons name="logo-google" size={24} color="#EA4335" />
+              {loadingButton === 'google' ? (
+                <ActivityIndicator size="small" color="#000000" />
+              ) : (
+                <Ionicons name="logo-google" size={24} color="#EA4335" />
+              )}
               <Text variant="headline" style={styles.googleButtonText}>
-                Continue with Google
+                {loadingButton === 'google' ? 'Signing in...' : 'Continue with Google'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -359,6 +389,9 @@ const styles = StyleSheet.create({
   },
   googleButtonText: {
     color: '#000000',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   legalContainer: {
     paddingHorizontal: theme.spacing.md,
