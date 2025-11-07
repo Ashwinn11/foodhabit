@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, Alert } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 import { theme, r } from '../theme';
+import { Container, Text, Card, Button } from '../components';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -28,155 +28,116 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile</Text>
-        </View>
+    <Container variant="grouped" scrollable>
+      <View style={styles.header}>
+        <Text variant="h1">Profile</Text>
+      </View>
 
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarText}>
-              {user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'U'}
+      <View style={styles.avatarContainer}>
+        <View style={styles.avatarPlaceholder}>
+          <Text variant="h1" color="inverse" style={styles.avatarText}>
+            {user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'U'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.infoSection}>
+        <Text variant="h4" style={styles.sectionTitle}>
+          Account Information
+        </Text>
+
+        {user?.name && (
+          <Card variant="elevated" padding="large" style={styles.infoCard}>
+            <Text variant="labelSmall" color="secondary" style={styles.infoLabel}>
+              Name
             </Text>
-          </View>
-        </View>
+            <Text variant="body">{user.name}</Text>
+          </Card>
+        )}
 
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Account Information</Text>
-
-          {user?.name && (
-            <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Name</Text>
-              <Text style={styles.infoValue}>{user.name}</Text>
-            </View>
-          )}
-
-          {user?.email && (
-            <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{user.email}</Text>
-            </View>
-          )}
-
-          <View style={styles.infoCard}>
-            <Text style={styles.infoLabel}>Sign-in Provider</Text>
-            <Text style={styles.infoValue}>
-              {user?.provider === 'apple' ? 'Apple' : 'Google'}
+        {user?.email && (
+          <Card variant="elevated" padding="large" style={styles.infoCard}>
+            <Text variant="labelSmall" color="secondary" style={styles.infoLabel}>
+              Email
             </Text>
-          </View>
+            <Text variant="body">{user.email}</Text>
+          </Card>
+        )}
 
-          <View style={styles.infoCard}>
-            <Text style={styles.infoLabel}>User ID</Text>
-            <Text style={[styles.infoValue, styles.infoValueSmall]}>
-              {user?.id}
-            </Text>
-          </View>
-        </View>
+        <Card variant="elevated" padding="large" style={styles.infoCard}>
+          <Text variant="labelSmall" color="secondary" style={styles.infoLabel}>
+            Sign-in Provider
+          </Text>
+          <Text variant="body">
+            {user?.provider === 'apple' ? 'Apple' : 'Google'}
+          </Text>
+        </Card>
 
-        <TouchableOpacity
-          style={styles.signOutButton}
-          onPress={handleSignOut}
-        >
-          <Text style={styles.signOutButtonText}>Sign Out</Text>
-        </TouchableOpacity>
+        <Card variant="elevated" padding="large" style={styles.infoCard}>
+          <Text variant="labelSmall" color="secondary" style={styles.infoLabel}>
+            User ID
+          </Text>
+          <Text variant="caption" color="tertiary" numberOfLines={1}>
+            {user?.id}
+          </Text>
+        </Card>
+      </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Food Habit v1.0.0</Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <Button
+        title="Sign Out"
+        onPress={handleSignOut}
+        variant="destructive"
+        size="large"
+        fullWidth
+        style={styles.signOutButton}
+      />
+
+      <View style={styles.footer}>
+        <Text variant="caption" color="tertiary">
+          Food Habit v1.0.0
+        </Text>
+      </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background.primary,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: r.adaptiveSpacing.lg,
-  },
   header: {
-    marginBottom: theme.spacing.xl,
-  },
-  headerTitle: {
-    ...theme.typography.h1,
-    color: theme.colors.text.primary,
+    marginBottom: r.adaptiveSpacing['2xl'],
   },
   avatarContainer: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: r.adaptiveSpacing['2xl'],
   },
   avatarPlaceholder: {
-    width: r.scaleWidth(100),
-    height: r.scaleWidth(100),
-    borderRadius: r.scaleWidth(50),
+    width: r.scaleWidth(120),
+    height: r.scaleWidth(120),
+    borderRadius: r.scaleWidth(60),
     backgroundColor: theme.colors.primary[500],
     alignItems: 'center',
     justifyContent: 'center',
     ...theme.shadows.lg,
   },
   avatarText: {
-    ...theme.typography.h1,
-    color: theme.colors.text.inverse,
-    fontSize: r.adaptiveFontSize['3xl'],
+    fontSize: r.adaptiveFontSize['4xl'],
   },
   infoSection: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: r.adaptiveSpacing['2xl'],
   },
   sectionTitle: {
-    ...theme.typography.h4,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   infoCard: {
-    backgroundColor: theme.colors.background.secondary,
-    padding: r.adaptiveSpacing.lg,
-    borderRadius: theme.borderRadius.md,
     marginBottom: theme.spacing.md,
-    ...theme.shadows.sm,
   },
   infoLabel: {
-    ...theme.typography.label,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
-  },
-  infoValue: {
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
-  },
-  infoValueSmall: {
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.sm,
   },
   signOutButton: {
-    backgroundColor: theme.colors.error.main,
-    paddingVertical: r.adaptiveSpacing.lg,
-    paddingHorizontal: theme.spacing.xl,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-    ...theme.shadows.md,
-  },
-  signOutButtonText: {
-    ...theme.typography.button,
-    color: theme.colors.text.inverse,
-    textTransform: 'none',
+    marginBottom: r.adaptiveSpacing['2xl'],
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
-  },
-  footerText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
+    paddingVertical: r.adaptiveSpacing.xl,
   },
 });

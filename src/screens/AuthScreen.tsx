@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, Platform, Alert, ActivityIndicator } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useAuth } from '../hooks/useAuth';
 import { getAllRedirectUrls } from '../config/supabase';
 import { theme, r } from '../theme';
+import { Container, Text, Button } from '../components';
 
 export default function AuthScreen() {
   const { loading, error, signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
@@ -59,18 +59,26 @@ export default function AuthScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <Container center variant="grouped">
         <ActivityIndicator size="large" color={theme.colors.primary[500]} />
-        <Text style={styles.loadingText}>Signing in...</Text>
-      </SafeAreaView>
+        <Text variant="body" color="secondary" style={styles.loadingText}>
+          Signing in...
+        </Text>
+      </Container>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+    <Container variant="grouped" center>
       <View style={styles.content}>
-        <Text style={styles.title}>Food Habit</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+        <View style={styles.header}>
+          <Text variant="h1" align="center" style={styles.title}>
+            Food Habit
+          </Text>
+          <Text variant="subtitle1" color="secondary" align="center" style={styles.subtitle}>
+            Track your eating habits and build healthier routines
+          </Text>
+        </View>
 
         <View style={styles.authButtons}>
           {appleAuthAvailable && Platform.OS === 'ios' && (
@@ -78,70 +86,65 @@ export default function AuthScreen() {
               <AppleAuthentication.AppleAuthenticationButton
                 buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
                 buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                cornerRadius={theme.borderRadius.md}
+                cornerRadius={theme.borderRadius.pill}
                 style={styles.appleButton}
                 onPress={handleAppleSignIn}
               />
             </View>
           )}
 
-          <TouchableOpacity
-            style={[
-              styles.googleButton,
-              loading && styles.googleButtonDisabled
-            ]}
+          <Button
+            title="Continue with Google"
             onPress={handleGoogleSignIn}
+            variant="primary"
+            size="large"
+            fullWidth
             disabled={loading}
-          >
-            <Text style={styles.googleButtonText}>
-              {loading ? 'Signing in...' : 'Sign in with Google'}
-            </Text>
-          </TouchableOpacity>
+            loading={loading}
+          />
 
           {__DEV__ && (
-            <TouchableOpacity onPress={handleShowRedirectUrl} style={styles.debugButton}>
-              <Text style={styles.debugText}>Show Supabase Redirect URL</Text>
-            </TouchableOpacity>
+            <Button
+              title="Show Redirect URL"
+              onPress={handleShowRedirectUrl}
+              variant="ghost"
+              size="small"
+              style={styles.debugButton}
+            />
           )}
         </View>
       </View>
 
       {__DEV__ && (
         <View style={styles.devInfo}>
-          <Text style={styles.devInfoText}>
+          <Text variant="caption" color="tertiary">
             Using Supabase Auth
           </Text>
         </View>
       )}
-    </SafeAreaView>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background.primary,
-  },
   content: {
-    flex: 1,
+    width: '100%',
+    maxWidth: r.scaleWidth(400),
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: r.adaptiveSpacing.lg,
+  },
+  header: {
+    marginBottom: r.adaptiveSpacing['4xl'],
+    width: '100%',
   },
   title: {
-    ...theme.typography.h1,
-    color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
   },
   subtitle: {
-    ...theme.typography.h4,
-    color: theme.colors.text.secondary,
-    marginBottom: r.adaptiveSpacing.xl,
+    marginTop: theme.spacing.sm,
   },
   authButtons: {
     width: '100%',
-    maxWidth: r.scaleWidth(320),
-    alignItems: 'center',
+    gap: theme.spacing.lg,
   },
   buttonContainer: {
     width: '100%',
@@ -149,52 +152,21 @@ const styles = StyleSheet.create({
   },
   appleButton: {
     width: '100%',
-    height: r.scaleHeight(50),
-  },
-  googleButton: {
-    width: '100%',
-    height: r.scaleHeight(50),
-    backgroundColor: theme.colors.primary[500],
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...theme.shadows.md,
-  },
-  googleButtonDisabled: {
-    backgroundColor: theme.colors.neutral[300],
-  },
-  googleButtonText: {
-    ...theme.typography.button,
-    color: theme.colors.text.inverse,
-    textTransform: 'none',
+    height: r.scaleHeight(56),
   },
   loadingText: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.lg,
   },
   debugButton: {
     marginTop: theme.spacing.xl,
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borderRadius.sm,
-  },
-  debugText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
   },
   devInfo: {
     position: 'absolute',
     bottom: r.scaleHeight(20),
     alignSelf: 'center',
-    padding: theme.spacing.sm,
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borderRadius.sm,
-  },
-  devInfoText: {
-    ...theme.typography.caption,
-    fontSize: r.adaptiveFontSize.xs,
-    color: theme.colors.text.secondary,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.fill.secondary,
+    borderRadius: theme.borderRadius.pill,
   },
 });

@@ -1,107 +1,136 @@
 /**
- * Color system for Food Habit app
- * Following iOS design guidelines with semantic color naming
+ * Apple Design System - Color Palette
+ * Following Apple Human Interface Guidelines (HIG) 2025
+ * Inspired by Apple's "Liquid Glass" design system
  */
 
 export const colors = {
-  // Primary colors
+  // Primary colors (Apple's refined green for health/food)
   primary: {
-    50: '#E8F5E9',
-    100: '#C8E6C9',
-    200: '#A5D6A7',
-    300: '#81C784',
-    400: '#66BB6A',
-    500: '#4CAF50', // Main brand color
-    600: '#43A047',
-    700: '#388E3C',
-    800: '#2E7D32',
-    900: '#1B5E20',
+    50: '#E8F8E9',
+    100: '#C8ECC9',
+    200: '#A3DFA5',
+    300: '#7ED181',
+    400: '#62C665',
+    500: '#34C759', // Apple System Green
+    600: '#2FB350',
+    700: '#289E45',
+    800: '#228A3B',
+    900: '#1B6E2C',
   },
 
-  // Secondary colors
+  // Secondary colors (Apple's vibrant orange)
   secondary: {
-    50: '#FFF3E0',
-    100: '#FFE0B2',
-    200: '#FFCC80',
-    300: '#FFB74D',
-    400: '#FFA726',
-    500: '#FF9800',
-    600: '#FB8C00',
-    700: '#F57C00',
-    800: '#EF6C00',
-    900: '#E65100',
+    50: '#FFF4E6',
+    100: '#FFE4BF',
+    200: '#FFD299',
+    300: '#FFC073',
+    400: '#FFB357',
+    500: '#FF9500', // Apple System Orange
+    600: '#F58800',
+    700: '#E67B00',
+    800: '#D66E00',
+    900: '#BA5A00',
   },
 
-  // Neutral/Gray scale
+  // Neutral/Gray scale (Apple's refined neutrals)
   neutral: {
     50: '#FAFAFA',
-    100: '#F5F5F5',
-    200: '#EEEEEE',
-    300: '#E0E0E0',
-    400: '#BDBDBD',
-    500: '#9E9E9E',
-    600: '#757575',
-    700: '#616161',
-    800: '#424242',
-    900: '#212121',
+    100: '#F2F2F7', // Apple System Gray 6
+    200: '#E5E5EA', // Apple System Gray 5
+    300: '#D1D1D6', // Apple System Gray 4
+    400: '#C7C7CC', // Apple System Gray 3
+    500: '#AEAEB2', // Apple System Gray 2
+    600: '#8E8E93', // Apple System Gray
+    700: '#636366', // Apple Label Secondary
+    800: '#48484A', // Apple Label Tertiary
+    900: '#1C1C1E', // Apple Label Primary
   },
 
-  // Semantic colors
+  // Semantic colors (Apple System Colors)
   success: {
-    light: '#81C784',
-    main: '#4CAF50',
-    dark: '#388E3C',
+    light: '#62C665',
+    main: '#34C759', // Apple System Green
+    dark: '#289E45',
   },
 
   error: {
-    light: '#E57373',
-    main: '#F44336',
+    light: '#FF6961',
+    main: '#FF3B30', // Apple System Red
     dark: '#D32F2F',
   },
 
   warning: {
-    light: '#FFB74D',
-    main: '#FF9800',
-    dark: '#F57C00',
+    light: '#FFB357',
+    main: '#FF9500', // Apple System Orange
+    dark: '#E67B00',
   },
 
   info: {
     light: '#64B5F6',
-    main: '#2196F3',
-    dark: '#1976D2',
+    main: '#007AFF', // Apple System Blue
+    dark: '#0051D5',
   },
 
-  // App-specific colors
+  // App-specific backgrounds (Apple's refined backgrounds)
   background: {
-    primary: '#FFFFFF',
-    secondary: '#F5F5F5',
-    tertiary: '#FAFAFA',
+    primary: '#FFFFFF', // System Background
+    secondary: '#F2F2F7', // Secondary System Background
+    tertiary: '#FFFFFF', // Tertiary System Background
+    grouped: '#F2F2F7', // System Grouped Background
+    card: '#FFFFFF', // Card/elevated surface
+    blur: 'rgba(255, 255, 255, 0.72)', // Frosted glass effect
   },
 
+  // Text colors (Apple's label hierarchy)
   text: {
-    primary: '#212121',
-    secondary: '#616161',
-    disabled: '#9E9E9E',
+    primary: '#000000', // Label (primary text)
+    secondary: '#3C3C43', // Secondary Label (60% opacity)
+    tertiary: '#3C3C4399', // Tertiary Label (30% opacity)
+    quaternary: '#3C3C432E', // Quaternary Label (18% opacity)
+    disabled: '#3C3C432E',
     inverse: '#FFFFFF',
+    placeholder: '#3C3C4399',
   },
 
+  // Border/Separator colors
   border: {
-    light: '#EEEEEE',
-    main: '#E0E0E0',
-    dark: '#BDBDBD',
+    light: '#F2F2F7',
+    main: '#E5E5EA',
+    dark: '#D1D1D6',
+    separator: '#3C3C4349', // Separator color (29% opacity)
+    opaque: '#C6C6C8', // Opaque separator
   },
 
-  // iOS system colors
+  // iOS System Colors (Official Apple Colors)
   ios: {
     blue: '#007AFF',
+    brown: '#A2845E',
+    cyan: '#32ADE6',
     green: '#34C759',
     indigo: '#5856D6',
+    mint: '#00C7BE',
     orange: '#FF9500',
     pink: '#FF2D55',
     purple: '#AF52DE',
     red: '#FF3B30',
-    teal: '#5AC8FA',
+    teal: '#30B0C7',
     yellow: '#FFCC00',
+  },
+
+  // Apple's elevated/fill colors
+  fill: {
+    primary: 'rgba(120, 120, 128, 0.20)',
+    secondary: 'rgba(120, 120, 128, 0.16)',
+    tertiary: 'rgba(118, 118, 128, 0.12)',
+    quaternary: 'rgba(116, 116, 128, 0.08)',
+  },
+
+  // Overlay colors for modal/sheet backdrops
+  overlay: {
+    light: 'rgba(0, 0, 0, 0.3)',
+    medium: 'rgba(0, 0, 0, 0.5)',
+    dark: 'rgba(0, 0, 0, 0.7)',
   },
 } as const;
 

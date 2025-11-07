@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 import { theme, r } from '../theme';
+import { Container, Text, Card } from '../components';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -15,100 +15,89 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Text style={styles.greeting}>{getGreeting()}</Text>
-          {user?.name && (
-            <Text style={styles.userName}>{user.name}</Text>
-          )}
-        </View>
-
-        <View style={styles.welcomeCard}>
-          <Text style={styles.welcomeTitle}>Welcome to Food Habit</Text>
-          <Text style={styles.welcomeText}>
-            Track your eating habits, discover patterns, and build healthier routines.
+    <Container variant="grouped" scrollable>
+      <View style={styles.header}>
+        <Text variant="h5" color="secondary" style={styles.greeting}>
+          {getGreeting()}
+        </Text>
+        {user?.name && (
+          <Text variant="h2" style={styles.userName}>
+            {user.name}
           </Text>
+        )}
+      </View>
+
+      <Card variant="filled" padding="large" style={styles.welcomeCard}>
+        <Text variant="h4" weight="semiBold" style={styles.welcomeTitle}>
+          Welcome to Food Habit
+        </Text>
+        <Text variant="body" color="secondary" style={styles.welcomeText}>
+          Track your eating habits, discover patterns, and build healthier routines.
+        </Text>
+      </Card>
+
+      <View style={styles.section}>
+        <Text variant="h4" style={styles.sectionTitle}>
+          Quick Stats
+        </Text>
+
+        <View style={styles.statsGrid}>
+          <Card variant="elevated" padding="large" style={styles.statCard}>
+            <Text variant="h1" style={styles.statValue}>
+              0
+            </Text>
+            <Text variant="label" color="secondary" align="center" style={styles.statLabel}>
+              Meals Logged
+            </Text>
+          </Card>
+
+          <Card variant="elevated" padding="large" style={styles.statCard}>
+            <Text variant="h1" style={styles.statValue}>
+              0
+            </Text>
+            <Text variant="label" color="secondary" align="center" style={styles.statLabel}>
+              Days Tracked
+            </Text>
+          </Card>
         </View>
+      </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Stats</Text>
-
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Meals Logged</Text>
-            </View>
-
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Days Tracked</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.placeholderSection}>
-          <Text style={styles.placeholderText}>
-            More features coming soon
-          </Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <View style={styles.placeholderSection}>
+        <Text variant="body" color="tertiary">
+          More features coming soon
+        </Text>
+      </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background.primary,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: r.adaptiveSpacing.lg,
-  },
   header: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: r.adaptiveSpacing['2xl'],
   },
   greeting: {
-    ...theme.typography.h5,
-    color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
   },
   userName: {
-    ...theme.typography.h2,
-    color: theme.colors.text.primary,
+    marginTop: theme.spacing.xs,
   },
   welcomeCard: {
-    backgroundColor: theme.colors.primary[50],
-    padding: r.adaptiveSpacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    marginBottom: theme.spacing.xl,
+    marginBottom: r.adaptiveSpacing['2xl'],
     borderLeftWidth: 4,
     borderLeftColor: theme.colors.primary[500],
   },
   welcomeTitle: {
-    ...theme.typography.h4,
-    color: theme.colors.primary[900],
-    marginBottom: theme.spacing.sm,
+    color: theme.colors.primary[700],
+    marginBottom: theme.spacing.md,
   },
   welcomeText: {
-    ...theme.typography.body,
-    color: theme.colors.primary[800],
     lineHeight: 24,
   },
   section: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: r.adaptiveSpacing['2xl'],
   },
   sectionTitle: {
-    ...theme.typography.h4,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -116,28 +105,17 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: theme.colors.background.secondary,
-    padding: r.adaptiveSpacing.lg,
-    borderRadius: theme.borderRadius.md,
     alignItems: 'center',
-    ...theme.shadows.sm,
   },
   statValue: {
-    ...theme.typography.h1,
     color: theme.colors.primary[500],
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
   },
   statLabel: {
-    ...theme.typography.label,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
+    marginTop: theme.spacing.xs,
   },
   placeholderSection: {
     alignItems: 'center',
-    paddingVertical: theme.spacing['2xl'],
-  },
-  placeholderText: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
+    paddingVertical: r.adaptiveSpacing['3xl'],
   },
 });

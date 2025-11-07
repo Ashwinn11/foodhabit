@@ -120,36 +120,41 @@ export const typography = {
     letterSpacing: letterSpacing.normal,
   } as TextStyle,
 
-  // Buttons
+  // Buttons (Apple style - no uppercase, natural case)
   button: {
     fontFamily: fontFamily.semiBold,
-    fontSize: fontSize.md,
-    lineHeight: fontSize.md * lineHeight.tight,
-    letterSpacing: letterSpacing.wide,
-    textTransform: 'uppercase' as const,
+    fontSize: fontSize.lg,
+    lineHeight: fontSize.lg * lineHeight.tight,
+    letterSpacing: letterSpacing.normal,
   } as TextStyle,
 
   buttonLarge: {
     fontFamily: fontFamily.semiBold,
-    fontSize: fontSize.lg,
-    lineHeight: fontSize.lg * lineHeight.tight,
-    letterSpacing: letterSpacing.wide,
-    textTransform: 'uppercase' as const,
+    fontSize: fontSize.xl,
+    lineHeight: fontSize.xl * lineHeight.tight,
+    letterSpacing: letterSpacing.normal,
   } as TextStyle,
 
-  // Labels
+  buttonSmall: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: fontSize.md,
+    lineHeight: fontSize.md * lineHeight.tight,
+    letterSpacing: letterSpacing.normal,
+  } as TextStyle,
+
+  // Labels (Apple-style text hierarchy)
   label: {
     fontFamily: fontFamily.medium,
-    fontSize: fontSize.sm,
-    lineHeight: fontSize.sm * lineHeight.normal,
+    fontSize: fontSize.md,
+    lineHeight: fontSize.md * lineHeight.normal,
     letterSpacing: letterSpacing.normal,
   } as TextStyle,
 
   labelSmall: {
     fontFamily: fontFamily.medium,
-    fontSize: fontSize.xs,
-    lineHeight: fontSize.xs * lineHeight.normal,
-    letterSpacing: letterSpacing.wide,
+    fontSize: fontSize.sm,
+    lineHeight: fontSize.sm * lineHeight.normal,
+    letterSpacing: letterSpacing.normal,
   } as TextStyle,
 
   // Caption
@@ -160,13 +165,27 @@ export const typography = {
     letterSpacing: letterSpacing.normal,
   } as TextStyle,
 
-  // Overline
-  overline: {
+  // Subtitle (Apple-style secondary heading)
+  subtitle1: {
     fontFamily: fontFamily.medium,
+    fontSize: fontSize.lg,
+    lineHeight: fontSize.lg * lineHeight.normal,
+    letterSpacing: letterSpacing.normal,
+  } as TextStyle,
+
+  subtitle2: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.md,
+    lineHeight: fontSize.md * lineHeight.normal,
+    letterSpacing: letterSpacing.normal,
+  } as TextStyle,
+
+  // Footnote (Apple's small secondary text)
+  footnote: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.xs,
     lineHeight: fontSize.xs * lineHeight.normal,
-    letterSpacing: letterSpacing.wider,
-    textTransform: 'uppercase' as const,
+    letterSpacing: letterSpacing.normal,
   } as TextStyle,
 } as const;
 

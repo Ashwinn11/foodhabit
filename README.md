@@ -8,6 +8,7 @@ A React Native Expo application with Apple Sign In and Google OAuth authenticati
 
 ## Features
 
+### Authentication
 - **Supabase Authentication**: Managed authentication with automatic token refresh
 - **Apple Sign In**: Native iOS authentication with Apple ID
 - **Google OAuth**: Seamless Google Sign In
@@ -16,26 +17,58 @@ A React Native Expo application with Apple Sign In and Google OAuth authenticati
 - **Custom Auth Hook**: Easy-to-use `useAuth` hook
 - **Deep Linking**: Proper redirect handling for OAuth flows
 
+### Apple Design System
+- **Apple HIG Compliant**: Following Apple Human Interface Guidelines 2025
+- **Pill-Shaped Buttons**: Apple's signature rounded button design
+- **Haptic Feedback**: Tactile feedback for all interactions
+- **Smooth Animations**: Spring-based physics for natural motion
+- **Apple System Colors**: Official iOS color palette
+- **Responsive Design**: Optimized for all iOS devices
+- **Reusable Components**: Complete component library
+- **Squircle Corners**: Apple-style rounded corners
+
 ## Project Structure
 
 ```
 foodhabit/
 ├── src/
+│   ├── components/              # Apple-designed UI components
+│   │   ├── Button.tsx          # Pill-shaped button with haptics
+│   │   ├── Card.tsx            # Refined card component
+│   │   ├── Container.tsx       # Safe area container
+│   │   ├── Text.tsx            # Typography component
+│   │   ├── Input.tsx           # Text input component
+│   │   └── index.ts            # Components barrel export
 │   ├── config/
 │   │   └── supabase.ts         # Supabase client configuration
 │   ├── hooks/
 │   │   └── useAuth.ts          # Main authentication hook
+│   ├── navigation/
+│   │   └── TabNavigator.tsx    # Bottom tab navigation
+│   ├── screens/
+│   │   ├── AuthScreen.tsx      # Authentication screen
+│   │   ├── HomeScreen.tsx      # Home dashboard
+│   │   ├── ProfileScreen.tsx   # User profile
+│   │   └── index.ts            # Screen exports
 │   ├── services/
 │   │   └── auth/
 │   │       ├── supabaseAuth.ts # Supabase auth service
 │   │       └── index.ts        # Auth services barrel export
-│   ├── types/
-│   │   └── auth.ts             # TypeScript types for auth
-│   └── utils/
-│       └── showRedirectUris.ts # Helper for showing redirect URLs
-├── App.tsx                      # Main app with auth example
+│   ├── theme/                   # Apple Design System
+│   │   ├── colors.ts           # Apple System Colors
+│   │   ├── typography.ts       # Poppins font variants
+│   │   ├── spacing.ts          # Spacing & border radius
+│   │   ├── responsive.ts       # Responsive utilities
+│   │   ├── animations.ts       # Animation constants
+│   │   ├── haptics.ts          # Haptic feedback system
+│   │   └── index.ts            # Theme barrel export
+│   └── types/
+│       └── auth.ts             # TypeScript types for auth
+├── App.tsx                      # Main app entry point
 ├── app.json                     # Expo configuration
-├── SUPABASE_SETUP.md           # Detailed Supabase setup guide
+├── DESIGN_SYSTEM.md            # Complete design system guide
+├── COMPONENTS.md               # Component usage guide
+├── SUPABASE_SETUP.md           # Supabase setup guide
 └── package.json
 ```
 
@@ -303,11 +336,59 @@ User authenticated!
 - `expo-web-browser`: OAuth browser flows
 - `react-native-url-polyfill`: URL polyfill for React Native
 
+## Design System
+
+This project implements a comprehensive Apple design system. For detailed information:
+
+- **[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)** - Complete design system guide
+- **[COMPONENTS.md](./COMPONENTS.md)** - Component usage guide with examples
+
+### Quick Example
+
+```tsx
+import { Button, Card, Container, Text } from './src/components';
+import { theme, r, haptics } from './src/theme';
+
+function MyScreen() {
+  const handlePress = () => {
+    haptics.patterns.buttonPress();
+    // Handle action
+  };
+
+  return (
+    <Container variant="grouped" scrollable>
+      <Text variant="h1">Welcome</Text>
+
+      <Card variant="elevated" padding="large" pressable onPress={handlePress}>
+        <Text variant="h4">Start Your Journey</Text>
+        <Text variant="body" color="secondary">
+          Track your eating habits
+        </Text>
+      </Card>
+
+      <Button
+        title="Get Started"
+        onPress={handlePress}
+        variant="primary"
+        size="large"
+        fullWidth
+      />
+    </Container>
+  );
+}
+```
+
 ## Resources
 
-- [Supabase Setup Guide](./SUPABASE_SETUP.md) - Detailed setup instructions
+### Documentation
+- [Design System Guide](./DESIGN_SYSTEM.md) - Apple HIG implementation
+- [Component Library](./COMPONENTS.md) - Component usage examples
+- [Supabase Setup Guide](./SUPABASE_SETUP.md) - Authentication setup
+
+### External Resources
 - [Supabase Documentation](https://supabase.com/docs)
 - [Expo Authentication](https://docs.expo.dev/guides/authentication/)
+- [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/)
 - [Apple Sign In Docs](https://developer.apple.com/sign-in-with-apple/)
 - [Google OAuth Docs](https://developers.google.com/identity/protocols/oauth2)
 
