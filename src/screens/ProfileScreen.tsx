@@ -5,23 +5,29 @@ import { useAuth } from '../hooks/useAuth';
 import { theme, r } from '../theme';
 import { Container, Text, Card } from '../components';
 
-const PRIMARY_COLOR = '#ff7664';
-
 interface SettingsRowProps {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   onPress: () => void;
   showChevron?: boolean;
   destructive?: boolean;
+  iconColor?: string;
 }
 
-const SettingsRow: React.FC<SettingsRowProps> = ({ icon, label, onPress, showChevron = true, destructive = false }) => (
+const SettingsRow: React.FC<SettingsRowProps> = ({
+  icon,
+  label,
+  onPress,
+  showChevron = true,
+  destructive = false,
+  iconColor = theme.colors.icon.primary
+}) => (
   <TouchableOpacity style={styles.settingsRow} onPress={onPress} activeOpacity={0.7}>
     <View style={styles.settingsRowLeft}>
       <Ionicons
         name={icon}
         size={22}
-        color={destructive ? '#ff3b30' : theme.colors.text.secondary}
+        color={iconColor}
       />
       <Text
         variant="body"
@@ -31,7 +37,7 @@ const SettingsRow: React.FC<SettingsRowProps> = ({ icon, label, onPress, showChe
       </Text>
     </View>
     {showChevron && (
-      <Ionicons name="chevron-forward" size={20} color={theme.colors.text.tertiary} />
+      <Ionicons name="chevron-forward" size={20} color={theme.colors.text.primary} />
     )}
   </TouchableOpacity>
 );
@@ -133,6 +139,7 @@ export default function ProfileScreen() {
             icon="card-outline"
             label="Manage Subscription"
             onPress={openSubscription}
+            iconColor={theme.colors.icon.secondary}
           />
         </Card>
       </View>
@@ -147,18 +154,21 @@ export default function ProfileScreen() {
             icon="help-circle-outline"
             label="Help & Support"
             onPress={openHelp}
+            iconColor={theme.colors.icon.primary}
           />
           <View style={styles.divider} />
           <SettingsRow
             icon="document-text-outline"
             label="Terms of Service"
             onPress={openTermsOfService}
+            iconColor={theme.colors.icon.tertiary}
           />
           <View style={styles.divider} />
           <SettingsRow
             icon="shield-checkmark-outline"
             label="Privacy Policy"
             onPress={openPrivacyPolicy}
+            iconColor={theme.colors.icon.tertiary}
           />
         </Card>
       </View>
@@ -174,6 +184,7 @@ export default function ProfileScreen() {
             label="Sign Out"
             onPress={handleSignOut}
             showChevron={false}
+            iconColor={theme.colors.icon.primary}
           />
           <View style={styles.divider} />
           <SettingsRow
@@ -182,6 +193,7 @@ export default function ProfileScreen() {
             onPress={handleDeleteAccount}
             showChevron={false}
             destructive
+            iconColor={theme.colors.icon.primary}
           />
         </Card>
       </View>
@@ -217,14 +229,14 @@ const styles = StyleSheet.create({
     width: r.scaleWidth(100),
     height: r.scaleWidth(100),
     borderRadius: r.scaleWidth(50),
-    backgroundColor: PRIMARY_COLOR,
+    backgroundColor: theme.colors.brand.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: theme.spacing.lg,
     ...theme.shadows.md,
   },
   avatarText: {
-    color: '#ffffff',
+    color: theme.colors.brand.white,
     fontWeight: '600',
   },
   displayName: {
@@ -263,7 +275,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   destructiveText: {
-    color: '#ff3b30',
+    color: theme.colors.brand.primary,
   },
   divider: {
     height: StyleSheet.hairlineWidth,

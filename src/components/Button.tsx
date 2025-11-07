@@ -149,7 +149,7 @@ export const Button: React.FC<ButtonProps> = ({
       >
         {loading ? (
           <ActivityIndicator
-            color={variant === 'primary' || variant === 'destructive' ? '#FFFFFF' : theme.colors.primary[500]}
+            color={variant === 'primary' || variant === 'destructive' ? theme.colors.brand.white : theme.colors.brand.primary}
             size="small"
           />
         ) : (
@@ -199,17 +199,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: r.adaptiveSpacing['2xl'],
   },
 
-  // Variants
+  // Variants - All buttons use primary color
   variant_primary: {
-    backgroundColor: theme.colors.primary[500],
+    backgroundColor: theme.colors.button.primary,
   },
 
   variant_secondary: {
-    backgroundColor: theme.colors.secondary[500],
+    backgroundColor: theme.colors.icon.secondary,
   },
 
   variant_tertiary: {
-    backgroundColor: theme.colors.fill.primary,
+    backgroundColor: theme.colors.icon.tertiary,
   },
 
   variant_ghost: {
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
 
   variant_destructive: {
-    backgroundColor: theme.colors.error.main,
+    backgroundColor: theme.colors.button.primary,
   },
 
   // States
@@ -233,36 +233,36 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 
-  // Text styles
+  // Text styles - All button text is white except ghost
   text: {
     textAlign: 'center',
   },
 
   text_small: {
     ...theme.typography.buttonSmall,
-    color: theme.colors.text.inverse,
+    color: theme.colors.button.primaryText,
   },
 
   text_medium: {
     ...theme.typography.button,
-    color: theme.colors.text.inverse,
+    color: theme.colors.button.primaryText,
   },
 
   text_large: {
     ...theme.typography.buttonLarge,
-    color: theme.colors.text.inverse,
+    color: theme.colors.button.primaryText,
   },
 
   text_primary: {
-    color: theme.colors.text.inverse,
+    color: theme.colors.button.primaryText,
   },
 
   text_secondary: {
-    color: theme.colors.text.inverse,
+    color: theme.colors.button.primaryText,
   },
 
   text_tertiary: {
-    color: theme.colors.text.primary,
+    color: theme.colors.button.primaryText,
   },
 
   text_ghost: {
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   },
 
   text_destructive: {
-    color: theme.colors.text.inverse,
+    color: theme.colors.button.primaryText,
   },
 
   textDisabled: {

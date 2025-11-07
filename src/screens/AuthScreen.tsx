@@ -235,9 +235,9 @@ export default function AuthScreen() {
                 activeOpacity={0.8}
               >
                 {loadingButton === 'apple' ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
+                  <ActivityIndicator size="small" color={theme.colors.brand.white} />
                 ) : (
-                  <Ionicons name="logo-apple" size={24} color="#ffffff" />
+                  <Ionicons name="logo-apple" size={24} color={theme.colors.brand.white} />
                 )}
                 <Text variant="headline" style={styles.appleButtonText}>
                   {loadingButton === 'apple' ? 'Signing in...' : 'Continue with Apple'}
@@ -255,7 +255,7 @@ export default function AuthScreen() {
               activeOpacity={0.8}
             >
               {loadingButton === 'google' ? (
-                <ActivityIndicator size="small" color="#000000" />
+                <ActivityIndicator size="small" color={theme.colors.brand.black} />
               ) : (
                 <Ionicons name="logo-google" size={24} color="#EA4335" />
               )}
@@ -287,7 +287,7 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ff7664',
+    backgroundColor: theme.colors.brand.primary,
   },
   contentContainer: {
     flex: 1,
@@ -300,14 +300,13 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: theme.spacing.lg,
-    color: '#ffffff',
+    color: theme.colors.brand.white,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   subtitle: {
-    color: '#ffffff',
-    opacity: 0.95,
+    color: theme.colors.brand.white,
     textShadowColor: 'rgba(0, 0, 0, 0.08)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
@@ -324,12 +323,12 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
     marginBottom: theme.spacing['2xl'],
   },
-  // Apple Button - Black background with white text/icon
+  // Apple Button - Black background with white text/icon (OAuth - keep as-is)
   appleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#000000',
+    backgroundColor: theme.colors.brand.black,
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.xl,
     borderRadius: theme.borderRadius.pill,
@@ -338,14 +337,14 @@ const styles = StyleSheet.create({
     height: 56,
   },
   appleButtonText: {
-    color: '#ffffff',
+    color: theme.colors.brand.white,
   },
-  // Google Button - White background with black text and colored logo
+  // Google Button - White background with black text and colored logo (OAuth - keep as-is)
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.brand.white,
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.xl,
     borderRadius: theme.borderRadius.pill,
@@ -354,7 +353,7 @@ const styles = StyleSheet.create({
     height: 56,
   },
   googleButtonText: {
-    color: '#000000',
+    color: theme.colors.brand.black,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -363,12 +362,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
   },
   legalText: {
-    color: '#ffffff',
-    opacity: 0.9,
+    color: theme.colors.brand.white,
     lineHeight: 18,
   },
   legalLink: {
-    color: '#ffffff',
+    color: theme.colors.brand.white,
     fontWeight: '500',
     textDecorationLine: 'underline',
   },
@@ -379,7 +377,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: theme.spacing.lg,
-    color: '#ffffff',
+    color: theme.colors.brand.white,
     fontSize: 17,
   },
   // Animated orb styles

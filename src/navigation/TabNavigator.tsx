@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { theme, r } from '../theme';
@@ -25,19 +25,24 @@ export default function TabNavigator() {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: theme.colors.primary[500],
-        tabBarInactiveTintColor: theme.colors.neutral[500],
+        tabBarActiveTintColor: theme.colors.brand.primary,
+        tabBarInactiveTintColor: theme.colors.brand.black,
         tabBarStyle: {
-          backgroundColor: theme.colors.background.primary,
-          borderTopColor: theme.colors.border.light,
-          borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? r.scaleHeight(88) : r.scaleHeight(60),
-          paddingBottom: Platform.OS === 'ios' ? r.adaptiveSpacing.lg : r.adaptiveSpacing.sm,
-          paddingTop: r.adaptiveSpacing.sm,
+          position: 'absolute',
+          backgroundColor: theme.colors.brand.white,
+          borderRadius: theme.borderRadius.xl,
+          marginHorizontal: theme.spacing.lg,
+          marginBottom: Platform.OS === 'ios' ? theme.spacing.lg : theme.spacing.md,
+          height: Platform.OS === 'ios' ? 70 : 60,
+          paddingBottom: Platform.OS === 'ios' ? theme.spacing.md : theme.spacing.sm,
+          paddingTop: theme.spacing.sm,
+          borderTopWidth: 0,
+          ...theme.shadows.lg,
         },
         tabBarLabelStyle: {
           ...theme.typography.caption,
           fontSize: r.adaptiveFontSize.xs,
+          fontWeight: '600',
         },
         headerShown: false,
         tabBarHideOnKeyboard: true,

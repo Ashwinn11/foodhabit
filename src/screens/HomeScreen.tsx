@@ -84,10 +84,10 @@ const styles = StyleSheet.create({
   welcomeCard: {
     marginBottom: r.adaptiveSpacing['2xl'],
     borderLeftWidth: 4,
-    borderLeftColor: theme.colors.primary[500],
+    borderLeftColor: theme.colors.brand.primary,
   },
   welcomeTitle: {
-    color: theme.colors.primary[700],
+    color: theme.colors.brand.primary,
     marginBottom: theme.spacing.md,
   },
   welcomeText: {
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    color: theme.colors.primary[500],
+    color: theme.colors.brand.primary,
     marginBottom: theme.spacing.sm,
   },
   statLabel: {
