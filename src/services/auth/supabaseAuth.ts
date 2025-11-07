@@ -109,6 +109,8 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
   try {
     const redirectUrl = getSupabaseRedirectUrl();
 
+    console.log('Starting Google OAuth with redirect URL:', redirectUrl);
+
     // Start the OAuth flow with Supabase
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -132,6 +134,8 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
       } as AuthError;
     }
 
+    console.log('Opening OAuth URL in browser...');
+
     // Open the OAuth URL in a browser
     const result = await WebBrowser.openAuthSessionAsync(
       data.url,
@@ -152,24 +156,55 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
       } as AuthError;
     }
 
-    // Extract the URL from the result
-    const url = result.url;
+    console.log('OAuth redirect received, getting session...');
 
-    // Parse the URL to get the session data
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSessionFromUrl({ url });
+    // After successful redirect, wait a moment for Supabase to process the session
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Get the session - Supabase automatically handles the URL parsing
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
     if (sessionError) {
       throw {
         message: sessionError.message,
-        code: sessionError.status?.toString(),
+        code: 'SESSION_ERROR',
       } as AuthError;
     }
 
     if (!sessionData.session || !sessionData.session.user) {
-      throw {
-        message: 'No session returned from Supabase',
-        code: 'NO_SESSION',
-      } as AuthError;
+      // If no session yet, try to get the user directly
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !userData.user) {
+        throw {
+          message: 'No session returned from Supabase after OAuth',
+          code: 'NO_SESSION',
+        } as AuthError;
+      }
+
+      // Get session again
+      const { data: retrySession } = await supabase.auth.getSession();
+
+      if (!retrySession.session) {
+        throw {
+          message: 'Failed to establish session after OAuth',
+          code: 'NO_SESSION',
+        } as AuthError;
+      }
+
+      const authUser: AuthUser = {
+        id: userData.user.id,
+        email: userData.user.email || null,
+        name: userData.user.user_metadata?.full_name || userData.user.user_metadata?.name || undefined,
+        givenName: userData.user.user_metadata?.given_name || undefined,
+        familyName: userData.user.user_metadata?.family_name || undefined,
+        photo: userData.user.user_metadata?.avatar_url || userData.user.user_metadata?.picture || undefined,
+        provider: 'google',
+        session: retrySession.session,
+        supabaseUser: userData.user,
+      };
+
+      return authUser;
     }
 
     const user = sessionData.session.user;
@@ -187,8 +222,11 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
       supabaseUser: user,
     };
 
+    console.log('Google sign in successful');
     return authUser;
   } catch (error: any) {
+    console.error('Google Sign In error:', error);
+
     if (error.message && error.code) {
       throw error as AuthError;
     }
