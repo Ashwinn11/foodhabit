@@ -17,7 +17,7 @@ import TabNavigator from './src/navigation/TabNavigator';
 import { theme } from './src/theme';
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { session, loading } = useAuth();
 
   if (loading) {
     return (
@@ -28,7 +28,7 @@ function AppContent() {
     );
   }
 
-  if (!user) {
+  if (!session) {
     return <AuthScreen />;
   }
 

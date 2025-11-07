@@ -1,19 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
+import { Session, User } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { AuthUser, AuthError } from '../types/auth';
-import {
-  signInWithApple,
-  signInWithGoogle,
-  signOut as supabaseSignOut,
-  getCurrentUser,
-  onAuthStateChange,
-} from '../services/auth';
+import { supabase } from '../config/supabase';
+import { signInWithApple as appleSignIn, signInWithGoogle as googleSignIn } from '../services/auth/supabaseAuth';
 
 export interface UseAuthReturn {
-  user: AuthUser | null;
+  session: Session | null;
+  user: User | null;
   loading: boolean;
-  error: AuthError | null;
   signInWithApple: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -21,102 +16,54 @@ export interface UseAuthReturn {
 }
 
 /**
- * Authentication hook for managing user authentication with Supabase
- * Supports Apple Sign In (native) and Google OAuth
+ * Standard Supabase authentication hook
+ * Follows official Supabase React Native pattern
  */
 export const useAuth = (): UseAuthReturn => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<AuthError | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Check for existing session on mount
   useEffect(() => {
-    checkUser();
-
-    // Listen to auth state changes
-    const subscription = onAuthStateChange((authUser) => {
-      setUser(authUser);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
-    return () => {
-      subscription.unsubscribe();
-    };
+    // Listen for auth changes - this is the single source of truth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const checkUser = async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-    } catch (err) {
-      console.error('Error checking user:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const isAppleAuthAvailable = async (): Promise<boolean> => {
-    if (Platform.OS !== 'ios') {
-      return false;
-    }
+  const isAppleAuthAvailable = async () => {
+    if (Platform.OS !== 'ios') return false;
     try {
       return await AppleAuthentication.isAvailableAsync();
-    } catch (error) {
-      console.error('Error checking Apple Auth availability:', error);
+    } catch {
       return false;
     }
   };
 
+  // Just call the auth method - listener handles state
   const handleSignInWithApple = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const authUser = await signInWithApple();
-      setUser(authUser);
-    } catch (err: any) {
-      setError(err as AuthError);
-      console.error('Apple Sign In error:', err);
-    } finally {
-      setLoading(false);
-    }
+    await appleSignIn();
   };
 
   const handleSignInWithGoogle = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const authUser = await signInWithGoogle();
-      setUser(authUser);
-    } catch (err: any) {
-      setError(err as AuthError);
-      console.error('Google Sign In error:', err);
-    } finally {
-      setLoading(false);
-    }
+    await googleSignIn();
   };
 
   const handleSignOut = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      await supabaseSignOut();
-      setUser(null);
-    } catch (err: any) {
-      setError(err as AuthError);
-      console.error('Sign out error:', err);
-    } finally {
-      setLoading(false);
-    }
+    await supabase.auth.signOut();
   };
 
   return {
-    user,
+    session,
+    user: session?.user ?? null,
     loading,
-    error,
     signInWithApple: handleSignInWithApple,
     signInWithGoogle: handleSignInWithGoogle,
     signOut: handleSignOut,

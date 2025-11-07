@@ -1,758 +1,455 @@
-# Food Habit Design System
+# Food Habit - Strict Design System
 
-This document describes the design system for the Food Habit iOS app, including colors, typography, spacing, and responsive utilities.
+This document describes the **strict design system** for the Food Habit app with approved colors only and no deviations.
 
 ## Overview
 
-The design system is built on:
-- **Poppins** font family (300-700 weights)
+The design system is built on strict principles:
+- **Approved colors only**: `#ff7664`, `#9bcbab`, `#cda4e8`, `#dedfe2`, `#000000`, `#ffffff`
+- **No opacity variations**: Icons and colors always solid
+- **White or black text only**: No gray text colors
+- **Colored icon containers**: Icons with colored backgrounds and white icons inside
 - **8px grid** spacing system
-- **Material Design** color palette
 - **Responsive scaling** for all iOS devices
-- **iOS design guidelines** compliance
+- **Haptic feedback** for tactile interactions
+- **Smooth animations** with spring physics
 
 ## Table of Contents
 
 1. [Colors](#colors)
-2. [Typography](#typography)
-3. [Spacing](#spacing)
-4. [Responsive Utilities](#responsive-utilities)
-5. [Usage Examples](#usage-examples)
-6. [Best Practices](#best-practices)
+2. [Icons](#icons)
+3. [Typography](#typography)
+4. [Buttons](#buttons)
+5. [Backgrounds](#backgrounds)
+6. [Tab Bar](#tab-bar)
+7. [Spacing & Border Radius](#spacing--border-radius)
+8. [Best Practices](#best-practices)
+
+---
 
 ## Colors
 
-### Primary Colors (Green)
-
-Main brand color for primary actions, buttons, and highlights.
+### Strict Brand Colors - ONLY THESE ALLOWED
 
 ```typescript
-primary: {
-  50: '#E8F5E9',   // Lightest
-  100: '#C8E6C9',
-  200: '#A5D6A7',
-  300: '#81C784',
-  400: '#66BB6A',
-  500: '#4CAF50',  // Main brand color ⭐
-  600: '#43A047',
-  700: '#388E3C',
-  800: '#2E7D32',
-  900: '#1B5E20',  // Darkest
+brand: {
+  primary: '#ff7664',    // Coral/Red - Primary brand color
+  secondary: '#9bcbab',  // Mint Green - Secondary color
+  tertiary: '#cda4e8',   // Lavender Purple - Tertiary color
+  background: '#dedfe2', // Light Gray - Main app background
+  black: '#000000',      // Pure Black
+  white: '#ffffff',      // Pure White
 }
 ```
 
-**Usage**: Primary buttons, active states, success indicators, brand elements.
+### Usage Rules
 
-### Secondary Colors (Orange)
+**Primary Color (#ff7664)**
+- All primary buttons
+- Primary icons
+- Tab bar active state
+- Avatar backgrounds
+- Primary accents
 
-Accent color for secondary actions and highlights.
+**Secondary Color (#9bcbab)**
+- Secondary buttons
+- Secondary icon containers (e.g., subscription)
+- Accent elements
+
+**Tertiary Color (#cda4e8)**
+- Tertiary buttons
+- Tertiary icon containers (e.g., legal docs)
+- Additional accent elements
+
+**Background (#dedfe2)**
+- Main app background
+- Grouped backgrounds
+- Container backgrounds
+
+**Black (#000000)**
+- All text (except on colored backgrounds)
+- Inactive tab icons
+- Borders
+
+**White (#ffffff)**
+- Text on colored backgrounds
+- Icons inside colored containers
+- Card backgrounds
+- Tab bar background
+
+### Text Colors - STRICT (Only Black or White)
 
 ```typescript
-secondary: {
-  50: '#FFF3E0',
-  500: '#FF9800',  // Main secondary color
-  900: '#E65100',
+text: {
+  primary: '#000000',   // Black text
+  secondary: '#000000', // Black text (no opacity!)
+  tertiary: '#000000',  // Black text (no opacity!)
+  inverse: '#ffffff',   // White text (on colored backgrounds)
 }
 ```
 
-**Usage**: Secondary buttons, badges, call-to-action elements.
+**NO opacity variations, NO gray colors for text!**
 
-### Neutral Colors (Gray Scale)
+---
 
-Used for backgrounds, borders, and text colors.
+## Icons
+
+### Icon System Rules
+
+**Two scenarios for icons:**
+
+#### 1. Icon WITHOUT Container (Direct Icon)
+Use colored icon directly (no container):
+```tsx
+<Ionicons name="chevron-forward" size={20} color={theme.colors.brand.black} />
+```
+
+#### 2. Icon WITH Rounded Container ⭐ PRIMARY PATTERN
+Container is colored, icon inside is WHITE:
+
+```tsx
+// Primary color container
+<View style={{
+  width: 32,
+  height: 32,
+  borderRadius: 16,
+  backgroundColor: theme.colors.brand.primary,
+  alignItems: 'center',
+  justifyContent: 'center'
+}}>
+  <Ionicons name="card-outline" size={20} color={theme.colors.brand.white} />
+</View>
+
+// Secondary color container
+<View style={{
+  width: 32,
+  height: 32,
+  borderRadius: 16,
+  backgroundColor: theme.colors.brand.secondary,
+  alignItems: 'center',
+  justifyContent: 'center'
+}}>
+  <Ionicons name="help" size={20} color={theme.colors.brand.white} />
+</View>
+
+// Tertiary color container
+<View style={{
+  width: 32,
+  height: 32,
+  borderRadius: 16,
+  backgroundColor: theme.colors.brand.tertiary,
+  alignItems: 'center',
+  justifyContent: 'center'
+}}>
+  <Ionicons name="document" size={20} color={theme.colors.brand.white} />
+</View>
+```
+
+### Icon Color Assignments
 
 ```typescript
-neutral: {
-  50: '#FAFAFA',   // Very light gray
-  100: '#F5F5F5',  // Light gray
-  200: '#EEEEEE',
-  300: '#E0E0E0',  // Border light
-  400: '#BDBDBD',  // Border dark
-  500: '#9E9E9E',  // Disabled text
-  600: '#757575',
-  700: '#616161',  // Secondary text
-  800: '#424242',
-  900: '#212121',  // Primary text
+icon: {
+  primary: '#ff7664',   // Help, Sign Out, Delete
+  secondary: '#9bcbab', // Subscription
+  tertiary: '#cda4e8',  // Terms, Privacy
+  white: '#ffffff',     // Icon inside containers
+  black: '#000000',     // Inactive icons, chevrons
 }
 ```
 
-### Semantic Colors
+### Rules
 
-Pre-defined colors for specific UI states.
+- **NO opacity on icons** - Always solid colors
+- **Icons with containers** - Container colored, icon white
+- **Icons without containers** - Icon colored directly
+- **Only use approved colors**: `#ff7664`, `#9bcbab`, `#cda4e8`
 
-```typescript
-colors: {
-  background: {
-    primary: '#FFFFFF',    // Main background
-    secondary: '#F5F5F5',  // Card backgrounds
-    tertiary: '#FAFAFA',   // Subtle backgrounds
-  },
-  text: {
-    primary: '#212121',    // Main text
-    secondary: '#616161',  // Subtitle, labels
-    disabled: '#9E9E9E',   // Disabled text
-    inverse: '#FFFFFF',    // Text on dark backgrounds
-  },
-  border: {
-    light: '#EEEEEE',
-    main: '#E0E0E0',
-    dark: '#BDBDBD',
-  },
-  success: {
-    light: '#81C784',
-    main: '#4CAF50',
-    dark: '#388E3C',
-  },
-  error: {
-    light: '#E57373',
-    main: '#F44336',
-    dark: '#D32F2F',
-  },
-  warning: {
-    light: '#FFB74D',
-    main: '#FF9800',
-    dark: '#F57C00',
-  },
-  info: {
-    light: '#64B5F6',
-    main: '#2196F3',
-    dark: '#1976D2',
-  },
-}
-```
-
-### iOS System Colors
-
-Native iOS colors for system-level consistency.
-
-```typescript
-ios: {
-  blue: '#007AFF',
-  green: '#34C759',
-  indigo: '#5856D6',
-  orange: '#FF9500',
-  pink: '#FF2D55',
-  purple: '#AF52DE',
-  red: '#FF3B30',
-  teal: '#5AC8FA',
-  yellow: '#FFCC00',
-}
-```
+---
 
 ## Typography
 
-### Font Family: Poppins
-
-All text uses the Poppins font family with the following weights:
+### Text Colors (Strict)
 
 ```typescript
-fontFamily: {
-  light: 'Poppins_300Light',      // Captions, labels
-  regular: 'Poppins_400Regular',  // Body text
-  medium: 'Poppins_500Medium',    // Emphasized body
-  semiBold: 'Poppins_600SemiBold',// Subheadings
-  bold: 'Poppins_700Bold',        // Headings
-}
+// All text is either black or white
+<Text style={{ color: theme.colors.brand.black }}>Black Text</Text>
+<Text style={{ color: theme.colors.brand.white }}>White Text</Text>
 ```
 
-### Typography Variants
+**NO gray variations, NO opacity!**
 
-Pre-defined text styles for consistent typography across the app.
+### Font Sizes
 
-#### Headings
-
+Use theme typography:
 ```typescript
-h1: {
-  fontFamily: 'Poppins_700Bold',
-  fontSize: 36,
-  lineHeight: 43.2,
-  letterSpacing: -0.5,
-}
-
-h2: {
-  fontFamily: 'Poppins_700Bold',
-  fontSize: 30,
-  lineHeight: 36,
-  letterSpacing: -0.5,
-}
-
-h3: {
-  fontFamily: 'Poppins_600SemiBold',
-  fontSize: 24,
-  lineHeight: 28.8,
-}
-
-h4: {
-  fontFamily: 'Poppins_600SemiBold',
-  fontSize: 20,
-  lineHeight: 24,
-}
-
-h5: {
-  fontFamily: 'Poppins_600SemiBold',
-  fontSize: 18,
-  lineHeight: 21.6,
-}
-
-h6: {
-  fontFamily: 'Poppins_600SemiBold',
-  fontSize: 16,
-  lineHeight: 19.2,
-}
+theme.typography.largeTitle  // 34pt
+theme.typography.title1      // 28pt
+theme.typography.title2      // 22pt
+theme.typography.title3      // 20pt
+theme.typography.headline    // 17pt semibold
+theme.typography.body        // 17pt regular
+theme.typography.callout     // 16pt
+theme.typography.subheadline // 15pt
+theme.typography.footnote    // 13pt
+theme.typography.caption     // 12pt
 ```
 
-#### Body Text
+---
 
-```typescript
-body: {
-  fontFamily: 'Poppins_400Regular',
-  fontSize: 16,
-  lineHeight: 24,
-}
+## Buttons
 
-bodyLarge: {
-  fontFamily: 'Poppins_400Regular',
-  fontSize: 18,
-  lineHeight: 27,
-}
-
-bodySmall: {
-  fontFamily: 'Poppins_400Regular',
-  fontSize: 14,
-  lineHeight: 21,
-}
-```
-
-#### UI Elements
+### Button Colors - ALL USE PRIMARY
 
 ```typescript
 button: {
-  fontFamily: 'Poppins_600SemiBold',
-  fontSize: 16,
-  lineHeight: 24,
-  letterSpacing: 0.5,
-  textTransform: 'uppercase',
-}
-
-label: {
-  fontFamily: 'Poppins_500Medium',
-  fontSize: 14,
-  lineHeight: 20,
-  letterSpacing: 0.15,
-}
-
-caption: {
-  fontFamily: 'Poppins_400Regular',
-  fontSize: 12,
-  lineHeight: 18,
-}
-
-overline: {
-  fontFamily: 'Poppins_500Medium',
-  fontSize: 10,
-  lineHeight: 16,
-  letterSpacing: 1.5,
-  textTransform: 'uppercase',
+  primary: '#ff7664',      // ALL buttons use this color
+  primaryText: '#ffffff',  // White text on buttons
 }
 ```
 
-## Spacing
+### Button Variants
 
-### 8px Grid System
+```tsx
+// Primary button - #ff7664 background, white text
+<Button variant="primary" title="Continue" />
 
-All spacing follows an 8px grid for consistency.
+// Secondary button - #9bcbab background, white text
+<Button variant="secondary" title="Maybe Later" />
+
+// Tertiary button - #cda4e8 background, white text
+<Button variant="tertiary" title="Info" />
+
+// Ghost button - transparent background, black text
+<Button variant="ghost" title="Cancel" />
+```
+
+### Rules
+
+- **All buttons use #ff7664** (except secondary/tertiary variants)
+- **Button text is always white** (except ghost variant)
+- **OAuth buttons exception**: Apple (black bg/white text), Google (white bg/black text)
+
+---
+
+## Backgrounds
+
+### Background Colors
+
+```typescript
+background: {
+  primary: '#dedfe2',    // Main app background
+  secondary: '#ffffff',  // Card backgrounds
+  grouped: '#dedfe2',    // Grouped screens
+  card: '#ffffff',       // Card/elevated surfaces
+}
+```
+
+### Usage
+
+```tsx
+// Main app screens
+<Container variant="grouped">  // Uses #dedfe2
+  {children}
+</Container>
+
+// Cards
+<Card variant="elevated">  // Uses #ffffff with shadow
+  {children}
+</Card>
+
+// Auth screen
+<LinearGradient colors={['#ffb5a7', '#ff9a8a', '#ff7664']}>  // Gradient with #ff7664
+  {children}
+</LinearGradient>
+```
+
+---
+
+## Tab Bar
+
+### Floating Tab Bar Design
+
+```typescript
+tabBarStyle: {
+  position: 'absolute',              // Floating effect
+  backgroundColor: '#ffffff',        // White background
+  borderRadius: theme.borderRadius.xl,
+  marginHorizontal: theme.spacing.lg,
+  marginBottom: Platform.OS === 'ios' ? theme.spacing.lg : theme.spacing.md,
+  ...theme.shadows.lg,
+}
+```
+
+### Tab Icons
+
+**Active State**: Icon with colored container (#ff7664 background, white icon)
+```tsx
+<View style={{
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: theme.colors.brand.primary,
+  alignItems: 'center',
+  justifyContent: 'center'
+}}>
+  <Ionicons name="home" size={24} color={theme.colors.brand.white} />
+</View>
+```
+
+**Inactive State**: Direct black icon (no container)
+```tsx
+<Ionicons name="home-outline" size={24} color={theme.colors.brand.black} />
+```
+
+---
+
+## Spacing & Border Radius
+
+### Spacing Scale (8px grid)
 
 ```typescript
 spacing: {
-  xs: 4,    // 0.5x
-  sm: 8,    // 1x
-  md: 16,   // 2x
-  lg: 24,   // 3x
-  xl: 32,   // 4x
-  '2xl': 48, // 6x
-  '3xl': 64, // 8x
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 32,
+  '4xl': 40,
+  '5xl': 48,
+  '6xl': 64,
 }
 ```
-
-**Usage**:
-- `xs` (4px): Tight spacing, icon padding
-- `sm` (8px): List item spacing, small gaps
-- `md` (16px): Default spacing between elements
-- `lg` (24px): Section spacing
-- `xl` (32px): Large section spacing
-- `2xl` (48px): Page section spacing
-- `3xl` (64px): Major layout spacing
 
 ### Border Radius
 
 ```typescript
 borderRadius: {
-  none: 0,
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 16,
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
   '2xl': 24,
-  full: 9999,
+  '3xl': 28,
+  pill: 9999,    // Buttons
+  circle: 9999,  // Icon containers, avatars
 }
 ```
 
-**Usage**:
-- `sm` (4px): Small buttons, chips
-- `md` (8px): Default buttons, cards
-- `lg` (12px): Large cards, modals
-- `xl` (16px): Hero sections
-- `full`: Circular elements (avatars, pills)
-
-### Shadows
-
-iOS-style shadow presets for depth and elevation.
-
-```typescript
-shadows: {
-  sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.18,
-    shadowRadius: 1.0,
-    elevation: 1,
-  },
-  md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.20,
-    shadowRadius: 3.84,
-    elevation: 2,
-  },
-  lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5.46,
-    elevation: 4,
-  },
-  xl: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.30,
-    shadowRadius: 8.30,
-    elevation: 6,
-  },
-}
-```
-
-**Usage**:
-- `sm`: Floating buttons, chips
-- `md`: Cards, list items
-- `lg`: Modals, dialogs
-- `xl`: Bottom sheets, major UI elements
-
-## Responsive Utilities
-
-### Device Breakpoints
-
-Based on common iOS device screen widths:
-
-```typescript
-breakpoints: {
-  small: 375,    // iPhone SE, iPhone 13 mini
-  medium: 390,   // iPhone 13, iPhone 13 Pro (base)
-  large: 428,    // iPhone 13 Pro Max, iPhone 14 Plus
-  tablet: 768,   // iPad mini
-  desktop: 1024, // iPad Pro
-}
-```
-
-### Scaling Functions
-
-#### Width Scaling
-Scales values proportionally to screen width (base: iPhone 13 - 390px).
-
-```typescript
-r.scaleWidth(size: number): number
-```
-
-**Example**:
-```typescript
-width: r.scaleWidth(300) // 300px on iPhone 13, scales on other devices
-```
-
-#### Height Scaling
-Scales values proportionally to screen height (base: iPhone 13 - 844px).
-
-```typescript
-r.scaleHeight(size: number): number
-```
-
-#### Font Size Scaling
-Scales font sizes with pixel ratio for crisp text.
-
-```typescript
-r.scaleFontSize(size: number): number
-```
-
-#### Moderate Scaling
-Less aggressive scaling (50% by default) - ideal for spacing and padding.
-
-```typescript
-r.moderateScale(size: number, factor?: number): number
-```
-
-**Example**:
-```typescript
-padding: r.moderateScale(20) // Less aggressive than scaleWidth
-```
-
-### Percentage-Based Scaling
-
-```typescript
-r.hp(percentage: number): number  // Horizontal percentage
-r.vp(percentage: number): number  // Vertical percentage
-```
-
-**Example**:
-```typescript
-width: r.hp(80)  // 80% of screen width
-height: r.vp(50) // 50% of screen height
-```
-
-### Responsive Value Selector
-
-Choose different values based on device size.
-
-```typescript
-r.responsive<T>(values: {
-  small?: T;
-  medium?: T;
-  large?: T;
-  tablet?: T;
-  desktop?: T;
-  default: T;
-}): T
-```
-
-**Example**:
-```typescript
-fontSize: r.responsive({
-  small: 14,
-  medium: 16,
-  large: 16,
-  tablet: 18,
-  default: 16,
-})
-```
-
-### Adaptive Spacing
-
-Pre-calculated responsive spacing values.
-
-```typescript
-r.adaptiveSpacing: {
-  xs: 2-4,   // Device dependent
-  sm: 6-8,
-  md: 12-16,
-  lg: 18-24,
-  xl: 24-32,
-}
-```
-
-**Example**:
-```typescript
-padding: r.adaptiveSpacing.md // Automatically adjusts to device
-```
-
-### Adaptive Font Sizes
-
-Pre-calculated responsive font sizes.
-
-```typescript
-r.adaptiveFontSize: {
-  xs: 11-12,
-  sm: 13-14,
-  md: 15-16,
-  lg: 17-18,
-  xl: 19-20,
-  '2xl': 22-24,
-  '3xl': 28-32,
-}
-```
-
-### Device Detection
-
-```typescript
-theme.isTablet: boolean
-theme.isSmallDevice: boolean
-theme.deviceSize: 'small' | 'medium' | 'large' | 'tablet' | 'desktop'
-```
-
-## Usage Examples
-
-### Basic Import
-
-```typescript
-import { theme, r } from './src/theme';
-```
-
-### Using Colors
-
-```typescript
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: theme.colors.background.primary,
-  },
-  text: {
-    color: theme.colors.text.primary,
-  },
-  button: {
-    backgroundColor: theme.colors.primary[500],
-  },
-  border: {
-    borderColor: theme.colors.border.main,
-    borderWidth: 1,
-  },
-});
-```
-
-### Using Typography
-
-```typescript
-const styles = StyleSheet.create({
-  heading: {
-    ...theme.typography.h1,
-    color: theme.colors.text.primary,
-  },
-  body: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-  },
-  button: {
-    ...theme.typography.button,
-    color: theme.colors.text.inverse,
-  },
-});
-```
-
-### Using Spacing
-
-```typescript
-const styles = StyleSheet.create({
-  container: {
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
-  card: {
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    ...theme.shadows.md,
-  },
-});
-```
-
-### Using Responsive Utilities
-
-```typescript
-const styles = StyleSheet.create({
-  container: {
-    width: r.scaleWidth(350),
-    padding: r.adaptiveSpacing.lg,
-  },
-  heading: {
-    ...theme.typography.h1,
-    fontSize: r.adaptiveFontSize['2xl'],
-  },
-  image: {
-    width: r.hp(80),  // 80% of screen width
-    height: r.vp(30), // 30% of screen height
-  },
-  responsiveCard: {
-    padding: r.responsive({
-      small: 12,
-      medium: 16,
-      large: 20,
-      tablet: 24,
-      default: 16,
-    }),
-  },
-});
-```
-
-### Complete Example
-
-```typescript
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { theme, r } from './src/theme';
-
-export default function MyComponent() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Welcome</Text>
-      <Text style={styles.body}>This is a sample component using the design system.</Text>
-
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Get Started</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background.primary,
-    padding: r.adaptiveSpacing.lg,
-    justifyContent: 'center',
-  },
-  heading: {
-    ...theme.typography.h1,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
-  },
-  body: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xl,
-  },
-  button: {
-    backgroundColor: theme.colors.primary[500],
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xl,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-    ...theme.shadows.md,
-  },
-  buttonText: {
-    ...theme.typography.button,
-    color: theme.colors.text.inverse,
-  },
-});
-```
+---
 
 ## Best Practices
 
 ### Colors
 
-1. **Always use semantic colors** for consistency:
-   - ✅ `theme.colors.text.primary`
-   - ❌ `theme.colors.neutral[900]`
+1. **Only use approved colors** - Never hardcode colors outside the approved palette
+2. **Reference theme** - Always use `theme.colors.brand.*`
+3. **No opacity** - Icons and elements use solid colors only
+4. **Text is black or white** - No gray text colors
 
-2. **Use primary color for main actions**:
-   - Primary buttons, active states, brand elements
+### Icons
 
-3. **Use neutral colors for UI structure**:
-   - Backgrounds, borders, dividers
+1. **With container** - Colored container (32x32 rounded), white icon inside
+2. **Without container** - Colored icon directly (e.g., chevrons)
+3. **Never use opacity** - Icons always solid
+4. **Color assignment** - Primary for main actions, secondary for subscriptions, tertiary for legal
 
-4. **Use semantic colors for feedback**:
-   - Success: Green
-   - Error: Red
-   - Warning: Orange
-   - Info: Blue
+### Buttons
+
+1. **Primary color** - All main buttons use #ff7664
+2. **White text** - All button text is white (except ghost)
+3. **OAuth exception** - Keep Apple/Google branding
+
+### Backgrounds
+
+1. **Main app** - #dedfe2 for all screens
+2. **Auth screen** - Linear gradient with #ff7664
+3. **Cards** - White (#ffffff) with shadows
+4. **Tab bar** - White, floating with rounded corners
 
 ### Typography
 
-1. **Always use typography variants**:
-   - ✅ `...theme.typography.h1`
-   - ❌ `fontSize: 36, fontWeight: 'bold'`
+1. **Black or white only** - No gray text
+2. **No opacity** - Text always solid
+3. **Use theme typography** - Never hardcode font sizes
 
-2. **Match variant to purpose**:
-   - Headings: h1-h6
-   - Body text: body, bodyLarge, bodySmall
-   - UI elements: button, label, caption
+---
 
-3. **Don't override font family** unless absolutely necessary
+## Implementation Examples
 
-4. **Use letter spacing** from variants (don't override)
+### ProfileScreen Icon Row
 
-### Spacing
+```tsx
+<View style={[styles.iconContainer, { backgroundColor: theme.colors.icon.primary }]}>
+  <Ionicons name="help-circle-outline" size={20} color={theme.colors.brand.white} />
+</View>
+```
 
-1. **Stick to the 8px grid**:
-   - ✅ Use spacing values from theme
-   - ❌ Don't use arbitrary values (7px, 13px, etc.)
+### Tab Bar Icon
 
-2. **Use consistent spacing patterns**:
-   - Small gaps: `spacing.sm`
-   - Default spacing: `spacing.md`
-   - Section spacing: `spacing.lg` or `spacing.xl`
+```tsx
+// Active
+<View style={styles.activeIconContainer}>
+  <Ionicons name="home" size={20} color={theme.colors.brand.white} />
+</View>
 
-3. **Apply shadows appropriately**:
-   - Cards: `shadows.md`
-   - Modals: `shadows.lg`
-   - Floating buttons: `shadows.sm`
+// Inactive
+<Ionicons name="home-outline" size={24} color={theme.colors.brand.black} />
+```
 
-### Responsive Design
+### Button
 
-1. **Always use scaling for dimensions**:
-   - ✅ `width: r.scaleWidth(300)`
-   - ❌ `width: 300`
+```tsx
+<Button
+  title="Sign Out"
+  variant="primary"  // Uses #ff7664
+  onPress={handleSignOut}
+/>
+```
 
-2. **Use adaptive spacing/fonts** when possible:
-   - ✅ `padding: r.adaptiveSpacing.lg`
-   - ✅ `fontSize: r.adaptiveFontSize.md`
+---
 
-3. **Use moderateScale for spacing** (less aggressive):
-   - ✅ `padding: r.moderateScale(20)`
+## Quick Reference
 
-4. **Test on different device sizes**:
-   - iPhone SE (small)
-   - iPhone 13 (medium)
-   - iPhone 13 Pro Max (large)
-   - iPad mini (tablet)
+### Approved Colors
 
-5. **Use responsive values for complex layouts**:
-   ```typescript
-   columns: r.responsive({
-     small: 1,
-     medium: 2,
-     tablet: 3,
-     default: 2,
-   })
-   ```
+```
+Primary:    #ff7664 (coral/red)
+Secondary:  #9bcbab (mint green)
+Tertiary:   #cda4e8 (lavender purple)
+Background: #dedfe2 (light gray)
+Black:      #000000
+White:      #ffffff
+```
 
-### General Guidelines
+### Icon Container Pattern
 
-1. **Import once at the top**:
-   ```typescript
-   import { theme, r } from './src/theme';
-   ```
+```tsx
+<View style={{
+  width: 32,
+  height: 32,
+  borderRadius: 16,
+  backgroundColor: theme.colors.brand.primary,
+  alignItems: 'center',
+  justifyContent: 'center'
+}}>
+  <Ionicons name="icon-name" size={20} color={theme.colors.brand.white} />
+</View>
+```
 
-2. **Don't mix hardcoded values with theme values**
+### Text Pattern
 
-3. **Create custom variants** if needed:
-   ```typescript
-   const customHeading = {
-     ...theme.typography.h2,
-     color: theme.colors.primary[500],
-   };
-   ```
+```tsx
+// Black text (default)
+<Text style={{ color: theme.colors.brand.black }}>Content</Text>
 
-4. **Document any deviations** from the design system
+// White text (on colored backgrounds)
+<Text style={{ color: theme.colors.brand.white }}>Content</Text>
+```
 
-5. **Keep the design system centralized** - don't create duplicate color/spacing definitions
+---
 
-## Updating the Design System
-
-If you need to modify the design system:
-
-1. **Update the source files** in `src/theme/`:
-   - `colors.ts` - Color palette
-   - `typography.ts` - Font family and variants
-   - `spacing.ts` - Spacing, border radius, shadows
-   - `responsive.ts` - Breakpoints and scaling
-
-2. **Test changes** across all screen sizes
-
-3. **Update this documentation**
-
-4. **Communicate changes** to the team
-
-## Resources
-
-- [Poppins Font](https://fonts.google.com/specimen/Poppins)
-- [Material Design Color System](https://material.io/design/color)
-- [iOS Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/)
-- [8-Point Grid System](https://spec.fm/specifics/8-pt-grid)
-
-## Support
-
-For questions or suggestions about the design system, please reach out to the design team.
+**Design System Version**: 3.0 (Strict Color System)
+**Last Updated**: 2025

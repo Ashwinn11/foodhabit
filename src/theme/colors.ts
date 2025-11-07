@@ -1,107 +1,81 @@
 /**
- * Color system for Food Habit app
- * Following iOS design guidelines with semantic color naming
+ * Strict Design System - Color Palette
+ * Only approved colors can be used throughout the app
  */
 
 export const colors = {
-  // Primary colors
+  // Brand Colors - STRICT (only these colors allowed)
+  brand: {
+    primary: '#ff7664',    // Coral/Red - Primary brand color
+    secondary: '#9bcbab',  // Mint Green - Secondary color
+    tertiary: '#cda4e8',   // Lavender Purple - Tertiary color
+    background: '#dedfe2', // Light Gray - Main app background
+    black: '#000000',      // Pure Black
+    white: '#ffffff',      // Pure White
+  },
+
+  // Legacy mappings for backwards compatibility
   primary: {
-    50: '#E8F5E9',
-    100: '#C8E6C9',
-    200: '#A5D6A7',
-    300: '#81C784',
-    400: '#66BB6A',
-    500: '#4CAF50', // Main brand color
-    600: '#43A047',
-    700: '#388E3C',
-    800: '#2E7D32',
-    900: '#1B5E20',
+    500: '#ff7664',
+    600: '#ff7664',
+    700: '#ff7664',
   },
 
-  // Secondary colors
   secondary: {
-    50: '#FFF3E0',
-    100: '#FFE0B2',
-    200: '#FFCC80',
-    300: '#FFB74D',
-    400: '#FFA726',
-    500: '#FF9800',
-    600: '#FB8C00',
-    700: '#F57C00',
-    800: '#EF6C00',
-    900: '#E65100',
+    500: '#9bcbab',
+    600: '#9bcbab',
+    700: '#9bcbab',
   },
 
-  // Neutral/Gray scale
-  neutral: {
-    50: '#FAFAFA',
-    100: '#F5F5F5',
-    200: '#EEEEEE',
-    300: '#E0E0E0',
-    400: '#BDBDBD',
-    500: '#9E9E9E',
-    600: '#757575',
-    700: '#616161',
-    800: '#424242',
-    900: '#212121',
-  },
-
-  // Semantic colors
-  success: {
-    light: '#81C784',
-    main: '#4CAF50',
-    dark: '#388E3C',
-  },
-
-  error: {
-    light: '#E57373',
-    main: '#F44336',
-    dark: '#D32F2F',
-  },
-
-  warning: {
-    light: '#FFB74D',
-    main: '#FF9800',
-    dark: '#F57C00',
-  },
-
-  info: {
-    light: '#64B5F6',
-    main: '#2196F3',
-    dark: '#1976D2',
-  },
-
-  // App-specific colors
+  // Background colors
   background: {
-    primary: '#FFFFFF',
-    secondary: '#F5F5F5',
-    tertiary: '#FAFAFA',
+    primary: '#dedfe2',    // Main app background
+    secondary: '#ffffff',  // Card backgrounds
+    tertiary: '#ffffff',
+    grouped: '#dedfe2',
+    card: '#ffffff',
   },
 
+  // Text colors - STRICT (only black or white)
   text: {
-    primary: '#212121',
-    secondary: '#616161',
-    disabled: '#9E9E9E',
-    inverse: '#FFFFFF',
+    primary: '#000000',   // Black text
+    secondary: '#000000', // Black text (no opacity variations)
+    tertiary: '#000000',
+    inverse: '#ffffff',   // White text
+    disabled: '#000000',
+    placeholder: '#000000',
   },
 
+  // Border/Separator colors
   border: {
-    light: '#EEEEEE',
-    main: '#E0E0E0',
-    dark: '#BDBDBD',
+    light: '#dedfe2',
+    main: '#dedfe2',
+    dark: '#000000',
+    separator: '#dedfe2',
+    opaque: '#dedfe2',
   },
 
-  // iOS system colors
-  ios: {
-    blue: '#007AFF',
-    green: '#34C759',
-    indigo: '#5856D6',
-    orange: '#FF9500',
-    pink: '#FF2D55',
-    purple: '#AF52DE',
-    red: '#FF3B30',
-    teal: '#5AC8FA',
-    yellow: '#FFCC00',
+  // Icon colors - STRICT (only brand colors)
+  icon: {
+    primary: '#ff7664',
+    secondary: '#9bcbab',
+    tertiary: '#cda4e8',
+    white: '#ffffff',
+    black: '#000000',
+  },
+
+  // Button colors
+  button: {
+    primary: '#ff7664',      // All buttons use primary color
+    primaryText: '#ffffff',  // White text on buttons
+  },
+
+  // Neutral colors (minimal usage)
+  neutral: {
+    500: '#dedfe2',
+    600: '#dedfe2',
+    700: '#000000',
+    900: '#000000',
   },
 } as const;
 

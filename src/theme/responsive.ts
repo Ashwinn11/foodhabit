@@ -147,13 +147,19 @@ export const maxScale = (size: number): number => {
 
 /**
  * Get adaptive spacing based on screen size
+ * Aligned with Apple's spacing system (12px base)
  */
 export const adaptiveSpacing = {
-  xs: responsive({ small: 2, medium: 4, large: 4, default: 4 }),
-  sm: responsive({ small: 6, medium: 8, large: 8, default: 8 }),
-  md: responsive({ small: 12, medium: 16, large: 16, default: 16 }),
-  lg: responsive({ small: 18, medium: 24, large: 24, default: 24 }),
-  xl: responsive({ small: 24, medium: 32, large: 32, default: 32 }),
+  xs: responsive({ small: 4, medium: 4, large: 4, default: 4 }),
+  sm: responsive({ small: 8, medium: 8, large: 8, default: 8 }),
+  md: responsive({ small: 12, medium: 12, large: 12, default: 12 }),
+  lg: responsive({ small: 16, medium: 16, large: 16, default: 16 }),
+  xl: responsive({ small: 20, medium: 20, large: 20, default: 20 }),
+  '2xl': responsive({ small: 24, medium: 24, large: 24, default: 24 }),
+  '3xl': responsive({ small: 32, medium: 32, large: 32, default: 32 }),
+  '4xl': responsive({ small: 40, medium: 40, large: 40, default: 40 }),
+  '5xl': responsive({ small: 48, medium: 48, large: 48, default: 48 }),
+  '6xl': responsive({ small: 64, medium: 64, large: 64, default: 64 }),
 } as const;
 
 /**
@@ -167,6 +173,9 @@ export const adaptiveFontSize = {
   xl: responsive({ small: 19, medium: 20, large: 20, default: 20 }),
   '2xl': responsive({ small: 22, medium: 24, large: 24, default: 24 }),
   '3xl': responsive({ small: 28, medium: 30, large: 32, default: 30 }),
+  '4xl': responsive({ small: 34, medium: 36, large: 38, default: 36 }),
+  '5xl': responsive({ small: 40, medium: 44, large: 48, default: 44 }),
+  '6xl': responsive({ small: 48, medium: 54, large: 60, default: 54 }),
 } as const;
 
 export type DeviceSize = 'small' | 'medium' | 'large' | 'tablet' | 'desktop';

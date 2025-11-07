@@ -1,11 +1,51 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, Alert, TouchableOpacity, Linking } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { theme, r } from '../theme';
+import { Container, Text, Card } from '../components';
+
+interface SettingsRowProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+  showChevron?: boolean;
+  destructive?: boolean;
+  iconColor?: string;
+}
+
+const SettingsRow: React.FC<SettingsRowProps> = ({
+  icon,
+  label,
+  onPress,
+  showChevron = true,
+  destructive = false,
+  iconColor = theme.colors.icon.primary
+}) => (
+  <TouchableOpacity style={styles.settingsRow} onPress={onPress} activeOpacity={0.7}>
+    <View style={styles.settingsRowLeft}>
+      <View style={[styles.iconContainer, { backgroundColor: iconColor }]}>
+        <Ionicons
+          name={icon}
+          size={20}
+          color={theme.colors.brand.white}
+        />
+      </View>
+      <Text
+        variant="body"
+        style={[styles.settingsLabel, destructive && styles.destructiveText]}
+      >
+        {label}
+      </Text>
+    </View>
+    {showChevron && (
+      <Ionicons name="chevron-forward" size={20} color={theme.colors.text.primary} />
+    )}
+  </TouchableOpacity>
+);
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { user, session, signOut } = useAuth();
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -27,156 +67,236 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Account deletion feature coming soon. Please contact support if you need to delete your account immediately.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  const openTermsOfService = () => {
+    // Replace with your actual terms URL
+    Linking.openURL('https://yourapp.com/terms');
+  };
+
+  const openPrivacyPolicy = () => {
+    // Replace with your actual privacy policy URL
+    Linking.openURL('https://yourapp.com/privacy');
+  };
+
+  const openHelp = () => {
+    // Replace with your actual help/support URL or email
+    Linking.openURL('mailto:support@yourapp.com?subject=Food%20Habit%20Support');
+  };
+
+  const openSubscription = () => {
+    Alert.alert(
+      'Subscription',
+      'Subscription management coming soon!',
+      [{ text: 'OK' }]
+    );
+  };
+
+  const getInitials = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name.charAt(0).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
+
+  const getDisplayName = () => {
+    return user?.user_metadata?.full_name || user?.email || 'User';
+  };
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile</Text>
-        </View>
+    <Container variant="grouped" scrollable>
+      <View style={styles.header}>
+        <Text variant="largeTitle" style={styles.title}>Profile</Text>
+      </View>
 
+      {/* Profile Header */}
+      <View style={styles.profileHeader}>
         <View style={styles.avatarContainer}>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarText}>
-              {user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'U'}
-            </Text>
-          </View>
+          <Text variant="largeTitle" style={styles.avatarText}>
+            {getInitials()}
+          </Text>
         </View>
+        <Text variant="title2" style={styles.displayName}>{getDisplayName()}</Text>
+        {user?.email && (
+          <Text variant="body" color="secondary" style={styles.email}>{user.email}</Text>
+        )}
+      </View>
 
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Account Information</Text>
+      {/* Subscription Section */}
+      <View style={styles.section}>
+        <Text variant="footnote" color="secondary" style={styles.sectionHeader}>
+          SUBSCRIPTION
+        </Text>
+        <Card variant="elevated" padding="none" style={styles.settingsCard}>
+          <SettingsRow
+            icon="card-outline"
+            label="Manage Subscription"
+            onPress={openSubscription}
+            iconColor={theme.colors.icon.secondary}
+          />
+        </Card>
+      </View>
 
-          {user?.name && (
-            <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Name</Text>
-              <Text style={styles.infoValue}>{user.name}</Text>
-            </View>
-          )}
+      {/* Support Section */}
+      <View style={styles.section}>
+        <Text variant="footnote" color="secondary" style={styles.sectionHeader}>
+          SUPPORT & LEGAL
+        </Text>
+        <Card variant="elevated" padding="none" style={styles.settingsCard}>
+          <SettingsRow
+            icon="help-circle-outline"
+            label="Help & Support"
+            onPress={openHelp}
+            iconColor={theme.colors.icon.primary}
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="document-text-outline"
+            label="Terms of Service"
+            onPress={openTermsOfService}
+            iconColor={theme.colors.icon.tertiary}
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="shield-checkmark-outline"
+            label="Privacy Policy"
+            onPress={openPrivacyPolicy}
+            iconColor={theme.colors.icon.tertiary}
+          />
+        </Card>
+      </View>
 
-          {user?.email && (
-            <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{user.email}</Text>
-            </View>
-          )}
+      {/* Account Actions */}
+      <View style={styles.section}>
+        <Text variant="footnote" color="secondary" style={styles.sectionHeader}>
+          ACCOUNT ACTIONS
+        </Text>
+        <Card variant="elevated" padding="none" style={styles.settingsCard}>
+          <SettingsRow
+            icon="log-out-outline"
+            label="Sign Out"
+            onPress={handleSignOut}
+            showChevron={false}
+            iconColor={theme.colors.icon.primary}
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="trash-outline"
+            label="Delete Account"
+            onPress={handleDeleteAccount}
+            showChevron={false}
+            destructive
+            iconColor={theme.colors.icon.primary}
+          />
+        </Card>
+      </View>
 
-          <View style={styles.infoCard}>
-            <Text style={styles.infoLabel}>Sign-in Provider</Text>
-            <Text style={styles.infoValue}>
-              {user?.provider === 'apple' ? 'Apple' : 'Google'}
-            </Text>
-          </View>
-
-          <View style={styles.infoCard}>
-            <Text style={styles.infoLabel}>User ID</Text>
-            <Text style={[styles.infoValue, styles.infoValueSmall]}>
-              {user?.id}
-            </Text>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={styles.signOutButton}
-          onPress={handleSignOut}
-        >
-          <Text style={styles.signOutButtonText}>Sign Out</Text>
-        </TouchableOpacity>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Food Habit v1.0.0</Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text variant="caption" color="tertiary">
+          Food Habit v1.0.0
+        </Text>
+        {user?.id && (
+          <Text variant="caption" color="tertiary" style={styles.userId}>
+            User ID: {user.id.substring(0, 8)}...
+          </Text>
+        )}
+      </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background.primary,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: r.adaptiveSpacing.lg,
-  },
   header: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
   },
-  headerTitle: {
-    ...theme.typography.h1,
-    color: theme.colors.text.primary,
+  title: {
+    fontWeight: '700',
+  },
+  profileHeader: {
+    alignItems: 'center',
+    marginBottom: r.adaptiveSpacing['3xl'],
+    paddingTop: theme.spacing.md,
   },
   avatarContainer: {
-    alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-  },
-  avatarPlaceholder: {
     width: r.scaleWidth(100),
     height: r.scaleWidth(100),
     borderRadius: r.scaleWidth(50),
-    backgroundColor: theme.colors.primary[500],
+    backgroundColor: theme.colors.brand.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadows.lg,
-  },
-  avatarText: {
-    ...theme.typography.h1,
-    color: theme.colors.text.inverse,
-    fontSize: r.adaptiveFontSize['3xl'],
-  },
-  infoSection: {
-    marginBottom: theme.spacing.xl,
-  },
-  sectionTitle: {
-    ...theme.typography.h4,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
-  },
-  infoCard: {
-    backgroundColor: theme.colors.background.secondary,
-    padding: r.adaptiveSpacing.lg,
-    borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.sm,
-  },
-  infoLabel: {
-    ...theme.typography.label,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
-  },
-  infoValue: {
-    ...theme.typography.body,
-    color: theme.colors.text.primary,
-  },
-  infoValueSmall: {
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.secondary,
-  },
-  signOutButton: {
-    backgroundColor: theme.colors.error.main,
-    paddingVertical: r.adaptiveSpacing.lg,
-    paddingHorizontal: theme.spacing.xl,
-    borderRadius: theme.borderRadius.md,
-    alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
     ...theme.shadows.md,
   },
-  signOutButtonText: {
-    ...theme.typography.button,
-    color: theme.colors.text.inverse,
-    textTransform: 'none',
+  avatarText: {
+    color: theme.colors.brand.white,
+    fontWeight: '600',
+  },
+  displayName: {
+    marginBottom: theme.spacing.xs,
+    fontWeight: '600',
+  },
+  email: {
+    marginBottom: theme.spacing.xs,
+  },
+  section: {
+    marginBottom: r.adaptiveSpacing.xl,
+  },
+  sectionHeader: {
+    marginLeft: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  settingsCard: {
+    overflow: 'hidden',
+  },
+  settingsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: theme.spacing.lg,
+    minHeight: 56,
+  },
+  settingsRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsLabel: {
+    marginLeft: theme.spacing.md,
+    flex: 1,
+  },
+  destructiveText: {
+    color: theme.colors.brand.primary,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: theme.colors.border.main,
+    marginLeft: theme.spacing.lg + 32 + theme.spacing.md, // Icon container width + icon margin
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: r.adaptiveSpacing['2xl'],
+    marginTop: theme.spacing.xl,
   },
-  footerText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
+  userId: {
+    marginTop: theme.spacing.xs,
   },
 });

@@ -1,18 +1,34 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { theme, r } from '../theme';
 
 const Tab = createBottomTabNavigator();
 
+// Custom tab icon with colored container for active state
+const TabIcon: React.FC<{
+  focused: boolean;
+  iconName: keyof typeof Ionicons.glyphMap;
+  size: number;
+}> = ({ focused, iconName, size }) => {
+  if (focused) {
+    return (
+      <View style={styles.activeIconContainer}>
+        <Ionicons name={iconName} size={size - 4} color={theme.colors.brand.white} />
+      </View>
+    );
+  }
+  return <Ionicons name={iconName} size={size} color={theme.colors.brand.black} />;
+};
+
 export default function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
 
           if (route.name === 'Home') {
@@ -23,21 +39,26 @@ export default function TabNavigator() {
             iconName = 'ellipse';
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <TabIcon focused={focused} iconName={iconName} size={size} />;
         },
-        tabBarActiveTintColor: theme.colors.primary[500],
-        tabBarInactiveTintColor: theme.colors.neutral[500],
+        tabBarActiveTintColor: theme.colors.brand.primary,
+        tabBarInactiveTintColor: theme.colors.brand.black,
         tabBarStyle: {
-          backgroundColor: theme.colors.background.primary,
-          borderTopColor: theme.colors.border.light,
-          borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? r.scaleHeight(88) : r.scaleHeight(60),
-          paddingBottom: Platform.OS === 'ios' ? r.adaptiveSpacing.lg : r.adaptiveSpacing.sm,
-          paddingTop: r.adaptiveSpacing.sm,
+          position: 'absolute',
+          backgroundColor: theme.colors.brand.white,
+          borderRadius: theme.borderRadius.xl,
+          marginHorizontal: theme.spacing.lg,
+          marginBottom: Platform.OS === 'ios' ? theme.spacing.lg : theme.spacing.md,
+          height: Platform.OS === 'ios' ? 70 : 60,
+          paddingBottom: Platform.OS === 'ios' ? theme.spacing.md : theme.spacing.sm,
+          paddingTop: theme.spacing.sm,
+          borderTopWidth: 0,
+          ...theme.shadows.lg,
         },
         tabBarLabelStyle: {
           ...theme.typography.caption,
           fontSize: r.adaptiveFontSize.xs,
+          fontWeight: '600',
         },
         headerShown: false,
         tabBarHideOnKeyboard: true,
@@ -60,3 +81,14 @@ export default function TabNavigator() {
     </Tab.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  activeIconContainer: {
+    backgroundColor: theme.colors.brand.primary,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

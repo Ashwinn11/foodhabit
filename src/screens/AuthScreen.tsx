@@ -1,17 +1,145 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, Dimensions, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useAuth } from '../hooks/useAuth';
-import { getAllRedirectUrls } from '../config/supabase';
-import { theme, r } from '../theme';
+import { theme, r, haptics } from '../theme';
+import { Container, Text } from '../components';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Decorative pattern component using simple overlays
+const DecorativePattern: React.FC = () => {
+  return (
+    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+      {/* Top gradient overlay */}
+      <LinearGradient
+        colors={['rgba(255, 255, 255, 0.12)', 'transparent']}
+        style={styles.topOverlay}
+      />
+
+      {/* Bottom gradient overlay */}
+      <LinearGradient
+        colors={['transparent', 'rgba(255, 255, 255, 0.08)']}
+        style={styles.bottomOverlay}
+      />
+
+      {/* Decorative circles */}
+      <View style={[styles.decorCircle, { top: -50, right: -50, width: 200, height: 200 }]} />
+      <View style={[styles.decorCircle, { bottom: -80, left: -80, width: 250, height: 250 }]} />
+    </View>
+  );
+};
+
+// Floating animated orb component for background
+const AnimatedOrb: React.FC<{ delay?: number; size?: number; initialX?: number; initialY?: number; duration?: number }> = ({
+  delay = 0,
+  size = 200,
+  initialX = 0,
+  initialY = 0,
+  duration = 8000,
+}) => {
+  const translateX = useRef(new Animated.Value(initialX)).current;
+  const translateY = useRef(new Animated.Value(initialY)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Fade in animation - slower and more subtle
+    Animated.timing(opacity, {
+      toValue: 0.4,
+      duration: 1500,
+      delay,
+      useNativeDriver: true,
+    }).start();
+
+    // Floating animation - slower and gentler movement
+    const animate = () => {
+      Animated.loop(
+        Animated.parallel([
+          Animated.sequence([
+            Animated.timing(translateX, {
+              toValue: Math.random() * 40 - 20, // Reduced from 100 to 40
+              duration,
+              useNativeDriver: true,
+            }),
+            Animated.timing(translateX, {
+              toValue: initialX,
+              duration,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.sequence([
+            Animated.timing(translateY, {
+              toValue: Math.random() * 40 - 20, // Reduced from 100 to 40
+              duration,
+              useNativeDriver: true,
+            }),
+            Animated.timing(translateY, {
+              toValue: initialY,
+              duration,
+              useNativeDriver: true,
+            }),
+          ]),
+        ])
+      ).start();
+    };
+
+    setTimeout(animate, delay);
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.orb,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          transform: [{ translateX }, { translateY }],
+          opacity,
+        },
+      ]}
+    />
+  );
+};
 
 export default function AuthScreen() {
-  const { loading, error, signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
+  const { signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
+  const [loadingButton, setLoadingButton] = useState<'apple' | 'google' | null>(null);
+
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
   useEffect(() => {
     checkAppleAuth();
+
+    // Entrance animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1200,
+        delay: 400,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 15,
+        friction: 9,
+        delay: 400,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 15,
+        friction: 9,
+        delay: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, []);
 
   const checkAppleAuth = async () => {
@@ -19,182 +147,262 @@ export default function AuthScreen() {
     setAppleAuthAvailable(available);
   };
 
-  useEffect(() => {
-    if (error) {
-      Alert.alert('Authentication Error', error.message);
-    }
-  }, [error]);
-
   const handleAppleSignIn = async () => {
-    await signInWithApple();
+    haptics.patterns.buttonPress();
+    setLoadingButton('apple');
+    try {
+      await signInWithApple();
+    } catch (error: any) {
+      Alert.alert('Authentication Error', error.message || 'Failed to sign in');
+    } finally {
+      setLoadingButton(null);
+    }
   };
 
   const handleGoogleSignIn = async () => {
-    await signInWithGoogle();
+    haptics.patterns.buttonPress();
+    setLoadingButton('google');
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      Alert.alert('Authentication Error', error.message || 'Failed to sign in');
+    } finally {
+      setLoadingButton(null);
+    }
   };
-
-  const handleShowRedirectUrl = () => {
-    const urls = getAllRedirectUrls();
-
-    const message = `Add BOTH URLs to your Supabase project:\n\n1. Expo Go (Dev):\n${urls.expoGo}\n\n2. Standalone Build:\n${urls.standalone}\n\nCurrently using:\n${urls.current}\n\nGo to: Authentication > URL Configuration > Redirect URLs`;
-
-    Alert.alert(
-      'Supabase Redirect URLs',
-      message,
-      [
-        {
-          text: 'Copy to Console',
-          onPress: () => {
-            console.log('=== SUPABASE REDIRECT URLs ===');
-            console.log('Expo Go (Dev):', urls.expoGo);
-            console.log('Standalone:', urls.standalone);
-            console.log('Current:', urls.current);
-            console.log('============================');
-          }
-        },
-        { text: 'OK' },
-      ]
-    );
-  };
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color={theme.colors.primary[500]} />
-        <Text style={styles.loadingText}>Signing in...</Text>
-      </SafeAreaView>
-    );
-  }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Food Habit</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+    <View style={styles.container}>
+      {/* Gradient Background - Light at top, heavy at bottom */}
+      <LinearGradient
+        colors={['#ffb5a7', '#ff9a8a', '#ff7664']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
 
-        <View style={styles.authButtons}>
-          {appleAuthAvailable && Platform.OS === 'ios' && (
-            <View style={styles.buttonContainer}>
-              <AppleAuthentication.AppleAuthenticationButton
-                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                cornerRadius={theme.borderRadius.md}
-                style={styles.appleButton}
-                onPress={handleAppleSignIn}
-              />
-            </View>
-          )}
+      {/* Decorative Pattern */}
+      <DecorativePattern />
 
-          <TouchableOpacity
-            style={[
-              styles.googleButton,
-              loading && styles.googleButtonDisabled
-            ]}
-            onPress={handleGoogleSignIn}
-            disabled={loading}
-          >
-            <Text style={styles.googleButtonText}>
-              {loading ? 'Signing in...' : 'Sign in with Google'}
-            </Text>
-          </TouchableOpacity>
+      {/* Animated Orbs */}
+      <AnimatedOrb delay={0} size={250} initialX={-50} initialY={-100} duration={15000} />
+      <AnimatedOrb delay={800} size={200} initialX={SCREEN_WIDTH - 150} initialY={SCREEN_HEIGHT / 2} duration={18000} />
+      <AnimatedOrb delay={1500} size={180} initialX={SCREEN_WIDTH / 2} initialY={SCREEN_HEIGHT - 200} duration={16000} />
 
-          {__DEV__ && (
-            <TouchableOpacity onPress={handleShowRedirectUrl} style={styles.debugButton}>
-              <Text style={styles.debugText}>Show Supabase Redirect URL</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      {__DEV__ && (
-        <View style={styles.devInfo}>
-          <Text style={styles.devInfoText}>
-            Using Supabase Auth
+      {/* Main Content */}
+      <Container variant="plain" style={styles.contentContainer}>
+        {/* Header at Top */}
+        <Animated.View
+          style={[
+            styles.header,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <Text variant="largeTitle" align="center" style={styles.title}>
+            Food Habit
           </Text>
-        </View>
-      )}
-    </SafeAreaView>
+          <Text variant="title3" align="center" style={styles.subtitle}>
+            Track your eating habits and build healthier routines
+          </Text>
+        </Animated.View>
+
+        {/* Spacer */}
+        <View style={styles.spacer} />
+
+        {/* Footer with Auth Buttons and Legal */}
+        <Animated.View
+          style={[
+            styles.footer,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }],
+            },
+          ]}
+        >
+          {/* Auth Buttons */}
+          <View style={styles.authButtons}>
+            {appleAuthAvailable && Platform.OS === 'ios' && (
+              <TouchableOpacity
+                style={[
+                  styles.appleButton,
+                  loadingButton !== null && styles.buttonDisabled,
+                ]}
+                onPress={handleAppleSignIn}
+                disabled={loadingButton !== null}
+                activeOpacity={0.8}
+              >
+                {loadingButton === 'apple' ? (
+                  <ActivityIndicator size="small" color={theme.colors.brand.white} />
+                ) : (
+                  <Ionicons name="logo-apple" size={24} color={theme.colors.brand.white} />
+                )}
+                <Text variant="headline" style={styles.appleButtonText}>
+                  {loadingButton === 'apple' ? 'Signing in...' : 'Continue with Apple'}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={[
+                styles.googleButton,
+                loadingButton !== null && styles.buttonDisabled,
+              ]}
+              onPress={handleGoogleSignIn}
+              disabled={loadingButton !== null}
+              activeOpacity={0.8}
+            >
+              {loadingButton === 'google' ? (
+                <ActivityIndicator size="small" color={theme.colors.brand.black} />
+              ) : (
+                <Ionicons name="logo-google" size={24} color="#EA4335" />
+              )}
+              <Text variant="headline" style={styles.googleButtonText}>
+                {loadingButton === 'google' ? 'Signing in...' : 'Continue with Google'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Legal Text */}
+          <View style={styles.legalContainer}>
+            <Text variant="caption1" align="center" style={styles.legalText}>
+              By continuing, you agree to our{' '}
+              <Text variant="caption1" style={styles.legalLink}>
+                Terms of Service
+              </Text>
+              {' '}and{' '}
+              <Text variant="caption1" style={styles.legalLink}>
+                Privacy Policy
+              </Text>
+            </Text>
+          </View>
+        </Animated.View>
+      </Container>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background.primary,
+    backgroundColor: theme.colors.brand.primary,
   },
-  content: {
+  contentContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: r.adaptiveSpacing.lg,
+    paddingHorizontal: theme.spacing['2xl'],
+    paddingTop: theme.spacing['6xl'],
+  },
+  header: {
+    width: '100%',
+    paddingHorizontal: theme.spacing.md,
   },
   title: {
-    ...theme.typography.h1,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    color: theme.colors.brand.white,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   subtitle: {
-    ...theme.typography.h4,
-    color: theme.colors.text.secondary,
-    marginBottom: r.adaptiveSpacing.xl,
+    color: theme.colors.brand.white,
+    textShadowColor: 'rgba(0, 0, 0, 0.08)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  spacer: {
+    flex: 1,
+  },
+  footer: {
+    width: '100%',
+    paddingBottom: theme.spacing['3xl'],
   },
   authButtons: {
     width: '100%',
-    maxWidth: r.scaleWidth(320),
-    alignItems: 'center',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing['2xl'],
   },
-  buttonContainer: {
-    width: '100%',
-    marginBottom: theme.spacing.md,
-  },
+  // Apple Button - Black background with white text/icon (OAuth - keep as-is)
   appleButton: {
-    width: '100%',
-    height: r.scaleHeight(50),
-  },
-  googleButton: {
-    width: '100%',
-    height: r.scaleHeight(50),
-    backgroundColor: theme.colors.primary[500],
-    borderRadius: theme.borderRadius.md,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadows.md,
+    backgroundColor: theme.colors.brand.black,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.borderRadius.pill,
+    gap: theme.spacing.md,
+    ...theme.shadows.lg,
+    height: 56,
   },
-  googleButtonDisabled: {
-    backgroundColor: theme.colors.neutral[300],
+  appleButtonText: {
+    color: theme.colors.brand.white,
+  },
+  // Google Button - White background with black text and colored logo (OAuth - keep as-is)
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.brand.white,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.borderRadius.pill,
+    gap: theme.spacing.md,
+    ...theme.shadows.lg,
+    height: 56,
   },
   googleButtonText: {
-    ...theme.typography.button,
-    color: theme.colors.text.inverse,
-    textTransform: 'none',
+    color: theme.colors.brand.black,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  legalContainer: {
+    paddingHorizontal: theme.spacing.md,
+  },
+  legalText: {
+    color: theme.colors.brand.white,
+    lineHeight: 18,
+  },
+  legalLink: {
+    color: theme.colors.brand.white,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.lg,
+    color: theme.colors.brand.white,
+    fontSize: 17,
   },
-  debugButton: {
-    marginTop: theme.spacing.xl,
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borderRadius.sm,
-  },
-  debugText: {
-    ...theme.typography.caption,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-  },
-  devInfo: {
+  // Animated orb styles
+  orb: {
     position: 'absolute',
-    bottom: r.scaleHeight(20),
-    alignSelf: 'center',
-    padding: theme.spacing.sm,
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.borderRadius.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
-  devInfoText: {
-    ...theme.typography.caption,
-    fontSize: r.adaptiveFontSize.xs,
-    color: theme.colors.text.secondary,
+  // Decorative pattern styles
+  topOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 250,
+  },
+  bottomOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 300,
+  },
+  decorCircle: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 9999,
   },
 });
