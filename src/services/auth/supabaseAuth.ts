@@ -156,74 +156,122 @@ export const signInWithGoogle = async (): Promise<AuthUser> => {
       } as AuthError;
     }
 
-    console.log('OAuth redirect received, getting session...');
+    console.log('OAuth redirect received, parsing URL...');
 
-    // After successful redirect, wait a moment for Supabase to process the session
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Extract the URL from the result
+    const responseUrl = result.url;
+    console.log('Response URL received');
 
-    // Get the session - Supabase automatically handles the URL parsing
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    // Parse URL parameters
+    const url = new URL(responseUrl);
+    const params = new URLSearchParams(url.search || url.hash.replace('#', '?'));
 
-    if (sessionError) {
+    // Check for error
+    const error_description = params.get('error_description');
+    if (error_description) {
       throw {
-        message: sessionError.message,
-        code: 'SESSION_ERROR',
+        message: error_description,
+        code: 'OAUTH_ERROR',
       } as AuthError;
     }
 
-    if (!sessionData.session || !sessionData.session.user) {
-      // If no session yet, try to get the user directly
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+    // Get auth code or tokens from URL
+    const code = params.get('code');
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
 
-      if (userError || !userData.user) {
+    console.log('URL contains:', {
+      hasCode: !!code,
+      hasAccessToken: !!access_token,
+      hasRefreshToken: !!refresh_token,
+    });
+
+    // If we have an authorization code, exchange it for a session
+    if (code) {
+      console.log('Exchanging code for session...');
+
+      const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+      if (exchangeError) {
+        console.error('Code exchange error:', exchangeError);
         throw {
-          message: 'No session returned from Supabase after OAuth',
+          message: exchangeError.message,
+          code: 'EXCHANGE_ERROR',
+        } as AuthError;
+      }
+
+      if (!sessionData.session || !sessionData.session.user) {
+        throw {
+          message: 'No session returned after code exchange',
           code: 'NO_SESSION',
         } as AuthError;
       }
 
-      // Get session again
-      const { data: retrySession } = await supabase.auth.getSession();
-
-      if (!retrySession.session) {
-        throw {
-          message: 'Failed to establish session after OAuth',
-          code: 'NO_SESSION',
-        } as AuthError;
-      }
+      const user = sessionData.session.user;
 
       const authUser: AuthUser = {
-        id: userData.user.id,
-        email: userData.user.email || null,
-        name: userData.user.user_metadata?.full_name || userData.user.user_metadata?.name || undefined,
-        givenName: userData.user.user_metadata?.given_name || undefined,
-        familyName: userData.user.user_metadata?.family_name || undefined,
-        photo: userData.user.user_metadata?.avatar_url || userData.user.user_metadata?.picture || undefined,
+        id: user.id,
+        email: user.email || null,
+        name: user.user_metadata?.full_name || user.user_metadata?.name || undefined,
+        givenName: user.user_metadata?.given_name || undefined,
+        familyName: user.user_metadata?.family_name || undefined,
+        photo: user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined,
         provider: 'google',
-        session: retrySession.session,
-        supabaseUser: userData.user,
+        session: sessionData.session,
+        supabaseUser: user,
       };
 
+      console.log('Google sign in successful (code exchange)');
       return authUser;
     }
 
-    const user = sessionData.session.user;
+    // If we have tokens directly, set the session
+    if (access_token && refresh_token) {
+      console.log('Setting session with tokens...');
 
-    // Create AuthUser from Supabase user
-    const authUser: AuthUser = {
-      id: user.id,
-      email: user.email || null,
-      name: user.user_metadata?.full_name || user.user_metadata?.name || undefined,
-      givenName: user.user_metadata?.given_name || undefined,
-      familyName: user.user_metadata?.family_name || undefined,
-      photo: user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined,
-      provider: 'google',
-      session: sessionData.session,
-      supabaseUser: user,
-    };
+      const { data: sessionData, error: setError } = await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
 
-    console.log('Google sign in successful');
-    return authUser;
+      if (setError) {
+        console.error('Set session error:', setError);
+        throw {
+          message: setError.message,
+          code: 'SET_SESSION_ERROR',
+        } as AuthError;
+      }
+
+      if (!sessionData.session || !sessionData.session.user) {
+        throw {
+          message: 'No session returned after setting tokens',
+          code: 'NO_SESSION',
+        } as AuthError;
+      }
+
+      const user = sessionData.session.user;
+
+      const authUser: AuthUser = {
+        id: user.id,
+        email: user.email || null,
+        name: user.user_metadata?.full_name || user.user_metadata?.name || undefined,
+        givenName: user.user_metadata?.given_name || undefined,
+        familyName: user.user_metadata?.family_name || undefined,
+        photo: user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined,
+        provider: 'google',
+        session: sessionData.session,
+        supabaseUser: user,
+      };
+
+      console.log('Google sign in successful (token)');
+      return authUser;
+    }
+
+    // If no code or tokens, something went wrong
+    throw {
+      message: 'No authorization code or tokens in OAuth callback URL',
+      code: 'NO_AUTH_DATA',
+    } as AuthError;
   } catch (error: any) {
     console.error('Google Sign In error:', error);
 
