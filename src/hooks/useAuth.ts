@@ -26,22 +26,12 @@ export const useAuth = (): UseAuthReturn => {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session:', session ? 'exists' : 'none');
-      if (session?.user) {
-        console.log('User ID:', session.user.id);
-        console.log('User email:', session.user.email);
-      }
       setSession(session);
       setLoading(false);
     });
 
     // Listen for auth changes - this is the single source of truth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session ? 'has session' : 'no session');
-      if (session?.user) {
-        console.log('User ID:', session.user.id);
-        console.log('User email:', session.user.email);
-      }
       setSession(session);
     });
 
