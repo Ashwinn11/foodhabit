@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   },
 
   inputContainerError: {
-    borderColor: theme.colors.error.main,
+    borderColor: theme.colors.brand.primary,
   },
 
   inputContainerDisabled: {
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   },
 
   errorText: {
-    color: theme.colors.error.main,
+    color: theme.colors.brand.primary,
     marginTop: theme.spacing.xs,
   },
 
