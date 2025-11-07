@@ -5,6 +5,15 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from './src/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { getAllRedirectUrls } from './src/config/supabase';
+import {
+  useFonts,
+  Poppins_300Light,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
+import { theme, r } from './src/theme';
 
 function AppContent() {
   const { user, loading, error, signInWithApple, signInWithGoogle, signOut, isAppleAuthAvailable } = useAuth();
@@ -60,7 +69,7 @@ function AppContent() {
   if (loading && !user) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color={theme.colors.primary[500]} />
         <Text style={styles.loadingText}>Loading...</Text>
       </SafeAreaView>
     );
@@ -125,6 +134,23 @@ function AppContent() {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    Poppins_300Light,
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <AppContent />
@@ -133,74 +159,82 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  loadingContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: r.adaptiveSpacing.lg,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    ...theme.typography.h1,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.lg,
   },
   subtitle: {
-    fontSize: 18,
-    marginBottom: 20,
-    color: '#666',
+    ...theme.typography.h4,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.lg,
   },
   authButtons: {
     width: '100%',
-    maxWidth: 300,
+    maxWidth: r.scaleWidth(300),
     alignItems: 'center',
   },
   buttonContainer: {
     width: '100%',
-    marginVertical: 10,
+    marginVertical: theme.spacing.md,
   },
   appleButton: {
     width: '100%',
-    height: 44,
+    height: r.scaleHeight(44),
   },
   userContainer: {
     alignItems: 'center',
-    padding: 20,
+    padding: theme.spacing.xl,
   },
   welcomeText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    ...theme.typography.h2,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.lg,
   },
   userText: {
-    fontSize: 16,
-    marginVertical: 5,
+    ...theme.typography.body,
+    color: theme.colors.text.primary,
+    marginVertical: theme.spacing.xs,
   },
   loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
+    ...theme.typography.body,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.md,
   },
   debugButton: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
+    marginTop: theme.spacing.lg,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.sm,
   },
   debugText: {
-    fontSize: 12,
-    color: '#666',
+    ...theme.typography.caption,
+    color: theme.colors.text.secondary,
     textAlign: 'center',
   },
   devInfo: {
     position: 'absolute',
-    bottom: 40,
-    padding: 8,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
+    bottom: r.scaleHeight(40),
+    padding: theme.spacing.sm,
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.sm,
   },
   devInfoText: {
-    fontSize: 10,
-    color: '#666',
+    ...theme.typography.caption,
+    fontSize: r.adaptiveFontSize.xs,
+    color: theme.colors.text.secondary,
   },
 });
