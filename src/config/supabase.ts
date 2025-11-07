@@ -13,24 +13,39 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'YOUR_SUP
 const isExpoGo = Constants.appOwnership === 'expo';
 
 /**
- * Get the appropriate redirect URL based on environment
- * - Expo Go: Uses Expo's auth proxy (https://auth.expo.io/...)
- * - Standalone: Uses custom scheme (foodhabit://auth/callback)
+ * CRITICAL: Google OAuth does NOT accept exp:// URLs
+ *
+ * Get the appropriate redirect URL based on environment:
+ * - Expo Go (Dev): https://auth.expo.io/@username/slug/--/auth/callback
+ * - Standalone: foodhabit://auth/callback
+ *
+ * Both formats are accepted by Google OAuth and Supabase.
  */
 export const getSupabaseRedirectUrl = (): string => {
   if (isExpoGo) {
-    // For Expo Go, use Expo's auth proxy
-    return AuthSession.makeRedirectUri({
-      useProxy: true,
-      path: 'auth/callback',
-    });
+    // For Expo Go development with Google OAuth
+    // MUST use https://auth.expo.io proxy (Google doesn't accept exp://)
+    const expoUsername = Constants.expoConfig?.owner;
+    const expoSlug = Constants.expoConfig?.slug || 'foodhabit';
+
+    if (!expoUsername) {
+      console.warn('⚠️  Expo username not found. Run: npx expo whoami');
+      console.warn('Using fallback URL - Google OAuth may not work until you set up your Expo account');
+      // Fallback to makeRedirectUri as last resort
+      return AuthSession.makeRedirectUri({
+        scheme: undefined,
+        useProxy: true,
+        path: 'auth/callback',
+      });
+    }
+
+    // Generate proper Expo auth proxy URL that Google accepts
+    return `https://auth.expo.io/@${expoUsername}/${expoSlug}/--/auth/callback`;
   }
 
   // For standalone builds, use custom scheme
-  return AuthSession.makeRedirectUri({
-    scheme: 'foodhabit',
-    path: 'auth/callback',
-  });
+  // Format: foodhabit://auth/callback (accepted by Google OAuth)
+  return 'foodhabit://auth/callback';
 };
 
 // Create Supabase client with AsyncStorage for session persistence
@@ -45,20 +60,23 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
 // Get all possible redirect URLs for configuration
 export const getAllRedirectUrls = () => {
-  const expoGoUrl = AuthSession.makeRedirectUri({
-    useProxy: true,
-    path: 'auth/callback',
-  });
+  const expoUsername = Constants.expoConfig?.owner || 'YOUR_EXPO_USERNAME';
+  const expoSlug = Constants.expoConfig?.slug || 'foodhabit';
 
-  const standaloneUrl = AuthSession.makeRedirectUri({
-    scheme: 'foodhabit',
-    path: 'auth/callback',
-  });
+  // Expo Go proxy URL (HTTPS - accepted by Google OAuth)
+  const expoGoUrl = `https://auth.expo.io/@${expoUsername}/${expoSlug}/--/auth/callback`;
+
+  // Standalone app URL (custom scheme - accepted by Google OAuth)
+  const standaloneUrl = 'foodhabit://auth/callback';
+
+  // Current URL being used
+  const currentUrl = getSupabaseRedirectUrl();
 
   return {
     expoGo: expoGoUrl,
     standalone: standaloneUrl,
-    current: getSupabaseRedirectUrl(),
+    current: currentUrl,
+    expoUsername,
   };
 };
 
@@ -66,8 +84,14 @@ export const getAllRedirectUrls = () => {
 const urls = getAllRedirectUrls();
 console.log('=== SUPABASE REDIRECT URLs ===');
 console.log(`Current mode: ${isExpoGo ? 'Expo Go (Development)' : 'Standalone Build'}`);
-console.log('\nAdd BOTH URLs to your Supabase project settings:');
-console.log('1. Expo Go (Dev):', urls.expoGo);
-console.log('2. Standalone:', urls.standalone);
-console.log('\nCurrently using:', urls.current);
+console.log('\n🔑 CRITICAL: Google OAuth requires proper URLs (NOT exp://)');
+console.log('\nAdd BOTH URLs to your Supabase project:');
+console.log(`✅ Expo Go (Dev): ${urls.expoGo}`);
+if (urls.expoUsername === 'YOUR_EXPO_USERNAME') {
+  console.log('   ⚠️  SETUP REQUIRED: Run "npx expo whoami" to get your username');
+  console.log('   ⚠️  Without username, Google OAuth will NOT work in Expo Go');
+}
+console.log(`✅ Standalone: ${urls.standalone}`);
+console.log('\n📍 Currently using:', urls.current);
+console.log('\n📖 Setup: https://docs.expo.dev/guides/authentication/#google');
 console.log('===============================');

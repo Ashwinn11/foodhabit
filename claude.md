@@ -935,35 +935,60 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 ---
 
-### Environment-Aware Redirect URLs
+### CRITICAL: Google OAuth Redirect URLs
 
-**RULE**: Always use environment detection for OAuth redirects.
+**⚠️  CRITICAL**: Google OAuth **DOES NOT** accept `exp://` URLs!
+
+#### Required URL Formats
+
+✅ **Expo Go (Development)**: `https://auth.expo.io/@username/slug/--/auth/callback`
+✅ **Standalone (Production)**: `foodhabit://auth/callback`
+❌ **NOT ALLOWED**: `exp://192.168.1.6:8081/--/auth/callback`
+
+**RULE**: Always use explicit HTTPS or custom scheme URLs. NEVER use `exp://` for OAuth.
 
 #### Current Implementation
 
 ```typescript
 import Constants from 'expo-constants';
-import * as AuthSession from 'expo-auth-session';
 
 const isExpoGo = Constants.appOwnership === 'expo';
 
 export const getSupabaseRedirectUrl = (): string => {
   if (isExpoGo) {
-    // Development - Expo Go
-    return AuthSession.makeRedirectUri({
-      useProxy: true,
-      path: 'auth/callback',
-    });
+    // CRITICAL: Use HTTPS auth proxy (Google doesn't accept exp://)
+    const expoUsername = Constants.expoConfig?.owner;
+    const expoSlug = Constants.expoConfig?.slug || 'foodhabit';
+
+    // Generate proper HTTPS URL that Google accepts
+    return `https://auth.expo.io/@${expoUsername}/${expoSlug}/--/auth/callback`;
   }
-  // Production - Standalone build
-  return AuthSession.makeRedirectUri({
-    scheme: 'foodhabit',
-    path: 'auth/callback',
-  });
+
+  // Production: Custom scheme (accepted by Google OAuth)
+  return 'foodhabit://auth/callback';
 };
 ```
 
+**Key Points**:
+- ✅ Explicitly generates `https://auth.expo.io/...` URL for Expo Go
+- ✅ Does NOT rely on `makeRedirectUri` which may generate `exp://`
+- ✅ Requires Expo username: run `npx expo whoami` to verify
+- ✅ Both URLs are compatible with Google OAuth
+
 **Reference**: `src/config/supabase.ts`
+
+#### Setup: Get Your Expo Username
+
+```bash
+# Check your Expo username
+npx expo whoami
+
+# If not logged in
+npx expo login
+
+# Your redirect URL will be
+https://auth.expo.io/@YOUR_USERNAME/foodhabit/--/auth/callback
+```
 
 ---
 

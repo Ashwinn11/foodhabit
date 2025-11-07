@@ -2,13 +2,26 @@
 
 This document explains how deep linking is properly configured to work with both Expo Go and standalone builds.
 
+## CRITICAL: Google OAuth URL Requirements
+
+**⚠️  IMPORTANT**: Google OAuth **DOES NOT** accept `exp://` URLs!
+
+### Accepted URL Formats
+
+✅ **Expo Go (Development)**: `https://auth.expo.io/@username/slug/--/auth/callback`
+✅ **Standalone (Production)**: `foodhabit://auth/callback`
+❌ **NOT ALLOWED**: `exp://192.168.1.6:8081/--/auth/callback`
+
+The `exp://` scheme is Expo's internal development URL and is **rejected by Google OAuth**. You MUST use the proper HTTPS auth proxy URL for development.
+
 ## The Problem
 
 Expo has limitations with deep linking:
 
 1. **Expo Go (Development)**: Custom URL schemes (`foodhabit://`) don't work properly
 2. **Standalone Builds (Production)**: Custom URL schemes work, but Expo's proxy doesn't
-3. OAuth requires a consistent redirect URL that must match what's configured in providers
+3. **OAuth requires specific URL formats**: Google OAuth requires HTTPS or registered custom schemes
+4. **No exp:// allowed**: The `exp://` development URL is NOT accepted by OAuth providers
 
 ## The Solution
 
@@ -22,23 +35,27 @@ We implement **environment-aware redirect URLs** that automatically detect and u
 // Detect environment
 const isExpoGo = Constants.appOwnership === 'expo';
 
-// Return appropriate URL
+// Return appropriate URL (CRITICAL: Google OAuth compatible)
 export const getSupabaseRedirectUrl = (): string => {
   if (isExpoGo) {
-    // Expo Go: https://auth.expo.io/@username/foodhabit/auth/callback
-    return AuthSession.makeRedirectUri({
-      useProxy: true,
-      path: 'auth/callback',
-    });
+    // Expo Go: MUST use https://auth.expo.io (Google doesn't accept exp://)
+    const expoUsername = Constants.expoConfig?.owner;
+    const expoSlug = Constants.expoConfig?.slug || 'foodhabit';
+
+    // Generate proper HTTPS URL that Google accepts
+    return `https://auth.expo.io/@${expoUsername}/${expoSlug}/--/auth/callback`;
   }
 
-  // Standalone: foodhabit://auth/callback
-  return AuthSession.makeRedirectUri({
-    scheme: 'foodhabit',
-    path: 'auth/callback',
-  });
+  // Standalone: Custom scheme (accepted by Google OAuth)
+  return 'foodhabit://auth/callback';
 };
 ```
+
+**Key Changes from Default Expo Behavior:**
+- ✅ Explicitly generates `https://auth.expo.io/...` URL
+- ✅ Does NOT use `exp://` URLs
+- ✅ Compatible with Google OAuth requirements
+- ✅ Requires Expo username (run `npx expo whoami`)
 
 ## How It Works
 
