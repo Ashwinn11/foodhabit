@@ -1,17 +1,122 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Platform, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useAuth } from '../hooks/useAuth';
 import { getAllRedirectUrls } from '../config/supabase';
 import { theme, r } from '../theme';
 import { Container, Text, Button } from '../components';
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Floating animated orb component for background
+const AnimatedOrb: React.FC<{ delay?: number; size?: number; initialX?: number; initialY?: number; duration?: number }> = ({
+  delay = 0,
+  size = 200,
+  initialX = 0,
+  initialY = 0,
+  duration = 8000,
+}) => {
+  const translateX = useRef(new Animated.Value(initialX)).current;
+  const translateY = useRef(new Animated.Value(initialY)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Fade in animation
+    Animated.timing(opacity, {
+      toValue: 0.6,
+      duration: 1000,
+      delay,
+      useNativeDriver: true,
+    }).start();
+
+    // Floating animation
+    const animate = () => {
+      Animated.loop(
+        Animated.parallel([
+          Animated.sequence([
+            Animated.timing(translateX, {
+              toValue: Math.random() * 100 - 50,
+              duration,
+              useNativeDriver: true,
+            }),
+            Animated.timing(translateX, {
+              toValue: initialX,
+              duration,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.sequence([
+            Animated.timing(translateY, {
+              toValue: Math.random() * 100 - 50,
+              duration,
+              useNativeDriver: true,
+            }),
+            Animated.timing(translateY, {
+              toValue: initialY,
+              duration,
+              useNativeDriver: true,
+            }),
+          ]),
+        ])
+      ).start();
+    };
+
+    setTimeout(animate, delay);
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.orb,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          transform: [{ translateX }, { translateY }],
+          opacity,
+        },
+      ]}
+    />
+  );
+};
+
 export default function AuthScreen() {
   const { loading, error, signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
 
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
   useEffect(() => {
     checkAppleAuth();
+
+    // Entrance animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        delay: 300,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 20,
+        friction: 7,
+        delay: 300,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 20,
+        friction: 7,
+        delay: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, []);
 
   const checkAppleAuth = async () => {
@@ -59,88 +164,156 @@ export default function AuthScreen() {
 
   if (loading) {
     return (
-      <Container center variant="grouped">
-        <ActivityIndicator size="large" color={theme.colors.primary[500]} />
-        <Text variant="body" color="secondary" style={styles.loadingText}>
-          Signing in...
-        </Text>
-      </Container>
+      <View style={styles.container}>
+        {/* Gradient Background */}
+        <LinearGradient
+          colors={['#667eea', '#764ba2', '#f093fb']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+
+        {/* Animated Orbs */}
+        <AnimatedOrb delay={0} size={250} initialX={-50} initialY={-100} duration={10000} />
+        <AnimatedOrb delay={500} size={200} initialX={SCREEN_WIDTH - 150} initialY={SCREEN_HEIGHT / 2} duration={12000} />
+        <AnimatedOrb delay={1000} size={180} initialX={SCREEN_WIDTH / 2} initialY={SCREEN_HEIGHT - 200} duration={9000} />
+
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text variant="body" style={styles.loadingText}>
+            Signing in...
+          </Text>
+        </View>
+      </View>
     );
   }
 
   return (
-    <Container variant="grouped" center>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text variant="h1" align="center" style={styles.title}>
-            Food Habit
-          </Text>
-          <Text variant="subtitle1" color="secondary" align="center" style={styles.subtitle}>
-            Track your eating habits and build healthier routines
-          </Text>
-        </View>
+    <View style={styles.container}>
+      {/* Gradient Background */}
+      <LinearGradient
+        colors={['#667eea', '#764ba2', '#f093fb']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
 
-        <View style={styles.authButtons}>
-          {appleAuthAvailable && Platform.OS === 'ios' && (
-            <View style={styles.buttonContainer}>
-              <AppleAuthentication.AppleAuthenticationButton
-                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                cornerRadius={theme.borderRadius.pill}
-                style={styles.appleButton}
-                onPress={handleAppleSignIn}
-              />
+      {/* Animated Orbs */}
+      <AnimatedOrb delay={0} size={250} initialX={-50} initialY={-100} duration={10000} />
+      <AnimatedOrb delay={500} size={200} initialX={SCREEN_WIDTH - 150} initialY={SCREEN_HEIGHT / 2} duration={12000} />
+      <AnimatedOrb delay={1000} size={180} initialX={SCREEN_WIDTH / 2} initialY={SCREEN_HEIGHT - 200} duration={9000} />
+
+      {/* Main Content */}
+      <Container variant="plain" center style={styles.contentContainer}>
+        <Animated.View
+          style={[
+            styles.glassContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+            },
+          ]}
+        >
+          {/* Glass Morphism Card */}
+          <BlurView intensity={20} tint="light" style={styles.glassCard}>
+            <View style={styles.content}>
+              {/* Header */}
+              <View style={styles.header}>
+                <Text variant="largeTitle" align="center" style={styles.title}>
+                  Food Habit
+                </Text>
+                <Text variant="callout" align="center" style={styles.subtitle}>
+                  Track your eating habits and build healthier routines
+                </Text>
+              </View>
+
+              {/* Auth Buttons */}
+              <View style={styles.authButtons}>
+                {appleAuthAvailable && Platform.OS === 'ios' && (
+                  <View style={styles.buttonContainer}>
+                    <AppleAuthentication.AppleAuthenticationButton
+                      buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                      cornerRadius={theme.borderRadius.pill}
+                      style={styles.appleButton}
+                      onPress={handleAppleSignIn}
+                    />
+                  </View>
+                )}
+
+                <Button
+                  title="Continue with Google"
+                  onPress={handleGoogleSignIn}
+                  variant="primary"
+                  size="large"
+                  fullWidth
+                  disabled={loading}
+                  loading={loading}
+                />
+
+                {__DEV__ && (
+                  <Button
+                    title="Show Redirect URL"
+                    onPress={handleShowRedirectUrl}
+                    variant="ghost"
+                    size="small"
+                    style={styles.debugButton}
+                  />
+                )}
+              </View>
             </View>
-          )}
+          </BlurView>
+        </Animated.View>
 
-          <Button
-            title="Continue with Google"
-            onPress={handleGoogleSignIn}
-            variant="primary"
-            size="large"
-            fullWidth
-            disabled={loading}
-            loading={loading}
-          />
-
-          {__DEV__ && (
-            <Button
-              title="Show Redirect URL"
-              onPress={handleShowRedirectUrl}
-              variant="ghost"
-              size="small"
-              style={styles.debugButton}
-            />
-          )}
-        </View>
-      </View>
-
-      {__DEV__ && (
-        <View style={styles.devInfo}>
-          <Text variant="caption" color="tertiary">
-            Using Supabase Auth
-          </Text>
-        </View>
-      )}
-    </Container>
+        {__DEV__ && (
+          <BlurView intensity={15} tint="dark" style={styles.devInfo}>
+            <Text variant="caption2" style={styles.devInfoText}>
+              Using Supabase Auth
+            </Text>
+          </BlurView>
+        )}
+      </Container>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
+    flex: 1,
+    backgroundColor: '#667eea',
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  glassContainer: {
     width: '100%',
-    maxWidth: r.scaleWidth(400),
-    alignItems: 'center',
+    maxWidth: 420,
+  },
+  glassCard: {
+    borderRadius: theme.borderRadius['2xl'],
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...theme.shadows.xl,
+  },
+  content: {
+    padding: theme.spacing['3xl'],
+    width: '100%',
   },
   header: {
-    marginBottom: r.adaptiveSpacing['4xl'],
+    marginBottom: theme.spacing['3xl'],
     width: '100%',
   },
   title: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    color: '#1a1a1a',
+    fontWeight: '700',
   },
   subtitle: {
-    marginTop: theme.spacing.sm,
+    color: '#4a4a4a',
+    opacity: 0.9,
   },
   authButtons: {
     width: '100%',
@@ -148,25 +321,42 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: '100%',
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   appleButton: {
     width: '100%',
-    height: r.scaleHeight(56),
+    height: 56,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
     marginTop: theme.spacing.lg,
+    color: '#ffffff',
+    fontSize: 17,
   },
   debugButton: {
-    marginTop: theme.spacing.xl,
+    marginTop: theme.spacing.md,
   },
   devInfo: {
     position: 'absolute',
-    bottom: r.scaleHeight(20),
+    bottom: theme.spacing['2xl'],
     alignSelf: 'center',
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.fill.secondary,
     borderRadius: theme.borderRadius.pill,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  devInfoText: {
+    color: '#ffffff',
+  },
+  // Animated orb styles
+  orb: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
 });

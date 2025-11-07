@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme, r } from '../theme';
 
-export type ContainerVariant = 'default' | 'grouped' | 'card';
+export type ContainerVariant = 'default' | 'grouped' | 'card' | 'plain';
 
 export interface ContainerProps {
   /**
@@ -159,6 +159,10 @@ const styles = StyleSheet.create({
 
   variant_card: {
     backgroundColor: theme.colors.background.card,
+  },
+
+  variant_plain: {
+    backgroundColor: 'transparent',
   },
 });
 
