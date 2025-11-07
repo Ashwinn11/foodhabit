@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, Alert, TouchableOpacity, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
-import { supabase } from '../config/supabase';
 import { theme, r } from '../theme';
 import { Container, Text, Card } from '../components';
 
@@ -39,7 +38,6 @@ const SettingsRow: React.FC<SettingsRowProps> = ({ icon, label, onPress, showChe
 
 export default function ProfileScreen() {
   const { user, session, signOut } = useAuth();
-  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -61,71 +59,12 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleDeleteAccount = async () => {
+  const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
-      'This will permanently delete your account and all associated data. This action cannot be undone.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete Account',
-          style: 'destructive',
-          onPress: () => {
-            // Second confirmation for extra safety
-            Alert.alert(
-              'Are You Sure?',
-              'Please confirm that you want to permanently delete your account. All your data will be lost forever.',
-              [
-                {
-                  text: 'Cancel',
-                  style: 'cancel',
-                },
-                {
-                  text: 'Yes, Delete My Account',
-                  style: 'destructive',
-                  onPress: confirmDeleteAccount,
-                },
-              ]
-            );
-          },
-        },
-      ]
+      'Account deletion feature coming soon. Please contact support if you need to delete your account immediately.',
+      [{ text: 'OK' }]
     );
-  };
-
-  const confirmDeleteAccount = async () => {
-    try {
-      setDeletingAccount(true);
-
-      // Delete user data from Supabase
-      // Note: You'll need to set up RLS policies and/or server function to handle this
-      const { error } = await supabase.auth.admin.deleteUser(user?.id || '');
-
-      if (error) {
-        // Fallback: just sign out if admin deletion isn't available
-        await signOut();
-        Alert.alert(
-          'Account Deletion Requested',
-          'Your account deletion request has been submitted. Please contact support to complete the process.'
-        );
-      } else {
-        Alert.alert(
-          'Account Deleted',
-          'Your account has been permanently deleted.',
-          [{ text: 'OK', onPress: () => signOut() }]
-        );
-      }
-    } catch (error) {
-      Alert.alert(
-        'Error',
-        'Failed to delete account. Please try again or contact support.'
-      );
-    } finally {
-      setDeletingAccount(false);
-    }
   };
 
   const openTermsOfService = () => {
@@ -165,13 +104,6 @@ export default function ProfileScreen() {
     return user?.user_metadata?.full_name || user?.email || 'User';
   };
 
-  const getProvider = () => {
-    const provider = user?.app_metadata?.provider;
-    if (provider === 'apple') return 'Apple';
-    if (provider === 'google') return 'Google';
-    return 'Unknown';
-  };
-
   return (
     <Container variant="grouped" scrollable>
       <View style={styles.header}>
@@ -189,24 +121,6 @@ export default function ProfileScreen() {
         {user?.email && (
           <Text variant="body" color="secondary" style={styles.email}>{user.email}</Text>
         )}
-      </View>
-
-      {/* Account Section */}
-      <View style={styles.section}>
-        <Text variant="footnote" color="secondary" style={styles.sectionHeader}>
-          ACCOUNT
-        </Text>
-        <Card variant="elevated" padding="none" style={styles.settingsCard}>
-          <SettingsRow
-            icon="person-outline"
-            label="Sign-in Provider"
-            onPress={() => {}}
-            showChevron={false}
-          />
-          <View style={styles.providerInfo}>
-            <Text variant="body" color="secondary">{getProvider()}</Text>
-          </View>
-        </Card>
       </View>
 
       {/* Subscription Section */}
@@ -264,7 +178,7 @@ export default function ProfileScreen() {
           <View style={styles.divider} />
           <SettingsRow
             icon="trash-outline"
-            label={deletingAccount ? "Deleting..." : "Delete Account"}
+            label="Delete Account"
             onPress={handleDeleteAccount}
             showChevron={false}
             destructive
@@ -350,11 +264,6 @@ const styles = StyleSheet.create({
   },
   destructiveText: {
     color: '#ff3b30',
-  },
-  providerInfo: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingBottom: theme.spacing.lg,
-    paddingTop: 0,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
