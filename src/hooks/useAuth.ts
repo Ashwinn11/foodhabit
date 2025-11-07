@@ -1,19 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
+import { Session } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { AuthUser, AuthError } from '../types/auth';
-import {
-  signInWithApple,
-  signInWithGoogle,
-  signOut as supabaseSignOut,
-  getCurrentUser,
-  onAuthStateChange,
-} from '../services/auth';
+import { supabase } from '../config/supabase';
+import { signInWithApple as appleSignIn, signInWithGoogle as googleSignIn } from '../services/auth/supabaseAuth';
 
 export interface UseAuthReturn {
-  user: AuthUser | null;
+  session: Session | null;
   loading: boolean;
-  error: AuthError | null;
   signInWithApple: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -21,133 +15,53 @@ export interface UseAuthReturn {
 }
 
 /**
- * Authentication hook for managing user authentication with Supabase
- * Supports Apple Sign In (native) and Google OAuth
+ * Standard Supabase authentication hook
+ * Follows official Supabase React Native pattern
  */
 export const useAuth = (): UseAuthReturn => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<AuthError | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Track state changes for debugging
   useEffect(() => {
-    console.log('🔄 [useAuth] State changed:', {
-      hasUser: !!user,
-      userEmail: user?.email,
-      loading,
-      hasError: !!error,
-    });
-  }, [user, loading, error]);
-
-  // Check for existing session on mount
-  useEffect(() => {
-    console.log('🚀 [useAuth] Initializing auth hook...');
-    checkUser();
-
-    // Listen to auth state changes from Supabase
-    console.log('👂 [useAuth] Setting up auth state listener...');
-    const subscription = onAuthStateChange((authUser) => {
-      console.log('📣 [useAuth] Auth state changed from listener:', authUser?.email || 'null');
-      setUser(authUser);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
-    return () => {
-      console.log('🧹 [useAuth] Cleaning up auth listener');
-      subscription.unsubscribe();
-    };
+    // Listen for auth changes - this is the single source of truth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const checkUser = async () => {
-    console.log('🔍 [useAuth] Checking for existing user session...');
-    try {
-      const currentUser = await getCurrentUser();
-      console.log('✅ [useAuth] User session check complete:', currentUser?.email || 'no session');
-      setUser(currentUser);
-    } catch (err) {
-      console.error('❌ [useAuth] Error checking user:', err);
-    } finally {
-      setLoading(false);
-      console.log('✅ [useAuth] Initial loading complete');
-    }
-  };
-
-  const isAppleAuthAvailable = async (): Promise<boolean> => {
-    if (Platform.OS !== 'ios') {
-      return false;
-    }
+  const isAppleAuthAvailable = async () => {
+    if (Platform.OS !== 'ios') return false;
     try {
       return await AppleAuthentication.isAvailableAsync();
-    } catch (error) {
-      console.error('Error checking Apple Auth availability:', error);
+    } catch {
       return false;
     }
   };
 
+  // Just call the auth method - listener handles state
   const handleSignInWithApple = async () => {
-    setError(null);
-    console.log('⏱️  [useAuth] Starting Apple sign-in...');
-
-    try {
-      const authUser = await signInWithApple();
-      console.log('✅ [useAuth] Apple sign-in successful, updating state...');
-      console.log('👤 [useAuth] User:', authUser.email);
-
-      // CRITICAL: Update both user and loading states immediately
-      // This ensures App.tsx navigation logic works correctly
-      setUser(authUser);
-      setLoading(false); // Ensure loading is false after successful auth
-
-      console.log('✅ [useAuth] State updated - user authenticated and loading=false');
-    } catch (err: any) {
-      console.error('❌ [useAuth] Apple Sign In error:', err);
-      setError(err as AuthError);
-      throw err; // Re-throw so AuthScreen's finally block can handle it
-    }
+    await appleSignIn();
   };
 
   const handleSignInWithGoogle = async () => {
-    setError(null);
-    console.log('⏱️  [useAuth] Starting Google sign-in...');
-
-    try {
-      const authUser = await signInWithGoogle();
-      console.log('✅ [useAuth] Google sign-in successful, updating state...');
-      console.log('👤 [useAuth] User:', authUser.email);
-
-      // CRITICAL: Update both user and loading states immediately
-      // This ensures App.tsx navigation logic works correctly
-      setUser(authUser);
-      setLoading(false); // Ensure loading is false after successful auth
-
-      console.log('✅ [useAuth] State updated - user authenticated and loading=false');
-    } catch (err: any) {
-      console.error('❌ [useAuth] Google Sign In error:', err);
-      setError(err as AuthError);
-      throw err; // Re-throw so AuthScreen's finally block can handle it
-    }
+    await googleSignIn();
   };
 
   const handleSignOut = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      await supabaseSignOut();
-      setUser(null);
-    } catch (err: any) {
-      setError(err as AuthError);
-      console.error('Sign out error:', err);
-    } finally {
-      setLoading(false);
-    }
+    await supabase.auth.signOut();
   };
 
   return {
-    user,
+    session,
     loading,
-    error,
     signInWithApple: handleSignInWithApple,
     signInWithGoogle: handleSignInWithGoogle,
     signOut: handleSignOut,

@@ -95,14 +95,6 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
-    // Use PKCE flow for all OAuth (more secure and faster)
-    flowType: 'pkce',
-  },
-  // Optimize network performance
-  global: {
-    headers: {
-      'x-client-info': 'foodhabit-mobile',
-    },
   },
 });
 

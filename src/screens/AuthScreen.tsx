@@ -105,7 +105,7 @@ const AnimatedOrb: React.FC<{ delay?: number; size?: number; initialX?: number; 
 };
 
 export default function AuthScreen() {
-  const { loading, error, signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
+  const { signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
   const [loadingButton, setLoadingButton] = useState<'apple' | 'google' | null>(null);
 
@@ -117,7 +117,7 @@ export default function AuthScreen() {
   useEffect(() => {
     checkAppleAuth();
 
-    // Entrance animations - slower and more subtle
+    // Entrance animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -147,24 +147,14 @@ export default function AuthScreen() {
     setAppleAuthAvailable(available);
   };
 
-  useEffect(() => {
-    if (error) {
-      Alert.alert('Authentication Error', error.message);
-    }
-  }, [error]);
-
   const handleAppleSignIn = async () => {
     haptics.patterns.buttonPress();
     setLoadingButton('apple');
     try {
       await signInWithApple();
-    } catch (error) {
-      // Error is handled by useAuth hook
-      console.log('Sign in error caught in AuthScreen');
+    } catch (error: any) {
+      Alert.alert('Authentication Error', error.message || 'Failed to sign in');
     } finally {
-      // Always reset loading state, even on success
-      // (on success, the screen will navigate away before this runs)
-      // This ensures the button returns to normal state if sign-in fails or is cancelled
       setLoadingButton(null);
     }
   };
@@ -174,46 +164,12 @@ export default function AuthScreen() {
     setLoadingButton('google');
     try {
       await signInWithGoogle();
-    } catch (error) {
-      // Error is handled by useAuth hook
-      console.log('Sign in error caught in AuthScreen');
+    } catch (error: any) {
+      Alert.alert('Authentication Error', error.message || 'Failed to sign in');
     } finally {
-      // Always reset loading state, even on success
-      // (on success, the screen will navigate away before this runs)
-      // This ensures the button returns to normal state if sign-in fails or is cancelled
       setLoadingButton(null);
     }
   };
-
-  // Only show full-screen loading during initial session check, not during sign-in
-  if (loading && loadingButton === null) {
-    return (
-      <View style={styles.container}>
-        {/* Gradient Background - Light at top, heavy at bottom */}
-        <LinearGradient
-          colors={['#ffb5a7', '#ff9a8a', '#ff7664']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
-
-        {/* Decorative Pattern */}
-        <DecorativePattern />
-
-        {/* Animated Orbs */}
-        <AnimatedOrb delay={0} size={250} initialX={-50} initialY={-100} duration={15000} />
-        <AnimatedOrb delay={800} size={200} initialX={SCREEN_WIDTH - 150} initialY={SCREEN_HEIGHT / 2} duration={18000} />
-        <AnimatedOrb delay={1500} size={180} initialX={SCREEN_WIDTH / 2} initialY={SCREEN_HEIGHT - 200} duration={16000} />
-
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ffffff" />
-          <Text variant="body" style={styles.loadingText}>
-            Loading...
-          </Text>
-        </View>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>

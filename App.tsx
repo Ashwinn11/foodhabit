@@ -17,19 +17,9 @@ import TabNavigator from './src/navigation/TabNavigator';
 import { theme } from './src/theme';
 
 function AppContent() {
-  const { user, loading } = useAuth();
-
-  // Debug logging to track auth state changes
-  React.useEffect(() => {
-    console.log('📊 [App] Auth state:', {
-      hasUser: !!user,
-      userEmail: user?.email,
-      loading
-    });
-  }, [user, loading]);
+  const { session, loading } = useAuth();
 
   if (loading) {
-    console.log('⏳ [App] Showing loading screen');
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary[500]} />
@@ -38,12 +28,10 @@ function AppContent() {
     );
   }
 
-  if (!user) {
-    console.log('🔐 [App] No user, showing AuthScreen');
+  if (!session) {
     return <AuthScreen />;
   }
 
-  console.log('✅ [App] User authenticated, showing TabNavigator');
   return <TabNavigator />;
 }
 
