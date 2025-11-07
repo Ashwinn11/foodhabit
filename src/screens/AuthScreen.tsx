@@ -23,21 +23,21 @@ const AnimatedOrb: React.FC<{ delay?: number; size?: number; initialX?: number; 
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Fade in animation
+    // Fade in animation - slower and more subtle
     Animated.timing(opacity, {
-      toValue: 0.6,
-      duration: 1000,
+      toValue: 0.4,
+      duration: 1500,
       delay,
       useNativeDriver: true,
     }).start();
 
-    // Floating animation
+    // Floating animation - slower and gentler movement
     const animate = () => {
       Animated.loop(
         Animated.parallel([
           Animated.sequence([
             Animated.timing(translateX, {
-              toValue: Math.random() * 100 - 50,
+              toValue: Math.random() * 40 - 20, // Reduced from 100 to 40
               duration,
               useNativeDriver: true,
             }),
@@ -49,7 +49,7 @@ const AnimatedOrb: React.FC<{ delay?: number; size?: number; initialX?: number; 
           ]),
           Animated.sequence([
             Animated.timing(translateY, {
-              toValue: Math.random() * 100 - 50,
+              toValue: Math.random() * 40 - 20, // Reduced from 100 to 40
               duration,
               useNativeDriver: true,
             }),
@@ -94,26 +94,26 @@ export default function AuthScreen() {
   useEffect(() => {
     checkAppleAuth();
 
-    // Entrance animations
+    // Entrance animations - slower and more subtle
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
-        delay: 300,
+        duration: 1200,
+        delay: 400,
         useNativeDriver: true,
       }),
       Animated.spring(slideAnim, {
         toValue: 0,
-        tension: 20,
-        friction: 7,
-        delay: 300,
+        tension: 15,
+        friction: 9,
+        delay: 400,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
-        tension: 20,
-        friction: 7,
-        delay: 300,
+        tension: 15,
+        friction: 9,
+        delay: 400,
         useNativeDriver: true,
       }),
     ]).start();
@@ -167,16 +167,16 @@ export default function AuthScreen() {
       <View style={styles.container}>
         {/* Gradient Background */}
         <LinearGradient
-          colors={['#667eea', '#764ba2', '#f093fb']}
+          colors={['#ff7664', '#ff9a8a', '#ffb5a7']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFillObject}
         />
 
         {/* Animated Orbs */}
-        <AnimatedOrb delay={0} size={250} initialX={-50} initialY={-100} duration={10000} />
-        <AnimatedOrb delay={500} size={200} initialX={SCREEN_WIDTH - 150} initialY={SCREEN_HEIGHT / 2} duration={12000} />
-        <AnimatedOrb delay={1000} size={180} initialX={SCREEN_WIDTH / 2} initialY={SCREEN_HEIGHT - 200} duration={9000} />
+        <AnimatedOrb delay={0} size={250} initialX={-50} initialY={-100} duration={15000} />
+        <AnimatedOrb delay={800} size={200} initialX={SCREEN_WIDTH - 150} initialY={SCREEN_HEIGHT / 2} duration={18000} />
+        <AnimatedOrb delay={1500} size={180} initialX={SCREEN_WIDTH / 2} initialY={SCREEN_HEIGHT - 200} duration={16000} />
 
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#ffffff" />
@@ -192,16 +192,16 @@ export default function AuthScreen() {
     <View style={styles.container}>
       {/* Gradient Background */}
       <LinearGradient
-        colors={['#667eea', '#764ba2', '#f093fb']}
+        colors={['#ff7664', '#ff9a8a', '#ffb5a7']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFillObject}
       />
 
       {/* Animated Orbs */}
-      <AnimatedOrb delay={0} size={250} initialX={-50} initialY={-100} duration={10000} />
-      <AnimatedOrb delay={500} size={200} initialX={SCREEN_WIDTH - 150} initialY={SCREEN_HEIGHT / 2} duration={12000} />
-      <AnimatedOrb delay={1000} size={180} initialX={SCREEN_WIDTH / 2} initialY={SCREEN_HEIGHT - 200} duration={9000} />
+      <AnimatedOrb delay={0} size={250} initialX={-50} initialY={-100} duration={15000} />
+      <AnimatedOrb delay={800} size={200} initialX={SCREEN_WIDTH - 150} initialY={SCREEN_HEIGHT / 2} duration={18000} />
+      <AnimatedOrb delay={1500} size={180} initialX={SCREEN_WIDTH / 2} initialY={SCREEN_HEIGHT - 200} duration={16000} />
 
       {/* Main Content */}
       <Container variant="plain" center style={styles.contentContainer}>
@@ -280,7 +280,7 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#667eea',
+    backgroundColor: '#ff7664',
   },
   contentContainer: {
     flex: 1,
@@ -357,6 +357,6 @@ const styles = StyleSheet.create({
   // Animated orb styles
   orb: {
     position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
 });

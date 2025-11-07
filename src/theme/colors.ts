@@ -5,18 +5,18 @@
  */
 
 export const colors = {
-  // Primary colors (Apple's refined green for health/food)
+  // Primary colors (Warm coral/salmon for food & wellness)
   primary: {
-    50: '#E8F8E9',
-    100: '#C8ECC9',
-    200: '#A3DFA5',
-    300: '#7ED181',
-    400: '#62C665',
-    500: '#34C759', // Apple System Green
-    600: '#2FB350',
-    700: '#289E45',
-    800: '#228A3B',
-    900: '#1B6E2C',
+    50: '#FFF5F3',
+    100: '#FFE8E5',
+    200: '#FFD1CB',
+    300: '#FFBAB1',
+    400: '#FFA397',
+    500: '#ff7664', // Main brand color
+    600: '#FF5B47',
+    700: '#F4422D',
+    800: '#D63521',
+    900: '#B82A19',
   },
 
   // Secondary colors (Apple's vibrant orange)
@@ -47,7 +47,7 @@ export const colors = {
     900: '#1C1C1E', // Apple Label Primary
   },
 
-  // Semantic colors (Apple System Colors)
+  // Semantic colors (complementary to coral theme)
   success: {
     light: '#62C665',
     main: '#34C759', // Apple System Green
