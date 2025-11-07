@@ -163,9 +163,17 @@ fill: {
 
 ## Typography
 
-### Font Family: Poppins
+### Apple's Semantic Typography System
 
-Apple-style typography with natural case (no uppercase transforms).
+Unlike traditional h1-h6 headings, Apple uses **semantic text styles** that describe their purpose and hierarchy. This system includes 11 official text styles from the Human Interface Guidelines.
+
+**Key Principles:**
+- Use semantic names (body, headline) instead of abstract names (h1, h2)
+- Consistent font sizes across all devices (with Dynamic Type support)
+- Proper visual hierarchy through size, weight, and spacing
+- SF Pro Display for 20pt+, SF Pro Text for <20pt (we use Poppins equivalents)
+
+### Font Family: Poppins
 
 ```typescript
 fontFamily: {
@@ -173,49 +181,200 @@ fontFamily: {
   regular: 'Poppins_400Regular',
   medium: 'Poppins_500Medium',
   semiBold: 'Poppins_600SemiBold',
-  bold: 'Poppins_700Bold',
+  bold: 'Poppins_700Bold',    // For large titles (Display)
 }
 ```
 
-### Typography Variants
+### The 11 Semantic Text Styles
 
-#### Headings
+Apple's complete typography hierarchy with specific use cases:
 
+#### 1. Large Title (34pt)
 ```typescript
-h1: 36px, bold, tight line height
-h2: 30px, bold, tight line height
-h3: 24px, semiBold, normal line height
-h4: 20px, semiBold, normal line height
-h5: 18px, semiBold, normal line height
-h6: 16px, semiBold, normal line height
+fontSize: 34pt
+lineHeight: 41pt
+weight: Bold
+letterSpacing: -0.41 (tight)
+```
+**When to use:** Main page headings, navigation bar titles (when scrolled)
+**Examples:** "Settings", "Music", "Photos"
+**DO:** Use for primary app-level headings
+**DON'T:** Use for content within pages
+
+#### 2. Title 1 (28pt)
+```typescript
+fontSize: 28pt
+lineHeight: 34pt
+weight: Bold
+letterSpacing: -0.41 (tight)
+```
+**When to use:** Primary section headings, important content titles
+**Examples:** "Library", "For You", "Browse"
+**DO:** Use for main sections within a screen
+**DON'T:** Overuse - one per major section
+
+#### 3. Title 2 (22pt)
+```typescript
+fontSize: 22pt
+lineHeight: 28pt
+weight: Bold
+letterSpacing: 0 (normal)
+```
+**When to use:** Secondary section headings, card headers
+**Examples:** Modal titles, subsection headers
+**DO:** Use for grouped content headers
+**DON'T:** Mix with Title 1 at the same level
+
+#### 4. Title 3 (20pt)
+```typescript
+fontSize: 20pt
+lineHeight: 25pt
+weight: SemiBold
+letterSpacing: 0 (normal)
+```
+**When to use:** Tertiary headings, list group headers
+**Examples:** Settings group headers, list section titles
+**DO:** Use for smaller subsections
+**DON'T:** Use as body text
+
+#### 5. Headline (17pt)
+```typescript
+fontSize: 17pt
+lineHeight: 22pt
+weight: SemiBold
+letterSpacing: 0 (normal)
+```
+**When to use:** Emphasizing primary content, list item titles
+**Examples:** Email subject, contact names, article titles
+**DO:** Use to make content stand out in lists
+**DON'T:** Use for body paragraphs
+
+#### 6. Body (17pt) ⭐ Most Common
+```typescript
+fontSize: 17pt
+lineHeight: 22pt
+weight: Regular
+letterSpacing: 0 (normal)
+```
+**When to use:** Main body text, primary readable content
+**Examples:** Article text, messages, descriptions
+**DO:** Use as your default text style
+**DON'T:** Use for headings or tiny text
+
+#### 7. Callout (16pt)
+```typescript
+fontSize: 16pt
+lineHeight: 21pt
+weight: Regular
+letterSpacing: 0 (normal)
+```
+**When to use:** Supplementary text, secondary descriptions
+**Examples:** Additional info, annotations, button labels
+**DO:** Use for less prominent information
+**DON'T:** Use for body paragraphs
+
+#### 8. Subheadline (15pt)
+```typescript
+fontSize: 15pt
+lineHeight: 20pt
+weight: Regular
+letterSpacing: 0 (normal)
+```
+**When to use:** List item subtitles, metadata
+**Examples:** Email preview text, secondary details
+**DO:** Use beneath headlines in lists
+**DON'T:** Use as primary content
+
+#### 9. Footnote (13pt)
+```typescript
+fontSize: 13pt
+lineHeight: 18pt
+weight: Regular
+letterSpacing: 0 (normal)
+```
+**When to use:** Small informational text, attributions
+**Examples:** Timestamps, bylines, legal text
+**DO:** Use for supplementary information
+**DON'T:** Use for critical content
+
+#### 10. Caption 1 (12pt)
+```typescript
+fontSize: 12pt
+lineHeight: 16pt
+weight: Regular
+letterSpacing: 0 (normal)
+```
+**When to use:** Very small text, image captions
+**Examples:** Photo captions, tiny labels
+**DO:** Use sparingly for small labels
+**DON'T:** Use for readable content
+
+#### 11. Caption 2 (11pt) - Minimum Size
+```typescript
+fontSize: 11pt
+lineHeight: 13pt
+weight: Regular
+letterSpacing: 0.38 (wide for legibility)
+```
+**When to use:** The smallest readable text
+**Examples:** Fine print, absolute minimum labels
+**DO:** Use only when space is critical
+**DON'T:** Use extensively - minimum recommended size per Apple
+
+### Additional Semantic Styles
+
+#### Body Emphasized
+```typescript
+fontSize: 17pt, weight: Medium
+```
+**When to use:** Emphasize body text without changing hierarchy
+**Example:** Important word in a sentence
+
+#### Callout Emphasized
+```typescript
+fontSize: 16pt, weight: Medium
+```
+**When to use:** Emphasize secondary text
+**Example:** Status labels, tags
+
+### Visual Hierarchy Example
+
+```tsx
+// Good - Using semantic styles
+<Text variant="largeTitle">Settings</Text>
+<Text variant="title2">Notifications</Text>
+<Text variant="headline">Push Notifications</Text>
+<Text variant="body">Receive alerts for new messages</Text>
+<Text variant="footnote">Last updated: 2 hours ago</Text>
+
+// Avoid - Using abstract h1-h6
+<Text variant="h1">Settings</Text>  // What does h1 mean?
+<Text variant="h3">Notifications</Text>  // Why h3 and not h2?
 ```
 
-#### Body Text
+### Typography Guidelines
 
-```typescript
-bodyLarge: 18px, regular, relaxed line height
-body: 16px, regular, normal line height
-bodySmall: 14px, regular, normal line height
-```
+1. **Use Semantic Names**
+   - Prefer `body` over `h5`
+   - Prefer `headline` over `h4`
+   - Makes intent clear to developers and screen readers
 
-#### Buttons (Natural Case - Apple Style)
+2. **Maintain Hierarchy**
+   - Don't skip levels (largeTitle → title3 ❌)
+   - Progress logically (title1 → title2 → title3 ✅)
 
-```typescript
-buttonLarge: 20px, semiBold, tight line height
-button: 18px, semiBold, tight line height
-buttonSmall: 16px, semiBold, tight line height
-```
+3. **Font Selection**
+   - 20pt+: Use SemiBold or Bold (Display font)
+   - <20pt: Use Regular or Medium (Text font)
 
-#### Labels & Captions
+4. **Body is Your Default**
+   - When in doubt, use `body` (17pt Regular)
+   - Most readable and commonly used style
 
-```typescript
-label: 16px, medium
-labelSmall: 14px, medium
-caption: 12px, regular
-footnote: 12px, regular
-subtitle1: 18px, medium
-subtitle2: 16px, medium
-```
+5. **Accessibility**
+   - Support Dynamic Type (future enhancement)
+   - Maintain 4.5:1 contrast ratio
+   - Never go below 11pt (Caption 2)
 
 ---
 
