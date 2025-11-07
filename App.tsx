@@ -1,9 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, Alert, Platform, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, Button, Alert, Platform, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useAuth } from './src/hooks/useAuth';
 import { useEffect, useState } from 'react';
-import { getSupabaseRedirectUrl } from './src/config/supabase';
+import { getSupabaseRedirectUrl, getAllRedirectUrls } from './src/config/supabase';
 
 export default function App() {
   const { user, loading, error, signInWithApple, signInWithGoogle, signOut, isAppleAuthAvailable } = useAuth();
@@ -33,12 +33,24 @@ export default function App() {
   };
 
   const handleShowRedirectUrl = () => {
-    const redirectUrl = getSupabaseRedirectUrl();
+    const urls = getAllRedirectUrls();
+
+    const message = `Add BOTH URLs to your Supabase project:\n\n1. Expo Go (Dev):\n${urls.expoGo}\n\n2. Standalone Build:\n${urls.standalone}\n\nCurrently using:\n${urls.current}\n\nGo to: Authentication > URL Configuration > Redirect URLs`;
+
     Alert.alert(
-      'Supabase Redirect URL',
-      `Add this URL to your Supabase project:\n\n${redirectUrl}\n\nGo to: Authentication > URL Configuration > Redirect URLs`,
+      'Supabase Redirect URLs',
+      message,
       [
-        { text: 'Copy to Console', onPress: () => console.log('Redirect URL:', redirectUrl) },
+        {
+          text: 'Copy to Console',
+          onPress: () => {
+            console.log('=== SUPABASE REDIRECT URLs ===');
+            console.log('Expo Go (Dev):', urls.expoGo);
+            console.log('Standalone:', urls.standalone);
+            console.log('Current:', urls.current);
+            console.log('============================');
+          }
+        },
         { text: 'OK' },
       ]
     );

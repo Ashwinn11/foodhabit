@@ -71,16 +71,21 @@ Supabase simplifies OAuth implementation by:
 
 ### Step 2: Verify Configuration
 
-The app will log the redirect URL on startup. Check your console for:
+The app will log the redirect URLs on startup. Check your console for:
 
 ```
-=== SUPABASE REDIRECT URL ===
-Add this to your Supabase project settings:
-foodhabit://auth/callback
-============================
+=== SUPABASE REDIRECT URLs ===
+Current mode: Expo Go (Development)
+
+Add BOTH URLs to your Supabase project settings:
+1. Expo Go (Dev): https://auth.expo.io/@username/foodhabit/auth/callback
+2. Standalone: foodhabit://auth/callback
+
+Currently using: https://auth.expo.io/@username/foodhabit/auth/callback
+===============================
 ```
 
-Save this URL - you'll need it soon!
+Save both URLs - you'll need them for deep link configuration!
 
 ## Setup Apple Sign In
 
@@ -177,41 +182,85 @@ Save this URL - you'll need it soon!
 
 ## Configure Deep Links
 
-### Step 1: Add Redirect URL to Supabase
+**IMPORTANT**: Due to Expo limitations, you need **TWO** redirect URLs - one for development (Expo Go) and one for production (standalone builds).
+
+### Understanding the Limitation
+
+- **Expo Go (Development)**: Custom URL schemes (`foodhabit://`) don't work properly
+- **Standalone Builds (Production)**: Expo's auth proxy doesn't work
+
+The app automatically detects which environment it's running in and uses the correct redirect URL.
+
+### Step 1: Get Your Redirect URLs
+
+The app automatically logs both URLs on startup. Check your console for:
+
+```
+=== SUPABASE REDIRECT URLs ===
+Current mode: Expo Go (Development)
+
+Add BOTH URLs to your Supabase project settings:
+1. Expo Go (Dev): https://auth.expo.io/@username/foodhabit/auth/callback
+2. Standalone: foodhabit://auth/callback
+
+Currently using: https://auth.expo.io/@username/foodhabit/auth/callback
+===============================
+```
+
+Or tap the "Show Supabase Redirect URL" button in development mode.
+
+### Step 2: Add BOTH URLs to Supabase
 
 1. In Supabase dashboard, go to "Authentication"
 2. Click "URL Configuration" tab
-3. Under "Redirect URLs", click "Add URL"
-4. Add: `foodhabit://auth/callback`
-5. Click "Save"
+3. Under "Redirect URLs", add **BOTH** URLs:
+   - Click "Add URL", paste: `https://auth.expo.io/@your-username/foodhabit/auth/callback`
+   - Click "Add URL" again, paste: `foodhabit://auth/callback`
+4. Click "Save"
 
-### Step 2: Verify Deep Link Configuration
+**Why both?**
+- The Expo Go URL (`https://auth.expo.io/...`) is used during development
+- The custom scheme URL (`foodhabit://...`) is used in standalone builds
+- The app auto-switches between them based on the environment
 
-The app is already configured with the correct scheme in `app.json`:
+### Step 3: Verify Deep Link Configuration
+
+The app is already configured in `app.json`:
 
 ```json
 {
   "scheme": "foodhabit",
-  "plugins": [
-    "expo-apple-authentication",
-    "expo-web-browser"
-  ]
+  "ios": {
+    "bundleIdentifier": "com.foodhabit.com",
+    "associatedDomains": ["applinks:foodhabit.com"]
+  },
+  "android": {
+    "package": "com.foodhabit.com",
+    "intentFilters": [...]
+  }
 }
 ```
 
-This enables `foodhabit://` URLs to open your app.
+This enables:
+- Custom URL scheme: `foodhabit://`
+- iOS universal links: `https://foodhabit.com`
+- Android deep links with intent filters
 
-### Step 3: Test Deep Link (Optional)
+### Step 4: Test Deep Link (Optional)
 
-For iOS:
+For iOS (Simulator):
 ```bash
 xcrun simctl openurl booted "foodhabit://auth/callback"
 ```
 
-For Android:
+For Android (Emulator/Device):
 ```bash
-adb shell am start -W -a android.intent.action.VIEW -d "foodhabit://auth/callback"
+adb shell am start -W -a android.intent.action.VIEW -d "foodhabit://auth/callback" com.foodhabit.com
 ```
+
+**Note**: In Expo Go, the custom scheme won't work. That's expected - it will use Expo's auth proxy automatically.
+
+For a detailed explanation of how deep linking works, see [DEEP_LINKING.md](./DEEP_LINKING.md).
 
 ## Testing
 
