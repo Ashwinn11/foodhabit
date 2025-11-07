@@ -1,42 +1,195 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# Environment Variables - CRITICAL: Never commit these
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env*.local
+
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
 
 # Expo
 .expo/
+.expo-shared/
 dist/
 web-build/
 expo-env.d.ts
 
-# Native
-.kotlin/
+# Native Build Folders
+ios/
+android/
+
+# Native Files
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.keystore
+!debug.keystore
+.kotlin/
 
-# Metro
+# Metro Bundler
 .metro-health-check*
+.metro-cache/
 
-# debug
+# Debug & Logs
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
+logs/
+
+# Testing
+coverage/
+*.lcov
+.nyc_output
+
+# TypeScript
+*.tsbuildinfo
+*.tsbuildinfo.json
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IDE - WebStorm / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# IDE - Sublime Text
+*.sublime-project
+*.sublime-workspace
 
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
 *.pem
 
-# local env files
-.env
-.env*.local
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# typescript
-*.tsbuildinfo
+# Linux
+*~
 
-# generated native folders
-/ios
-/android
+# Temporary Files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# npm
+npm-debug.log*
+.npm
+
+# Yarn
+yarn-debug.log*
+yarn-error.log*
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Parcel-bundler cache
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+out
+
+# Nuxt.js build / generate output
+.nuxt
+
+# Gatsby files
+.cache/
+
+# Comment in the public line if your project uses Gatsby and not Next.js
+# public
+
+# vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Storybook
+storybook-static
+
+# EAS (Expo Application Services)
+.eas/
+
+# Expo Router
+.expo-router/
+
+# Local Netlify folder
+.netlify
+
+# Vercel
+.vercel
+
+# Turbo
+.turbo
+
+# Sentry
+.sentryclirc
+
+# Firebase
+.firebase/
+
+# Generated documentation
+docs-build/
+
+# Screenshots and recordings (often generated during testing)
+screenshots/
+recordings/
+
+# Backup files
+*.bak
+*.backup

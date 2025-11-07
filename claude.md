@@ -791,6 +791,140 @@ const styles = StyleSheet.create({
 
 ---
 
+## Security and Environment Variables
+
+### CRITICAL: .gitignore Configuration
+
+**RULE**: ALWAYS ensure sensitive files are in .gitignore. NEVER commit environment variables or credentials.
+
+#### Comprehensive .gitignore
+
+The project uses a comprehensive .gitignore that covers:
+
+1. **Environment Variables (CRITICAL)**
+   - .env
+   - .env.local
+   - .env.development
+   - .env.production
+   - .env.test
+   - .env*.local
+
+2. **Dependencies**
+   - node_modules/
+   - .pnp files
+
+3. **Build Artifacts**
+   - .expo/
+   - dist/
+   - web-build/
+   - ios/
+   - android/
+
+4. **Cache Files**
+   - .metro-cache/
+   - .cache/
+   - .parcel-cache/
+
+5. **IDE Settings**
+   - .vscode/
+   - .idea/
+   - *.sublime-*
+
+6. **OS Files**
+   - .DS_Store (macOS)
+   - Thumbs.db (Windows)
+   - *~ (Linux)
+
+7. **Logs and Debug Files**
+   - *.log
+   - npm-debug.*
+   - yarn-error.*
+
+8. **Testing**
+   - coverage/
+   - .nyc_output
+
+**Documentation**: See `.gitignore` in project root
+
+---
+
+### Environment Variables (.env)
+
+**RULE**: NEVER commit .env files. ALWAYS use .env.example for documentation.
+
+#### Required Environment Variables
+
+```bash
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+**IMPORTANT**: Use `EXPO_PUBLIC_` prefix to expose variables to the app.
+
+#### Setting Up Environment Variables
+
+1. Copy the example file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Get your Supabase credentials:
+   - Go to https://app.supabase.com
+   - Select your project
+   - Navigate to Settings > API
+   - Copy Project URL and anon/public key
+
+3. Update .env with your actual values:
+   ```bash
+   EXPO_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxxx.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   ```
+
+4. Verify .env is in .gitignore:
+   ```bash
+   git check-ignore .env
+   # Should output: .env
+   ```
+
+#### Security Best Practices
+
+1. **NEVER commit .env files**
+   - Always verify with `git status` before committing
+   - .env should never appear in git status
+
+2. **Rotate keys if exposed**
+   - If you accidentally commit .env, rotate keys immediately in Supabase
+   - Go to Supabase Settings > API > Reset keys
+
+3. **Use .env.example for team**
+   - Commit .env.example with placeholder values
+   - Document all required variables
+   - Never include actual credentials
+
+4. **Check commits before pushing**
+   ```bash
+   git diff HEAD~1 HEAD
+   # Verify no .env content is included
+   ```
+
+5. **Use git hooks (optional)**
+   - Add pre-commit hook to check for .env content
+   - Use tools like git-secrets or husky
+
+#### Accessing Environment Variables
+
+In your code:
+```typescript
+import Constants from 'expo-constants';
+
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+```
+
+**Reference**: `src/config/supabase.ts`
+
+---
+
 ## Authentication Flow
 
 ### Supabase Authentication
