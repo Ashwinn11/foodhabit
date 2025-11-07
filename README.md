@@ -4,8 +4,7 @@ A React Native Expo application with Apple Sign In and Google OAuth authenticati
 
 ## Bundle ID
 
-- iOS: `com.foodhabit.com`
-- Android: `com.foodhabit.com`
+- iOS: `com.foodhabit.app`
 
 ## Features
 
@@ -107,7 +106,7 @@ For detailed setup instructions, see [SUPABASE_SETUP.md](./SUPABASE_SETUP.md).
 
 #### Apple Sign In
 
-1. Enable "Sign in with Apple" in Apple Developer Portal for `com.foodhabit.com`
+1. Enable "Sign in with Apple" in Apple Developer Portal for `com.foodhabit.app`
 2. Create an auth key in Apple Developer Portal
 3. Configure Apple provider in Supabase with Team ID, Key ID, and auth key
 
@@ -244,7 +243,7 @@ User authenticated!
    ```json
    {
      "ios": {
-       "bundleIdentifier": "com.foodhabit.com",
+       "bundleIdentifier": "com.foodhabit.app",
        "usesAppleSignIn": true
      }
    }
@@ -253,22 +252,6 @@ User authenticated!
 2. Build with EAS:
    ```bash
    eas build --platform ios
-   ```
-
-### Android
-
-1. Configure in `app.json`:
-   ```json
-   {
-     "android": {
-       "package": "com.foodhabit.com"
-     }
-   }
-   ```
-
-2. Build with EAS:
-   ```bash
-   eas build --platform android
    ```
 
 ## Troubleshooting

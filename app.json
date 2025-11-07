@@ -2,6 +2,7 @@
   "expo": {
     "name": "Food Habit",
     "slug": "foodhabit",
+    "owner": "ashwiin11",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,17 +16,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.foodhabit.com",
-      "usesAppleSignIn": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.foodhabit.com",
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "bundleIdentifier": "com.foodhabit.app",
+      "usesAppleSignIn": true,
+      "associatedDomains": [
+        "applinks:foodhabit.com"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
