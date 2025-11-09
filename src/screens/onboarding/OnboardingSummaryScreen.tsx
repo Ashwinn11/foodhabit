@@ -155,7 +155,10 @@ export default function OnboardingSummaryScreen({
             {/* Title */}
             <View style={styles.titleContainer}>
               <Text variant="h2" align="center" style={styles.title}>
-                Here's your personalized FEEL dashboard
+                Here's your starting baseline
+              </Text>
+              <Text variant="body" align="center" style={styles.subtitle}>
+                Your scores will become more accurate as you log meals
               </Text>
             </View>
 
@@ -228,7 +231,7 @@ export default function OnboardingSummaryScreen({
             {/* Info Text */}
             <View style={styles.infoContainer}>
               <Text variant="caption" align="center" style={styles.infoText}>
-                These scores will update daily as you log meals
+                💡 Based on your lifestyle habits. Log meals daily for personalized insights.
               </Text>
             </View>
 
@@ -373,6 +376,10 @@ const styles = StyleSheet.create({
   },
   title: {
     color: theme.colors.brand.white,
+  },
+  subtitle: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: theme.spacing.sm,
   },
   cardsContainer: {
     gap: theme.spacing.md,
