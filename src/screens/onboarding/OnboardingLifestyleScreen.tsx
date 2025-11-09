@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -36,7 +36,7 @@ interface OnboardingLifestyleScreenProps {
  * - Progressive ring fill
  *
  * Animation:
- * - Ring progresses 50% → 70%
+ * - Ring progresses 50% → 65%
  * - Icons scale on select
  * - Haptic on each selection
  */
@@ -71,6 +71,12 @@ export default function OnboardingLifestyleScreen({
     { id: 'vegan', label: 'Vegan', icon: 'flower' as const },
   ];
 
+  // Helper function to validate time format HH:MM
+  const isValidTime = (time: string): boolean => {
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+    return timeRegex.test(time);
+  };
+
   // Validate and update ring progress
   const validateAndUpdateProgress = () => {
     const newErrors: Record<string, string> = {};
@@ -79,7 +85,7 @@ export default function OnboardingLifestyleScreen({
     if (activityLevel) filledFields++;
     if (sleepHours) {
       const sleep = parseFloat(sleepHours);
-      if (sleep < 1 || sleep > 24) {
+      if (isNaN(sleep) || sleep < 1 || sleep > 24) {
         newErrors.sleepHours = 'Sleep must be 1-24 hours';
       } else {
         filledFields++;
@@ -89,12 +95,30 @@ export default function OnboardingLifestyleScreen({
     }
 
     if (dietType) filledFields++;
-    if (eatingStart && eatingEnd) filledFields++;
+
+    // Validate eating window
+    let eatingWindowValid = true;
+    if (eatingStart && eatingEnd) {
+      if (!isValidTime(eatingStart)) {
+        newErrors.eatingStart = 'Invalid time format (HH:MM)';
+        eatingWindowValid = false;
+      }
+      if (!isValidTime(eatingEnd)) {
+        newErrors.eatingEnd = 'Invalid time format (HH:MM)';
+        eatingWindowValid = false;
+      }
+      if (eatingWindowValid) {
+        filledFields++;
+      }
+    } else {
+      if (!eatingStart) newErrors.eatingStart = 'Start time required';
+      if (!eatingEnd) newErrors.eatingEnd = 'End time required';
+    }
 
     setErrors(newErrors);
 
-    // Update ring: 50% → 70% (20% range)
-    const progress = 50 + (filledFields / 4) * 20;
+    // Update ring: 50% → 65% (15% range)
+    const progress = 50 + (filledFields / 4) * 15;
     Animated.timing(ringValue, {
       toValue: progress,
       duration: 300,
@@ -111,8 +135,8 @@ export default function OnboardingLifestyleScreen({
     if (dietType) filledFields++;
     if (eatingStart && eatingEnd) filledFields++;
 
-    // Update ring: 50% → 70% (20% range)
-    const progress = 50 + (filledFields / 4) * 20;
+    // Update ring: 50% → 65% (15% range)
+    const progress = 50 + (filledFields / 4) * 15;
     Animated.timing(ringValue, {
       toValue: progress,
       duration: 300,
@@ -134,9 +158,52 @@ export default function OnboardingLifestyleScreen({
   };
 
   const handleSleepChange = (value: string) => {
-    setSleepHours(value);
-    haptics.light();
+    // Allow numbers and one decimal point
+    const filtered = value.replace(/[^0-9.]/g, '');
+    // Ensure only one decimal point
+    const parts = filtered.split('.');
+    const limited = parts.length > 2
+      ? parts[0] + '.' + parts.slice(1).join('')
+      : filtered;
+    // Limit to 4 characters (e.g., 24.5)
+    const final = limited.slice(0, 4);
+    setSleepHours(final);
+    if (value !== final) {
+      haptics.light();
+    }
     updateRingProgressOnly();
+  };
+
+  const handleEatingStartChange = (value: string) => {
+    // Format: HH:MM - only allow numbers and colon
+    const filtered = value.replace(/[^0-9:]/g, '');
+    // Auto-format time (add colon after 2 digits)
+    let formatted = filtered;
+    if (filtered.length >= 2 && !filtered.includes(':')) {
+      formatted = filtered.slice(0, 2) + ':' + filtered.slice(2);
+    }
+    // Limit to HH:MM format (5 characters)
+    const final = formatted.slice(0, 5);
+    setEatingStart(final);
+    if (value !== final) {
+      haptics.light();
+    }
+  };
+
+  const handleEatingEndChange = (value: string) => {
+    // Format: HH:MM - only allow numbers and colon
+    const filtered = value.replace(/[^0-9:]/g, '');
+    // Auto-format time (add colon after 2 digits)
+    let formatted = filtered;
+    if (filtered.length >= 2 && !filtered.includes(':')) {
+      formatted = filtered.slice(0, 2) + ':' + filtered.slice(2);
+    }
+    // Limit to HH:MM format (5 characters)
+    const final = formatted.slice(0, 5);
+    setEatingEnd(final);
+    if (value !== final) {
+      haptics.light();
+    }
   };
 
   const handleNext = () => {
@@ -268,12 +335,18 @@ export default function OnboardingLifestyleScreen({
                       <Input
                         placeholder="12:00"
                         value={eatingStart}
-                        onChangeText={setEatingStart}
+                        onChangeText={handleEatingStartChange}
                         onBlur={validateAndUpdateProgress}
+                        keyboardType="number-pad"
                       />
                       <Text variant="caption" style={styles.ampmLabel}>
                         Start
                       </Text>
+                      {errors.eatingStart && (
+                        <Text variant="caption" style={styles.errorText}>
+                          {errors.eatingStart}
+                        </Text>
+                      )}
                     </View>
 
                     <Text variant="body" style={styles.separator}>
@@ -284,12 +357,18 @@ export default function OnboardingLifestyleScreen({
                       <Input
                         placeholder="20:00"
                         value={eatingEnd}
-                        onChangeText={setEatingEnd}
+                        onChangeText={handleEatingEndChange}
                         onBlur={validateAndUpdateProgress}
+                        keyboardType="number-pad"
                       />
                       <Text variant="caption" style={styles.ampmLabel}>
                         End
                       </Text>
+                      {errors.eatingEnd && (
+                        <Text variant="caption" style={styles.errorText}>
+                          {errors.eatingEnd}
+                        </Text>
+                      )}
                     </View>
                   </View>
                 </View>

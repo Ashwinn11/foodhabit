@@ -155,7 +155,10 @@ export default function OnboardingSummaryScreen({
             {/* Title */}
             <View style={styles.titleContainer}>
               <Text variant="h2" align="center" style={styles.title}>
-                Here's your personalized FEEL dashboard
+                Here's your starting baseline
+              </Text>
+              <Text variant="body" align="center" style={styles.subtitle}>
+                Your scores will become more accurate as you log meals
               </Text>
             </View>
 
@@ -176,6 +179,7 @@ export default function OnboardingSummaryScreen({
                   iconBg={theme.colors.brand.primary}
                   title="Metabolic Age"
                   value={metabolicAge}
+                  targetValue={metrics.metabolic_age}
                   suffix=" years"
                   description="Your body performs like a"
                 />
@@ -196,6 +200,7 @@ export default function OnboardingSummaryScreen({
                   iconBg={theme.colors.brand.secondary}
                   title="Gut Health Score"
                   value={gutScore}
+                  targetValue={metrics.gut_health_score}
                   suffix="/100"
                   description="Above average — room to optimize"
                 />
@@ -216,6 +221,7 @@ export default function OnboardingSummaryScreen({
                   iconBg={theme.colors.brand.tertiary}
                   title="Nutrition Balance"
                   value={nutritionScore}
+                  targetValue={metrics.nutrition_balance_score}
                   suffix="/100"
                   description="Balanced, but we found gaps"
                 />
@@ -225,7 +231,7 @@ export default function OnboardingSummaryScreen({
             {/* Info Text */}
             <View style={styles.infoContainer}>
               <Text variant="caption" align="center" style={styles.infoText}>
-                These scores will update daily as you log meals
+                💡 Based on your lifestyle habits. Log meals daily for personalized insights.
               </Text>
             </View>
 
@@ -268,6 +274,7 @@ interface MetricsCardProps {
   iconBg: string;
   title: string;
   value: Animated.Value;
+  targetValue: number;
   suffix: string;
   description: string;
 }
@@ -277,6 +284,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({
   iconBg,
   title,
   value,
+  targetValue,
   suffix,
   description,
 }) => {
@@ -301,7 +309,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({
 
           {/* Animated Value */}
           <Animated.View style={styles.valueContainer}>
-            <AnimatedNumber value={value} suffix={suffix} />
+            <AnimatedNumber value={value} targetValue={targetValue} suffix={suffix} />
           </Animated.View>
 
           <Text variant="caption" style={styles.description}>
@@ -318,8 +326,9 @@ const MetricsCard: React.FC<MetricsCardProps> = ({
  */
 const AnimatedNumber: React.FC<{
   value: Animated.Value;
+  targetValue: number;
   suffix: string;
-}> = ({ value, suffix }) => {
+}> = ({ value, targetValue, suffix }) => {
   return (
     <Animated.Text
       style={[
@@ -335,8 +344,8 @@ const AnimatedNumber: React.FC<{
         }}
       >
         {value.interpolate({
-          inputRange: [0, 100],
-          outputRange: ['0', '100'],
+          inputRange: [0, targetValue],
+          outputRange: ['0', Math.round(targetValue).toString()],
         })}
       </Animated.Text>
       <Text style={styles.suffix}>{suffix}</Text>
@@ -367,6 +376,10 @@ const styles = StyleSheet.create({
   },
   title: {
     color: theme.colors.brand.white,
+  },
+  subtitle: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: theme.spacing.sm,
   },
   cardsContainer: {
     gap: theme.spacing.md,

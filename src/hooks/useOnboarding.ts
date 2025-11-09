@@ -13,7 +13,7 @@ export const useOnboarding = () => {
   const { user } = useAuth();
   const [state, setState] = useState<OnboardingState>({
     step: 0,
-    totalSteps: 7,
+    totalSteps: 9,
     data: {},
     ringProgress: 0,
   });
@@ -166,7 +166,7 @@ export const useOnboarding = () => {
   const reset = useCallback(() => {
     setState({
       step: 0,
-      totalSteps: 7,
+      totalSteps: 9,
       data: {},
       ringProgress: 0,
     });

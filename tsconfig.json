@@ -24,7 +24,11 @@
   },
   "ts-node": {
     "compilerOptions": {
-      "module": "commonjs"
+      "module": "commonjs",
+      "lib": ["ES2020"]
     }
-  }
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -124,18 +124,46 @@ export default function OnboardingBodyBasicsScreen({
   };
 
   const handleAgeChange = (value: string) => {
-    setAge(value);
-    haptics.light();
+    // Only allow integers (no decimals for age)
+    const filtered = value.replace(/[^0-9]/g, '');
+    // Limit to 3 digits (max 999, but validation will catch 121+)
+    const limited = filtered.slice(0, 3);
+    setAge(limited);
+    if (value !== limited) {
+      haptics.light();
+    }
   };
 
   const handleHeightChange = (value: string) => {
-    setHeight(value);
-    haptics.light();
+    // Allow numbers and one decimal point
+    const filtered = value.replace(/[^0-9.]/g, '');
+    // Ensure only one decimal point
+    const parts = filtered.split('.');
+    const limited = parts.length > 2
+      ? parts[0] + '.' + parts.slice(1).join('')
+      : filtered;
+    // Limit total length to 5 (e.g., 250.5)
+    const final = limited.slice(0, 5);
+    setHeight(final);
+    if (value !== final) {
+      haptics.light();
+    }
   };
 
   const handleWeightChange = (value: string) => {
-    setWeight(value);
-    haptics.light();
+    // Allow numbers and one decimal point
+    const filtered = value.replace(/[^0-9.]/g, '');
+    // Ensure only one decimal point
+    const parts = filtered.split('.');
+    const limited = parts.length > 2
+      ? parts[0] + '.' + parts.slice(1).join('')
+      : filtered;
+    // Limit total length to 5 (e.g., 500.5)
+    const final = limited.slice(0, 5);
+    setWeight(final);
+    if (value !== final) {
+      haptics.light();
+    }
   };
 
   const handleGenderSelect = (selectedGender: string) => {
