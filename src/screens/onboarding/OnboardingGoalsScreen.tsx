@@ -38,7 +38,7 @@ interface OnboardingGoalsScreenProps {
  * - Heavy haptic on goal selection creates weight/importance
  *
  * Animation:
- * - Ring progresses 70% → 90%
+ * - Ring progresses 85% → 95%
  * - Goal cards pulse on appear
  * - Selected card grows with glow effect
  * - Sliders update ring progress smoothly
@@ -94,8 +94,8 @@ export default function OnboardingGoalsScreen({
 
     setErrors(newErrors);
 
-    // Update ring: 70% → 90% (20% range)
-    const progress = 70 + (filledFields / 3) * 20;
+    // Update ring: 85% → 95% (10% range)
+    const progress = 85 + (filledFields / 3) * 10;
     Animated.timing(ringValue, {
       toValue: progress,
       duration: 300,
@@ -113,8 +113,8 @@ export default function OnboardingGoalsScreen({
     if (waterIntake) filledFields++;
     if (cookingRatio) filledFields++;
 
-    // Update ring: 70% → 90% (20% range)
-    const progress = 70 + (filledFields / 3) * 20;
+    // Update ring: 85% → 95% (10% range)
+    const progress = 85 + (filledFields / 3) * 10;
     Animated.timing(ringValue, {
       toValue: progress,
       duration: 300,

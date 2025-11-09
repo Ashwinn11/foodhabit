@@ -36,7 +36,7 @@ interface OnboardingLifestyleScreenProps {
  * - Progressive ring fill
  *
  * Animation:
- * - Ring progresses 50% → 70%
+ * - Ring progresses 50% → 65%
  * - Icons scale on select
  * - Haptic on each selection
  */
@@ -117,8 +117,8 @@ export default function OnboardingLifestyleScreen({
 
     setErrors(newErrors);
 
-    // Update ring: 50% → 70% (20% range)
-    const progress = 50 + (filledFields / 4) * 20;
+    // Update ring: 50% → 65% (15% range)
+    const progress = 50 + (filledFields / 4) * 15;
     Animated.timing(ringValue, {
       toValue: progress,
       duration: 300,
@@ -135,8 +135,8 @@ export default function OnboardingLifestyleScreen({
     if (dietType) filledFields++;
     if (eatingStart && eatingEnd) filledFields++;
 
-    // Update ring: 50% → 70% (20% range)
-    const progress = 50 + (filledFields / 4) * 20;
+    // Update ring: 50% → 65% (15% range)
+    const progress = 50 + (filledFields / 4) * 15;
     Animated.timing(ringValue, {
       toValue: progress,
       duration: 300,

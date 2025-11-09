@@ -6,6 +6,8 @@ import OnboardingHookScreen from './OnboardingHookScreen';
 import OnboardingEducationScreen from './OnboardingEducationScreen';
 import OnboardingBodyBasicsScreen from './OnboardingBodyBasicsScreen';
 import OnboardingLifestyleScreen from './OnboardingLifestyleScreen';
+import OnboardingSymptomBaselineScreen from './OnboardingSymptomBaselineScreen';
+import OnboardingMedicalContextScreen from './OnboardingMedicalContextScreen';
 import OnboardingGoalsScreen from './OnboardingGoalsScreen';
 import OnboardingLoadingScreen from './OnboardingLoadingScreen';
 import OnboardingSummaryScreen from './OnboardingSummaryScreen';
@@ -17,15 +19,36 @@ const Stack = createNativeStackNavigator();
  */
 function isCompleteOnboardingData(data: Partial<OnboardingData>): data is OnboardingData {
   return !!(
+    // Body Basics
     typeof data.age === 'number' &&
     data.gender &&
     typeof data.height === 'number' &&
     typeof data.weight === 'number' &&
+    // Lifestyle
     data.activity_level &&
     typeof data.sleep_hours === 'number' &&
     data.diet_type &&
     data.eating_window_start &&
     data.eating_window_end &&
+    // Symptom Baseline
+    typeof data.bloating_severity === 'number' &&
+    data.bloating_frequency &&
+    typeof data.abdominal_pain_severity === 'number' &&
+    typeof data.bowel_movement_frequency === 'number' &&
+    data.bowel_movement_quality &&
+    typeof data.has_constipation === 'boolean' &&
+    typeof data.has_diarrhea === 'boolean' &&
+    typeof data.gas_severity === 'number' &&
+    typeof data.baseline_energy_level === 'number' &&
+    typeof data.baseline_mood_quality === 'number' &&
+    typeof data.has_brain_fog === 'boolean' &&
+    typeof data.digestive_impact_on_life === 'number' &&
+    // Medical Context
+    Array.isArray(data.diagnosed_conditions) &&
+    Array.isArray(data.food_allergies) &&
+    typeof data.restricts_food_severely === 'boolean' &&
+    typeof data.binges_regularly === 'boolean' &&
+    // Goals
     data.focus_area &&
     typeof data.water_intake === 'number' &&
     typeof data.cooking_ratio === 'number'
@@ -38,16 +61,28 @@ interface OnboardingNavigatorProps {
 
 /**
  * Onboarding Navigator
- * Manages the 7-screen onboarding flow with state management
+ * Manages the 9-screen onboarding flow with state management
  *
  * Screen Flow:
  * 0. Hook (emotional trigger)
  * 1. Education (show value)
  * 2. Body Basics (age, gender, height, weight)
  * 3. Lifestyle (activity, sleep, diet, eating window)
- * 4. Goals (focus area, water, cooking ratio)
- * 5. Loading (8.5s synthetic analysis)
- * 6. Summary (dopamine hit with calculated metrics)
+ * 4. Symptom Baseline (bloating, pain, bowel movements, energy, mood)
+ * 5. Medical Context (conditions, allergies, eating patterns)
+ * 6. Goals (focus area, water, cooking ratio)
+ * 7. Loading (8.5s synthetic analysis)
+ * 8. Summary (dopamine hit with calculated metrics)
+ *
+ * Ring Progress Flow:
+ * - Hook → Education: 20%
+ * - Education → Body Basics: 35%
+ * - Body Basics: 35% → 50%
+ * - Lifestyle: 50% → 65%
+ * - Symptom Baseline: 65% → 75%
+ * - Medical Context: 75% → 85%
+ * - Goals: 85% → 95%
+ * - Loading: 100%
  *
  * Data Flow:
  * - Each screen updates state via useOnboarding hook
@@ -83,11 +118,21 @@ export function OnboardingNavigator({ onComplete }: OnboardingNavigatorProps) {
 
   const handleLifestyleNext = useCallback((navigation: any) => {
     nextStep();
+    navigation.navigate('SymptomBaseline');
+  }, [nextStep]);
+
+  const handleSymptomBaselineNext = useCallback((navigation: any) => {
+    nextStep();
+    navigation.navigate('MedicalContext');
+  }, [nextStep]);
+
+  const handleMedicalContextNext = useCallback((navigation: any) => {
+    nextStep();
     navigation.navigate('Goals');
   }, [nextStep]);
 
   const handleGoalsNext = useCallback(async (navigation: any) => {
-    setRingProgress(90);
+    setRingProgress(100);
     nextStep();
     navigation.navigate('Loading');
   }, [setRingProgress, nextStep]);
@@ -175,7 +220,39 @@ export function OnboardingNavigator({ onComplete }: OnboardingNavigatorProps) {
         )}
       </Stack.Screen>
 
-      {/* Screen 4: Goals */}
+      {/* Screen 4: Symptom Baseline */}
+      <Stack.Screen
+        name="SymptomBaseline"
+        options={navigationOptions}
+      >
+        {({ navigation }) => (
+          <OnboardingSymptomBaselineScreen
+            onNext={() => handleSymptomBaselineNext(navigation)}
+            data={state.data}
+            updateData={updateData}
+            ringProgress={state.ringProgress}
+            setRingProgress={setRingProgress}
+          />
+        )}
+      </Stack.Screen>
+
+      {/* Screen 5: Medical Context */}
+      <Stack.Screen
+        name="MedicalContext"
+        options={navigationOptions}
+      >
+        {({ navigation }) => (
+          <OnboardingMedicalContextScreen
+            onNext={() => handleMedicalContextNext(navigation)}
+            data={state.data}
+            updateData={updateData}
+            ringProgress={state.ringProgress}
+            setRingProgress={setRingProgress}
+          />
+        )}
+      </Stack.Screen>
+
+      {/* Screen 6: Goals */}
       <Stack.Screen
         name="Goals"
         options={navigationOptions}
@@ -191,7 +268,7 @@ export function OnboardingNavigator({ onComplete }: OnboardingNavigatorProps) {
         )}
       </Stack.Screen>
 
-      {/* Screen 5: Loading - Synthetic Analysis */}
+      {/* Screen 7: Loading - Synthetic Analysis */}
       <Stack.Screen
         name="Loading"
         options={{
@@ -202,7 +279,7 @@ export function OnboardingNavigator({ onComplete }: OnboardingNavigatorProps) {
         {({ navigation }) => <OnboardingLoadingScreen onComplete={() => handleLoadingComplete(navigation)} />}
       </Stack.Screen>
 
-      {/* Screen 6: Summary - Metrics Display */}
+      {/* Screen 8: Summary - Metrics Display */}
       <Stack.Screen
         name="Summary"
         options={{
