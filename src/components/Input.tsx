@@ -3,7 +3,7 @@
  * Text input with Apple-style design and validation
  */
 
-import React, { useState } from 'react';
+import React, { useRef } from 'react';
 import {
   TextInput,
   View,
@@ -78,24 +78,25 @@ export const Input: React.FC<InputProps> = ({
   onBlur,
   ...textInputProps
 }) => {
-  const [isFocused, setIsFocused] = useState(false);
+  const isFocusedRef = useRef(false);
 
   const handleFocus = (e: any) => {
     if (hapticFeedback && !disabled) {
       haptics.patterns.inputFocus();
     }
-    setIsFocused(true);
+    isFocusedRef.current = true;
     onFocus?.(e);
   };
 
   const handleBlur = (e: any) => {
-    setIsFocused(false);
+    isFocusedRef.current = false;
     onBlur?.(e);
   };
 
+  // Don't conditionally apply focus styles - they cause re-renders that blur the input
   const inputContainerStyle: ViewStyle[] = [
     styles.inputContainer,
-    isFocused && styles.inputContainerFocused,
+    // isFocusedRef.current && styles.inputContainerFocused, // DISABLED: causes focus loss
     error && styles.inputContainerError,
     disabled && styles.inputContainerDisabled,
   ].filter(Boolean) as ViewStyle[];
@@ -121,10 +122,11 @@ export const Input: React.FC<InputProps> = ({
         <TextInput
           {...textInputProps}
           style={textInputStyle}
-          placeholderTextColor={theme.colors.text.placeholder}
+          placeholderTextColor="rgba(255, 255, 255, 0.5)"
           onFocus={handleFocus}
           onBlur={handleBlur}
           editable={!disabled}
+          onChangeText={textInputProps.onChangeText}
         />
 
         {rightIcon && <View style={styles.rightIconContainer}>{rightIcon}</View>}
@@ -147,7 +149,7 @@ export const Input: React.FC<InputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: r.adaptiveSpacing.md,
+    // Spacing is handled at the parent level via containerStyle prop
   },
 
   label: {
@@ -157,10 +159,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.background.card,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: theme.colors.border.main,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     paddingHorizontal: r.adaptiveSpacing.md,
     minHeight: r.scaleHeight(48),
   },
@@ -183,7 +185,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     ...theme.typography.body,
-    color: theme.colors.text.primary,
+    color: theme.colors.brand.white,
     paddingVertical: r.adaptiveSpacing.sm,
   },
 
