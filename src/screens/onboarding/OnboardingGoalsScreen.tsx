@@ -54,6 +54,7 @@ export default function OnboardingGoalsScreen({
   const [focusArea, setFocusArea] = useState<string | null>(data.focus_area ?? null);
   const [waterIntake, setWaterIntake] = useState(data.water_intake?.toString() ?? '8');
   const [cookingRatio, setCookingRatio] = useState(data.cooking_ratio?.toString() ?? '50');
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const ringValue = useRef(new Animated.Value(ringProgress)).current;
 
@@ -67,10 +68,31 @@ export default function OnboardingGoalsScreen({
   // Update ring progress
   const validateAndUpdateProgress = () => {
     let filledFields = 0;
+    const newErrors: Record<string, string> = {};
 
     if (focusArea) filledFields++;
-    if (waterIntake) filledFields++;
-    if (cookingRatio) filledFields++;
+
+    // Validate water intake (1-16 cups)
+    if (waterIntake) {
+      const water = parseInt(waterIntake, 10);
+      if (isNaN(water) || water < 1 || water > 16) {
+        newErrors.waterIntake = 'Water intake must be 1-16 cups';
+      } else {
+        filledFields++;
+      }
+    }
+
+    // Validate cooking ratio (0-100%)
+    if (cookingRatio) {
+      const cooking = parseInt(cookingRatio, 10);
+      if (isNaN(cooking) || cooking < 0 || cooking > 100) {
+        newErrors.cookingRatio = 'Cooking ratio must be 0-100%';
+      } else {
+        filledFields++;
+      }
+    }
+
+    setErrors(newErrors);
 
     // Update ring: 70% → 90% (20% range)
     const progress = 70 + (filledFields / 3) * 20;
@@ -80,6 +102,8 @@ export default function OnboardingGoalsScreen({
       useNativeDriver: false,
     }).start();
     setRingProgress(progress);
+
+    return Object.keys(newErrors).length === 0;
   };
 
   // Update ring progress without validation (for immediate visual feedback while typing)
@@ -106,19 +130,39 @@ export default function OnboardingGoalsScreen({
   };
 
   const handleWaterChange = (value: string) => {
-    setWaterIntake(value);
-    haptics.light();
+    // Only allow integers (1-16)
+    const filtered = value.replace(/[^0-9]/g, '');
+    // Limit to 2 digits (max 16)
+    const limited = filtered.slice(0, 2);
+    // Auto-clamp to max 16
+    const num = parseInt(limited, 10);
+    const final = !isNaN(num) && num > 16 ? '16' : limited;
+    setWaterIntake(final);
+    if (value !== final) {
+      haptics.light();
+    }
     updateRingProgressOnly();
   };
 
   const handleCookingChange = (value: string) => {
-    setCookingRatio(value);
-    haptics.light();
+    // Only allow integers (0-100)
+    const filtered = value.replace(/[^0-9]/g, '');
+    // Limit to 3 digits (max 100)
+    const limited = filtered.slice(0, 3);
+    // Auto-clamp to max 100
+    const num = parseInt(limited, 10);
+    const final = !isNaN(num) && num > 100 ? '100' : limited;
+    setCookingRatio(final);
+    if (value !== final) {
+      haptics.light();
+    }
     updateRingProgressOnly();
   };
 
   const handleNext = () => {
-    if (focusArea && waterIntake && cookingRatio) {
+    const isValid = validateAndUpdateProgress();
+
+    if (isValid && focusArea && waterIntake && cookingRatio) {
       updateData({
         focus_area: focusArea as 'sugar' | 'energy' | 'gut' | 'weight',
         water_intake: parseInt(waterIntake, 10),
@@ -131,7 +175,7 @@ export default function OnboardingGoalsScreen({
     }
   };
 
-  const isFormValid = focusArea && waterIntake && cookingRatio;
+  const isFormValid = focusArea && waterIntake && cookingRatio && Object.keys(errors).length === 0;
 
 
   return (

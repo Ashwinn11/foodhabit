@@ -176,6 +176,7 @@ export default function OnboardingSummaryScreen({
                   iconBg={theme.colors.brand.primary}
                   title="Metabolic Age"
                   value={metabolicAge}
+                  targetValue={metrics.metabolic_age}
                   suffix=" years"
                   description="Your body performs like a"
                 />
@@ -196,6 +197,7 @@ export default function OnboardingSummaryScreen({
                   iconBg={theme.colors.brand.secondary}
                   title="Gut Health Score"
                   value={gutScore}
+                  targetValue={metrics.gut_health_score}
                   suffix="/100"
                   description="Above average — room to optimize"
                 />
@@ -216,6 +218,7 @@ export default function OnboardingSummaryScreen({
                   iconBg={theme.colors.brand.tertiary}
                   title="Nutrition Balance"
                   value={nutritionScore}
+                  targetValue={metrics.nutrition_balance_score}
                   suffix="/100"
                   description="Balanced, but we found gaps"
                 />
@@ -268,6 +271,7 @@ interface MetricsCardProps {
   iconBg: string;
   title: string;
   value: Animated.Value;
+  targetValue: number;
   suffix: string;
   description: string;
 }
@@ -277,6 +281,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({
   iconBg,
   title,
   value,
+  targetValue,
   suffix,
   description,
 }) => {
@@ -301,7 +306,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({
 
           {/* Animated Value */}
           <Animated.View style={styles.valueContainer}>
-            <AnimatedNumber value={value} suffix={suffix} />
+            <AnimatedNumber value={value} targetValue={targetValue} suffix={suffix} />
           </Animated.View>
 
           <Text variant="caption" style={styles.description}>
@@ -318,8 +323,9 @@ const MetricsCard: React.FC<MetricsCardProps> = ({
  */
 const AnimatedNumber: React.FC<{
   value: Animated.Value;
+  targetValue: number;
   suffix: string;
-}> = ({ value, suffix }) => {
+}> = ({ value, targetValue, suffix }) => {
   return (
     <Animated.Text
       style={[
@@ -335,8 +341,8 @@ const AnimatedNumber: React.FC<{
         }}
       >
         {value.interpolate({
-          inputRange: [0, 100],
-          outputRange: ['0', '100'],
+          inputRange: [0, targetValue],
+          outputRange: ['0', Math.round(targetValue).toString()],
         })}
       </Animated.Text>
       <Text style={styles.suffix}>{suffix}</Text>

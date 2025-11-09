@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useOnboarding } from '../../hooks/useOnboarding';
+import { OnboardingData } from '../../types/profile';
 import OnboardingHookScreen from './OnboardingHookScreen';
 import OnboardingEducationScreen from './OnboardingEducationScreen';
 import OnboardingBodyBasicsScreen from './OnboardingBodyBasicsScreen';
@@ -10,6 +11,26 @@ import OnboardingLoadingScreen from './OnboardingLoadingScreen';
 import OnboardingSummaryScreen from './OnboardingSummaryScreen';
 
 const Stack = createNativeStackNavigator();
+
+/**
+ * Type guard to check if partial onboarding data is complete
+ */
+function isCompleteOnboardingData(data: Partial<OnboardingData>): data is OnboardingData {
+  return !!(
+    typeof data.age === 'number' &&
+    data.gender &&
+    typeof data.height === 'number' &&
+    typeof data.weight === 'number' &&
+    data.activity_level &&
+    typeof data.sleep_hours === 'number' &&
+    data.diet_type &&
+    data.eating_window_start &&
+    data.eating_window_end &&
+    data.focus_area &&
+    typeof data.water_intake === 'number' &&
+    typeof data.cooking_ratio === 'number'
+  );
+}
 
 interface OnboardingNavigatorProps {
   onComplete: () => void;
@@ -73,8 +94,15 @@ export function OnboardingNavigator({ onComplete }: OnboardingNavigatorProps) {
 
   const handleLoadingComplete = useCallback(async (navigation: any) => {
     try {
+      // Validate that all required data is present
+      if (!isCompleteOnboardingData(state.data)) {
+        console.error('Incomplete onboarding data');
+        // TODO: Show error to user or navigate back to incomplete screen
+        return;
+      }
+
       // Complete onboarding and save to Supabase
-      const calculatedMetrics = await completeOnboarding(state.data as any);
+      const calculatedMetrics = await completeOnboarding(state.data);
 
       if (calculatedMetrics) {
         nextStep();
