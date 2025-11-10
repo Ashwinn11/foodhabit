@@ -264,10 +264,8 @@ export default function OnboardingSymptomBaselineScreen({
     }
   };
 
-  const isFormValid =
-    bloatingFrequency &&
-    bowelMovementQuality &&
-    Object.keys(errors).length === 0;
+  // Check if required fields are filled
+  const isFormValid = Boolean(bloatingFrequency && bowelMovementQuality);
 
   return (
     <GradientBackground>
@@ -311,7 +309,7 @@ export default function OnboardingSymptomBaselineScreen({
                       options={frequencyOptions}
                       selected={bloatingFrequency}
                       onSelect={handleBloatingFrequencySelect}
-                      layout="column"
+                      layout="row"
                       containerStyle={styles.iconSelector}
                     />
                   </View>
@@ -539,7 +537,7 @@ export default function OnboardingSymptomBaselineScreen({
               size="large"
               fullWidth
               disabled={!isFormValid}
-              style={styles.blackButton}
+              style={[styles.blackButton, !isFormValid && { opacity: 0.5 }]}
               textStyle={styles.whiteButtonText}
             />
           </View>
@@ -600,7 +598,8 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
   },
   errorText: {
-    color: '#ff6b6b',
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '600',
     marginLeft: theme.spacing.sm,
   },
   ringContainer: {

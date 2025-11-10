@@ -175,7 +175,18 @@ export default function OnboardingGoalsScreen({
     }
   };
 
-  const isFormValid = focusArea && waterIntake && cookingRatio && Object.keys(errors).length === 0;
+  // Check if form is valid based on actual values
+  const isFormValid = React.useMemo(() => {
+    if (!focusArea || !waterIntake || !cookingRatio) return false;
+
+    const water = parseInt(waterIntake, 10);
+    if (isNaN(water) || water < 1 || water > 16) return false;
+
+    const cooking = parseInt(cookingRatio, 10);
+    if (isNaN(cooking) || cooking < 0 || cooking > 100) return false;
+
+    return true;
+  }, [focusArea, waterIntake, cookingRatio]);
 
 
   return (
@@ -197,7 +208,7 @@ export default function OnboardingGoalsScreen({
               keyboardShouldPersistTaps="handled"
             >
               {/* Progress Indicator */}
-              <ProgressIndicator currentStep={3} totalSteps={5} />
+              <ProgressIndicator currentStep={5} totalSteps={5} />
 
               {/* Title and Subtitle */}
               <View style={styles.titleContainer}>
@@ -250,6 +261,7 @@ export default function OnboardingGoalsScreen({
                       onChangeText={handleWaterChange}
                       onBlur={validateAndUpdateProgress}
                       keyboardType="number-pad"
+                      containerStyle={{ flex: 1 }}
                     />
 
                     <TouchableOpacity
@@ -291,6 +303,7 @@ export default function OnboardingGoalsScreen({
                       onChangeText={handleCookingChange}
                       onBlur={validateAndUpdateProgress}
                       keyboardType="number-pad"
+                      containerStyle={{ flex: 1 }}
                     />
 
                     <TouchableOpacity
@@ -330,7 +343,7 @@ export default function OnboardingGoalsScreen({
               size="large"
               fullWidth
               disabled={!isFormValid}
-              style={styles.blackButton}
+              style={[styles.blackButton, !isFormValid && { opacity: 0.5 }]}
               textStyle={styles.whiteButtonText}
             />
           </View>
@@ -439,7 +452,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.lg,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: theme.borderRadius.lg,
     gap: theme.spacing.lg,
   },
@@ -481,7 +494,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },

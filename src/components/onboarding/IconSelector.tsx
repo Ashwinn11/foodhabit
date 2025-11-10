@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
+import React, { useRef, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, ViewStyle, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme, haptics } from '../../theme';
 import { Text } from '../Text';
@@ -36,8 +35,18 @@ export const IconSelector: React.FC<IconSelectorProps> = ({
   containerStyle,
 }) => {
   // Determine layout based on number of options
-  const isColumn = layout === 'column' || options.length === 2;
-  const isRow = layout === 'row' || (options.length === 3 || options.length === 4);
+  const isColumn = layout === 'column';
+  const isRow = layout === 'row';
+
+  // Dynamic flex basis based on item count for optimal wrapping
+  const getFlexBasis = () => {
+    if (isColumn) return '100%';
+    if (options.length === 2) return '48%'; // 2 items side by side
+    if (options.length === 4) return '22%'; // 4 items in 1 row
+    if (options.length === 5) return '30%'; // 5 items in 2 rows (3+2)
+    if (options.length >= 6) return '30%'; // 6+ items in multiple rows (3 per row)
+    return '30%'; // Default for 3 items
+  };
 
   const handleSelect = (id: string) => {
     onSelect(id);
@@ -60,6 +69,7 @@ export const IconSelector: React.FC<IconSelectorProps> = ({
           isSelected={selected === option.id}
           onPress={() => handleSelect(option.id)}
           isColumn={isColumn}
+          flexBasis={getFlexBasis()}
         />
       ))}
     </View>
@@ -71,6 +81,7 @@ interface IconOptionButtonProps {
   isSelected: boolean;
   onPress: () => void;
   isColumn: boolean;
+  flexBasis: string;
 }
 
 /**
@@ -81,47 +92,60 @@ const IconOptionButton: React.FC<IconOptionButtonProps> = ({
   isSelected,
   onPress,
   isColumn,
+  flexBasis,
 }) => {
+  const scaleAnim = useRef(new Animated.Value(isSelected ? 1.05 : 0.95)).current;
+
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: isSelected ? 1.05 : 0.95,
+      tension: 20,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, [isSelected, scaleAnim]);
+
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
       style={[
         styles.optionButton,
-        isColumn && styles.columnOption,
-        !isColumn && styles.rowOption,
+        isColumn ? styles.columnOption : { flexBasis, flexGrow: 0, flexShrink: 0 },
       ]}
     >
-      <Animated.View
-        style={[
-          styles.optionContainer,
-          {
-            backgroundColor: isSelected
-              ? theme.colors.brand.white
-              : 'rgba(255, 255, 255, 0.15)',
-          },
-        ]}
-      >
-        {/* Ionicon */}
-        <Ionicons
-          name={option.icon as any}
-          size={32}
-          color={isSelected ? theme.colors.brand.primary : theme.colors.brand.white}
-        />
-      </Animated.View>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <Animated.View
+          style={[
+            styles.optionContainer,
+            {
+              backgroundColor: isSelected
+                ? theme.colors.brand.white
+                : 'rgba(255, 255, 255, 0.25)',
+            },
+          ]}
+        >
+          {/* Ionicon */}
+          <Ionicons
+            name={option.icon as any}
+            size={32}
+            color={isSelected ? theme.colors.brand.primary : theme.colors.brand.white}
+          />
+        </Animated.View>
 
-      {/* Label */}
-      <Text
-        variant="label"
-        style={{
-          ...styles.label,
-          color: theme.colors.brand.white,
-        }}
-        numberOfLines={2}
-        align="center"
-      >
-        {option.label}
-      </Text>
+        {/* Label */}
+        <Text
+          variant="label"
+          style={{
+            ...styles.label,
+            color: theme.colors.brand.white,
+          }}
+          numberOfLines={2}
+          align="center"
+        >
+          {option.label}
+        </Text>
+      </Animated.View>
     </TouchableOpacity>
   );
 };
@@ -133,7 +157,8 @@ const styles = StyleSheet.create({
   rowLayout: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: theme.spacing.md,
   },
   columnLayout: {
     flexDirection: 'column',
@@ -143,7 +168,9 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   rowOption: {
-    flex: 0.48, // ~50% width with gap
+    flexBasis: '30%', // ~3 items per row with gap
+    flexGrow: 0,
+    flexShrink: 0,
   },
   columnOption: {
     width: '100%',

@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   checkboxItem: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: theme.borderRadius.md,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
     minWidth: '45%',
   },
   checkboxItemSelected: {
-    backgroundColor: 'rgba(255, 118, 100, 0.2)',
+    backgroundColor: theme.colors.brand.white,
     borderColor: theme.colors.brand.primary,
   },
   checkboxContent: {
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     color: theme.colors.brand.white,
   },
   checkboxLabelSelected: {
-    color: theme.colors.brand.white,
+    color: theme.colors.brand.black,
     fontWeight: '600',
   },
   fieldContainer: {

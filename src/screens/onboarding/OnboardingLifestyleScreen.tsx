@@ -231,13 +231,17 @@ export default function OnboardingLifestyleScreen({
     }
   };
 
-  const isFormValid =
-    activityLevel &&
-    sleepHours &&
-    dietType &&
-    eatingStart &&
-    eatingEnd &&
-    Object.keys(errors).length === 0;
+  // Check if form is valid based on actual values, not errors object
+  const isFormValid = React.useMemo(() => {
+    if (!activityLevel || !sleepHours || !dietType || !eatingStart || !eatingEnd) return false;
+
+    const sleep = parseFloat(sleepHours);
+    if (isNaN(sleep) || sleep < 1 || sleep > 24) return false;
+
+    if (!isValidTime(eatingStart) || !isValidTime(eatingEnd)) return false;
+
+    return true;
+  }, [activityLevel, sleepHours, dietType, eatingStart, eatingEnd]);
 
 
   return (
@@ -299,6 +303,7 @@ export default function OnboardingLifestyleScreen({
                       onChangeText={handleSleepChange}
                       onBlur={validateAndUpdateProgress}
                       keyboardType="decimal-pad"
+                      containerStyle={{ flex: 1 }}
                     />
                     <Text variant="body" style={styles.sleepLabel}>
                       hrs/night
@@ -398,7 +403,7 @@ export default function OnboardingLifestyleScreen({
               size="large"
               fullWidth
               disabled={!isFormValid}
-              style={styles.blackButton}
+              style={[styles.blackButton, !isFormValid && { opacity: 0.5 }]}
               textStyle={styles.whiteButtonText}
             />
           </View>
@@ -480,7 +485,8 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   errorText: {
-    color: '#ff6b6b',
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '600',
     marginLeft: theme.spacing.sm,
   },
   ringContainer: {
