@@ -398,7 +398,7 @@ export default function OnboardingLifestyleScreen({
               size="large"
               fullWidth
               disabled={!isFormValid}
-              style={styles.blackButton}
+              style={[styles.blackButton, !isFormValid && { opacity: 0.5 }]}
               textStyle={styles.whiteButtonText}
             />
           </View>
@@ -480,7 +480,8 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   errorText: {
-    color: '#ff6b6b',
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '600',
     marginLeft: theme.spacing.sm,
   },
   ringContainer: {

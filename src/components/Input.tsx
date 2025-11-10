@@ -122,7 +122,7 @@ export const Input: React.FC<InputProps> = ({
         <TextInput
           {...textInputProps}
           style={textInputStyle}
-          placeholderTextColor="rgba(255, 255, 255, 0.5)"
+          placeholderTextColor="rgba(0, 0, 0, 0.4)"
           onFocus={handleFocus}
           onBlur={handleBlur}
           editable={!disabled}
@@ -159,10 +159,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
     paddingHorizontal: r.adaptiveSpacing.md,
     minHeight: r.scaleHeight(48),
   },
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     ...theme.typography.body,
-    color: theme.colors.brand.white,
+    color: theme.colors.brand.black,
     paddingVertical: r.adaptiveSpacing.sm,
   },
 

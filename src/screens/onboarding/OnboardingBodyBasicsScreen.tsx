@@ -169,7 +169,8 @@ export default function OnboardingBodyBasicsScreen({
   const handleGenderSelect = (selectedGender: string) => {
     setGender(selectedGender);
     haptics.light();
-    validateAndUpdateProgress();
+    // Don't validate immediately - state hasn't updated yet
+    // Validation will happen on Next button press
   };
 
   const handleNext = () => {
@@ -235,7 +236,7 @@ export default function OnboardingBodyBasicsScreen({
                   </Text>
                   <TextInput
                     placeholder="Enter your age"
-                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                    placeholderTextColor="rgba(0, 0, 0, 0.4)"
                     value={age}
                     onChangeText={handleAgeChange}
                     onBlur={validateAndUpdateProgress}
@@ -275,7 +276,7 @@ export default function OnboardingBodyBasicsScreen({
                   </Text>
                   <TextInput
                     placeholder="E.g., 170"
-                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                    placeholderTextColor="rgba(0, 0, 0, 0.4)"
                     value={height}
                     onChangeText={handleHeightChange}
                     onBlur={validateAndUpdateProgress}
@@ -296,7 +297,7 @@ export default function OnboardingBodyBasicsScreen({
                   </Text>
                   <TextInput
                     placeholder="E.g., 70"
-                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                    placeholderTextColor="rgba(0, 0, 0, 0.4)"
                     value={weight}
                     onChangeText={handleWeightChange}
                     onBlur={validateAndUpdateProgress}
@@ -335,7 +336,7 @@ export default function OnboardingBodyBasicsScreen({
               size="large"
               fullWidth
               disabled={!isFormValid}
-              style={styles.blackButton}
+              style={[styles.blackButton, !isFormValid && { opacity: 0.5 }]}
               textStyle={styles.whiteButtonText}
             />
           </View>
@@ -381,11 +382,11 @@ const styles = StyleSheet.create({
   },
   textInput: {
     ...theme.typography.body,
-    color: theme.colors.brand.white,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    color: theme.colors.brand.black,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
     paddingHorizontal: r.adaptiveSpacing.md,
     paddingVertical: r.adaptiveSpacing.sm,
     minHeight: r.scaleHeight(48),
@@ -402,7 +403,8 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
   },
   errorText: {
-    color: '#ff6b6b',
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '600',
     marginLeft: theme.spacing.sm,
   },
   ringContainer: {

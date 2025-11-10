@@ -197,7 +197,7 @@ export default function OnboardingGoalsScreen({
               keyboardShouldPersistTaps="handled"
             >
               {/* Progress Indicator */}
-              <ProgressIndicator currentStep={3} totalSteps={5} />
+              <ProgressIndicator currentStep={5} totalSteps={5} />
 
               {/* Title and Subtitle */}
               <View style={styles.titleContainer}>
@@ -330,7 +330,7 @@ export default function OnboardingGoalsScreen({
               size="large"
               fullWidth
               disabled={!isFormValid}
-              style={styles.blackButton}
+              style={[styles.blackButton, !isFormValid && { opacity: 0.5 }]}
               textStyle={styles.whiteButtonText}
             />
           </View>
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.lg,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: theme.borderRadius.lg,
     gap: theme.spacing.lg,
   },
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },

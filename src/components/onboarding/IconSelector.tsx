@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
+import React, { useRef, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, ViewStyle, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme, haptics } from '../../theme';
 import { Text } from '../Text';
@@ -82,6 +81,17 @@ const IconOptionButton: React.FC<IconOptionButtonProps> = ({
   onPress,
   isColumn,
 }) => {
+  const scaleAnim = useRef(new Animated.Value(isSelected ? 1.05 : 0.95)).current;
+
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: isSelected ? 1.05 : 0.95,
+      tension: 20,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, [isSelected, scaleAnim]);
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -92,36 +102,38 @@ const IconOptionButton: React.FC<IconOptionButtonProps> = ({
         !isColumn && styles.rowOption,
       ]}
     >
-      <Animated.View
-        style={[
-          styles.optionContainer,
-          {
-            backgroundColor: isSelected
-              ? theme.colors.brand.white
-              : 'rgba(255, 255, 255, 0.15)',
-          },
-        ]}
-      >
-        {/* Ionicon */}
-        <Ionicons
-          name={option.icon as any}
-          size={32}
-          color={isSelected ? theme.colors.brand.primary : theme.colors.brand.white}
-        />
-      </Animated.View>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <Animated.View
+          style={[
+            styles.optionContainer,
+            {
+              backgroundColor: isSelected
+                ? theme.colors.brand.white
+                : 'rgba(255, 255, 255, 0.25)',
+            },
+          ]}
+        >
+          {/* Ionicon */}
+          <Ionicons
+            name={option.icon as any}
+            size={32}
+            color={isSelected ? theme.colors.brand.primary : theme.colors.brand.white}
+          />
+        </Animated.View>
 
-      {/* Label */}
-      <Text
-        variant="label"
-        style={{
-          ...styles.label,
-          color: theme.colors.brand.white,
-        }}
-        numberOfLines={2}
-        align="center"
-      >
-        {option.label}
-      </Text>
+        {/* Label */}
+        <Text
+          variant="label"
+          style={{
+            ...styles.label,
+            color: theme.colors.brand.white,
+          }}
+          numberOfLines={2}
+          align="center"
+        >
+          {option.label}
+        </Text>
+      </Animated.View>
     </TouchableOpacity>
   );
 };
@@ -133,7 +145,8 @@ const styles = StyleSheet.create({
   rowLayout: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: theme.spacing.md,
   },
   columnLayout: {
     flexDirection: 'column',
@@ -143,7 +156,9 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   rowOption: {
-    flex: 0.48, // ~50% width with gap
+    flexBasis: '30%', // ~3 items per row with gap
+    flexGrow: 0,
+    flexShrink: 0,
   },
   columnOption: {
     width: '100%',
