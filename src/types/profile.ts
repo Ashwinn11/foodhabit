@@ -52,9 +52,21 @@ export interface UserProfile {
 export interface HealthMetrics {
   id: string;
   user_id: string;
+
+  // Baseline/projected scores (from onboarding)
   metabolic_age: number;
   gut_health_score: number;
   nutrition_balance_score: number;
+
+  // Real-time scores (from meal logs + daily check-ins)
+  nutrition_score_real?: number | null;
+  gut_health_score_real?: number | null;
+  metabolism_score_real?: number | null;
+  body_age_real?: number | null;
+
+  // Metadata
+  days_with_data?: number | null;
+  last_meal_logged_at?: string | null;
   calculated_at: string;
   created_at: string;
 }
@@ -104,4 +116,54 @@ export interface OnboardingState {
   totalSteps: number;
   data: Partial<OnboardingData>;
   ringProgress: number;
+}
+
+export interface MealLog {
+  id: string;
+  user_id: string;
+
+  // Meal details
+  meal_name: string;
+  meal_size?: 'small' | 'normal' | 'large' | null;
+  meal_time: string;
+
+  // Auto-categorized food type
+  is_high_sugar: boolean;
+  is_high_fat: boolean;
+  is_high_carb: boolean;
+  is_high_fiber: boolean;
+  is_high_protein: boolean;
+  is_processed: boolean;
+
+  // Post-meal symptom
+  symptom: 'fine' | 'mild_discomfort' | 'bloating';
+
+  // Metadata
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DailyCheckIn {
+  id: string;
+  user_id: string;
+  check_in_date: string;
+
+  // Digestion
+  had_bowel_movement: boolean;
+  bristol_stool_type?: number | null; // 1-7
+  has_bloating: boolean;
+  has_constipation: boolean;
+
+  // Hydration
+  water_intake: 'low' | 'medium' | 'high';
+
+  // Daily vitals
+  energy_level: 'low' | 'normal' | 'high';
+  mood_stress: 'low' | 'medium' | 'high';
+  sleep_quality: 'bad' | 'ok' | 'good';
+  appetite: 'low' | 'normal' | 'high';
+
+  // Metadata
+  created_at: string;
+  updated_at: string;
 }

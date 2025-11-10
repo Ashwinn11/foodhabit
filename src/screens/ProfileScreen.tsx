@@ -1,9 +1,12 @@
-import React from 'react';
-import { View, StyleSheet, Alert, TouchableOpacity, Linking } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, Alert, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { theme, r } from '../theme';
 import { Container, Text, Card } from '../components';
+import { EditMyBodyModal } from '../components/modals/EditMyBodyModal';
+import { profileService } from '../services/profile/profileService';
+import { UserProfile } from '../types/profile';
 
 interface SettingsRowProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -47,8 +50,36 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
   </TouchableOpacity>
 );
 
+
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+
+  useEffect(() => {
+    loadProfileData();
+  }, [user?.id]);
+
+  const loadProfileData = async () => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+      const profileData = await profileService.getProfile(user.id);
+      setProfile(profileData);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      Alert.alert('Error', 'Failed to load profile data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditMyBodySave = async () => {
+    // Reload profile data after save
+    await loadProfileData();
+  };
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -79,17 +110,14 @@ export default function ProfileScreen() {
   };
 
   const openTermsOfService = () => {
-    // Replace with your actual terms URL
     Linking.openURL('https://yourapp.com/terms');
   };
 
   const openPrivacyPolicy = () => {
-    // Replace with your actual privacy policy URL
     Linking.openURL('https://yourapp.com/privacy');
   };
 
   const openHelp = () => {
-    // Replace with your actual help/support URL or email
     Linking.openURL('mailto:support@yourapp.com?subject=Food%20Habit%20Support');
   };
 
@@ -115,24 +143,51 @@ export default function ProfileScreen() {
     return user?.user_metadata?.full_name || user?.email || 'User';
   };
 
-  return (
-    <Container variant="grouped" scrollable>
-      <View style={styles.header}>
-        <Text variant="h6" color="secondary" style={styles.title}>Profile</Text>
-      </View>
-
-      {/* Profile Header */}
-      <View style={styles.profileHeader}>
-        <View style={styles.avatarContainer}>
-          <Text variant="largeTitle" style={styles.avatarText}>
-            {getInitials()}
-          </Text>
+  if (loading) {
+    return (
+      <Container>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.brand.primary} />
         </View>
-        <Text variant="title2" style={styles.displayName}>{getDisplayName()}</Text>
-        {user?.email && (
-          <Text variant="body" color="secondary" style={styles.email}>{user.email}</Text>
-        )}
-      </View>
+      </Container>
+    );
+  }
+
+  return (
+    <>
+      <Container variant="grouped" scrollable>
+        <View style={styles.header}>
+          <Text variant="h6" color="secondary" style={styles.title}>Profile</Text>
+        </View>
+
+        {/* Profile Header */}
+        <View style={styles.profileHeader}>
+          <View style={styles.avatarContainer}>
+            <Text variant="largeTitle" style={styles.avatarText}>
+              {getInitials()}
+            </Text>
+          </View>
+          <Text variant="title2" style={styles.displayName}>{getDisplayName()}</Text>
+          {user?.email && (
+            <Text variant="body" color="secondary" style={styles.email}>{user.email}</Text>
+          )}
+        </View>
+
+        {/* My Body Data Section */}
+        <View style={styles.section}>
+          <Text variant="footnote" color="secondary" style={styles.sectionHeader}>
+            MY BODY DATA
+          </Text>
+          <Card variant="elevated" padding="none" style={styles.settingsCard}>
+            <SettingsRow
+              icon="body-outline"
+              label="Edit My Body Data"
+              onPress={() => setEditModalVisible(true)}
+              showChevron={true}
+              iconColor={theme.colors.brand.primary}
+            />
+          </Card>
+        </View>
 
       {/* Subscription Section */}
       <View style={styles.section}>
@@ -214,7 +269,19 @@ export default function ProfileScreen() {
           </Text>
         )}
       </View>
-    </Container>
+      </Container>
+
+      {/* Edit My Body Modal */}
+      {profile && user?.id && (
+        <EditMyBodyModal
+          visible={editModalVisible}
+          profile={profile}
+          userId={user.id}
+          onClose={() => setEditModalVisible(false)}
+          onSave={handleEditMyBodySave}
+        />
+      )}
+    </>
   );
 }
 
@@ -224,6 +291,12 @@ const styles = StyleSheet.create({
   },
   title: {
     // No style override - use the variant typography
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: r.adaptiveSpacing['3xl'],
   },
   profileHeader: {
     alignItems: 'center',
@@ -259,6 +332,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  // Settings Card Styles
   settingsCard: {
     overflow: 'hidden',
   },
@@ -291,7 +365,6 @@ const styles = StyleSheet.create({
   divider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: theme.colors.border.main,
-    marginLeft: theme.spacing.lg + 32 + theme.spacing.md, // Icon container width + icon margin
   },
   footer: {
     alignItems: 'center',
