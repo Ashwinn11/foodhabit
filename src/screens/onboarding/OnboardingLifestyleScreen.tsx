@@ -303,6 +303,7 @@ export default function OnboardingLifestyleScreen({
                       onChangeText={handleSleepChange}
                       onBlur={validateAndUpdateProgress}
                       keyboardType="decimal-pad"
+                      containerStyle={{ flex: 1 }}
                     />
                     <Text variant="body" style={styles.sleepLabel}>
                       hrs/night

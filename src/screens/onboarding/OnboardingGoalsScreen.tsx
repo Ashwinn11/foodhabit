@@ -261,6 +261,7 @@ export default function OnboardingGoalsScreen({
                       onChangeText={handleWaterChange}
                       onBlur={validateAndUpdateProgress}
                       keyboardType="number-pad"
+                      containerStyle={{ flex: 1 }}
                     />
 
                     <TouchableOpacity
@@ -302,6 +303,7 @@ export default function OnboardingGoalsScreen({
                       onChangeText={handleCookingChange}
                       onBlur={validateAndUpdateProgress}
                       keyboardType="number-pad"
+                      containerStyle={{ flex: 1 }}
                     />
 
                     <TouchableOpacity
