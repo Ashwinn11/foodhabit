@@ -231,13 +231,17 @@ export default function OnboardingLifestyleScreen({
     }
   };
 
-  const isFormValid =
-    activityLevel &&
-    sleepHours &&
-    dietType &&
-    eatingStart &&
-    eatingEnd &&
-    Object.keys(errors).length === 0;
+  // Check if form is valid based on actual values, not errors object
+  const isFormValid = React.useMemo(() => {
+    if (!activityLevel || !sleepHours || !dietType || !eatingStart || !eatingEnd) return false;
+
+    const sleep = parseFloat(sleepHours);
+    if (isNaN(sleep) || sleep < 1 || sleep > 24) return false;
+
+    if (!isValidTime(eatingStart) || !isValidTime(eatingEnd)) return false;
+
+    return true;
+  }, [activityLevel, sleepHours, dietType, eatingStart, eatingEnd]);
 
 
   return (

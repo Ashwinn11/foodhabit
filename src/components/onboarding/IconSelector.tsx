@@ -38,6 +38,15 @@ export const IconSelector: React.FC<IconSelectorProps> = ({
   const isColumn = layout === 'column' || options.length === 2;
   const isRow = layout === 'row' || (options.length === 3 || options.length === 4);
 
+  // Dynamic flex basis based on item count for optimal wrapping
+  const getFlexBasis = () => {
+    if (isColumn) return '100%';
+    if (options.length === 4) return '22%'; // 4 items in 1 row
+    if (options.length === 5) return '30%'; // 5 items in 2 rows (3+2)
+    if (options.length >= 6) return '30%'; // 6+ items in multiple rows (3 per row)
+    return '30%'; // Default for 2-3 items
+  };
+
   const handleSelect = (id: string) => {
     onSelect(id);
     haptics.light();
@@ -59,6 +68,7 @@ export const IconSelector: React.FC<IconSelectorProps> = ({
           isSelected={selected === option.id}
           onPress={() => handleSelect(option.id)}
           isColumn={isColumn}
+          flexBasis={getFlexBasis()}
         />
       ))}
     </View>
@@ -70,6 +80,7 @@ interface IconOptionButtonProps {
   isSelected: boolean;
   onPress: () => void;
   isColumn: boolean;
+  flexBasis: string;
 }
 
 /**
@@ -80,6 +91,7 @@ const IconOptionButton: React.FC<IconOptionButtonProps> = ({
   isSelected,
   onPress,
   isColumn,
+  flexBasis,
 }) => {
   const scaleAnim = useRef(new Animated.Value(isSelected ? 1.05 : 0.95)).current;
 
@@ -98,8 +110,7 @@ const IconOptionButton: React.FC<IconOptionButtonProps> = ({
       activeOpacity={0.7}
       style={[
         styles.optionButton,
-        isColumn && styles.columnOption,
-        !isColumn && styles.rowOption,
+        isColumn ? styles.columnOption : { flexBasis, flexGrow: 0, flexShrink: 0 },
       ]}
     >
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>

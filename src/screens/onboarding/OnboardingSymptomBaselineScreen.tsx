@@ -264,10 +264,8 @@ export default function OnboardingSymptomBaselineScreen({
     }
   };
 
-  const isFormValid =
-    bloatingFrequency &&
-    bowelMovementQuality &&
-    Object.keys(errors).length === 0;
+  // Check if required fields are filled
+  const isFormValid = Boolean(bloatingFrequency && bowelMovementQuality);
 
   return (
     <GradientBackground>

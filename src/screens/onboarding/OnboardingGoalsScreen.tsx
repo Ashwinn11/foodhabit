@@ -175,7 +175,18 @@ export default function OnboardingGoalsScreen({
     }
   };
 
-  const isFormValid = focusArea && waterIntake && cookingRatio && Object.keys(errors).length === 0;
+  // Check if form is valid based on actual values
+  const isFormValid = React.useMemo(() => {
+    if (!focusArea || !waterIntake || !cookingRatio) return false;
+
+    const water = parseInt(waterIntake, 10);
+    if (isNaN(water) || water < 1 || water > 16) return false;
+
+    const cooking = parseInt(cookingRatio, 10);
+    if (isNaN(cooking) || cooking < 0 || cooking > 100) return false;
+
+    return true;
+  }, [focusArea, waterIntake, cookingRatio]);
 
 
   return (

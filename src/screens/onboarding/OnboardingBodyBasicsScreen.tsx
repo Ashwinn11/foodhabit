@@ -188,12 +188,22 @@ export default function OnboardingBodyBasicsScreen({
     }
   };
 
-  const isFormValid =
-    age &&
-    gender &&
-    height &&
-    weight &&
-    Object.keys(errors).length === 0;
+  // Check if form is valid based on actual values, not errors object
+  // This enables button as soon as values are valid (even before blur)
+  const isFormValid = React.useMemo(() => {
+    if (!age || !gender || !height || !weight) return false;
+
+    const ageNum = parseInt(age, 10);
+    if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) return false;
+
+    const heightNum = parseFloat(height);
+    if (isNaN(heightNum) || heightNum < 50 || heightNum > 250) return false;
+
+    const weightNum = parseFloat(weight);
+    if (isNaN(weightNum) || weightNum < 20 || weightNum > 500) return false;
+
+    return true;
+  }, [age, gender, height, weight]);
 
 
   return (
