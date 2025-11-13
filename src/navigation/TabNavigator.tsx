@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import HomeScreen from '../screens/HomeScreen';
+import MealLogScreen from '../screens/MealLogScreen';
+import InsightsScreen from '../screens/InsightsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { theme, r } from '../theme';
 
@@ -39,6 +41,10 @@ export default function TabNavigator(): React.ReactElement {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Meals') {
+            iconName = focused ? 'restaurant' : 'restaurant-outline';
+          } else if (route.name === 'Insights') {
+            iconName = focused ? 'bulb' : 'bulb-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           } else {
@@ -93,6 +99,20 @@ export default function TabNavigator(): React.ReactElement {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
+        }}
+      />
+      <Tab.Screen
+        name="Meals"
+        component={MealLogScreen}
+        options={{
+          tabBarLabel: 'Meals',
+        }}
+      />
+      <Tab.Screen
+        name="Insights"
+        component={InsightsScreen}
+        options={{
+          tabBarLabel: 'Insights',
         }}
       />
       <Tab.Screen

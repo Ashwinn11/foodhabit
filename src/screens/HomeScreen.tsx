@@ -1,32 +1,67 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ActivityIndicator, Platform, TouchableOpacity } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
 import { theme, r } from '../theme';
 import { Container, Text, Card } from '../components';
 import { AnimatedRing } from '../components/onboarding/AnimatedRing';
+import { HealthRing } from '../components/health/HealthRing';
 import { metricsService } from '../services/health/metricsService';
+import { mealService } from '../services/meal/mealService';
+import { insightEngine } from '../services/insights/insightEngine';
 import { HealthMetrics } from '../types/profile';
+import { Insight } from '../types/insight';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const [metrics, setMetrics] = useState<HealthMetrics | null>(null);
+  const [todayMealCount, setTodayMealCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [latestInsight, setLatestInsight] = useState<Insight | null>(null);
 
-  useEffect(() => {
-    loadMetrics();
-  }, [user?.id]);
+  // Refresh metrics when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadMetrics();
+      loadMealStats();
+      loadLatestInsight();
+    }, [user?.id])
+  );
 
   const loadMetrics = async () => {
     if (!user?.id) return;
 
     try {
-      setLoading(true);
       const metricsData = await metricsService.getLatestMetrics(user.id);
       setMetrics(metricsData);
     } catch (error) {
       console.error('Error loading metrics:', error);
+    }
+  };
+
+  const loadMealStats = async () => {
+    if (!user?.id) return;
+
+    try {
+      const count = await mealService.getTodayMealCount(user.id);
+      setTodayMealCount(count);
+    } catch (error) {
+      console.error('Error loading meal stats:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadLatestInsight = async () => {
+    if (!user?.id) return;
+
+    try {
+      const insights = await insightEngine.getInsights(user.id);
+      if (insights.length > 0) {
+        setLatestInsight(insights[0]); // Get most recent unread insight
+      }
+    } catch (error) {
+      console.error('Error loading latest insight:', error);
     }
   };
 
@@ -68,67 +103,100 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Body Age Ring Section */}
+      {/* Hero: Body Age Ring */}
       {loading ? (
-        <Card variant="elevated" padding="large" style={styles.metricsCard}>
+        <Card variant="elevated" padding="large" style={styles.heroCard}>
           <ActivityIndicator size="large" color={theme.colors.brand.primary} />
         </Card>
       ) : metrics ? (
-        <Card variant="elevated" padding="large" style={StyleSheet.flatten([styles.metricsCard, styles.ringCard])}>
-          <Text variant="label" color="secondary" style={styles.metricsLabel}>
-            Your Body Age
-          </Text>
+        <>
+          <Card variant="elevated" padding="large" style={styles.heroCard}>
+            {/* Data Source Badge */}
+            <View style={styles.badgeContainer}>
+              <View
+                style={[
+                  styles.dataBadge,
+                  {
+                    backgroundColor: metrics.body_age_real
+                      ? theme.colors.brand.secondary + '30'
+                      : theme.colors.neutral[500] + '30',
+                  },
+                ]}
+              >
+                <Text
+                  variant="caption"
+                  style={{
+                    color: metrics.body_age_real ? theme.colors.brand.secondary : theme.colors.text.secondary,
+                    fontWeight: '600',
+                    fontSize: 10,
+                  }}
+                >
+                  {metrics.body_age_real ? 'REAL-TIME' : 'BASELINE'}
+                </Text>
+              </View>
+            </View>
 
-          <View style={styles.ringContainer}>
-            <AnimatedRing
-              progress={calculateRingProgress(metrics.metabolic_age)}
-              size={r.scaleWidth(200)}
-              strokeWidth={12}
-              color={getRingColor(metrics.metabolic_age)}
-              glowing={true}
-              pulsing={false}
+            <Text variant="label" color="secondary" style={styles.metricsLabel}>
+              Your Body Age
+            </Text>
+
+            <View style={styles.ringContainer}>
+              <AnimatedRing
+                progress={calculateRingProgress(metrics.body_age_real || metrics.metabolic_age)}
+                size={r.scaleWidth(280)}
+                strokeWidth={16}
+                color={getRingColor(metrics.body_age_real || metrics.metabolic_age)}
+                glowing={true}
+                pulsing={false}
+              />
+
+              <View style={styles.ringCenter}>
+                <Text
+                  variant="h1"
+                  style={StyleSheet.flatten([
+                    styles.ringAge,
+                    { color: getRingColor(metrics.body_age_real || metrics.metabolic_age), fontSize: r.adaptiveFontSize['3xl'] * 2 },
+                  ])}
+                >
+                  {metrics.body_age_real || metrics.metabolic_age}
+                </Text>
+                <Text variant="label" color="secondary" style={styles.ageLabel}>
+                  years
+                </Text>
+              </View>
+            </View>
+          </Card>
+
+          {/* Supporting Health Rings */}
+          <View style={styles.healthRingsContainer}>
+            <HealthRing
+              score={metrics.gut_health_score_real || metrics.gut_health_score || 0}
+              label="Gut Health"
+              color={theme.colors.brand.secondary}
+              size={r.scaleWidth(120)}
+              strokeWidth={8}
+              delay={0}
             />
-
-            <View style={styles.ringCenter}>
-              <Text variant="h1" style={StyleSheet.flatten([styles.ringAge, { color: getRingColor(metrics.metabolic_age) }])}>
-                {metrics.metabolic_age}
-              </Text>
-              <Text variant="label" color="secondary" style={styles.ageLabel}>
-                years
-              </Text>
-            </View>
+            <HealthRing
+              score={metrics.nutrition_score_real || metrics.nutrition_balance_score || 0}
+              label="Nutrition"
+              color={theme.colors.brand.tertiary}
+              size={r.scaleWidth(120)}
+              strokeWidth={8}
+              delay={200}
+            />
+            <HealthRing
+              score={metrics.metabolism_score_real || 50}
+              label="Metabolism"
+              color={theme.colors.brand.primary}
+              size={r.scaleWidth(120)}
+              strokeWidth={8}
+              delay={400}
+            />
           </View>
-
-          <View style={styles.metricsGrid}>
-            <View style={styles.metricItem}>
-              <Text variant="label" color="secondary">Gut Health</Text>
-              <Text variant="h4" style={StyleSheet.flatten([styles.metricScore, { color: theme.colors.brand.primary }])}>
-                {metrics.gut_health_score}
-              </Text>
-              <Text variant="caption" color="tertiary" style={styles.metricUnit}>
-                /100
-              </Text>
-            </View>
-
-            <View style={styles.dividerVertical} />
-
-            <View style={styles.metricItem}>
-              <Text variant="label" color="secondary">Nutrition</Text>
-              <Text variant="h4" style={StyleSheet.flatten([styles.metricScore, { color: theme.colors.brand.primary }])}>
-                {metrics.nutrition_balance_score}
-              </Text>
-              <Text variant="caption" color="tertiary" style={styles.metricUnit}>
-                /100
-              </Text>
-            </View>
-          </View>
-
-          <Text variant="caption" color="tertiary" style={styles.lastUpdated}>
-            Last calculated: Today
-          </Text>
-        </Card>
+        </>
       ) : (
-        <Card variant="elevated" padding="large" style={styles.metricsCard}>
+        <Card variant="elevated" padding="large" style={styles.heroCard}>
           <Text variant="body" color="tertiary" style={styles.noDataText}>
             Complete your onboarding to see your Body Age
           </Text>
@@ -144,6 +212,50 @@ export default function HomeScreen() {
         </Text>
       </Card>
 
+      {/* Latest Insight Preview */}
+      {latestInsight && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text variant="h4" style={styles.sectionTitle}>
+              Latest Insight
+            </Text>
+            <TouchableOpacity onPress={() => {
+              // TODO: Navigate to Insights tab
+              console.log('Navigate to Insights');
+            }}>
+              <Text variant="label" style={styles.seeAllLink}>
+                See All
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <Card variant="elevated" padding="large" style={styles.insightPreviewCard}>
+            <View style={[styles.insightBadge, {
+              backgroundColor: latestInsight.type === 'milestone'
+                ? theme.colors.brand.primary + '20'
+                : theme.colors.brand.secondary + '20'
+            }]}>
+              <Text variant="caption" style={{
+                color: latestInsight.type === 'milestone'
+                  ? theme.colors.brand.primary
+                  : theme.colors.brand.secondary,
+                fontWeight: '600',
+                fontSize: 10,
+              }}>
+                {latestInsight.type === 'milestone' ? 'ACHIEVEMENT' : 'NEW INSIGHT'}
+              </Text>
+            </View>
+
+            <Text variant="h5" style={styles.insightTitle}>
+              {latestInsight.title}
+            </Text>
+            <Text variant="body" color="secondary" style={styles.insightDescription} numberOfLines={2}>
+              {latestInsight.subtitle}
+            </Text>
+          </Card>
+        </View>
+      )}
+
       <View style={styles.section}>
         <Text variant="h4" style={styles.sectionTitle}>
           Quick Stats
@@ -152,16 +264,16 @@ export default function HomeScreen() {
         <View style={styles.statsGrid}>
           <Card variant="elevated" padding="large" style={styles.statCard}>
             <Text variant="h1" style={styles.statValue}>
-              0
+              {todayMealCount}
             </Text>
             <Text variant="label" color="secondary" align="center" style={styles.statLabel}>
-              Meals Logged
+              Meals Today
             </Text>
           </Card>
 
           <Card variant="elevated" padding="large" style={styles.statCard}>
             <Text variant="h1" style={styles.statValue}>
-              0
+              {metrics?.days_with_data || 0}
             </Text>
             <Text variant="label" color="secondary" align="center" style={styles.statLabel}>
               Days Tracked
@@ -181,7 +293,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    marginBottom: r.adaptiveSpacing['2xl'],
+    marginBottom: r.adaptiveSpacing.xl,
   },
   greetingRow: {
     flexDirection: 'row',
@@ -191,14 +303,22 @@ const styles = StyleSheet.create({
   userNameText: {
     color: theme.colors.brand.primary,
   },
-  // Metrics Card Styles
-  metricsCard: {
-    marginBottom: r.adaptiveSpacing['2xl'],
+  // Hero Body Age Card
+  heroCard: {
+    marginBottom: r.adaptiveSpacing.lg,
     alignItems: 'center',
+    position: 'relative',
   },
-  ringCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.brand.primary,
+  badgeContainer: {
+    position: 'absolute',
+    top: theme.spacing.md,
+    right: theme.spacing.md,
+    zIndex: 10,
+  },
+  dataBadge: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: 9999,
   },
   metricsLabel: {
     marginBottom: theme.spacing.md,
@@ -208,7 +328,7 @@ const styles = StyleSheet.create({
   ringContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: r.adaptiveSpacing.xl,
+    marginVertical: r.adaptiveSpacing.lg,
     position: 'relative',
   },
   ringCenter: {
@@ -223,31 +343,13 @@ const styles = StyleSheet.create({
   ageLabel: {
     fontSize: 12,
   },
-  metricsGrid: {
+  // Supporting Health Rings
+  healthRingsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    width: '100%',
-    marginTop: r.adaptiveSpacing.lg,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  metricItem: {
     alignItems: 'center',
-    flex: 1,
-  },
-  metricScore: {
-    marginTop: theme.spacing.sm,
-  },
-  metricUnit: {
-    marginTop: theme.spacing.xs,
-  },
-  dividerVertical: {
-    width: StyleSheet.hairlineWidth,
-    height: 60,
-    backgroundColor: theme.colors.border.main,
-    marginHorizontal: theme.spacing.md,
-  },
-  lastUpdated: {
-    marginTop: theme.spacing.lg,
+    marginBottom: r.adaptiveSpacing['2xl'],
+    paddingHorizontal: theme.spacing.sm,
   },
   noDataText: {
     textAlign: 'center',
@@ -263,13 +365,22 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   welcomeText: {
-    lineHeight: 24,
+    lineHeight: theme.typography.body.lineHeight,
   },
   section: {
     marginBottom: r.adaptiveSpacing['2xl'],
   },
-  sectionTitle: {
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: theme.spacing.lg,
+  },
+  sectionTitle: {
+    marginBottom: 0,
+  },
+  seeAllLink: {
+    color: theme.colors.brand.primary,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -289,5 +400,6 @@ const styles = StyleSheet.create({
   placeholderSection: {
     alignItems: 'center',
     paddingVertical: r.adaptiveSpacing['3xl'],
+    paddingBottom: Platform.OS === 'ios' ? 94 : 76, // Clearance for floating tab bar
   },
 });
