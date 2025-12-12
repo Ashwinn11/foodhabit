@@ -86,7 +86,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <Container variant="grouped" scrollable>
+    <Container variant="default" scrollable>
       <View style={styles.header}>
         <Text variant="h6" color="secondary" style={styles.title}>Profile</Text>
       </View>
@@ -196,6 +196,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: theme.colors.border.main,
+    backgroundColor: theme.colors.border.separator,
   },
 });

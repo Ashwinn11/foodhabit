@@ -22,7 +22,7 @@ function AppContent() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+        <ActivityIndicator size="large" color={theme.colors.brand.primary} />
         <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
@@ -47,7 +47,7 @@ export default function App() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary[500]} />
+        <ActivityIndicator size="large" color={theme.colors.brand.primary} />
         <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
@@ -77,7 +77,7 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer theme={NavigationTheme}>
         <AppContent />
-        <StatusBar style="dark" backgroundColor={theme.colors.background.primary} />
+        <StatusBar style="light" backgroundColor={theme.colors.background.primary} />
       </NavigationContainer>
     </SafeAreaProvider>
   );

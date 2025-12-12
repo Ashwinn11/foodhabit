@@ -121,11 +121,11 @@ const styles = StyleSheet.create({
   variant_outlined: {
     backgroundColor: theme.colors.background.card,
     borderWidth: 1,
-    borderColor: theme.colors.border.main,
+    borderColor: theme.colors.border.main, // Subtle white border for dark background
   },
 
   variant_filled: {
-    backgroundColor: theme.colors.background.secondary,
+    backgroundColor: theme.colors.background.primary,
   },
 
   // Padding

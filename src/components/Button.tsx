@@ -76,13 +76,13 @@ export const Button: React.FC<ButtonProps> = ({
     onPress();
   };
 
-  // Determine text color based on variant for Neumorphic style
-  let textColor: string = theme.colors.neumorphism.text;
-  if (variant === 'primary') textColor = theme.colors.brand.primary;
-  if (variant === 'secondary') textColor = theme.colors.brand.secondary;
+  // Determine text color based on variant
+  let textColor: string = theme.colors.text.primary; // Default white
+  if (variant === 'primary') textColor = theme.colors.button.primaryText; // White on primary
+  if (variant === 'secondary') textColor = theme.colors.button.secondaryText; // Primary color
   if (variant === 'tertiary') textColor = theme.colors.brand.tertiary;
-  if (variant === 'ghost') textColor = theme.colors.neumorphism.secondaryText;
-  if (variant === 'destructive') textColor = theme.colors.brand.primary; 
+  if (variant === 'ghost') textColor = theme.colors.text.secondary; // Light gray
+  if (variant === 'destructive') textColor = theme.colors.button.primaryText; // White 
 
   const textStyleCombined: TextStyle[] = [
     styles.text,

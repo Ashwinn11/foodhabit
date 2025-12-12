@@ -117,7 +117,7 @@ export const NeumorphicView: React.FC<NeumorphicViewProps> = ({
     // Top-left is slightly lighter, bottom-right slightly darker to match light source
     return (
       <LinearGradient
-        colors={['#E8EDF5', '#D6DCE6']} // Subtle shift around #E0E5EC
+        colors={['#1F2A3A', '#151D2A']} // Subtle shift around #1A2332
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.content, { borderRadius }, contentContainerStyle]}

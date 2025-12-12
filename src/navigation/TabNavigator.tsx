@@ -11,13 +11,13 @@ import { theme, r } from '../theme';
 
 const Tab = createBottomTabNavigator();
 
-// Custom tab icon with brand color for active state, grey for inactive
+// Custom tab icon with brand color for active state, white/grey for inactive
 const TabIcon: React.FC<{
   focused: boolean;
   iconName: keyof typeof Ionicons.glyphMap;
   size: number;
 }> = ({ focused, iconName, size }) => {
-  const color = focused ? theme.colors.brand.primary : theme.colors.neumorphism.secondaryText;
+  const color = focused ? theme.colors.brand.primary : theme.colors.text.primary;
   
   return (
     <Ionicons
@@ -56,7 +56,7 @@ export default function TabNavigator(): React.ReactElement {
           return <TabIcon focused={focused} iconName={iconName} size={size} />;
         },
         tabBarActiveTintColor: theme.colors.brand.primary,
-        tabBarInactiveTintColor: theme.colors.neumorphism.secondaryText,
+        tabBarInactiveTintColor: theme.colors.text.primary,
         tabBarBackground: () => (
           <BlurView 
             tint="light" 
@@ -66,7 +66,7 @@ export default function TabNavigator(): React.ReactElement {
         ),
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: 'rgba(224, 229, 236, 0.7)', // Semi-transparent base
+          backgroundColor: 'rgba(26, 35, 50, 0.9)', // Semi-transparent dark blue
           borderRadius: theme.borderRadius.pill,
           marginHorizontal: r.scaleWidth(40),
           marginBottom: Platform.OS === 'ios' ? theme.spacing.lg : theme.spacing.md,
@@ -75,12 +75,12 @@ export default function TabNavigator(): React.ReactElement {
           paddingTop: theme.spacing.sm,
           borderTopWidth: 0,
           // Glassmorphic border
-          borderColor: 'rgba(255,255,255,0.3)',
+          borderColor: 'rgba(255,255,255,0.2)',
           borderWidth: 1,
           // Soft shadow
           shadowColor: theme.colors.neumorphism.darkShadow,
           shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.3,
+          shadowOpacity: 0.5,
           shadowRadius: 20,
           elevation: 10,
           alignSelf: 'center',

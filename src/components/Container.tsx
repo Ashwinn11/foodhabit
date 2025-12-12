@@ -157,15 +157,15 @@ const styles = StyleSheet.create({
 
   // Variants
   variant_default: {
-    backgroundColor: theme.colors.background.primary,
+    backgroundColor: theme.colors.background.primary, // Dark blue
   },
 
   variant_grouped: {
-    backgroundColor: theme.colors.background.grouped,
+    backgroundColor: theme.colors.background.grouped, // Dark blue
   },
 
   variant_card: {
-    backgroundColor: theme.colors.background.card,
+    backgroundColor: theme.colors.background.card, // Dark blue
   },
 
   variant_plain: {

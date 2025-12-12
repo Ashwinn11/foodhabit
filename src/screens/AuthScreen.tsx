@@ -172,17 +172,8 @@ export default function AuthScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Gradient Background - Primary color with opacity variations */}
-      <LinearGradient
-        colors={[
-          `${theme.colors.brand.primary}B3`, // 70% opacity
-          `${theme.colors.brand.primary}D9`, // 85% opacity
-          theme.colors.brand.primary,        // 100% opacity
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-      />
+      {/* Dark blue/navy background */}
+      <View style={StyleSheet.absoluteFillObject} />
 
       {/* Decorative Pattern */}
       <DecorativePattern />
@@ -237,11 +228,11 @@ export default function AuthScreen() {
                 disabled={loadingButton !== null}
                 activeOpacity={0.8}
               >
-                {loadingButton === 'apple' ? (
-                  <ActivityIndicator size="small" color={theme.colors.brand.white} />
-                ) : (
-                  <Ionicons name="logo-apple" size={24} color={theme.colors.brand.white} />
-                )}
+                  {loadingButton === 'apple' ? (
+                    <ActivityIndicator size="small" color={theme.colors.brand.black} />
+                  ) : (
+                    <Ionicons name="logo-apple" size={24} color={theme.colors.brand.black} />
+                  )}
                 <Text variant="headline" style={styles.appleButtonText}>
                   {loadingButton === 'apple' ? 'Signing in...' : 'Continue with Apple'}
                 </Text>
@@ -260,7 +251,7 @@ export default function AuthScreen() {
               {loadingButton === 'google' ? (
                 <ActivityIndicator size="small" color={theme.colors.brand.black} />
               ) : (
-                <Ionicons name="logo-google" size={24} color={theme.colors.brand.primary} />
+                <Ionicons name="logo-google" size={24} color={theme.colors.brand.black} />
               )}
               <Text variant="headline" style={styles.googleButtonText}>
                 {loadingButton === 'google' ? 'Signing in...' : 'Continue with Google'}
@@ -290,7 +281,7 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.brand.primary,
+    backgroundColor: theme.colors.background.primary, // Dark blue/navy
   },
   contentContainer: {
     flex: 1,
@@ -326,12 +317,12 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
     marginBottom: theme.spacing['2xl'],
   },
-  // Apple Button - Black background with white text/icon (OAuth - keep as-is)
+  // Apple Button - Coral background with white text/icon
   appleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.brand.black,
+    backgroundColor: theme.colors.brand.primary, // #ff7664
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.xl,
     borderRadius: theme.borderRadius.pill,
@@ -340,7 +331,7 @@ const styles = StyleSheet.create({
     height: 56,
   },
   appleButtonText: {
-    color: theme.colors.brand.white,
+    color: theme.colors.brand.black, // Match Google button text color
   },
   // Google Button - White background with black text and colored logo (OAuth - keep as-is)
   googleButton: {

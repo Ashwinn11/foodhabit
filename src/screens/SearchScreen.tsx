@@ -5,7 +5,7 @@ import { theme } from '../theme';
 
 export default function SearchScreen() {
   return (
-    <Container>
+    <Container variant="default">
       <View style={styles.container}>
         <Text variant="h3" color="primary">Search</Text>
         <Text variant="body" color="secondary" style={styles.comingSoon}>
