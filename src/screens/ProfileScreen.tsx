@@ -106,9 +106,7 @@ export default function ProfileScreen() {
 
       {/* Account Actions */}
       <View style={styles.section}>
-        <Text variant="footnote" color="secondary" style={styles.sectionHeader}>
-          ACCOUNT
-        </Text>
+        <Text variant="footnote" color="secondary" style={styles.sectionHeader}>ACCOUNT</Text>
         <Card variant="elevated" padding="none" style={styles.settingsCard}>
           <SettingsRow
             icon="log-out-outline"

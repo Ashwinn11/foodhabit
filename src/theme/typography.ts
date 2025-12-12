@@ -242,6 +242,66 @@ export const typography = {
     lineHeight: lineHeight[21],
     letterSpacing: letterSpacing.normal,
   } as TextStyle,
+
+  /**
+   * Caption Emphasized (12pt)
+   * Use for: Important notes, emphasized small text
+   * Weight: Medium
+   */
+  captionEmphasized: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize[12],
+    lineHeight: lineHeight[16],
+    letterSpacing: letterSpacing.normal,
+  } as TextStyle,
+
+  /**
+   * Button Large (17pt)
+   * Use for: Primary action buttons
+   * Weight: SemiBold
+   */
+  buttonLarge: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: fontSize[17],
+    lineHeight: lineHeight[22],
+    letterSpacing: letterSpacing.normal,
+  } as TextStyle,
+
+  /**
+   * Button Medium (15pt)
+   * Use for: Secondary action buttons
+   * Weight: SemiBold
+   */
+  buttonMedium: {
+    fontFamily: fontFamily.semiBold,
+    fontSize: fontSize[15],
+    lineHeight: lineHeight[20],
+    letterSpacing: letterSpacing.normal,
+  } as TextStyle,
+
+  /**
+   * Button Small (13pt)
+   * Use for: Small, tertiary action buttons
+   * Weight: Medium
+   */
+  buttonSmall: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize[13],
+    lineHeight: lineHeight[18],
+    letterSpacing: letterSpacing.normal,
+  } as TextStyle,
+
+  /**
+   * Label Small (11pt)
+   * Use for: Small form labels, metadata
+   * Weight: Medium
+   */
+  labelSmall: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize[11],
+    lineHeight: lineHeight[13],
+    letterSpacing: letterSpacing.wide,
+  } as TextStyle,
 } as const;
 
 /**
@@ -261,12 +321,12 @@ export const legacyTypography = {
   body: typography.callout,
   bodySmall: typography.subheadline,
 
-  button: typography.headline,
-  buttonLarge: typography.headline,
-  buttonSmall: typography.body,
+  button: typography.buttonMedium,
+  buttonLarge: typography.buttonLarge,
+  buttonSmall: typography.buttonSmall,
 
   label: typography.callout,
-  labelSmall: typography.subheadline,
+  labelSmall: typography.labelSmall,
 
   caption: typography.caption1,
 

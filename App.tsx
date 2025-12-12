@@ -53,15 +53,15 @@ export default function App() {
     );
   }
 
-  // Custom Navigation Theme to match Neomorphism
+  // Custom Navigation Theme to match the new design system
   const NavigationTheme = {
-    dark: false,
+    dark: true,
     colors: {
       primary: theme.colors.brand.primary,
-      background: theme.colors.background.primary, // STRICT: Use Neomorphic base
-      card: theme.colors.background.primary,       // Match base for headers
-      text: theme.colors.text.primary,
-      border: theme.colors.border.light,
+      background: theme.colors.background.screen, // Dark Blue
+      card: theme.colors.background.card,         // Slightly lighter blue
+      text: theme.colors.text.primary,           // White
+      border: theme.colors.border.main,           // Subtle white border
       notification: theme.colors.brand.secondary,
     },
     fonts: {

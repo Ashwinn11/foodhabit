@@ -12,29 +12,33 @@ import {
   Animated,
 } from 'react-native';
 import { theme, r, haptics } from '../theme';
-import { NeumorphicView } from './NeumorphicView';
+import { Surface } from './Surface'; // Updated import
 
-export type CardVariant = 'elevated' | 'outlined' | 'filled';
 export type CardPadding = 'none' | 'small' | 'medium' | 'large';
 
 export interface CardProps {
   children: React.ReactNode;
-  variant?: CardVariant;
   padding?: CardPadding;
   pressable?: boolean;
   onPress?: () => void;
   style?: ViewStyle;
   hapticFeedback?: boolean;
+  // New props for Surface customization
+  elevation?: Parameters<typeof Surface>[0]['elevation'];
+  backgroundColor?: string;
+  borderRadius?: Parameters<typeof Surface>[0]['borderRadius'];
 }
 
 export const Card: React.FC<CardProps> = ({
   children,
-  variant = 'elevated',
   padding = 'medium',
   pressable = false,
   onPress,
   style,
   hapticFeedback = true,
+  elevation = 'md',
+  backgroundColor = theme.colors.background.card,
+  borderRadius = 'lg',
 }) => {
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
@@ -67,31 +71,18 @@ export const Card: React.FC<CardProps> = ({
 
   const paddingStyle = styles[`padding_${padding}`];
   
-  // Extract layout styles (margin, width, flex) vs visual styles
-  // For simplicity, we pass style to the container
-  
   const renderContent = () => {
-    if (variant === 'elevated') {
-      return (
-        <NeumorphicView 
-          style={style} 
-          contentContainerStyle={paddingStyle}
-          size="md"
-        >
-          {children}
-        </NeumorphicView>
-      );
-    }
-
-    // Legacy/Other variants
-    const cardStyle: ViewStyle[] = [
-      styles.base,
-      styles[`variant_${variant}`],
-      paddingStyle,
-      style,
-    ].filter(Boolean) as ViewStyle[];
-
-    return <View style={cardStyle}>{children}</View>;
+    return (
+      <Surface 
+        style={style} 
+        contentContainerStyle={paddingStyle}
+        elevation={elevation}
+        backgroundColor={backgroundColor}
+        borderRadius={borderRadius}
+      >
+        {children}
+      </Surface>
+    );
   };
 
   if (pressable && onPress) {
@@ -112,22 +103,7 @@ export const Card: React.FC<CardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  base: {
-    borderRadius: theme.borderRadius.lg,
-    overflow: 'hidden',
-  },
-
-  // Variants
-  variant_outlined: {
-    backgroundColor: theme.colors.background.card,
-    borderWidth: 1,
-    borderColor: theme.colors.border.main, // Subtle white border for dark background
-  },
-
-  variant_filled: {
-    backgroundColor: theme.colors.background.primary,
-  },
-
+  // Removed base and variant styles, as Surface handles them now.
   // Padding
   padding_none: {
     padding: 0,

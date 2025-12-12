@@ -16,7 +16,6 @@ import {
   StyleProp,
 } from 'react-native';
 import { theme, r, haptics } from '../theme';
-import { NeumorphicView } from './NeumorphicView';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'ghost' | 'destructive';
 export type ButtonSize = 'small' | 'medium' | 'large';
@@ -48,11 +47,9 @@ export const Button: React.FC<ButtonProps> = ({
   textStyle,
   hapticFeedback = true,
 }) => {
-  const [isPressed, setIsPressed] = React.useState(false);
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
-    setIsPressed(true);
     Animated.spring(scaleAnim, {
       toValue: 0.98, // Subtle scale
       useNativeDriver: true,
@@ -61,7 +58,6 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const handlePressOut = () => {
-    setIsPressed(false);
     Animated.spring(scaleAnim, {
       toValue: 1,
       useNativeDriver: true,
@@ -76,13 +72,50 @@ export const Button: React.FC<ButtonProps> = ({
     onPress();
   };
 
-  // Determine text color based on variant
-  let textColor: string = theme.colors.text.primary; // Default white
-  if (variant === 'primary') textColor = theme.colors.button.primaryText; // White on primary
-  if (variant === 'secondary') textColor = theme.colors.button.secondaryText; // Primary color
-  if (variant === 'tertiary') textColor = theme.colors.brand.tertiary;
-  if (variant === 'ghost') textColor = theme.colors.text.secondary; // Light gray
-  if (variant === 'destructive') textColor = theme.colors.button.primaryText; // White 
+  // Determine button background and text color based on variant
+  let backgroundColor: string;
+  let textColor: string;
+  let borderColor: string | undefined = undefined;
+  let borderWidth: number | undefined = undefined;
+
+  switch (variant) {
+    case 'primary':
+      backgroundColor = theme.colors.button.primary;
+      textColor = theme.colors.button.primaryText;
+      break;
+    case 'secondary':
+      backgroundColor = theme.colors.button.secondary;
+      textColor = theme.colors.button.secondaryText;
+      borderWidth = 1; // Example: Add a border for secondary
+      borderColor = theme.colors.button.secondaryText;
+      break;
+    case 'tertiary':
+      backgroundColor = 'transparent';
+      textColor = theme.colors.brand.tertiary;
+      break;
+    case 'ghost':
+      backgroundColor = 'transparent';
+      textColor = theme.colors.text.secondary;
+      break;
+    case 'destructive':
+      backgroundColor = theme.colors.feedback.error; // Assuming an error color exists
+      textColor = theme.colors.button.primaryText;
+      break;
+    default:
+      backgroundColor = theme.colors.button.primary;
+      textColor = theme.colors.button.primaryText;
+  }
+
+  // Combine all button styles
+  const buttonStyles: StyleProp<ViewStyle> = [
+    styles.base,
+    styles[`size_${size}`],
+    styles[`padding_${size}`],
+    { backgroundColor, borderColor, borderWidth },
+    fullWidth && styles.fullWidth,
+    (disabled || loading) && styles.disabled,
+    style,
+  ];
 
   const textStyleCombined: TextStyle[] = [
     styles.text,
@@ -92,68 +125,18 @@ export const Button: React.FC<ButtonProps> = ({
     textStyle,
   ].filter(Boolean) as TextStyle[];
 
-  const renderContent = () => {
-    if (variant === 'ghost') {
-      return (
-        <View style={[
-          styles.base, 
-          styles[`size_${size}`], 
-          styles[`padding_${size}`], // Apply padding here
-          styles.variant_ghost,
-          fullWidth && styles.fullWidth,
-          (disabled || loading) && styles.disabled,
-          style
-        ]}>
-          {loading ? (
-            <ActivityIndicator color={textColor} size="small" />
-          ) : (
-            <View style={styles.content}>
-              {icon && <View style={styles.icon}>{icon}</View>}
-              <Text style={textStyleCombined}>{title}</Text>
-            </View>
-          )}
-        </View>
-      );
-    }
-
-    // Glow effect for primary buttons when pressed
-    const glowStyle = (variant === 'primary' && isPressed) ? {
-      shadowColor: theme.colors.brand.primary,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.6,
-      shadowRadius: 10,
-      elevation: 5,
-    } : {};
-
-    return (
-      <NeumorphicView
-        style={[
-          styles.base,
-          styles[`size_${size}`],
-          fullWidth && styles.fullWidth,
-          (disabled || loading) && styles.disabled,
-          style,
-          glowStyle, // Apply glow
-        ]}
-        contentContainerStyle={[
-          styles.contentContainer,
-          styles[`padding_${size}`], // Apply padding here
-          fullWidth && styles.fullWidth,
-        ]}
-        size={size === 'small' ? 'sm' : 'md'}
-        inset={isPressed} // Toggle concave state on press
-      >
-        {loading ? (
-          <ActivityIndicator color={textColor} size="small" />
-        ) : (
-          <View style={styles.content}>
-            {icon && <View style={styles.icon}>{icon}</View>}
-            <Text style={textStyleCombined}>{title}</Text>
-          </View>
-        )}
-      </NeumorphicView>
-    );
-  };
+  const renderContent = () => (
+    <View style={styles.content}>
+      {loading ? (
+        <ActivityIndicator color={textColor} size="small" />
+      ) : (
+        <>
+          {icon && <View style={styles.icon}>{icon}</View>}
+          <Text style={textStyleCombined}>{title}</Text>
+        </>
+      )}
+    </View>
+  );
 
   return (
     <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
@@ -162,6 +145,7 @@ export const Button: React.FC<ButtonProps> = ({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         disabled={disabled || loading}
+        style={buttonStyles}
       >
         {renderContent()}
       </Pressable>
@@ -172,20 +156,17 @@ export const Button: React.FC<ButtonProps> = ({
 const styles = StyleSheet.create({
   base: {
     borderRadius: theme.borderRadius.pill,
-    // paddingHorizontal handled by size styles, but NeumorphicView needs explicit style
-  },
-
-  contentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '100%',
+    overflow: 'hidden', // Ensure content respects borderRadius
   },
 
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    height: '100%',
   },
 
   icon: {
@@ -218,14 +199,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: r.adaptiveSpacing['2xl'],
   },
 
-  // Ghost variant
-  variant_ghost: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
   // States
   disabled: {
     opacity: 0.5,
@@ -242,15 +215,15 @@ const styles = StyleSheet.create({
   },
 
   text_small: {
-    ...theme.typography.subheadline,
+    ...theme.typography.buttonSmall,
   },
 
   text_medium: {
-    ...theme.typography.headline,
+    ...theme.typography.buttonMedium,
   },
 
   text_large: {
-    ...theme.typography.headline,
+    ...theme.typography.buttonLarge,
   },
 
   textDisabled: {

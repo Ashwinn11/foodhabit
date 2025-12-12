@@ -11,7 +11,7 @@ export * from './animations';
 export * from './haptics';
 
 import { colors } from './colors';
-import { spacing, borderRadius, shadows, neumorphicShadows } from './spacing';
+import { spacing, borderRadius, shadows } from './spacing';
 import { allTypography as typography, fontFamily, fontSize, lineHeight, letterSpacing } from './typography';
 import {
   screen,
@@ -39,7 +39,7 @@ export const theme = {
   spacing,
   borderRadius,
   shadows,
-  neumorphicShadows,
+
   typography,
   fontFamily,
   fontSize,

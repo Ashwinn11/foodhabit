@@ -14,5 +14,5 @@ export type { ContainerProps, ContainerVariant } from './Container';
 export { Text } from './Text';
 export type { TextProps, TextVariant, TextColor, TextAlign, TextWeight } from './Text';
 
-export { NeumorphicView } from './NeumorphicView';
+export * from './Surface';
 export type { NeumorphicViewProps } from './NeumorphicView';

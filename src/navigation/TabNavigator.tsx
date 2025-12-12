@@ -1,20 +1,20 @@
 import React, { useRef } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native'; // Added View import
 import * as Haptics from 'expo-haptics';
 import ProfileScreen from '../screens/ProfileScreen';
 import { theme, r } from '../theme';
 
 const Tab = createBottomTabNavigator();
 
-// Custom tab icon with brand color for active state, white/grey for inactive
+// Custom tab icon with brand color for active state, dark/grey for inactive
 const TabIcon: React.FC<{
   focused: boolean;
   iconName: keyof typeof Ionicons.glyphMap;
   size: number;
 }> = ({ focused, iconName, size }) => {
-  const color = focused ? theme.colors.brand.primary : theme.colors.text.primary;
+  const color = focused ? theme.colors.brand.primary : theme.colors.text.tertiary; // Updated inactive color for dark mode
   
   return (
     <Ionicons
@@ -25,9 +25,7 @@ const TabIcon: React.FC<{
   );
 };
 
-import { BlurView } from 'expo-blur';
-
-// ... (TabIcon remains same)
+// Removed BlurView import
 
 export default function TabNavigator(): React.ReactElement {
   const previousRouteRef = useRef<string | undefined>(undefined);
@@ -53,17 +51,18 @@ export default function TabNavigator(): React.ReactElement {
           return <TabIcon focused={focused} iconName={iconName} size={size} />;
         },
         tabBarActiveTintColor: theme.colors.brand.primary,
-        tabBarInactiveTintColor: theme.colors.text.primary,
+        tabBarInactiveTintColor: theme.colors.text.tertiary, // Updated inactive color
         tabBarBackground: () => (
-          <BlurView 
-            tint="light" 
-            intensity={80} 
-            style={StyleSheet.absoluteFill} 
+          <View 
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: theme.colors.background.card }, // Solid background color
+            ]}
           />
         ),
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: 'rgba(26, 35, 50, 0.9)', // Semi-transparent dark blue
+          backgroundColor: theme.colors.background.card, // Updated to card background color
           borderRadius: theme.borderRadius.pill,
           marginHorizontal: r.scaleWidth(40),
           marginBottom: Platform.OS === 'ios' ? theme.spacing.lg : theme.spacing.md,
@@ -71,17 +70,17 @@ export default function TabNavigator(): React.ReactElement {
           paddingBottom: Platform.OS === 'ios' ? theme.spacing.md : theme.spacing.sm,
           paddingTop: theme.spacing.sm,
           borderTopWidth: 0,
-          // Glassmorphic border
-          borderColor: 'rgba(255,255,255,0.2)',
-          borderWidth: 1,
-          // Soft shadow
-          shadowColor: theme.colors.neumorphism.darkShadow,
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.5,
-          shadowRadius: 20,
-          elevation: 10,
+          // Subtle border for definition
+          borderColor: theme.colors.border.light,
+          borderWidth: StyleSheet.hairlineWidth, // Very thin border
+          // Soft shadow for modern card look
+          shadowColor: theme.shadows.md.shadowColor, // Using theme shadows
+          shadowOffset: theme.shadows.md.shadowOffset,
+          shadowOpacity: theme.shadows.md.shadowOpacity,
+          shadowRadius: theme.shadows.md.shadowRadius,
+          elevation: theme.shadows.md.elevation, // Android elevation
           alignSelf: 'center',
-          overflow: 'hidden', // Required for BlurView to respect borderRadius
+          overflow: 'hidden', // Important for borderRadius to work with shadows
         },
         tabBarLabelStyle: {
           ...theme.typography.caption,
