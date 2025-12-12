@@ -98,6 +98,64 @@ export const shadows = {
   },
 } as const;
 
+/**
+ * Neumorphic shadow presets
+ * Defines the geometry for light and dark shadows
+ */
+export const neumorphicShadows = {
+  sm: {
+    light: {
+      shadowOffset: { width: -2, height: -2 },
+      shadowOpacity: 1,
+      shadowRadius: 4,
+    },
+    dark: {
+      shadowOffset: { width: 2, height: 2 },
+      shadowOpacity: 1,
+      shadowRadius: 4,
+    },
+  },
+  md: {
+    light: {
+      shadowOffset: { width: -6, height: -6 },
+      shadowOpacity: 1,
+      shadowRadius: 12,
+    },
+    dark: {
+      shadowOffset: { width: 6, height: 6 },
+      shadowOpacity: 1,
+      shadowRadius: 12,
+    },
+  },
+  lg: {
+    light: {
+      shadowOffset: { width: -10, height: -10 },
+      shadowOpacity: 1,
+      shadowRadius: 20,
+    },
+    dark: {
+      shadowOffset: { width: 10, height: 10 },
+      shadowOpacity: 1,
+      shadowRadius: 20,
+    },
+  },
+  // Pressed state (Concave) - Simulated via inverted shadows or inner shadow logic
+  // Note: True inner shadows are complex in RN. We often simulate this by
+  // inverting the light/dark source or using a border.
+  concave: {
+    light: {
+      shadowOffset: { width: 2, height: 2 }, // Inverted
+      shadowOpacity: 1,
+      shadowRadius: 4,
+    },
+    dark: {
+      shadowOffset: { width: -2, height: -2 }, // Inverted
+      shadowOpacity: 1,
+      shadowRadius: 4,
+    },
+  }
+} as const;
+
 export type Spacing = typeof spacing;
 export type BorderRadius = typeof borderRadius;
 export type Shadows = typeof shadows;

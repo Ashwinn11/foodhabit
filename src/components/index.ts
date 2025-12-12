@@ -1,5 +1,5 @@
 /**
- * Apple Design System - Component Library Barrel Export
+ * Design System - Component Library Barrel Export
  */
 
 export { Button } from './Button';
@@ -14,5 +14,5 @@ export type { ContainerProps, ContainerVariant } from './Container';
 export { Text } from './Text';
 export type { TextProps, TextVariant, TextColor, TextAlign, TextWeight } from './Text';
 
-export { Input } from './Input';
-export type { InputProps } from './Input';
+export { NeumorphicView } from './NeumorphicView';
+export type { NeumorphicViewProps } from './NeumorphicView';

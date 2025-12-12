@@ -9,8 +9,8 @@ export const colors = {
     primary: '#ff7664',    // Coral/Red - Primary brand color
     secondary: '#9bcbab',  // Mint Green - Secondary color
     tertiary: '#cda4e8',   // Lavender Purple - Tertiary color
-    background: '#dedfe2', // Light Gray - Main app background
-    black: '#000000',      // Pure Black
+    background: '#E0E5EC', // Neumorphic Grey - Strict Base
+    black: '#3E4E5E',      // Dark Grey for text (softer than black)
     white: '#ffffff',      // Pure White
   },
 
@@ -28,13 +28,23 @@ export const colors = {
     700: '#9bcbab',
   },
 
-  // Background colors
+  // Background colors - STRICTLY MONOCHROMATIC
   background: {
-    primary: '#dedfe2',    // Main app background
-    secondary: '#ffffff',  // Card backgrounds
-    tertiary: '#ffffff',
-    grouped: '#dedfe2',
-    card: '#ffffff',
+    primary: '#E0E5EC',    // Main app background
+    secondary: '#E0E5EC',  // Card backgrounds MUST match main
+    tertiary: '#E0E5EC',   // Even tertiary backgrounds should match
+    grouped: '#E0E5EC',
+    card: '#E0E5EC',
+  },
+
+  // Neumorphism specific colors
+  neumorphism: {
+    base: '#E0E5EC',
+    lightShadow: '#FFFFFF',
+    darkShadow: '#A3B1C6',
+    border: '#FFFFFF',
+    text: '#3E4E5E',       // High contrast text for neumorphic bg
+    secondaryText: '#7D8CA3',
   },
 
   // Text colors - STRICT (only black or white)

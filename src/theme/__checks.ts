@@ -139,12 +139,6 @@ export const RequiredComponentUsage = {
   CARD: 'Use <Card> component from ./components with padding and variant props',
 
   /**
-   * Use <Input> component instead of <TextInput>
-   * with consistent styling and validation
-   */
-  INPUT: 'Use <Input> component from ./components',
-
-  /**
    * Use <Button> component instead of custom buttons
    * with consistent touch feedback and styling
    */

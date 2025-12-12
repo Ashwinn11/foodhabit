@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { theme, r } from '../theme';
 
 export type ContainerVariant = 'default' | 'grouped' | 'card' | 'plain';
@@ -34,6 +34,12 @@ export interface ContainerProps {
    * @default true
    */
   safeArea?: boolean;
+
+  /**
+   * Safe area edges to apply
+   * @default ['top', 'left', 'right']
+   */
+  edges?: Edge[];
 
   /**
    * Enable scrolling
@@ -69,6 +75,7 @@ export const Container: React.FC<ContainerProps> = ({
   children,
   variant = 'default',
   safeArea = true,
+  edges = ['top', 'left', 'right'],
   scrollable = false,
   padding = true,
   center = false,
@@ -113,7 +120,7 @@ export const Container: React.FC<ContainerProps> = ({
 
   if (safeArea) {
     return (
-      <SafeAreaView style={containerStyle} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={containerStyle} edges={edges}>
         {wrappedContent}
       </SafeAreaView>
     );

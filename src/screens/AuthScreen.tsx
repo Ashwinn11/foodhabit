@@ -193,7 +193,7 @@ export default function AuthScreen() {
       <AnimatedOrb delay={1500} size={180} initialX={SCREEN_WIDTH / 2} initialY={SCREEN_HEIGHT - 200} duration={16000} />
 
       {/* Main Content */}
-      <Container variant="plain" style={styles.contentContainer}>
+      <Container variant="plain" style={styles.contentContainer} edges={['top', 'left', 'right', 'bottom']}>
         {/* Header at Top */}
         <Animated.View
           style={[

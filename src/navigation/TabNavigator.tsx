@@ -1,34 +1,36 @@
 import React, { useRef } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import HomeScreen from '../screens/HomeScreen';
-import MealLogScreen from '../screens/MealLogScreen';
-import InsightsScreen from '../screens/InsightsScreen';
+import ExploreScreen from '../screens/ExploreScreen';
+import ActivityScreen from '../screens/ActivityScreen';
+import SearchScreen from '../screens/SearchScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { theme, r } from '../theme';
 
 const Tab = createBottomTabNavigator();
 
-// Custom tab icon with white color for active state, reduced opacity for inactive
+// Custom tab icon with brand color for active state, grey for inactive
 const TabIcon: React.FC<{
   focused: boolean;
   iconName: keyof typeof Ionicons.glyphMap;
   size: number;
 }> = ({ focused, iconName, size }) => {
-  const color = theme.colors.brand.white;
-  const opacity = focused ? 1 : 0.5;
-
+  const color = focused ? theme.colors.brand.primary : theme.colors.neumorphism.secondaryText;
+  
   return (
     <Ionicons
       name={iconName}
       size={size}
       color={color}
-      style={{ opacity }}
     />
   );
 };
+
+import { BlurView } from 'expo-blur';
+
+// ... (TabIcon remains same)
 
 export default function TabNavigator(): React.ReactElement {
   const previousRouteRef = useRef<string | undefined>(undefined);
@@ -39,12 +41,12 @@ export default function TabNavigator(): React.ReactElement {
         tabBarIcon: ({ focused, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
 
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Meals') {
-            iconName = focused ? 'restaurant' : 'restaurant-outline';
-          } else if (route.name === 'Insights') {
-            iconName = focused ? 'bulb' : 'bulb-outline';
+          if (route.name === 'Explore') {
+            iconName = focused ? 'compass' : 'compass-outline';
+          } else if (route.name === 'Activity') {
+            iconName = focused ? 'flame' : 'flame-outline';
+          } else if (route.name === 'Search') {
+            iconName = focused ? 'search' : 'search-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           } else {
@@ -53,24 +55,41 @@ export default function TabNavigator(): React.ReactElement {
 
           return <TabIcon focused={focused} iconName={iconName} size={size} />;
         },
-        tabBarActiveTintColor: theme.colors.brand.white,
-        tabBarInactiveTintColor: theme.colors.brand.white,
+        tabBarActiveTintColor: theme.colors.brand.primary,
+        tabBarInactiveTintColor: theme.colors.neumorphism.secondaryText,
+        tabBarBackground: () => (
+          <BlurView 
+            tint="light" 
+            intensity={80} 
+            style={StyleSheet.absoluteFill} 
+          />
+        ),
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: theme.colors.brand.black,
-          borderRadius: theme.borderRadius.pill, // Pill shape
-          marginHorizontal: r.scaleWidth(50), // Smaller margin for longer bar
+          backgroundColor: 'rgba(224, 229, 236, 0.7)', // Semi-transparent base
+          borderRadius: theme.borderRadius.pill,
+          marginHorizontal: r.scaleWidth(40),
           marginBottom: Platform.OS === 'ios' ? theme.spacing.lg : theme.spacing.md,
           height: Platform.OS === 'ios' ? 70 : 60,
           paddingBottom: Platform.OS === 'ios' ? theme.spacing.md : theme.spacing.sm,
           paddingTop: theme.spacing.sm,
           borderTopWidth: 0,
-          ...theme.shadows.lg,
+          // Glassmorphic border
+          borderColor: 'rgba(255,255,255,0.3)',
+          borderWidth: 1,
+          // Soft shadow
+          shadowColor: theme.colors.neumorphism.darkShadow,
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.3,
+          shadowRadius: 20,
+          elevation: 10,
           alignSelf: 'center',
+          overflow: 'hidden', // Required for BlurView to respect borderRadius
         },
         tabBarLabelStyle: {
           ...theme.typography.caption,
           fontSize: r.adaptiveFontSize.xs,
+          fontWeight: '600',
         },
         headerShown: false,
         tabBarHideOnKeyboard: true,
@@ -95,24 +114,24 @@ export default function TabNavigator(): React.ReactElement {
       })}
     >
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
+        name="Explore"
+        component={ExploreScreen}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: 'Explore',
         }}
       />
       <Tab.Screen
-        name="Meals"
-        component={MealLogScreen}
+        name="Activity"
+        component={ActivityScreen}
         options={{
-          tabBarLabel: 'Meals',
+          tabBarLabel: 'Activity',
         }}
       />
       <Tab.Screen
-        name="Insights"
-        component={InsightsScreen}
+        name="Search"
+        component={SearchScreen}
         options={{
-          tabBarLabel: 'Insights',
+          tabBarLabel: 'Search',
         }}
       />
       <Tab.Screen

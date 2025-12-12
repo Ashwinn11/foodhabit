@@ -12,48 +12,18 @@ import {
   Animated,
 } from 'react-native';
 import { theme, r, haptics } from '../theme';
+import { NeumorphicView } from './NeumorphicView';
 
 export type CardVariant = 'elevated' | 'outlined' | 'filled';
 export type CardPadding = 'none' | 'small' | 'medium' | 'large';
 
 export interface CardProps {
-  /**
-   * Card content
-   */
   children: React.ReactNode;
-
-  /**
-   * Visual style variant
-   * @default 'elevated'
-   */
   variant?: CardVariant;
-
-  /**
-   * Internal padding
-   * @default 'medium'
-   */
   padding?: CardPadding;
-
-  /**
-   * Make card pressable/tappable
-   * @default false
-   */
   pressable?: boolean;
-
-  /**
-   * onPress handler (only works if pressable is true)
-   */
   onPress?: () => void;
-
-  /**
-   * Custom card style override
-   */
   style?: ViewStyle;
-
-  /**
-   * Enable haptic feedback on press
-   * @default true
-   */
   hapticFeedback?: boolean;
 }
 
@@ -95,29 +65,50 @@ export const Card: React.FC<CardProps> = ({
     onPress?.();
   };
 
-  const cardStyle: ViewStyle[] = [
-    styles.base,
-    styles[`variant_${variant}`],
-    styles[`padding_${padding}`],
-    style,
-  ].filter(Boolean) as ViewStyle[];
+  const paddingStyle = styles[`padding_${padding}`];
+  
+  // Extract layout styles (margin, width, flex) vs visual styles
+  // For simplicity, we pass style to the container
+  
+  const renderContent = () => {
+    if (variant === 'elevated') {
+      return (
+        <NeumorphicView 
+          style={style} 
+          contentContainerStyle={paddingStyle}
+          size="md"
+        >
+          {children}
+        </NeumorphicView>
+      );
+    }
+
+    // Legacy/Other variants
+    const cardStyle: ViewStyle[] = [
+      styles.base,
+      styles[`variant_${variant}`],
+      paddingStyle,
+      style,
+    ].filter(Boolean) as ViewStyle[];
+
+    return <View style={cardStyle}>{children}</View>;
+  };
 
   if (pressable && onPress) {
     return (
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <Pressable
-          style={cardStyle}
           onPress={handlePress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
         >
-          {children}
+          {renderContent()}
         </Pressable>
       </Animated.View>
     );
   }
 
-  return <View style={cardStyle}>{children}</View>;
+  return renderContent();
 };
 
 const styles = StyleSheet.create({
@@ -127,11 +118,6 @@ const styles = StyleSheet.create({
   },
 
   // Variants
-  variant_elevated: {
-    backgroundColor: theme.colors.background.card,
-    ...theme.shadows.md,
-  },
-
   variant_outlined: {
     backgroundColor: theme.colors.background.card,
     borderWidth: 1,
