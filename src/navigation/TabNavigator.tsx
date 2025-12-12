@@ -3,9 +3,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import ExploreScreen from '../screens/ExploreScreen';
-import ActivityScreen from '../screens/ActivityScreen';
-import SearchScreen from '../screens/SearchScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { theme, r } from '../theme';
 
@@ -113,27 +110,6 @@ export default function TabNavigator(): React.ReactElement {
         },
       })}
     >
-      <Tab.Screen
-        name="Explore"
-        component={ExploreScreen}
-        options={{
-          tabBarLabel: 'Explore',
-        }}
-      />
-      <Tab.Screen
-        name="Activity"
-        component={ActivityScreen}
-        options={{
-          tabBarLabel: 'Activity',
-        }}
-      />
-      <Tab.Screen
-        name="Search"
-        component={SearchScreen}
-        options={{
-          tabBarLabel: 'Search',
-        }}
-      />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
