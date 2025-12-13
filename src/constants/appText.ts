@@ -1,6 +1,6 @@
 /**
- * App Text Content - Single source of truth
- * ZERO duplication - every text string appears exactly once
+ * App Text Content - Playful & Cute Edition
+ * Friendly, encouraging, and easy to understand.
  */
 
 // Shared texts used across multiple screens
@@ -8,30 +8,30 @@ const SHARED_TEXTS = {
   appName: 'Gut Harmony',
   legalTerms: 'Terms',
   legalPrivacy: 'Privacy Policy',
-  disclaimer: 'No medical advice. Always consult your doctor.',
+  disclaimer: 'Just a friendly tool! Chat with your doc for medical advice.',
   valueProps: [
     {
-      title: 'Find Your Triggers',
-      description: 'Identify food patterns in just 3 days',
+      title: 'Find Food Friends',
+      description: 'See what foods love you back in 3 days',
       icons: {
-        outline: 'checkmark-circle-outline',
-        solid: 'checkmark-circle',
+        outline: 'heart-outline',
+        solid: 'heart',
       },
     },
     {
-      title: 'Track Progress',
-      description: 'See patterns only you can understand',
+      title: 'Track Your Vibes',
+      description: 'Spot patterns in your tummy\'s mood',
       icons: {
-        outline: 'trending-up-outline',
-        solid: 'trending-up',
+        outline: 'sparkles-outline',
+        solid: 'sparkles',
       },
     },
     {
-      title: 'Share with Doctor',
-      description: 'Export reports for your healthcare provider',
+      title: 'Share the Scoop',
+      description: 'Easy reports for your doctor visit',
       icons: {
-        outline: 'share-social-outline',
-        solid: 'share-social',
+        outline: 'chatbubbles-outline',
+        solid: 'chatbubbles',
       },
     },
   ],
@@ -44,12 +44,12 @@ export const APP_TEXTS = {
   // Auth Screen
   auth: {
     title: SHARED_TEXTS.appName,
-    subtitle: 'Discover what\'s triggering your gut issues in 7 days',
+    subtitle: 'Let\'s make your tummy happy in 7 days!',
     valueProps: SHARED_TEXTS.valueProps.map((prop) => ({
       icon: prop.icons.outline,
       text: prop.title,
     })),
-    legalPrefix: 'By signing in, you agree to our',
+    legalPrefix: 'Joining the club means you agree to our',
     termsLink: SHARED_TEXTS.legalTerms,
     privacyLink: SHARED_TEXTS.legalPrivacy,
   },
@@ -57,58 +57,58 @@ export const APP_TEXTS = {
   // Onboarding Splash Screen
   onboardingSplash: {
     title: SHARED_TEXTS.appName,
-    subtitle: 'Discover what\'s making your gut miserable',
+    subtitle: 'Figuring out your gut, one bite at a time.',
     valueProps: SHARED_TEXTS.valueProps.map((prop) => ({
       icon: prop.icons.solid,
       title: prop.title,
       description: prop.description,
     })),
-    cta: 'Get Started',
+    cta: 'Let\'s Go!',
     disclaimer: SHARED_TEXTS.disclaimer,
   },
 
   // Onboarding Profile Screen
   onboardingProfile: {
-    title: 'Let\'s Set You Up',
-    subtitle: 'Help us understand your situation',
+    title: 'Who\'s This?',
+    subtitle: 'Tell us a bit about you!',
     nameLabel: 'Your Name',
-    namePlaceholder: 'Enter your name',
-    conditionLabel: 'Do you have a diagnosis?',
-    issueLabel: 'What\'s your main concern?',
-    continueButton: 'Continue',
+    namePlaceholder: 'What should we call you?',
+    conditionLabel: 'Any known tummy troubles?',
+    issueLabel: 'What\'s bothering you most?',
+    continueButton: 'Onward!',
   },
 
   // Onboarding First Log Screen (Stool Entry)
   onboardingFirstLog: {
     stoolStep: {
-      title: 'Stool Type',
-      subtitle: 'Bristol Stool Chart (1-7)',
+      title: 'The Scoop on Poop',
+      subtitle: 'What did it look like?',
     },
     energyStep: {
-      title: 'Energy Level',
-      subtitle: 'How do you feel right now?',
+      title: 'Vibe Check',
+      subtitle: 'How are you feeling?',
     },
     symptomsStep: {
-      title: 'Symptoms',
-      subtitle: 'Select any you experienced',
+      title: 'Ouchies & Feels',
+      subtitle: 'Anything else going on?',
     },
     mealsStep: {
-      title: 'What Did You Eat?',
-      subtitle: 'Recently? (optional)',
-      mealPlaceholder: 'e.g., Pizza, Coffee',
-      addButton: 'Add',
+      title: 'Yum! What did you eat?',
+      subtitle: 'Any snacks or meals? (optional)',
+      mealPlaceholder: 'e.g., Pizza, Yummy Salad',
+      addButton: 'Add it!',
     },
-    nextButton: 'Next',
-    completeButton: 'Complete',
+    nextButton: 'Next Step',
+    completeButton: 'All Done!',
     savingButton: 'Saving...',
   },
 
   // Onboarding Celebration Screen
   onboardingCelebration: {
-    heading: 'You Did It!',
-    progressText: (entryCount: number) => `${entryCount}/3 entries logged`,
-    nextText: 'Log 2 more to unlock your analysis',
-    buttonText: 'Next',
+    heading: 'Woohoo! Great Job!',
+    progressText: (entryCount: number) => `${entryCount}/3 logs done!`,
+    nextText: 'Just 2 more to unlock your magic insights',
+    buttonText: 'Keep Going!',
   },
 
   // Conditions (for selection screens)
@@ -118,44 +118,44 @@ export const APP_TEXTS = {
     { id: 'colitis', label: 'Colitis' },
     { id: 'celiac', label: 'Celiac' },
     { id: 'gerd', label: 'GERD' },
-    { id: 'general', label: 'General' },
+    { id: 'general', label: 'Just figuring it out' },
   ],
 
   // Main issues
   mainIssues: [
     { id: 'bloating', label: 'Bloating' },
-    { id: 'cramping', label: 'Cramping' },
-    { id: 'diarrhea', label: 'Diarrhea' },
-    { id: 'constipation', label: 'Constipation' },
-    { id: 'energy', label: 'Low Energy' },
-    { id: 'multiple', label: 'Multiple Issues' },
+    { id: 'cramping', label: 'Tummy Aches' },
+    { id: 'diarrhea', label: 'The Runs' },
+    { id: 'constipation', label: 'Backed Up' },
+    { id: 'energy', label: 'Sleepy/Low Energy' },
+    { id: 'multiple', label: 'A Mix of Things' },
   ],
 
-  // Stool types
+  // Stool types - Simplified and cuter
   stoolTypes: [
-    { type: 1, label: 'Hard' },
-    { type: 2, label: 'Lumpy' },
-    { type: 3, label: 'Normal' },
-    { type: 4, label: 'Normal' },
-    { type: 5, label: 'Soft' },
-    { type: 6, label: 'Loose' },
+    { type: 1, label: 'Hard Pellets' },
+    { type: 2, label: 'Lumpy Log' },
+    { type: 3, label: 'Cracked Log' },
+    { type: 4, label: 'Smooth Log' },
+    { type: 5, label: 'Soft Blobs' },
+    { type: 6, label: 'Mushy' },
     { type: 7, label: 'Liquid' },
   ],
 
   // Energy levels
   energyLevels: [
-    { value: 1, icon: 'sad', label: 'Low' },
-    { value: 5, icon: 'remove', label: 'Fair' },
+    { value: 1, icon: 'sad', label: 'Meh' },
+    { value: 5, icon: 'remove', label: 'Okay' },
     { value: 8, icon: 'happy', label: 'Good' },
-    { value: 10, icon: 'flash', label: 'Great' },
+    { value: 10, icon: 'flash', label: 'Super!' },
   ],
 
   // Symptoms
   symptoms: [
-    { id: 'bloating', label: 'Bloating' },
-    { id: 'gas', label: 'Gas' },
-    { id: 'cramping', label: 'Cramping' },
-    { id: 'urgency', label: 'Urgency' },
+    { id: 'bloating', label: 'Bloated' },
+    { id: 'gas', label: 'Gassy' },
+    { id: 'cramping', label: 'Crampy' },
+    { id: 'urgency', label: 'Urgent' },
     { id: 'burning', label: 'Burning' },
   ],
 } as const;

@@ -6,7 +6,7 @@ export { Button } from './Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './Button';
 
 export { Card } from './Card';
-export type { CardProps, CardVariant, CardPadding } from './Card';
+export type { CardProps, CardPadding } from './Card';
 
 export { GlassmorphismCard } from './GlassmorphismCard';
 export type { GlassmorphismCardProps, GlassCardSize, GlassCardGradient } from './GlassmorphismCard';
@@ -21,4 +21,3 @@ export { Input } from './Input';
 export type { InputProps } from './Input';
 
 export * from './Surface';
-export type { NeumorphicViewProps } from './NeumorphicView';

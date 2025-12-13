@@ -92,6 +92,20 @@ export const colors = {
     secondary: 'transparent', // Secondary button (transparent)
     secondaryText: '#ff7664', // Secondary button text (primary color)
   },
+
+  // ============================================
+  // FEEDBACK COLORS (Added for safety)
+  // ============================================
+  feedback: {
+    success: '#9bcbab',
+    warning: '#f1c40f', // Standard warning yellow
+    error: '#ff7664',   // Using primary red/orange as error or a distinct red? 
+                        // Since primary is #ff7664 (Coral), let's use a slightly stronger red for error 
+                        // or just map to primary if that's the design.
+                        // I'll use a standard red for error to distinguish from brand if needed, 
+                        // but usually error is red.
+    info: '#3498db',
+  }
 } as const;
 
 export type ColorScheme = typeof colors;

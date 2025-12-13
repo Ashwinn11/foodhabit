@@ -1,13 +1,12 @@
 /**
- * Apple Design System - Spacing
- * Following Apple Human Interface Guidelines
- * Based on 8px grid system with Apple-specific values
+ * Playful Design System - Spacing & Shapes
+ * Generous spacing and super-rounded corners
  */
 
 export const spacing = {
   xs: 4,
   sm: 8,
-  md: 12, // Apple's preferred base spacing
+  md: 12, 
   lg: 16,
   xl: 20,
   '2xl': 24,
@@ -18,27 +17,25 @@ export const spacing = {
 } as const;
 
 /**
- * Apple-style border radius values
- * Apple uses continuous corner curves (squircles) but we approximate with standard border radius
- * These values are optimized for iOS-like rounded corners
+ * Border Radius Values
+ * "Super-ellipse" style softness
  */
 export const borderRadius = {
   none: 0,
-  xs: 4, // Small elements
-  sm: 8, // Buttons, small cards
-  md: 12, // Standard cards, input fields
-  lg: 16, // Large cards
-  xl: 20, // Extra large cards
-  '2xl': 24, // Modals, sheets
-  '3xl': 28, // Extra large modals
-  pill: 9999, // Pill-shaped buttons (Apple's signature)
-  circle: 9999, // Circular elements
+  xs: 8,   // Softened from 4
+  sm: 12,  // Softened from 8
+  md: 20,  // Major jump from 12 (very round cards)
+  lg: 28,  // Major jump from 16
+  xl: 36,  // Almost pill-shaped
+  '2xl': 44, 
+  '3xl': 50, 
+  pill: 9999,
+  circle: 9999,
 } as const;
 
 /**
- * Apple-style shadow presets
- * Subtle, refined shadows that match iOS design language
- * Apple uses lighter, more diffused shadows compared to Material Design
+ * Shadows
+ * Softer, more colorful/diffused shadows if possible (keeping black for now but diffused)
  */
 export const shadows = {
   none: {
@@ -48,57 +45,56 @@ export const shadows = {
     shadowRadius: 0,
     elevation: 0,
   },
-  // Subtle shadow for small interactive elements
-  xs: {
+  flat: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
+    shadowOpacity: 0.02,
     shadowRadius: 2,
+    elevation: 0, // Flat usually means no elevation or very subtle
+  },
+  xs: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 }, // Dropped slightly more
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
     elevation: 1,
   },
-  // Small cards, buttons
   sm: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  // Standard cards
   md: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  // Elevated cards, floating action buttons
   lg: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 10,
   },
-  // Modals, sheets, overlays
   xl: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 15 },
+    shadowOpacity: 0.15,
+    shadowRadius: 30,
+    elevation: 15,
   },
-  // Maximum elevation for important overlays
   '2xl': {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.15,
-    shadowRadius: 32,
-    elevation: 16,
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.2,
+    shadowRadius: 40,
+    elevation: 20,
   },
 } as const;
-
-
 
 export type Spacing = typeof spacing;
 export type BorderRadius = typeof borderRadius;
