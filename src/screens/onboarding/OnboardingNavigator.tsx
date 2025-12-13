@@ -128,8 +128,7 @@ export default function OnboardingNavigator({
       <OnboardingProfileScreen
         onContinue={handleProfileContinue}
         onBack={() => {
-          // User can go back to auth screen by pressing back
-          // Navigation will handle the pop
+          // Back navigation handled by stack
         }}
       />
     );

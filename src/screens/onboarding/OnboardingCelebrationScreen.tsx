@@ -3,9 +3,7 @@ import {
   View,
   StyleSheet,
   Animated,
-  TouchableOpacity,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Button, Container } from '../../components';
 import { theme, haptics } from '../../theme';
@@ -21,7 +19,7 @@ export default function OnboardingCelebrationScreen({
 }: OnboardingCelebrationScreenProps) {
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(100)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
     // Celebrate icon animation
@@ -52,14 +50,6 @@ export default function OnboardingCelebrationScreen({
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[
-          theme.colors.background.primary,
-          theme.colors.background.card,
-        ]}
-        style={StyleSheet.absoluteFillObject}
-      />
-
       <Container variant="plain" style={styles.contentContainer}>
         {/* Celebration Icon */}
         <Animated.View
@@ -80,7 +70,7 @@ export default function OnboardingCelebrationScreen({
         </Animated.View>
 
         {/* Spacer */}
-        <View style={{ flex: 0.3 }} />
+        <View style={{ flex: 0.1 }} />
 
         {/* Content */}
         <Animated.View
@@ -110,15 +100,7 @@ export default function OnboardingCelebrationScreen({
               Progress to First Insight
             </Text>
             <View style={styles.progressBarContainer}>
-              <LinearGradient
-                colors={[
-                  theme.colors.brand.primary,
-                  theme.colors.brand.secondary,
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.progressBar, { width: '33%' }]}
-              />
+              <View style={[styles.progressBar, { width: '33%' }]} />
             </View>
             <View style={styles.progressSteps}>
               {[1, 2, 3].map((num) => (
@@ -236,7 +218,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: `${theme.colors.brand.primary}20`,
+    backgroundColor: theme.colors.background.card, // Solid background
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -246,27 +228,33 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: theme.spacing.sm,
     color: theme.colors.text.primary,
+    fontWeight: '700',
   },
   subtitle: {
     marginBottom: theme.spacing.xl,
   },
   progressSection: {
     marginBottom: theme.spacing['2xl'],
+    padding: theme.spacing.lg,
+    backgroundColor: theme.colors.background.card,
+    borderRadius: theme.spacing.lg,
   },
   progressLabel: {
     marginBottom: theme.spacing.md,
     fontSize: 16,
     color: theme.colors.text.primary,
+    fontWeight: '600',
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: `${theme.colors.text.primary}20`,
+    backgroundColor: theme.colors.background.primary,
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: theme.spacing.lg,
   },
   progressBar: {
     height: '100%',
+    backgroundColor: theme.colors.brand.primary,
     borderRadius: 4,
   },
   progressSteps: {
@@ -281,9 +269,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: theme.colors.background.card,
-    borderWidth: 2,
-    borderColor: `${theme.colors.text.primary}30`,
+    backgroundColor: theme.colors.background.primary,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -301,17 +289,19 @@ const styles = StyleSheet.create({
   nextStepsTitle: {
     marginBottom: theme.spacing.lg,
     color: theme.colors.text.primary,
+    fontWeight: '600',
   },
   nextStep: {
     flexDirection: 'row',
     gap: theme.spacing.md,
     marginBottom: theme.spacing.lg,
+    alignItems: 'center',
   },
   nextStepIcon: {
     width: 48,
     height: 48,
-    borderRadius: 12,
-    backgroundColor: `${theme.colors.brand.primary}15`,
+    borderRadius: 24,
+    backgroundColor: theme.colors.background.card, // Solid background
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -320,9 +310,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   nextStepTitle: {
-    marginBottom: theme.spacing.xs,
+    marginBottom: 2,
     fontSize: 16,
     color: theme.colors.text.primary,
+    fontWeight: '600',
   },
   nextStepDesc: {
     fontSize: 14,

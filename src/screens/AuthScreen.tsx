@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, Dimensions, TouchableOpacity, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { theme, haptics } from '../theme';
 import { Container, Text } from '../components';
 import { APP_TEXTS } from '../constants/appText';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Modern Value Prop Component with glassmorphism
+// Solid, modern value prop component
 interface ValuePropRowProps {
   icon: string;
   text: string;
@@ -17,51 +16,19 @@ interface ValuePropRowProps {
 }
 
 const ValuePropRow: React.FC<ValuePropRowProps> = ({ icon, text, index }) => {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.95,
-      tension: 200,
-      friction: 10,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      tension: 200,
-      friction: 10,
-      useNativeDriver: true,
-    }).start();
-  };
-
   return (
-    <Animated.View
-      style={[
-        styles.valuePropRow,
-        { transform: [{ scale: scaleAnim }] },
-      ]}
-    >
-      <TouchableOpacity
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={0.8}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, flex: 1 }}
-      >
-        <View style={styles.valuePropIconContainer}>
-          <Ionicons name={icon as any} size={20} color={theme.colors.brand.primary} />
-        </View>
-        <Text variant="body" style={styles.valuePropText}>
-          {text}
-        </Text>
-      </TouchableOpacity>
-    </Animated.View>
+    <View style={styles.valuePropRow}>
+      <View style={styles.valuePropIconContainer}>
+        <Ionicons name={icon as any} size={20} color={theme.colors.brand.primary} />
+      </View>
+      <Text variant="body" style={styles.valuePropText}>
+        {text}
+      </Text>
+    </View>
   );
 };
 
-// Cute animated mascot component
+// Simplified solid mascot/logo component
 interface AnimatedMascotProps {
   fadeAnim: Animated.Value;
   scaleAnim: Animated.Value;
@@ -82,107 +49,13 @@ const AnimatedMascot: React.FC<AnimatedMascotProps> = ({ fadeAnim, scaleAnim, bo
         },
       ]}
     >
-      <View style={styles.mascotGlow} />
-      <Image
-        source={require('../../assets/icon.png')}
-        style={styles.mascot}
-      />
+      <View style={styles.mascotBg}>
+         <Image
+          source={require('../../assets/icon.png')}
+          style={styles.mascot}
+        />
+      </View>
     </Animated.View>
-  );
-};
-
-// Decorative pattern component using simple overlays
-const DecorativePattern: React.FC = () => {
-  return (
-    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-      {/* Top gradient overlay */}
-      <LinearGradient
-        colors={['rgba(255, 255, 255, 0.12)', 'transparent']}
-        style={styles.topOverlay}
-      />
-
-      {/* Bottom gradient overlay */}
-      <LinearGradient
-        colors={['transparent', 'rgba(255, 255, 255, 0.08)']}
-        style={styles.bottomOverlay}
-      />
-
-      {/* Decorative circles */}
-      <View style={[styles.decorCircle, { top: -50, right: -50, width: 200, height: 200 }]} />
-      <View style={[styles.decorCircle, { bottom: -80, left: -80, width: 250, height: 250 }]} />
-    </View>
-  );
-};
-
-// Floating animated orb component for background
-const AnimatedOrb: React.FC<{ delay?: number; size?: number; initialX?: number; initialY?: number; duration?: number }> = ({
-  delay = 0,
-  size = 200,
-  initialX = 0,
-  initialY = 0,
-  duration = 8000,
-}) => {
-  const translateX = useRef(new Animated.Value(initialX)).current;
-  const translateY = useRef(new Animated.Value(initialY)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    // Fade in animation - slower and more subtle
-    Animated.timing(opacity, {
-      toValue: 0.4,
-      duration: 1500,
-      delay,
-      useNativeDriver: true,
-    }).start();
-
-    // Floating animation - slower and gentler movement
-    const animate = () => {
-      Animated.loop(
-        Animated.parallel([
-          Animated.sequence([
-            Animated.timing(translateX, {
-              toValue: Math.random() * 40 - 20, // Reduced from 100 to 40
-              duration,
-              useNativeDriver: true,
-            }),
-            Animated.timing(translateX, {
-              toValue: initialX,
-              duration,
-              useNativeDriver: true,
-            }),
-          ]),
-          Animated.sequence([
-            Animated.timing(translateY, {
-              toValue: Math.random() * 40 - 20, // Reduced from 100 to 40
-              duration,
-              useNativeDriver: true,
-            }),
-            Animated.timing(translateY, {
-              toValue: initialY,
-              duration,
-              useNativeDriver: true,
-            }),
-          ]),
-        ])
-      ).start();
-    };
-
-    setTimeout(animate, delay);
-  }, []);
-
-  return (
-    <Animated.View
-      style={[
-        styles.orb,
-        {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          transform: [{ translateX }, { translateY }],
-          opacity,
-        },
-      ]}
-    />
   );
 };
 
@@ -193,8 +66,8 @@ export default function AuthScreen() {
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -204,43 +77,42 @@ export default function AuthScreen() {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1200,
-        delay: 400,
+        duration: 800,
+        delay: 200,
         useNativeDriver: true,
       }),
       Animated.spring(slideAnim, {
         toValue: 0,
-        tension: 15,
-        friction: 9,
-        delay: 400,
+        tension: 20,
+        friction: 8,
+        delay: 200,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
-        tension: 15,
-        friction: 9,
-        delay: 400,
+        tension: 20,
+        friction: 8,
+        delay: 200,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Bounce animation for mascot (starts after initial animations)
-    setTimeout(() => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(bounceAnim, {
-            toValue: -20,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.timing(bounceAnim, {
-            toValue: 0,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    }, 1600);
+     // Gentle float animation for mascot
+     Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: -10,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
   }, []);
 
   const checkAppleAuth = async () => {
@@ -274,27 +146,23 @@ export default function AuthScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Dark blue/navy background */}
+      {/* Solid Background */}
       <View style={StyleSheet.absoluteFillObject} />
-
-      {/* Decorative Pattern */}
-      <DecorativePattern />
-
-      {/* Animated Orbs */}
-      <AnimatedOrb delay={0} size={250} initialX={-50} initialY={-100} duration={15000} />
-      <AnimatedOrb delay={800} size={200} initialX={SCREEN_WIDTH - 150} initialY={SCREEN_HEIGHT / 2} duration={18000} />
-      <AnimatedOrb delay={1500} size={180} initialX={SCREEN_WIDTH / 2} initialY={SCREEN_HEIGHT - 200} duration={16000} />
 
       {/* Main Content */}
       <Container variant="plain" style={styles.contentContainer} edges={['top', 'left', 'right', 'bottom']}>
-        {/* Cute Mascot */}
+        
+        {/* Spacer for top */}
+        <View style={{ height: theme.spacing['4xl'] }} />
+
+        {/* Mascot */}
         <AnimatedMascot
           fadeAnim={fadeAnim}
           scaleAnim={scaleAnim}
           bounceAnim={bounceAnim}
         />
 
-        {/* Header at Top */}
+        {/* Header */}
         <Animated.View
           style={[
             styles.header,
@@ -307,7 +175,7 @@ export default function AuthScreen() {
           <Text variant="largeTitle" align="center" style={styles.title}>
             {APP_TEXTS.auth.title}
           </Text>
-          <Text variant="title3" align="center" style={styles.subtitle}>
+          <Text variant="body" align="center" style={styles.subtitle}>
             {APP_TEXTS.auth.subtitle}
           </Text>
 
@@ -326,13 +194,13 @@ export default function AuthScreen() {
         {/* Spacer */}
         <View style={styles.spacer} />
 
-        {/* Footer with Auth Buttons and Legal */}
+        {/* Footer */}
         <Animated.View
           style={[
             styles.footer,
             {
               opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
+              transform: [{ translateY: slideAnim }], // Reuse slide anim for footer
             },
           ]}
         >
@@ -349,7 +217,7 @@ export default function AuthScreen() {
                 activeOpacity={0.8}
               >
                 {loadingButton === 'apple' ? (
-                  <ActivityIndicator size="small" color={theme.colors.brand.black} />
+                  <ActivityIndicator size="small" color={theme.colors.brand.white} />
                 ) : (
                   <Ionicons name="logo-apple" size={24} color={theme.colors.brand.black} />
                 )}
@@ -401,30 +269,36 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background.primary, // Dark blue/navy
+    backgroundColor: theme.colors.background.primary,
   },
   contentContainer: {
     flex: 1,
     paddingHorizontal: theme.spacing['2xl'],
-    paddingTop: theme.spacing['3xl'],
+    paddingTop: theme.spacing['2xl'],
   },
   // Mascot styles
   mascotContainer: {
     alignItems: 'center',
     marginBottom: theme.spacing['3xl'],
   },
-  mascotGlow: {
-    position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(255, 118, 100, 0.2)',
-    blur: 40,
-  },
-  mascot: {
+  mascotBg: {
     width: 140,
     height: 140,
     borderRadius: 70,
+    backgroundColor: theme.colors.background.card, // Solid card background
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Subtle shadow
+    shadowColor: theme.colors.brand.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  mascot: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     resizeMode: 'contain',
   },
   header: {
@@ -433,42 +307,32 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: theme.spacing.md,
-    color: theme.colors.brand.white,
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    color: theme.colors.text.primary,
   },
   subtitle: {
-    marginBottom: theme.spacing.xl,
-    color: theme.colors.brand.white,
-    textShadowColor: 'rgba(0, 0, 0, 0.08)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    marginBottom: theme.spacing['2xl'],
+    color: theme.colors.text.secondary,
   },
   valuePropsContainer: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
   },
   valuePropRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: `rgba(255, 255, 255, 0.08)`,
-    borderRadius: theme.spacing.lg,
-    borderWidth: 1,
-    borderColor: `rgba(255, 255, 255, 0.1)`,
+    gap: theme.spacing.lg,
   },
   valuePropIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: `rgba(255, 118, 100, 0.2)`,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.background.card,
     justifyContent: 'center',
     alignItems: 'center',
   },
   valuePropText: {
     flex: 1,
-    color: theme.colors.brand.white,
+    color: theme.colors.text.primary,
   },
   spacer: {
     flex: 1,
@@ -482,7 +346,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
     marginBottom: theme.spacing['2xl'],
   },
-  // Apple Button - Coral background with white text/icon
+  // Apple Button - Black background with white text/icon (Standard Apple Design)
   appleButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -492,13 +356,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
     borderRadius: theme.borderRadius.pill,
     gap: theme.spacing.md,
-    ...theme.shadows.lg,
     height: 56,
   },
   appleButtonText: {
     color: theme.colors.brand.black,
   },
-  // Google Button - White background with black text and colored logo (OAuth - keep as-is)
+  // Google Button - White background with black text
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -508,60 +371,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
     borderRadius: theme.borderRadius.pill,
     gap: theme.spacing.md,
-    ...theme.shadows.lg,
     height: 56,
   },
   googleButtonText: {
     color: theme.colors.brand.black,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
   legalContainer: {
     paddingHorizontal: theme.spacing.md,
   },
   legalText: {
-    color: theme.colors.brand.white,
+    color: theme.colors.text.secondary,
     lineHeight: 18,
   },
   legalLink: {
-    color: theme.colors.brand.white,
-    fontWeight: '500',
+    color: theme.colors.text.primary,
     textDecorationLine: 'underline',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: theme.spacing.lg,
-    color: theme.colors.brand.white,
-    ...theme.typography.body,
-  },
-  // Animated orb styles
-  orb: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  // Decorative pattern styles
-  topOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 250,
-  },
-  bottomOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 300,
-  },
-  decorCircle: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: theme.borderRadius.circle,
   },
 });

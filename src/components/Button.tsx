@@ -1,6 +1,7 @@
 /**
- * Apple Design System - Button Component
+ * Design System - Button Component
  * Implements Apple's signature pill-shaped buttons with haptic feedback
+ * Updated: Solid modern look, no glassmorphism
  */
 
 import React from 'react';
@@ -84,10 +85,9 @@ export const Button: React.FC<ButtonProps> = ({
       textColor = theme.colors.button.primaryText;
       break;
     case 'secondary':
-      backgroundColor = theme.colors.button.secondary;
-      textColor = theme.colors.button.secondaryText;
-      borderWidth = 1; // Example: Add a border for secondary
-      borderColor = theme.colors.button.secondaryText;
+      backgroundColor = theme.colors.background.card; // Solid card background
+      textColor = theme.colors.brand.primary; // Primary color text
+      borderWidth = 0; // No border for cleaner look, or use brand color
       break;
     case 'tertiary':
       backgroundColor = 'transparent';
@@ -159,16 +159,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden', // Ensure content respects borderRadius
-    // 2025 Modern: Subtle shadow for depth (neumorphism)
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
-    // Subtle border for glassmorphism
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+    // Removed glassmorphism borders and shadows
+    // Keeping elevation for depth if needed, but making it subtle
+    // elevation: 2,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 4,
   },
 
   content: {

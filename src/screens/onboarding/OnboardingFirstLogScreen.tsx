@@ -20,7 +20,6 @@ interface OnboardingFirstLogScreenProps {
   onBack: () => void;
 }
 
-// Use constants from APP_TEXTS instead of hardcoding
 const STOOL_TYPES = APP_TEXTS.stoolTypes;
 const SYMPTOMS = APP_TEXTS.symptoms;
 const ENERGY_LEVELS = APP_TEXTS.energyLevels;
@@ -97,7 +96,7 @@ export default function OnboardingFirstLogScreen({
     <View style={styles.container}>
       <Container
         scrollable
-        variant="default"
+        variant="plain"
         keyboardAvoiding
         edges={['top', 'left', 'right']}
         padding={false}
@@ -107,15 +106,16 @@ export default function OnboardingFirstLogScreen({
           <TouchableOpacity
             onPress={handleBack}
             disabled={loading}
+            style={styles.backButton}
           >
             <Ionicons
-              name="chevron-back"
-              size={32}
-              color={theme.colors.brand.primary}
+              name="arrow-back"
+              size={24}
+              color={theme.colors.text.primary}
             />
           </TouchableOpacity>
-          <Text variant="body" color="secondary">
-            {progress}/{totalSteps}
+          <Text variant="callout" style={styles.progressText}>
+            Step {progress} of {totalSteps}
           </Text>
         </View>
 
@@ -132,7 +132,7 @@ export default function OnboardingFirstLogScreen({
         {/* Content */}
         {step === 'type' && (
           <View style={styles.section}>
-            <Text variant="largeTitle" style={styles.title}>
+            <Text variant="title1" style={styles.title}>
               {APP_TEXTS.onboardingFirstLog.stoolStep.title}
             </Text>
             <Text variant="body" style={styles.subtitle} color="secondary">
@@ -154,8 +154,8 @@ export default function OnboardingFirstLogScreen({
                   }}
                   disabled={loading}
                 >
-                  <Text variant="headline">{item.type}</Text>
-                  <Text variant="caption" color="secondary">
+                  <Text variant="title3" style={{color: selectedStoolType === item.type ? theme.colors.brand.primary : theme.colors.text.primary}}>{item.type}</Text>
+                  <Text variant="caption1" color="secondary">
                     {item.label}
                   </Text>
                 </TouchableOpacity>
@@ -166,7 +166,7 @@ export default function OnboardingFirstLogScreen({
 
         {step === 'energy' && (
           <View style={styles.section}>
-            <Text variant="largeTitle" style={styles.title}>
+            <Text variant="title1" style={styles.title}>
               {APP_TEXTS.onboardingFirstLog.energyStep.title}
             </Text>
             <Text variant="body" style={styles.subtitle} color="secondary">
@@ -217,7 +217,7 @@ export default function OnboardingFirstLogScreen({
 
         {step === 'symptoms' && (
           <View style={styles.section}>
-            <Text variant="largeTitle" style={styles.title}>
+            <Text variant="title1" style={styles.title}>
               {APP_TEXTS.onboardingFirstLog.symptomsStep.title}
             </Text>
             <Text variant="body" style={styles.subtitle} color="secondary">
@@ -239,17 +239,10 @@ export default function OnboardingFirstLogScreen({
                   }}
                   disabled={loading}
                 >
-                  {selectedSymptoms[symptom.id] && (
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={20}
-                      color={theme.colors.brand.primary}
-                      style={{ marginRight: theme.spacing.sm }}
-                    />
-                  )}
                   <Text
                     variant="body"
                     style={{
+                      flex: 1,
                       color: selectedSymptoms[symptom.id]
                         ? theme.colors.brand.primary
                         : theme.colors.text.primary,
@@ -257,6 +250,13 @@ export default function OnboardingFirstLogScreen({
                   >
                     {symptom.label}
                   </Text>
+                  {selectedSymptoms[symptom.id] && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={20}
+                      color={theme.colors.brand.primary}
+                    />
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -265,7 +265,7 @@ export default function OnboardingFirstLogScreen({
 
         {step === 'meals' && (
           <View style={styles.section}>
-            <Text variant="largeTitle" style={styles.title}>
+            <Text variant="title1" style={styles.title}>
               {APP_TEXTS.onboardingFirstLog.mealsStep.title}
             </Text>
             <Text variant="body" style={styles.subtitle} color="secondary">
@@ -278,14 +278,15 @@ export default function OnboardingFirstLogScreen({
                 value={mealInput}
                 onChangeText={setMealInput}
                 editable={!loading}
+                containerStyle={{ flex: 1 }}
               />
               <Button
-                title={APP_TEXTS.onboardingFirstLog.mealsStep.addButton}
+                title="Add"
                 onPress={addMeal}
                 variant="secondary"
-                size="small"
+                size="medium"
                 disabled={!mealInput.trim() || loading}
-                style={{ marginLeft: theme.spacing.sm }}
+                style={{ marginLeft: theme.spacing.sm, height: 56, marginTop: 16 }}
               />
             </View>
 
@@ -293,7 +294,7 @@ export default function OnboardingFirstLogScreen({
               <View style={styles.mealsContainer}>
                 {meals.map((meal, index) => (
                   <View key={index} style={styles.mealTag}>
-                    <Text variant="body">{meal}</Text>
+                    <Text variant="body" style={{ color: theme.colors.text.primary }}>{meal}</Text>
                     <TouchableOpacity
                       onPress={() => removeMeal(index)}
                       disabled={loading}
@@ -351,12 +352,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     paddingHorizontal: theme.spacing['2xl'],
+    marginTop: theme.spacing.lg,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.background.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  progressText: {
+    color: theme.colors.text.secondary,
   },
   progressBarContainer: {
     height: 4,
-    backgroundColor: `${theme.colors.text.primary}20`,
+    backgroundColor: theme.colors.background.card,
     borderRadius: 2,
     marginBottom: theme.spacing['2xl'],
     marginHorizontal: theme.spacing['2xl'],
@@ -371,8 +384,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing['2xl'],
   },
   title: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
     color: theme.colors.text.primary,
+    fontWeight: '700',
   },
   subtitle: {
     marginBottom: theme.spacing['2xl'],
@@ -383,20 +397,19 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   stoolTypeButton: {
-    flex: 1,
-    minWidth: '22%',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.md,
+    width: '30%',
+    aspectRatio: 1,
+    padding: theme.spacing.sm,
     backgroundColor: theme.colors.background.card,
     borderRadius: theme.spacing.md,
-    borderWidth: 2,
-    borderColor: `${theme.colors.text.primary}20`,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   stoolTypeButtonSelected: {
-    backgroundColor: `${theme.colors.brand.primary}15`,
     borderColor: theme.colors.brand.primary,
+    backgroundColor: theme.colors.background.card,
   },
   energyGrid: {
     flexDirection: 'row',
@@ -408,13 +421,12 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.lg,
     backgroundColor: theme.colors.background.card,
     borderRadius: theme.spacing.md,
-    borderWidth: 2,
-    borderColor: `${theme.colors.text.primary}20`,
+    borderWidth: 1,
+    borderColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },
   energyButtonSelected: {
-    backgroundColor: `${theme.colors.brand.primary}15`,
     borderColor: theme.colors.brand.primary,
   },
   symptomsGrid: {
@@ -423,20 +435,20 @@ const styles = StyleSheet.create({
   symptomButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     backgroundColor: theme.colors.background.card,
     borderRadius: theme.spacing.md,
-    borderWidth: 2,
-    borderColor: `${theme.colors.text.primary}20`,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   symptomButtonSelected: {
-    backgroundColor: `${theme.colors.brand.primary}15`,
     borderColor: theme.colors.brand.primary,
   },
   mealInputContainer: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    alignItems: 'flex-start',
     marginBottom: theme.spacing.md,
   },
   mealsContainer: {
@@ -450,13 +462,17 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
-    backgroundColor: `${theme.colors.brand.primary}15`,
+    backgroundColor: theme.colors.background.card,
     borderRadius: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
   },
   footer: {
     paddingHorizontal: theme.spacing['2xl'],
     paddingVertical: theme.spacing.lg,
-    paddingBottom: theme.spacing['2xl'],
+    paddingBottom: theme.spacing['3xl'],
     backgroundColor: theme.colors.background.primary,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border.light,
   },
 });

@@ -19,7 +19,6 @@ interface OnboardingProfileScreenProps {
   onBack: () => void;
 }
 
-// Use constants from APP_TEXTS instead of hardcoding
 const CONDITIONS = APP_TEXTS.conditions;
 const MAIN_ISSUES = APP_TEXTS.mainIssues;
 
@@ -55,7 +54,7 @@ export default function OnboardingProfileScreen({
     <View style={styles.container}>
       <Container
         scrollable
-        variant="default"
+        variant="plain"
         keyboardAvoiding
         edges={['top', 'left', 'right']}
         padding={false}
@@ -68,11 +67,12 @@ export default function OnboardingProfileScreen({
             onBack();
           }}
           disabled={loading}
+          style={styles.backButton}
         >
           <Ionicons
-            name="chevron-back"
-            size={32}
-            color={theme.colors.brand.primary}
+            name="arrow-back"
+            size={24}
+            color={theme.colors.text.primary}
           />
         </TouchableOpacity>
       </View>
@@ -96,6 +96,7 @@ export default function OnboardingProfileScreen({
           onChangeText={setName}
           editable={!loading}
           placeholderTextColor={theme.colors.text.tertiary}
+          style={styles.input}
         />
       </View>
 
@@ -118,7 +119,7 @@ export default function OnboardingProfileScreen({
                 setSelectedCondition(condition.id);
               }}
               disabled={loading}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
               <Text
                 variant="body"
@@ -157,7 +158,7 @@ export default function OnboardingProfileScreen({
                 setSelectedIssue(issue.id);
               }}
               disabled={loading}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
               <Text
                 variant="body"
@@ -211,11 +212,21 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: theme.spacing.lg,
     paddingHorizontal: theme.spacing['2xl'],
+    marginTop: theme.spacing.lg,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.background.card,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     marginBottom: theme.spacing.sm,
     color: theme.colors.text.primary,
     paddingHorizontal: theme.spacing['2xl'],
+    fontWeight: '700',
   },
   subtitle: {
     marginBottom: theme.spacing['3xl'],
@@ -226,9 +237,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing['2xl'],
   },
   sectionLabel: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     color: theme.colors.text.primary,
-    fontSize: 16,
+    fontWeight: '600',
+  },
+  input: {
+    backgroundColor: theme.colors.background.card,
+    borderRadius: theme.spacing.md,
   },
   gridContainer: {
     flexDirection: 'row',
@@ -242,24 +257,28 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.lg,
     backgroundColor: theme.colors.background.card,
     borderRadius: theme.spacing.lg,
-    borderWidth: 2,
-    borderColor: `${theme.colors.text.primary}20`,
+    // Removed transparency/border, solid background
+    borderWidth: 1,
+    borderColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 80,
+    minHeight: 60,
   },
   gridItemText: {
     textAlign: 'center',
     fontWeight: '500',
   },
   gridItemSelected: {
-    backgroundColor: `${theme.colors.brand.primary}15`,
+    backgroundColor: theme.colors.background.card,
     borderColor: theme.colors.brand.primary,
+    borderWidth: 1,
   },
   footer: {
     paddingHorizontal: theme.spacing['2xl'],
     paddingVertical: theme.spacing.lg,
-    paddingBottom: theme.spacing['2xl'],
+    paddingBottom: theme.spacing['3xl'],
     backgroundColor: theme.colors.background.primary,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border.light,
   },
 });
