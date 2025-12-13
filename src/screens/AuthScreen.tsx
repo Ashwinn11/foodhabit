@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, Dimensions, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { theme, haptics } from '../theme';
 import { Container, Text } from '../components';
 import { APP_TEXTS } from '../constants/appText';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Solid, modern value prop component
 interface ValuePropRowProps {
@@ -15,11 +13,11 @@ interface ValuePropRowProps {
   index: number;
 }
 
-const ValuePropRow: React.FC<ValuePropRowProps> = ({ icon, text, index }) => {
+const ValuePropRow: React.FC<ValuePropRowProps> = ({ icon, text }) => {
   return (
     <View style={styles.valuePropRow}>
-      <View style={styles.valuePropIconContainer}>
-        <Ionicons name={icon as any} size={20} color={theme.colors.brand.primary} />
+      <View style={[styles.valuePropIconContainer, { borderRadius: theme.borderRadius.xl }]}>
+         <Ionicons name={icon as any} size={28} color={theme.colors.brand.primary} />
       </View>
       <Text variant="body" style={styles.valuePropText}>
         {text}
@@ -49,10 +47,10 @@ const AnimatedMascot: React.FC<AnimatedMascotProps> = ({ fadeAnim, scaleAnim, bo
         },
       ]}
     >
-      <View style={styles.mascotBg}>
+      <View style={[styles.mascotBg, { borderRadius: theme.borderRadius['3xl'] }]}>
          <Image
           source={require('../../assets/icon.png')}
-          style={styles.mascot}
+          style={[styles.mascot, { width: 110, height: 110 }]}
         />
       </View>
     </Animated.View>
@@ -100,15 +98,15 @@ export default function AuthScreen() {
      // Gentle float animation for mascot
      Animated.loop(
       Animated.sequence([
-        Animated.timing(bounceAnim, {
-          toValue: -10,
-          duration: 1500,
+        Animated.spring(bounceAnim, { // Using spring for bouncier feel
+          toValue: -15, // Increased vertical movement
           useNativeDriver: true,
+          ...theme.animations.springConfig.bouncy, // Use bouncy config
         }),
-        Animated.timing(bounceAnim, {
+        Animated.spring(bounceAnim, {
           toValue: 0,
-          duration: 1500,
           useNativeDriver: true,
+          ...theme.animations.springConfig.bouncy,
         }),
       ])
     ).start();
@@ -152,55 +150,50 @@ export default function AuthScreen() {
       {/* Main Content */}
       <Container variant="plain" style={styles.contentContainer} edges={['top', 'left', 'right', 'bottom']}>
         
-        {/* Spacer for top */}
-        <View style={{ height: theme.spacing['4xl'] }} />
+        {/* Top Section: Mascot + Header */}
+        <View style={styles.topSection}>
+           <AnimatedMascot
+            fadeAnim={fadeAnim}
+            scaleAnim={scaleAnim}
+            bounceAnim={bounceAnim}
+          />
 
-        {/* Mascot */}
-        <AnimatedMascot
-          fadeAnim={fadeAnim}
-          scaleAnim={scaleAnim}
-          bounceAnim={bounceAnim}
-        />
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <Text variant="largeTitle" align="center" style={styles.title}>
+              {APP_TEXTS.auth.title}
+            </Text>
+            <Text variant="body" align="center" style={styles.subtitle}>
+              {APP_TEXTS.auth.subtitle}
+            </Text>
 
-        {/* Header */}
-        <Animated.View
-          style={[
-            styles.header,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-        >
-          <Text variant="largeTitle" align="center" style={styles.title}>
-            {APP_TEXTS.auth.title}
-          </Text>
-          <Text variant="body" align="center" style={styles.subtitle}>
-            {APP_TEXTS.auth.subtitle}
-          </Text>
+            <View style={styles.valuePropsContainer}>
+              {APP_TEXTS.auth.valueProps.map((prop, index) => (
+                <ValuePropRow
+                  key={prop.text}
+                  icon={prop.icon}
+                  text={prop.text}
+                  index={index}
+                />
+              ))}
+            </View>
+          </Animated.View>
+        </View>
 
-          <View style={styles.valuePropsContainer}>
-            {APP_TEXTS.auth.valueProps.map((prop, index) => (
-              <ValuePropRow
-                key={prop.text}
-                icon={prop.icon}
-                text={prop.text}
-                index={index}
-              />
-            ))}
-          </View>
-        </Animated.View>
-
-        {/* Spacer */}
-        <View style={styles.spacer} />
-
-        {/* Footer */}
+        {/* Bottom Section: Buttons + Legal */}
         <Animated.View
           style={[
             styles.footer,
             {
               opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }], // Reuse slide anim for footer
+              transform: [{ translateY: slideAnim }],
             },
           ]}
         >
@@ -214,7 +207,9 @@ export default function AuthScreen() {
                 ]}
                 onPress={handleAppleSignIn}
                 disabled={loadingButton !== null}
-                activeOpacity={0.8}
+                onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.92, useNativeDriver: true, ...theme.animations.springConfig.bouncy }).start()}
+                onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, ...theme.animations.springConfig.default }).start()}
+                activeOpacity={1} 
               >
                 {loadingButton === 'apple' ? (
                   <ActivityIndicator size="small" color={theme.colors.brand.white} />
@@ -234,7 +229,9 @@ export default function AuthScreen() {
               ]}
               onPress={handleGoogleSignIn}
               disabled={loadingButton !== null}
-              activeOpacity={0.8}
+              onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.92, useNativeDriver: true, ...theme.animations.springConfig.bouncy }).start()}
+              onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, ...theme.animations.springConfig.default }).start()}
+              activeOpacity={1}
             >
               {loadingButton === 'google' ? (
                 <ActivityIndicator size="small" color={theme.colors.brand.black} />
@@ -274,12 +271,18 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     paddingHorizontal: theme.spacing['2xl'],
-    paddingTop: theme.spacing['2xl'],
+    paddingVertical: theme.spacing['2xl'],
+    justifyContent: 'space-between', // Distribute space between Top and Bottom sections
+  },
+  topSection: {
+    alignItems: 'center',
+    width: '100%',
+    paddingTop: theme.spacing['2xl'], // Add some top padding
   },
   // Mascot styles
   mascotContainer: {
     alignItems: 'center',
-    marginBottom: theme.spacing['3xl'],
+    marginBottom: theme.spacing['2xl'],
   },
   mascotBg: {
     width: 140,
@@ -315,18 +318,22 @@ const styles = StyleSheet.create({
   },
   valuePropsContainer: {
     gap: theme.spacing.lg,
-    marginTop: theme.spacing.lg,
+    marginTop: theme.spacing.md,
+    width: '100%',
   },
   valuePropRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.lg,
+    backgroundColor: theme.colors.background.card, // Add background to row for card-like feel
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.xl,
   },
   valuePropIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: theme.colors.background.card,
+    backgroundColor: 'rgba(255, 118, 100, 0.15)', // Light primary color background
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -334,24 +341,20 @@ const styles = StyleSheet.create({
     flex: 1,
     color: theme.colors.text.primary,
   },
-  spacer: {
-    flex: 1,
-  },
   footer: {
     width: '100%',
-    paddingBottom: theme.spacing['3xl'],
+    paddingBottom: theme.spacing.xl,
   },
   authButtons: {
     width: '100%',
     gap: theme.spacing.md,
-    marginBottom: theme.spacing['2xl'],
+    marginBottom: theme.spacing.xl,
   },
-  // Apple Button - Black background with white text/icon (Standard Apple Design)
   appleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.brand.primary, // #ff7664
+    backgroundColor: theme.colors.brand.primary,
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.xl,
     borderRadius: theme.borderRadius.pill,
@@ -361,7 +364,6 @@ const styles = StyleSheet.create({
   appleButtonText: {
     color: theme.colors.brand.black,
   },
-  // Google Button - White background with black text
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',

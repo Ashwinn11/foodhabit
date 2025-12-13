@@ -50,6 +50,8 @@ const categorizeStool = (entry: any): 'bad' | 'good' => {
 /**
  * Get dominant symptom from bad stool entries
  */
+// Helper to get dominant symptom (unused for now)
+/*
 const getDominantSymptom = (badEntries: any[]): string => {
   const symptomCounts: Record<string, number> = {};
 
@@ -75,6 +77,7 @@ const getDominantSymptom = (badEntries: any[]): string => {
 
   return dominant;
 };
+*/
 
 /**
  * Analyze food triggers based on user's entries
@@ -152,7 +155,7 @@ export const analyzeTriggers = async (userId: string): Promise<FoodTrigger[]> =>
     // Save correlations to database
     const triggers: FoodTrigger[] = [];
     for (const [, trigger] of Object.entries(correlations)) {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('food_triggers')
         .upsert({
           user_id: userId,

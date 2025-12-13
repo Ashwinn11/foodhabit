@@ -50,7 +50,7 @@ export const GlassmorphismCard: React.FC<GlassmorphismCardProps> = ({
   onPress,
   style,
   hapticFeedback = true,
-  blurIntensity = 'medium',
+  // blurIntensity = 'medium',
   glassOpacity = 0.8,
   glowColor,
   showGlow = false,
@@ -126,7 +126,7 @@ export const GlassmorphismCard: React.FC<GlassmorphismCardProps> = ({
 
   const sizeStyles = sizeMap[size];
   const gradientStyles = gradientMap[gradient];
-  const blurOpacity = blurIntensityMap[blurIntensity];
+  // const blurRadius = blurIntensityMap[blurIntensity];
   const paddingStyle = paddingMap[padding];
 
   // Glow shadow interpolation
@@ -242,11 +242,11 @@ const gradientMap: Record<GlassCardGradient, ViewStyle> = {
 };
 
 // Blur intensity affects the glass appearance
-const blurIntensityMap: Record<'light' | 'medium' | 'strong', number> = {
-  light: 0.6,
-  medium: 0.8,
-  strong: 0.95,
-};
+// const blurIntensityMap: Record<'light' | 'medium' | 'strong', number> = {
+//   light: 5,
+//   medium: 10,
+//   strong: 15,
+// };
 
 // Padding options
 const paddingMap: Record<'small' | 'medium' | 'large', ViewStyle> = {

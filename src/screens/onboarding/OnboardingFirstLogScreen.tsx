@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, Input, Container } from '../../components';
+import { Text, Button, Input, Container, AnimatedSelectionCard } from '../../components';
 import { theme, haptics } from '../../theme';
 import { APP_TEXTS } from '../../constants/appText';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 interface OnboardingFirstLogScreenProps {
   onContinue: (data: {
@@ -28,19 +36,20 @@ export default function OnboardingFirstLogScreen({
   onContinue,
   onBack,
 }: OnboardingFirstLogScreenProps) {
-  const [step, setStep] = useState<'type' | 'energy' | 'symptoms' | 'meals'>(
-    'type'
-  );
+  const [step, setStep] = useState<'type' | 'energy' | 'symptoms' | 'meals'>('type');
   const [selectedStoolType, setSelectedStoolType] = useState<number | null>(3);
   const [selectedEnergy, setSelectedEnergy] = useState<number>(8);
-  const [selectedSymptoms, setSelectedSymptoms] = useState<
-    Record<string, boolean>
-  >({});
+  const [selectedSymptoms, setSelectedSymptoms] = useState<Record<string, boolean>>({});
   const [mealInput, setMealInput] = useState('');
   const [meals, setMeals] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, [step]);
+
   const toggleSymptom = (symptom: string) => {
+    haptics.selection();
     setSelectedSymptoms((prev) => ({
       ...prev,
       [symptom]: !prev[symptom],
@@ -49,13 +58,17 @@ export default function OnboardingFirstLogScreen({
 
   const addMeal = () => {
     if (mealInput.trim()) {
+      LayoutAnimation.configureNext(theme.animations.layoutAnimations.spring);
       setMeals([...meals, mealInput.trim()]);
       setMealInput('');
+      haptics.selection();
     }
   };
 
   const removeMeal = (index: number) => {
+    LayoutAnimation.configureNext(theme.animations.layoutAnimations.spring);
     setMeals(meals.filter((_, i) => i !== index));
+    haptics.selection();
   };
 
   const handleNext = () => {
@@ -139,26 +152,26 @@ export default function OnboardingFirstLogScreen({
               {APP_TEXTS.onboardingFirstLog.stoolStep.subtitle}
             </Text>
 
-            <View style={styles.stoolTypesGrid}>
+            <View style={styles.gridContainer}>
               {STOOL_TYPES.map((item) => (
-                <TouchableOpacity
-                  key={item.type}
-                  style={[
-                    styles.stoolTypeButton,
-                    selectedStoolType === item.type &&
-                      styles.stoolTypeButtonSelected,
-                  ]}
-                  onPress={() => {
-                    haptics.patterns.buttonPress();
-                    setSelectedStoolType(item.type);
-                  }}
-                  disabled={loading}
-                >
-                  <Text variant="title3" style={{color: selectedStoolType === item.type ? theme.colors.brand.primary : theme.colors.text.primary}}>{item.type}</Text>
-                  <Text variant="caption1" color="secondary">
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
+                <View key={item.type} style={styles.gridItemHalf}>
+                  <AnimatedSelectionCard
+                    selected={selectedStoolType === item.type}
+                    onPress={() => {
+                        setSelectedStoolType(item.type);
+                        haptics.selection();
+                    }}
+                    disabled={loading}
+                    style={styles.cardContentVertical}
+                  >
+                    <Text variant="title2" style={{ color: selectedStoolType === item.type ? theme.colors.brand.primary : theme.colors.text.primary, marginBottom: 4 }}>
+                      {item.type}
+                    </Text>
+                    <Text variant="caption1" color="secondary" align="center">
+                      {item.label}
+                    </Text>
+                  </AnimatedSelectionCard>
+                </View>
               ))}
             </View>
           </View>
@@ -173,43 +186,29 @@ export default function OnboardingFirstLogScreen({
               {APP_TEXTS.onboardingFirstLog.energyStep.subtitle}
             </Text>
 
-            <View style={styles.energyGrid}>
+            <View style={styles.gridContainer}>
               {ENERGY_LEVELS.map((level) => (
-                <TouchableOpacity
-                  key={level.value}
-                  style={[
-                    styles.energyButton,
-                    selectedEnergy === level.value &&
-                      styles.energyButtonSelected,
-                  ]}
-                  onPress={() => {
-                    haptics.patterns.buttonPress();
-                    setSelectedEnergy(level.value);
-                  }}
-                  disabled={loading}
-                >
-                  <Ionicons
-                    name={level.icon as any}
-                    size={32}
-                    color={
-                      selectedEnergy === level.value
-                        ? theme.colors.brand.primary
-                        : theme.colors.text.secondary
-                    }
-                  />
-                  <Text
-                    variant="body"
-                    style={{
-                      marginTop: theme.spacing.sm,
-                      color:
-                        selectedEnergy === level.value
-                          ? theme.colors.brand.primary
-                          : theme.colors.text.secondary,
+                <View key={level.value} style={styles.gridItemHalf}>
+                  <AnimatedSelectionCard
+                    selected={selectedEnergy === level.value}
+                    onPress={() => {
+                        setSelectedEnergy(level.value);
+                        haptics.selection();
                     }}
+                    disabled={loading}
+                    style={styles.cardContentVertical}
                   >
-                    {level.label}
-                  </Text>
-                </TouchableOpacity>
+                    <Ionicons
+                        name={level.icon as any}
+                        size={32}
+                        color={selectedEnergy === level.value ? theme.colors.brand.primary : theme.colors.text.secondary}
+                        style={{ marginBottom: 8 }}
+                    />
+                    <Text variant="body" style={{ color: selectedEnergy === level.value ? theme.colors.brand.primary : theme.colors.text.secondary }}>
+                      {level.label}
+                    </Text>
+                  </AnimatedSelectionCard>
+                </View>
               ))}
             </View>
           </View>
@@ -224,40 +223,27 @@ export default function OnboardingFirstLogScreen({
               {APP_TEXTS.onboardingFirstLog.symptomsStep.subtitle}
             </Text>
 
-            <View style={styles.symptomsGrid}>
+            <View style={styles.listContainer}>
               {SYMPTOMS.map((symptom) => (
-                <TouchableOpacity
+                <AnimatedSelectionCard
                   key={symptom.id}
-                  style={[
-                    styles.symptomButton,
-                    selectedSymptoms[symptom.id] &&
-                      styles.symptomButtonSelected,
-                  ]}
-                  onPress={() => {
-                    haptics.patterns.buttonPress();
-                    toggleSymptom(symptom.id);
-                  }}
+                  selected={!!selectedSymptoms[symptom.id]}
+                  onPress={() => toggleSymptom(symptom.id)}
                   disabled={loading}
+                  containerStyle={{ marginBottom: theme.spacing.md }}
+                  style={styles.cardContentHorizontal}
                 >
-                  <Text
-                    variant="body"
-                    style={{
-                      flex: 1,
-                      color: selectedSymptoms[symptom.id]
-                        ? theme.colors.brand.primary
-                        : theme.colors.text.primary,
-                    }}
-                  >
+                  <Text variant="body" style={{ flex: 1, color: selectedSymptoms[symptom.id] ? theme.colors.brand.primary : theme.colors.text.primary, fontWeight: '600' }}>
                     {symptom.label}
                   </Text>
                   {selectedSymptoms[symptom.id] && (
                     <Ionicons
                       name="checkmark-circle"
-                      size={20}
+                      size={24}
                       color={theme.colors.brand.primary}
                     />
                   )}
-                </TouchableOpacity>
+                </AnimatedSelectionCard>
               ))}
             </View>
           </View>
@@ -290,25 +276,23 @@ export default function OnboardingFirstLogScreen({
               />
             </View>
 
-            {meals.length > 0 && (
-              <View style={styles.mealsContainer}>
+            <View style={styles.mealsContainer}>
                 {meals.map((meal, index) => (
-                  <View key={index} style={styles.mealTag}>
-                    <Text variant="body" style={{ color: theme.colors.text.primary }}>{meal}</Text>
-                    <TouchableOpacity
-                      onPress={() => removeMeal(index)}
-                      disabled={loading}
-                    >
-                      <Ionicons
-                        name="close-circle"
-                        size={20}
-                        color={theme.colors.brand.primary}
-                      />
-                    </TouchableOpacity>
-                  </View>
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.mealTag}
+                    onPress={() => removeMeal(index)}
+                    disabled={loading}
+                  >
+                    <Text variant="body" style={{ color: theme.colors.text.primary, marginRight: 6 }}>{meal}</Text>
+                    <Ionicons
+                      name="close-circle"
+                      size={18}
+                      color={theme.colors.brand.primary}
+                    />
+                  </TouchableOpacity>
                 ))}
-              </View>
-            )}
+            </View>
           </View>
         )}
 
@@ -368,9 +352,9 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
   },
   progressBarContainer: {
-    height: 4,
+    height: 6,
     backgroundColor: theme.colors.background.card,
-    borderRadius: 2,
+    borderRadius: 3,
     marginBottom: theme.spacing['2xl'],
     marginHorizontal: theme.spacing['2xl'],
     overflow: 'hidden',
@@ -378,6 +362,7 @@ const styles = StyleSheet.create({
   progressBar: {
     height: '100%',
     backgroundColor: theme.colors.brand.primary,
+    borderRadius: 3,
   },
   section: {
     marginBottom: theme.spacing['4xl'],
@@ -391,65 +376,34 @@ const styles = StyleSheet.create({
   subtitle: {
     marginBottom: theme.spacing['2xl'],
   },
-  stoolTypesGrid: {
+  gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.md,
   },
-  stoolTypeButton: {
-    width: '30%',
-    aspectRatio: 1,
-    padding: theme.spacing.sm,
-    backgroundColor: theme.colors.background.card,
-    borderRadius: theme.spacing.md,
-    justifyContent: 'center',
+  gridItemHalf: {
+    width: '47%', // 2 columns
+  },
+  listContainer: {
+    flexDirection: 'column',
+  },
+  cardContentVertical: {
+    flexDirection: 'column',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'transparent',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.xl,
   },
-  stoolTypeButtonSelected: {
-    borderColor: theme.colors.brand.primary,
-    backgroundColor: theme.colors.background.card,
-  },
-  energyGrid: {
+  cardContentHorizontal: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  energyButton: {
-    flex: 1,
-    marginHorizontal: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.lg,
-    backgroundColor: theme.colors.background.card,
-    borderRadius: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: 'transparent',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  energyButtonSelected: {
-    borderColor: theme.colors.brand.primary,
-  },
-  symptomsGrid: {
-    gap: theme.spacing.md,
-  },
-  symptomButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    backgroundColor: theme.colors.background.card,
-    borderRadius: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  symptomButtonSelected: {
-    borderColor: theme.colors.brand.primary,
   },
   mealInputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
   mealsContainer: {
     flexDirection: 'row',
@@ -459,11 +413,10 @@ const styles = StyleSheet.create({
   mealTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     backgroundColor: theme.colors.background.card,
-    borderRadius: theme.spacing.md,
+    borderRadius: theme.borderRadius.pill,
     borderWidth: 1,
     borderColor: theme.colors.border.light,
   },

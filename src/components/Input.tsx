@@ -56,11 +56,6 @@ export const Input: React.FC<InputProps> = ({
     onBlur?.(e);
   };
 
-  const borderColor = focusAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [theme.colors.border.light, theme.colors.brand.primary],
-  });
-
   const inputWrapperStyle: StyleProp<ViewStyle> = [
     styles.inputContainer,
     { backgroundColor: theme.colors.background.field, borderRadius: theme.borderRadius.md },

@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, Input, Container } from '../../components';
+import { Text, Button, Input, Container, AnimatedSelectionCard } from '../../components';
 import { theme, haptics } from '../../theme';
 import { APP_TEXTS } from '../../constants/appText';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 interface OnboardingProfileScreenProps {
   onContinue: (data: {
@@ -31,6 +38,11 @@ export default function OnboardingProfileScreen({
   const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    // Animate content entry
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, []);
+
   const canContinue = name.trim() && selectedCondition && selectedIssue;
 
   const handleContinue = async () => {
@@ -48,6 +60,16 @@ export default function OnboardingProfileScreen({
       alert('Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
       setLoading(false);
     }
+  };
+
+  const handleSelectCondition = (id: string) => {
+    LayoutAnimation.configureNext(theme.animations.layoutAnimations.spring);
+    setSelectedCondition(id);
+  };
+
+  const handleSelectIssue = (id: string) => {
+    LayoutAnimation.configureNext(theme.animations.layoutAnimations.spring);
+    setSelectedIssue(id);
   };
 
   return (
@@ -107,35 +129,28 @@ export default function OnboardingProfileScreen({
         </Text>
         <View style={styles.gridContainer}>
           {CONDITIONS.map((condition) => (
-            <TouchableOpacity
-              key={condition.id}
-              style={[
-                styles.gridItem,
-                selectedCondition === condition.id &&
-                  styles.gridItemSelected,
-              ]}
-              onPress={() => {
-                haptics.patterns.buttonPress();
-                setSelectedCondition(condition.id);
-              }}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <Text
-                variant="body"
-                style={[
-                  styles.gridItemText,
-                  {
-                    color:
-                      selectedCondition === condition.id
-                        ? theme.colors.brand.primary
-                        : theme.colors.text.primary,
-                  },
-                ]}
-              >
-                {condition.label}
-              </Text>
-            </TouchableOpacity>
+            <View key={condition.id} style={styles.gridItemContainer}>
+               <AnimatedSelectionCard
+                  selected={selectedCondition === condition.id}
+                  onPress={() => handleSelectCondition(condition.id)}
+                  disabled={loading}
+                  style={styles.cardContent}
+               >
+                  <Text
+                    variant="body"
+                    style={{
+                      color:
+                        selectedCondition === condition.id
+                          ? theme.colors.brand.primary
+                          : theme.colors.text.primary,
+                      textAlign: 'center',
+                      fontWeight: '600',
+                    }}
+                  >
+                    {condition.label}
+                  </Text>
+               </AnimatedSelectionCard>
+            </View>
           ))}
         </View>
       </View>
@@ -147,34 +162,28 @@ export default function OnboardingProfileScreen({
         </Text>
         <View style={styles.gridContainer}>
           {MAIN_ISSUES.map((issue) => (
-            <TouchableOpacity
-              key={issue.id}
-              style={[
-                styles.gridItem,
-                selectedIssue === issue.id && styles.gridItemSelected,
-              ]}
-              onPress={() => {
-                haptics.patterns.buttonPress();
-                setSelectedIssue(issue.id);
-              }}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <Text
-                variant="body"
-                style={[
-                  styles.gridItemText,
-                  {
-                    color:
-                      selectedIssue === issue.id
-                        ? theme.colors.brand.primary
-                        : theme.colors.text.primary,
-                  },
-                ]}
-              >
-                {issue.label}
-              </Text>
-            </TouchableOpacity>
+            <View key={issue.id} style={styles.gridItemContainer}>
+               <AnimatedSelectionCard
+                  selected={selectedIssue === issue.id}
+                  onPress={() => handleSelectIssue(issue.id)}
+                  disabled={loading}
+                  style={styles.cardContent}
+               >
+                  <Text
+                    variant="body"
+                    style={{
+                      color:
+                        selectedIssue === issue.id
+                          ? theme.colors.brand.primary
+                          : theme.colors.text.primary,
+                      textAlign: 'center',
+                      fontWeight: '600',
+                    }}
+                  >
+                    {issue.label}
+                  </Text>
+               </AnimatedSelectionCard>
+            </View>
           ))}
         </View>
       </View>
@@ -250,28 +259,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: theme.spacing.lg,
   },
-  gridItem: {
-    flex: 1,
-    minWidth: '45%',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.lg,
-    backgroundColor: theme.colors.background.card,
-    borderRadius: theme.spacing.lg,
-    // Removed transparency/border, solid background
-    borderWidth: 1,
-    borderColor: 'transparent',
-    justifyContent: 'center',
-    alignItems: 'center',
+  gridItemContainer: {
+    width: '46%', // 2 columns with gap
     minHeight: 60,
   },
-  gridItemText: {
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  gridItemSelected: {
-    backgroundColor: theme.colors.background.card,
-    borderColor: theme.colors.brand.primary,
-    borderWidth: 1,
+  cardContent: {
+    minHeight: 60,
+    paddingVertical: theme.spacing.lg,
   },
   footer: {
     paddingHorizontal: theme.spacing['2xl'],

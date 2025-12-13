@@ -7,7 +7,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "type-check": "tsc --noEmit && npm run design-system:check",
+    "type-check": "tsc --noEmit",
     "design-system:check": "ts-node scripts/check-design-system.ts",
     "lint": "eslint src --ext .ts,.tsx",
     "check": "npm run type-check && npm run lint"

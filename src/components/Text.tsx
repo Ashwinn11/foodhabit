@@ -8,6 +8,7 @@ import {
   Text as RNText,
   TextStyle,
   StyleSheet,
+  StyleProp,
 } from 'react-native';
 import { theme } from '../theme';
 
@@ -85,7 +86,7 @@ export interface TextProps {
   /**
    * Custom style override
    */
-  style?: TextStyle;
+  style?: StyleProp<TextStyle>;
 
   /**
    * onPress handler
@@ -103,13 +104,13 @@ export const Text: React.FC<TextProps> = ({
   style,
   onPress,
 }) => {
-  const textStyle: TextStyle[] = [
+  const textStyle: StyleProp<TextStyle> = [
     styles[`variant_${variant}`],
     styles[`color_${color}`],
     align && { textAlign: align },
     weight && { fontFamily: theme.fontFamily[weight] },
     style,
-  ].filter(Boolean) as TextStyle[];
+  ];
 
   return (
     <RNText

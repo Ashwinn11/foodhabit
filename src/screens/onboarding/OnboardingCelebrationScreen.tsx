@@ -14,7 +14,6 @@ interface OnboardingCelebrationScreenProps {
 }
 
 export default function OnboardingCelebrationScreen({
-  name,
   onContinue,
 }: OnboardingCelebrationScreenProps) {
   const scaleAnim = useRef(new Animated.Value(0)).current;
