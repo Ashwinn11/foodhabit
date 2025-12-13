@@ -19,6 +19,7 @@ import Text from '../components/Text';
 import Button from '../components/Button';
 import QuickLogScreen from './QuickLogScreen';
 import { Ionicons } from '@expo/vector-icons';
+import { STOOL_TYPES, getEnergyIcon } from '../constants/stoolData';
 
 interface DashboardData {
   currentStreak: number;
@@ -220,50 +221,67 @@ export default function HomeScreen() {
               />
             </View>
 
-            {dashboardData.recentEntries.slice(0, 3).map((entry, index) => (
-              <View key={index} style={styles.logItem}>
-                <View style={styles.logDate}>
-                  <Text variant="caption" weight="semiBold">
-                    {new Date(entry.created_at).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </Text>
-                </View>
-                <View style={styles.logMeta}>
-                  <View style={styles.metaItem}>
-                    <Ionicons
-                      name="fitness-outline"
-                      size={14}
-                      color={theme.colors.brand.primary}
-                    />
-                    <Text
-                      variant="caption"
-                      style={{ marginLeft: 4 }}
-                      weight="semiBold"
-                    >
-                      {entry.energy_level}/10
+            {dashboardData.recentEntries.slice(0, 3).map((entry, index) => {
+              const stoolType = STOOL_TYPES.find(t => t.type === entry.stool_type);
+              const energyIcon = getEnergyIcon(entry.energy_level);
+              
+              return (
+                <View key={index} style={styles.logItem}>
+                  {/* Left: Stool Icon */}
+                  <View style={[styles.logIconContainer, { backgroundColor: stoolType?.color ? stoolType.color + '20' : theme.colors.background.card }]}>
+                     {stoolType && (
+                       <stoolType.iconLib 
+                         name={stoolType.icon as any} 
+                         size={20} 
+                         color={stoolType.color} 
+                       />
+                     )}
+                  </View>
+
+                  {/* Middle: Info */}
+                  <View style={styles.logContent}>
+                    <Text variant="body" weight="semiBold">
+                       {stoolType?.label || `Type ${entry.stool_type}`}
+                    </Text>
+                    <Text variant="caption" color="secondary">
+                      {new Date(entry.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </Text>
                   </View>
-                  {entry.symptoms && entry.symptoms.length > 0 && (
+
+                  {/* Right: Energy & Symptoms */}
+                  <View style={styles.logMeta}>
                     <View style={styles.metaItem}>
                       <Ionicons
-                        name="alert-circle-outline"
-                        size={14}
-                        color={theme.colors.brand.tertiary}
+                        name={energyIcon.name as any}
+                        size={16}
+                        color={energyIcon.color}
                       />
-                      <Text
-                        variant="caption"
-                        style={{ marginLeft: 4 }}
-                        weight="semiBold"
-                      >
-                        {entry.symptoms.length}
-                      </Text>
                     </View>
-                  )}
+                    {entry.symptoms && entry.symptoms.length > 0 && (
+                      <View style={styles.metaItem}>
+                        <Ionicons
+                          name="alert-circle-outline"
+                          size={16}
+                          color={theme.colors.brand.tertiary}
+                        />
+                        <Text
+                          variant="caption"
+                          style={{ marginLeft: 2 }}
+                          weight="semiBold"
+                        >
+                          {entry.symptoms.length}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
 
@@ -397,14 +415,25 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
+  logIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.lg,
+  },
+  logContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   logDate: {
     minWidth: 50,
   },
   logMeta: {
-    flex: 1,
     flexDirection: 'row',
+    alignItems: 'center',
     gap: theme.spacing.lg,
-    marginLeft: theme.spacing.lg,
   },
   metaItem: {
     flexDirection: 'row',

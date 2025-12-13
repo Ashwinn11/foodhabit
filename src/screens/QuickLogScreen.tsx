@@ -15,73 +15,7 @@ import { streakService } from '../services/gutHarmony/streakService';
 import { theme } from '../theme';
 import Text from '../components/Text';
 import { Ionicons } from '@expo/vector-icons';
-
-const STOOL_TYPES = [
-  {
-    type: 1,
-    label: 'Type 1',
-    description: 'Separate hard lumps',
-    subtext: 'Constipation',
-    icon: '■',
-    color: '#8B6F47',
-  },
-  {
-    type: 2,
-    label: 'Type 2',
-    description: 'Lumpy & sausage-like',
-    subtext: 'Constipated',
-    icon: '■',
-    color: '#A0826D',
-  },
-  {
-    type: 3,
-    label: 'Type 3',
-    description: 'Sausage-shaped',
-    subtext: 'Normal',
-    icon: '■',
-    color: '#C4B5A0',
-  },
-  {
-    type: 4,
-    label: 'Type 4',
-    description: 'Smooth & soft',
-    subtext: 'Normal',
-    icon: '●',
-    color: '#78D3BF',
-  },
-  {
-    type: 5,
-    label: 'Type 5',
-    description: 'Soft blobs',
-    subtext: 'Slightly loose',
-    icon: '●',
-    color: '#FFD700',
-  },
-  {
-    type: 6,
-    label: 'Type 6',
-    description: 'Mushy paste',
-    subtext: 'Loose',
-    icon: '◉',
-    color: '#FF9500',
-  },
-  {
-    type: 7,
-    label: 'Type 7',
-    description: 'Liquid only',
-    subtext: 'Diarrhea',
-    icon: '◆',
-    color: '#FF6B6B',
-  },
-];
-
-const SYMPTOMS = [
-  { id: 'bloating', label: 'Bloating', icon: 'balloon-outline' },
-  { id: 'gas', label: 'Gas', icon: 'cloud-outline' },
-  { id: 'cramping', label: 'Cramping', icon: 'alert-circle-outline' },
-  { id: 'urgency', label: 'Urgency', icon: 'flash-outline' },
-  { id: 'burning', label: 'Burning', icon: 'flame-outline' },
-];
+import { STOOL_TYPES, SYMPTOMS, getEnergyIcon } from '../constants/stoolData';
 
 interface QuickLogData {
   stoolType: number | null;
@@ -161,6 +95,8 @@ export default function QuickLogScreen({
 
   const selectedStoolType = STOOL_TYPES.find((t) => t.type === data.stoolType);
 
+  const energyIcon = getEnergyIcon(data.energyLevel);
+
   return (
     <View
       style={[
@@ -195,7 +131,7 @@ export default function QuickLogScreen({
             <Text
               variant="title2"
               weight="bold"
-              style={{ color: theme.colors.brand.black }}
+              style={{ color: theme.colors.brand.primary }}
             >
               {data.logTime.toLocaleTimeString('en-US', {
                 hour: '2-digit',
@@ -205,7 +141,7 @@ export default function QuickLogScreen({
             </Text>
             <Text
               variant="caption"
-              style={{ marginTop: 4, color: theme.colors.brand.black }}
+              style={{ marginTop: 4, color: theme.colors.brand.primary }}
             >
               {data.logTime.toLocaleDateString('en-US', {
                 weekday: 'short',
@@ -240,7 +176,7 @@ export default function QuickLogScreen({
                     color:
                       data.logTime.getHours() === preset.hours &&
                       data.logTime.getMinutes() === preset.minutes
-                        ? theme.colors.brand.primary
+                        ? theme.colors.brand.black
                         : theme.colors.text.secondary,
                   }}
                 >
@@ -265,9 +201,13 @@ export default function QuickLogScreen({
                 { borderLeftColor: selectedStoolType.color },
               ]}
             >
-              <Text variant="title1" style={{ fontSize: 32 }}>
-                {selectedStoolType.icon}
-              </Text>
+              <View style={[styles.selectedTypeIconContainer, { backgroundColor: theme.colors.background.primary }]}>
+                <selectedStoolType.iconLib 
+                  name={selectedStoolType.icon as any} 
+                  size={40} 
+                  color={selectedStoolType.color} 
+                />
+              </View>
               <View style={{ flex: 1, marginLeft: theme.spacing.lg }}>
                 <Text
                   variant="body"
@@ -285,7 +225,10 @@ export default function QuickLogScreen({
                 <Text
                   variant="caption"
                   weight="semiBold"
-                  style={{ marginTop: 2, color: selectedStoolType.color }}
+                  style={{ 
+                    marginTop: 2, 
+                    color: selectedStoolType.color 
+                  }}
                 >
                   {selectedStoolType.subtext}
                 </Text>
@@ -295,43 +238,62 @@ export default function QuickLogScreen({
 
           {/* Type Selection Grid */}
           <View style={styles.typeGrid}>
-            {STOOL_TYPES.map((item) => (
+            {STOOL_TYPES.map((item) => {
+              const isSelected = data.stoolType === item.type;
+              return (
               <TouchableOpacity
                 key={item.type}
                 style={[
                   styles.typeCard,
-                  data.stoolType === item.type && styles.typeCardSelected,
+                  isSelected && styles.typeCardSelected,
                 ]}
                 onPress={() => setData((prev) => ({ ...prev, stoolType: item.type }))}
               >
                 <View
                   style={[
                     styles.typeIcon,
-                    { backgroundColor: item.color },
+                    { 
+                      backgroundColor: isSelected 
+                        ? theme.colors.background.primary 
+                        : item.color + '20' 
+                    },
                   ]}
                 >
-                  <Text variant="title1" style={{ color: theme.colors.brand.white }}>
-                    {item.icon}
-                  </Text>
+                  <item.iconLib 
+                    name={item.icon as any} 
+                    size={32} 
+                    color={item.color} 
+                  />
                 </View>
                 <Text
                   variant="caption"
                   weight="semiBold"
                   align="center"
-                  style={{ marginTop: 8 }}
+                  style={{ 
+                    marginTop: 8,
+                    color: isSelected 
+                      ? theme.colors.brand.black 
+                      : theme.colors.text.primary
+                  }}
                 >
                   {item.label}
                 </Text>
                 <Text
                   variant="caption"
-                  color="secondary"
                   align="center"
-                  style={{ marginTop: 2, fontSize: 10 }}
+                  style={{ 
+                    marginTop: 2, 
+                    fontSize: 10,
+                    color: isSelected 
+                      ? theme.colors.brand.black 
+                      : theme.colors.text.secondary
+                  }}
                 >
                   {item.subtext}
                 </Text>
               </TouchableOpacity>
-            ))}
+              );
+            })}
           </View>
         </View>
 
@@ -347,10 +309,10 @@ export default function QuickLogScreen({
                 {
                   backgroundColor:
                     data.energyLevel >= 7
-                      ? 'rgba(120, 211, 191, 0.2)'
+                      ? 'rgba(255, 118, 100, 0.2)' // Primary with opacity
                       : data.energyLevel >= 4
-                        ? 'rgba(255, 215, 0, 0.2)'
-                        : 'rgba(255, 107, 107, 0.2)',
+                        ? 'rgba(252, 239, 222, 0.2)' // Cream with opacity
+                        : 'rgba(205, 164, 232, 0.2)', // Tertiary with opacity
                 },
               ]}
             >
@@ -360,10 +322,10 @@ export default function QuickLogScreen({
                 style={{
                   color:
                     data.energyLevel >= 7
-                      ? theme.colors.feedback.success
+                      ? theme.colors.brand.primary
                       : data.energyLevel >= 4
-                        ? '#FFD700'
-                        : theme.colors.feedback.error,
+                        ? theme.colors.brand.cream
+                        : theme.colors.brand.tertiary,
                 }}
               >
                 {data.energyLevel}/10
@@ -387,32 +349,35 @@ export default function QuickLogScreen({
               thumbTintColor={theme.colors.brand.primary}
             />
             <View style={styles.sliderLabels}>
-              <Text variant="caption" style={{ color: theme.colors.brand.black }}>
+              <Text variant="caption" style={{ color: theme.colors.text.secondary }}>
                 Low
               </Text>
-              <Text variant="caption" style={{ color: theme.colors.brand.black }}>
+              <Text variant="caption" style={{ color: theme.colors.text.secondary }}>
                 High
               </Text>
             </View>
           </View>
 
           {/* Energy Description */}
-          <Text
-            variant="caption"
-            color="secondary"
-            align="center"
-            style={{ marginTop: theme.spacing.lg }}
-          >
-            {data.energyLevel >= 8
-              ? '🔥 Energized'
-              : data.energyLevel >= 6
-                ? '✓ Good'
-                : data.energyLevel >= 4
-                  ? '〰 Neutral'
-                  : data.energyLevel >= 2
-                    ? '⚠ Low'
-                    : '😴 Exhausted'}
-          </Text>
+          <View style={styles.energyDescriptionContainer}>
+             <Ionicons name={energyIcon.name as any} size={24} color={energyIcon.color} />
+             <Text
+              variant="caption"
+              color="secondary"
+              align="center"
+              style={{ marginLeft: 8 }}
+            >
+              {data.energyLevel >= 8
+                ? 'Energized'
+                : data.energyLevel >= 6
+                  ? 'Good'
+                  : data.energyLevel >= 4
+                    ? 'Neutral'
+                    : data.energyLevel >= 2
+                      ? 'Low'
+                      : 'Exhausted'}
+            </Text>
+          </View>
         </View>
 
         {/* Symptoms - Optional */}
@@ -441,9 +406,9 @@ export default function QuickLogScreen({
               >
                 <Ionicons
                   name={
-                    data.selectedSymptoms.includes(symptom.id)
+                    (data.selectedSymptoms.includes(symptom.id)
                       ? symptom.icon.replace('-outline', '')
-                      : symptom.icon
+                      : symptom.icon) as any
                   }
                   size={24}
                   color={
@@ -458,7 +423,7 @@ export default function QuickLogScreen({
                   style={{
                     marginTop: theme.spacing.sm,
                     color: data.selectedSymptoms.includes(symptom.id)
-                      ? theme.colors.brand.primary
+                      ? theme.colors.brand.black
                       : theme.colors.text.secondary,
                   }}
                 >
@@ -525,7 +490,7 @@ const styles = StyleSheet.create({
 
   /* Time Picker */
   timeDisplay: {
-    backgroundColor: theme.colors.brand.cream,
+    backgroundColor: theme.colors.background.card,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
     alignItems: 'center',
@@ -547,8 +512,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   timePresetSelected: {
-    borderColor: theme.colors.brand.primary,
-    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    borderColor: theme.colors.brand.black,
+    backgroundColor: theme.colors.brand.cream,
   },
 
   /* Stool Type */
@@ -577,8 +542,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   typeCardSelected: {
-    borderColor: theme.colors.brand.primary,
-    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    borderColor: theme.colors.brand.black,
+    backgroundColor: theme.colors.brand.cream,
   },
   typeIcon: {
     width: 56,
@@ -598,10 +563,10 @@ const styles = StyleSheet.create({
   energyBadge: {
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
+    borderRadius: theme.borderRadius.pill,
   },
   sliderContainer: {
-    backgroundColor: theme.colors.brand.cream,
+    backgroundColor: theme.colors.background.card,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
   },
@@ -635,8 +600,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   symptomCardSelected: {
-    borderColor: theme.colors.brand.primary,
-    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    borderColor: theme.colors.brand.black,
+    backgroundColor: theme.colors.brand.cream,
   },
 
   /* Footer */
@@ -652,4 +617,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  selectedTypeIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: theme.borderRadius.circle,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.card,
+  },
+  energyDescriptionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: theme.spacing.lg,
+  }
 });
