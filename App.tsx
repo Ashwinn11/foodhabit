@@ -20,8 +20,7 @@ import { theme } from './src/theme';
 
 function AppContent() {
   const { session, loading, user } = useAuth();
-  const [onboardingComplete, setOnboardingComplete] = useState(false);
-  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
 
   // Check if user has completed onboarding
   useEffect(() => {
@@ -34,14 +33,17 @@ function AppContent() {
           console.error('Error checking onboarding:', error);
           setOnboardingComplete(false);
         }
+      } else {
+        // User not authenticated yet
+        setOnboardingComplete(null);
       }
-      setCheckingOnboarding(false);
     };
 
     checkOnboarding();
   }, [user?.id]);
 
-  if (loading || checkingOnboarding) {
+  // Show loading while auth is initializing
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.brand.primary} />
@@ -53,6 +55,16 @@ function AppContent() {
   // Not signed in - show auth screen
   if (!session) {
     return <AuthScreen />;
+  }
+
+  // Signed in but onboarding status unknown - show loading
+  if (onboardingComplete === null) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.brand.primary} />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
   }
 
   // Signed in but onboarding not complete - show onboarding

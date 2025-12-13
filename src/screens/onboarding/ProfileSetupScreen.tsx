@@ -137,10 +137,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: theme.spacing.sm,
     marginBottom: theme.spacing.lg,
+    alignContent: 'flex-start',
   },
   optionButton: {
-    flex: 1,
-    minWidth: '45%',
+    width: '47%',
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     backgroundColor: theme.colors.background.card,

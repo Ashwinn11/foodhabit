@@ -108,23 +108,21 @@ export const AnimatedSelectionCard: React.FC<AnimatedSelectionCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    // Flex behavior should be handled by parent or containerStyle
+    minHeight: 60,
   },
   pressable: {
     width: '100%',
-    height: '100%',
   },
   pressed: {
     opacity: 0.9,
   },
   contentContainer: {
     width: '100%',
+    minHeight: 60,
     padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.xl, // Very round
+    borderRadius: theme.borderRadius.xl,
     justifyContent: 'center',
     alignItems: 'center',
-    // Default border for unselected state (simulated via transparency interpolation above, or static)
-    // We handle border logic in interpolation, but can set base here
     borderStyle: 'solid',
   },
 });

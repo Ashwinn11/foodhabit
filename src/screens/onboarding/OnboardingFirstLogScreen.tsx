@@ -233,7 +233,7 @@ export default function OnboardingFirstLogScreen({
                   containerStyle={{ marginBottom: theme.spacing.md }}
                   style={styles.cardContentHorizontal}
                 >
-                  <Text variant="body" style={{ flex: 1, color: selectedSymptoms[symptom.id] ? theme.colors.brand.primary : theme.colors.text.primary, fontWeight: '600' }}>
+                  <Text variant="body" style={{ flex: 1, color: selectedSymptoms[symptom.id] ? theme.colors.brand.primary : theme.colors.text.primary }}>
                     {symptom.label}
                   </Text>
                   {selectedSymptoms[symptom.id] && (
@@ -367,11 +367,11 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: theme.spacing['4xl'],
     paddingHorizontal: theme.spacing['2xl'],
+    width: '100%',
   },
   title: {
     marginBottom: theme.spacing.sm,
     color: theme.colors.text.primary,
-    fontWeight: '700',
   },
   subtitle: {
     marginBottom: theme.spacing['2xl'],
@@ -380,12 +380,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.md,
+    alignContent: 'flex-start',
   },
   gridItemHalf: {
-    width: '47%', // 2 columns
+    width: '47%',
+    minHeight: 70,
+    maxHeight: 100,
   },
   listContainer: {
     flexDirection: 'column',
+    width: '100%',
   },
   cardContentVertical: {
     flexDirection: 'column',

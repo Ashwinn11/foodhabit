@@ -49,7 +49,7 @@ export default function OnboardingCelebrationScreen({
 
   return (
     <View style={styles.container}>
-      <Container variant="plain" style={styles.contentContainer}>
+      <Container variant="plain" style={styles.contentContainer} scrollable>
         {/* Celebration Icon */}
         <Animated.View
           style={[
@@ -62,8 +62,8 @@ export default function OnboardingCelebrationScreen({
           <View style={styles.iconCircle}>
             <Ionicons
               name="checkmark"
-              size={80}
-              color={theme.colors.brand.primary}
+              size={64}
+              color={theme.colors.brand.white}
             />
           </View>
         </Animated.View>
@@ -211,38 +211,41 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
   },
   iconCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: theme.colors.background.card, // Solid background
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: theme.colors.brand.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: theme.colors.brand.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
   content: {
     flex: 1,
   },
   title: {
-    marginBottom: theme.spacing.sm,
-    color: theme.colors.text.primary,
-    fontWeight: '700',
+    marginBottom: theme.spacing.lg,
+    color: theme.colors.brand.primary,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing['3xl'],
   },
   progressSection: {
-    marginBottom: theme.spacing['2xl'],
-    padding: theme.spacing.lg,
+    marginBottom: theme.spacing['3xl'],
+    padding: theme.spacing.xl,
     backgroundColor: theme.colors.background.card,
     borderRadius: theme.spacing.lg,
   },
   progressLabel: {
-    marginBottom: theme.spacing.md,
-    fontSize: 16,
+    marginBottom: theme.spacing.lg,
     color: theme.colors.text.primary,
-    fontWeight: '600',
   },
   progressBarContainer: {
     height: 8,
@@ -280,21 +283,19 @@ const styles = StyleSheet.create({
   },
   stepNumberText: {
     color: theme.colors.text.secondary,
-    fontWeight: '600',
   },
   nextStepsSection: {
-    marginBottom: theme.spacing['2xl'],
+    marginBottom: theme.spacing['3xl'],
   },
   nextStepsTitle: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
     color: theme.colors.text.primary,
-    fontWeight: '600',
   },
   nextStep: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-    alignItems: 'center',
+    gap: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
+    alignItems: 'flex-start',
   },
   nextStepIcon: {
     width: 48,
@@ -309,13 +310,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   nextStepTitle: {
-    marginBottom: 2,
-    fontSize: 16,
+    marginBottom: theme.spacing.sm,
     color: theme.colors.text.primary,
-    fontWeight: '600',
   },
   nextStepDesc: {
-    fontSize: 14,
     lineHeight: 20,
   },
   button: {

@@ -144,7 +144,6 @@ export default function OnboardingProfileScreen({
                           ? theme.colors.brand.primary
                           : theme.colors.text.primary,
                       textAlign: 'center',
-                      fontWeight: '600',
                     }}
                   >
                     {condition.label}
@@ -177,7 +176,6 @@ export default function OnboardingProfileScreen({
                           ? theme.colors.brand.primary
                           : theme.colors.text.primary,
                       textAlign: 'center',
-                      fontWeight: '600',
                     }}
                   >
                     {issue.label}
@@ -235,7 +233,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
     color: theme.colors.text.primary,
     paddingHorizontal: theme.spacing['2xl'],
-    fontWeight: '700',
   },
   subtitle: {
     marginBottom: theme.spacing['3xl'],
@@ -248,7 +245,6 @@ const styles = StyleSheet.create({
   sectionLabel: {
     marginBottom: theme.spacing.md,
     color: theme.colors.text.primary,
-    fontWeight: '600',
   },
   input: {
     backgroundColor: theme.colors.background.card,
@@ -257,11 +253,13 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.lg,
+    gap: theme.spacing.md,
+    alignContent: 'flex-start',
   },
   gridItemContainer: {
-    width: '46%', // 2 columns with gap
-    minHeight: 60,
+    width: '47%',
+    minHeight: 70,
+    maxHeight: 100,
   },
   cardContent: {
     minHeight: 60,
