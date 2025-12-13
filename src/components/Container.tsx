@@ -90,12 +90,17 @@ export const Container: React.FC<ContainerProps> = ({
     style,
   ].filter(Boolean) as ViewStyle[];
 
+  // Extract backgroundColor from the variant style
+  const variantStyle = styles[`variant_${variant}`] as ViewStyle;
+  const backgroundColor = variantStyle?.backgroundColor;
+
   const content = scrollable ? (
     <ScrollView
-      style={styles.scrollView}
+      style={[styles.scrollView, { backgroundColor }]}
       contentContainerStyle={[
         styles.scrollContent,
         center && styles.center,
+        padding && { paddingHorizontal: r.adaptiveSpacing.lg },
       ]}
       showsVerticalScrollIndicator={false}
       bounces={true}
@@ -144,6 +149,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     flexGrow: 1,
+    paddingVertical: r.adaptiveSpacing.lg,
   },
 
   padding: {

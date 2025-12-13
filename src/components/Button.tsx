@@ -160,6 +160,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden', // Ensure content respects borderRadius
+    // 2025 Modern: Subtle shadow for depth (neumorphism)
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+    // Subtle border for glassmorphism
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
 
   content: {

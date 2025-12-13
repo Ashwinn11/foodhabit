@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -14,12 +14,34 @@ import {
 import { useAuth } from './src/hooks/useAuth';
 import AuthScreen from './src/screens/AuthScreen';
 import RootNavigator from './src/navigation/RootNavigator';
+import OnboardingNavigator from './src/screens/onboarding/OnboardingNavigator';
+import { hasCompletedOnboarding } from './src/services/gutHarmony/userService';
 import { theme } from './src/theme';
 
 function AppContent() {
-  const { session, loading } = useAuth();
+  const { session, loading, user } = useAuth();
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
-  if (loading) {
+  // Check if user has completed onboarding
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      if (user?.id) {
+        try {
+          const completed = await hasCompletedOnboarding(user.id);
+          setOnboardingComplete(completed);
+        } catch (error) {
+          console.error('Error checking onboarding:', error);
+          setOnboardingComplete(false);
+        }
+      }
+      setCheckingOnboarding(false);
+    };
+
+    checkOnboarding();
+  }, [user?.id]);
+
+  if (loading || checkingOnboarding) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.brand.primary} />
@@ -28,10 +50,21 @@ function AppContent() {
     );
   }
 
+  // Not signed in - show auth screen
   if (!session) {
     return <AuthScreen />;
   }
 
+  // Signed in but onboarding not complete - show onboarding
+  if (!onboardingComplete) {
+    return (
+      <OnboardingNavigator
+        onComplete={() => setOnboardingComplete(true)}
+      />
+    );
+  }
+
+  // Signed in and onboarded - show main app
   return <RootNavigator />;
 }
 

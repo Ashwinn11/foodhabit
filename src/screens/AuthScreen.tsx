@@ -1,12 +1,95 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, Dimensions, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, Dimensions, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { theme, haptics } from '../theme';
 import { Container, Text } from '../components';
+import { APP_TEXTS } from '../constants/appText';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Modern Value Prop Component with glassmorphism
+interface ValuePropRowProps {
+  icon: string;
+  text: string;
+  index: number;
+}
+
+const ValuePropRow: React.FC<ValuePropRowProps> = ({ icon, text, index }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      tension: 200,
+      friction: 10,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 200,
+      friction: 10,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <Animated.View
+      style={[
+        styles.valuePropRow,
+        { transform: [{ scale: scaleAnim }] },
+      ]}
+    >
+      <TouchableOpacity
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.8}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, flex: 1 }}
+      >
+        <View style={styles.valuePropIconContainer}>
+          <Ionicons name={icon as any} size={20} color={theme.colors.brand.primary} />
+        </View>
+        <Text variant="body" style={styles.valuePropText}>
+          {text}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+// Cute animated mascot component
+interface AnimatedMascotProps {
+  fadeAnim: Animated.Value;
+  scaleAnim: Animated.Value;
+  bounceAnim: Animated.Value;
+}
+
+const AnimatedMascot: React.FC<AnimatedMascotProps> = ({ fadeAnim, scaleAnim, bounceAnim }) => {
+  return (
+    <Animated.View
+      style={[
+        styles.mascotContainer,
+        {
+          opacity: fadeAnim,
+          transform: [
+            { scale: scaleAnim },
+            { translateY: bounceAnim },
+          ],
+        },
+      ]}
+    >
+      <View style={styles.mascotGlow} />
+      <Image
+        source={require('../../assets/icon.png')}
+        style={styles.mascot}
+      />
+    </Animated.View>
+  );
+};
 
 // Decorative pattern component using simple overlays
 const DecorativePattern: React.FC = () => {
@@ -112,6 +195,7 @@ export default function AuthScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const bounceAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     checkAppleAuth();
@@ -139,6 +223,24 @@ export default function AuthScreen() {
         useNativeDriver: true,
       }),
     ]).start();
+
+    // Bounce animation for mascot (starts after initial animations)
+    setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(bounceAnim, {
+            toValue: -20,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(bounceAnim, {
+            toValue: 0,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }, 1600);
   }, []);
 
   const checkAppleAuth = async () => {
@@ -185,6 +287,13 @@ export default function AuthScreen() {
 
       {/* Main Content */}
       <Container variant="plain" style={styles.contentContainer} edges={['top', 'left', 'right', 'bottom']}>
+        {/* Cute Mascot */}
+        <AnimatedMascot
+          fadeAnim={fadeAnim}
+          scaleAnim={scaleAnim}
+          bounceAnim={bounceAnim}
+        />
+
         {/* Header at Top */}
         <Animated.View
           style={[
@@ -196,11 +305,22 @@ export default function AuthScreen() {
           ]}
         >
           <Text variant="largeTitle" align="center" style={styles.title}>
-            Food Habit
+            {APP_TEXTS.auth.title}
           </Text>
           <Text variant="title3" align="center" style={styles.subtitle}>
-            Track your eating habits and build healthier routines
+            {APP_TEXTS.auth.subtitle}
           </Text>
+
+          <View style={styles.valuePropsContainer}>
+            {APP_TEXTS.auth.valueProps.map((prop, index) => (
+              <ValuePropRow
+                key={prop.text}
+                icon={prop.icon}
+                text={prop.text}
+                index={index}
+              />
+            ))}
+          </View>
         </Animated.View>
 
         {/* Spacer */}
@@ -228,11 +348,11 @@ export default function AuthScreen() {
                 disabled={loadingButton !== null}
                 activeOpacity={0.8}
               >
-                  {loadingButton === 'apple' ? (
-                    <ActivityIndicator size="small" color={theme.colors.brand.black} />
-                  ) : (
-                    <Ionicons name="logo-apple" size={24} color={theme.colors.brand.black} />
-                  )}
+                {loadingButton === 'apple' ? (
+                  <ActivityIndicator size="small" color={theme.colors.brand.black} />
+                ) : (
+                  <Ionicons name="logo-apple" size={24} color={theme.colors.brand.black} />
+                )}
                 <Text variant="headline" style={styles.appleButtonText}>
                   {loadingButton === 'apple' ? 'Signing in...' : 'Continue with Apple'}
                 </Text>
@@ -262,13 +382,13 @@ export default function AuthScreen() {
           {/* Legal Text */}
           <View style={styles.legalContainer}>
             <Text variant="caption1" align="center" style={styles.legalText}>
-              By continuing, you agree to our{' '}
+              {APP_TEXTS.auth.legalPrefix}{' '}
               <Text variant="caption1" style={styles.legalLink}>
-                Terms of Service
+                {APP_TEXTS.auth.termsLink}
               </Text>
               {' '}and{' '}
               <Text variant="caption1" style={styles.legalLink}>
-                Privacy Policy
+                {APP_TEXTS.auth.privacyLink}
               </Text>
             </Text>
           </View>
@@ -286,24 +406,69 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     paddingHorizontal: theme.spacing['2xl'],
-    paddingTop: theme.spacing['6xl'],
+    paddingTop: theme.spacing['3xl'],
+  },
+  // Mascot styles
+  mascotContainer: {
+    alignItems: 'center',
+    marginBottom: theme.spacing['3xl'],
+  },
+  mascotGlow: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255, 118, 100, 0.2)',
+    blur: 40,
+  },
+  mascot: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    resizeMode: 'contain',
   },
   header: {
     width: '100%',
     paddingHorizontal: theme.spacing.md,
   },
   title: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     color: theme.colors.brand.white,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   subtitle: {
+    marginBottom: theme.spacing.xl,
     color: theme.colors.brand.white,
     textShadowColor: 'rgba(0, 0, 0, 0.08)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
+  },
+  valuePropsContainer: {
+    gap: theme.spacing.md,
+  },
+  valuePropRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: `rgba(255, 255, 255, 0.08)`,
+    borderRadius: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: `rgba(255, 255, 255, 0.1)`,
+  },
+  valuePropIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: `rgba(255, 118, 100, 0.2)`,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  valuePropText: {
+    flex: 1,
+    color: theme.colors.brand.white,
   },
   spacer: {
     flex: 1,
@@ -331,7 +496,7 @@ const styles = StyleSheet.create({
     height: 56,
   },
   appleButtonText: {
-    color: theme.colors.brand.black, // Match Google button text color
+    color: theme.colors.brand.black,
   },
   // Google Button - White background with black text and colored logo (OAuth - keep as-is)
   googleButton: {

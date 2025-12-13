@@ -10,7 +10,6 @@ import {
   Animated,
 } from 'react-native';
 import { theme } from '../theme';
-import { Box } from './Layout';
 
 export interface InputProps extends TextInputProps {
   label?: string;
@@ -72,18 +71,19 @@ export const Input: React.FC<InputProps> = ({
   ];
 
   return (
-    <Box 
-      mb="md" 
-      w={fullWidth ? '100%' : undefined}
-      style={containerStyle}
+    <View
+      style={[
+        { marginBottom: theme.spacing.md, width: fullWidth ? '100%' : 'auto' },
+        containerStyle,
+      ]}
     >
       {label && (
         <Text style={styles.label}>{label}</Text>
       )}
-      
+
       <View style={inputWrapperStyle}>
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
-        
+
         <TextInput
           style={[styles.input, style]}
           placeholderTextColor={placeholderTextColor}
@@ -92,14 +92,14 @@ export const Input: React.FC<InputProps> = ({
           selectionColor={theme.colors.brand.primary}
           {...props}
         />
-        
+
         {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
       </View>
 
       {error && (
         <Text style={styles.error}>{error}</Text>
       )}
-    </Box>
+    </View>
   );
 };
 
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   },
   error: {
     ...theme.typography.caption1,
-    color: theme.colors.feedback.error, // Assuming a feedback.error color exists
+    color: theme.colors.brand.primary,
     marginTop: theme.spacing.xs,
     marginLeft: theme.spacing.xs,
   },
