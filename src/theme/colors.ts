@@ -20,31 +20,32 @@ export const colors = {
 
   // Secondary colors - Accent colors
   secondary: {
-    500: '#9bcbab',  // Mint Green
-    600: '#9bcbab',
-    700: '#9bcbab',
+    500: '#78D3BF',  // Teal
+    600: '#78D3BF',
+    700: '#78D3BF',
   },
 
   // Brand colors - Semantic naming (strictly from the provided list)
   brand: {
     primary: '#ff7664',    // Primary brand color
-    secondary: '#9bcbab',  // Secondary color
+    secondary: '#78D3BF',  // Secondary color (Teal)
     tertiary: '#cda4e8',   // Tertiary color
-    white: '#ffffff',       // Pure White
-    black: '#000000',       // Pure Black
+    cream: '#FCEFDE',      // Cream (Light background)
+    white: '#ffffff',      // Pure White
+    black: '#000000',      // Pure Black
   },
 
   // ============================================
   // BACKGROUND COLORS
   // ============================================
   background: {
-    primary: '#1a2332',    // Main app background
+    primary: '#1a2332',    // Main app background (dark blue)
     secondary: '#1a2332',  // Secondary background (same as primary)
     tertiary: '#1a2332',   // Tertiary background (same as primary)
-    grouped: '#1f1f1f',    // Grouped background (slightly lighter for distinction)
-    card: '#1f1f1f',       // Card background (slightly lighter for distinction)
+    grouped: '#2a3847',    // Grouped background (lighter for distinction)
+    card: '#2a3847',       // Card background (lighter for distinction)
     screen: '#1a2332',     // Screen background (alias for primary)
-    field: '#1f1f1f',      // Input field background (slightly lighter for distinction)
+    field: '#2a3847',      // Input field background (lighter for distinction)
   },
 
   // ============================================
@@ -76,7 +77,7 @@ export const colors = {
   // ============================================
   icon: {
     primary: '#ff7664',      // Primary icon color
-    secondary: '#9bcbab',    // Secondary icon color
+    secondary: '#78D3BF',    // Secondary icon color (Teal)
     tertiary: '#cda4e8',      // Tertiary icon color
     white: '#ffffff',         // White icons
     black: '#000000',         // Black icons
@@ -94,17 +95,11 @@ export const colors = {
   },
 
   // ============================================
-  // FEEDBACK COLORS (Added for safety)
+  // FEEDBACK COLORS
   // ============================================
   feedback: {
-    success: '#9bcbab',
-    warning: '#f1c40f', // Standard warning yellow
-    error: '#ff7664',   // Using primary red/orange as error or a distinct red? 
-                        // Since primary is #ff7664 (Coral), let's use a slightly stronger red for error 
-                        // or just map to primary if that's the design.
-                        // I'll use a standard red for error to distinguish from brand if needed, 
-                        // but usually error is red.
-    info: '#3498db',
+    success: '#78D3BF',  // Teal
+    error: '#ff7664',    // Coral
   }
 } as const;
 

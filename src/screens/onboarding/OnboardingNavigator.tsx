@@ -22,7 +22,6 @@ interface OnboardingNavigatorProps {
 interface UserData {
   name: string;
   condition: string;
-  main_issue: string;
 }
 
 export default function OnboardingNavigator({
@@ -37,15 +36,6 @@ export default function OnboardingNavigator({
 
     setCurrentStep('loading');
     try {
-      // Create user profile
-      await createUserProfile(user.id, {
-        ...profileData,
-        personality_style: 'motivational_buddy',
-      });
-
-      // Initialize streak tracking
-      await initializeUserStreak(user.id);
-
       setUserData(profileData);
       setCurrentStep('firstlog');
     } catch (error) {
@@ -59,12 +49,25 @@ export default function OnboardingNavigator({
     energy_level: number;
     symptoms: Record<string, boolean>;
     meals: string[];
+    main_issue: string;
   }) => {
     if (!user?.id) throw new Error('User not authenticated');
+    if (!userData) throw new Error('User data not initialized');
 
     setCurrentStep('loading');
     try {
       const now = new Date();
+
+      // Create user profile with main_issue from firstlog
+      await createUserProfile(user.id, {
+        name: userData.name,
+        condition: userData.condition,
+        main_issue: logData.main_issue,
+        personality_style: 'motivational_buddy',
+      });
+
+      // Initialize streak tracking
+      await initializeUserStreak(user.id);
 
       // Log stool entry
       await logStoolEntry(user.id, {

@@ -319,6 +319,7 @@ const styles = StyleSheet.create({
   valuePropsContainer: {
     gap: theme.spacing.lg,
     marginTop: theme.spacing.md,
+    marginBottom: theme.spacing['2xl'],
     width: '100%',
   },
   valuePropRow: {
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.brand.white,
+    backgroundColor: theme.colors.brand.cream,
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.xl,
     borderRadius: theme.borderRadius.pill,

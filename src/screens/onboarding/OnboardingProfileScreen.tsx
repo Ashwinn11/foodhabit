@@ -21,13 +21,11 @@ interface OnboardingProfileScreenProps {
   onContinue: (data: {
     name: string;
     condition: string;
-    main_issue: string;
   }) => Promise<void>;
   onBack: () => void;
 }
 
 const CONDITIONS = APP_TEXTS.conditions;
-const MAIN_ISSUES = APP_TEXTS.mainIssues;
 
 export default function OnboardingProfileScreen({
   onContinue,
@@ -35,7 +33,6 @@ export default function OnboardingProfileScreen({
 }: OnboardingProfileScreenProps) {
   const [name, setName] = useState('');
   const [selectedCondition, setSelectedCondition] = useState<string | null>(null);
-  const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -43,7 +40,7 @@ export default function OnboardingProfileScreen({
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
   }, []);
 
-  const canContinue = name.trim() && selectedCondition && selectedIssue;
+  const canContinue = name.trim() && selectedCondition;
 
   const handleContinue = async () => {
     if (!canContinue) return;
@@ -54,7 +51,6 @@ export default function OnboardingProfileScreen({
       await onContinue({
         name: name.trim(),
         condition: selectedCondition,
-        main_issue: selectedIssue,
       });
     } catch (error) {
       alert('Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -65,11 +61,6 @@ export default function OnboardingProfileScreen({
   const handleSelectCondition = (id: string) => {
     LayoutAnimation.configureNext(theme.animations.layoutAnimations.spring);
     setSelectedCondition(id);
-  };
-
-  const handleSelectIssue = (id: string) => {
-    LayoutAnimation.configureNext(theme.animations.layoutAnimations.spring);
-    setSelectedIssue(id);
   };
 
   return (
@@ -134,51 +125,23 @@ export default function OnboardingProfileScreen({
                   selected={selectedCondition === condition.id}
                   onPress={() => handleSelectCondition(condition.id)}
                   disabled={loading}
-                  style={styles.cardContent}
+                  isCreamBg={selectedCondition === condition.id}
+                  style={[
+                    styles.cardContent,
+                    selectedCondition === condition.id && styles.selectedCardBackground,
+                  ]}
                >
                   <Text
                     variant="body"
                     style={{
                       color:
                         selectedCondition === condition.id
-                          ? theme.colors.brand.primary
+                          ? theme.colors.brand.black
                           : theme.colors.text.primary,
                       textAlign: 'center',
                     }}
                   >
                     {condition.label}
-                  </Text>
-               </AnimatedSelectionCard>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* Main Issue Selection */}
-      <View style={styles.section}>
-        <Text variant="headline" style={styles.sectionLabel}>
-          {APP_TEXTS.onboardingProfile.issueLabel}
-        </Text>
-        <View style={styles.gridContainer}>
-          {MAIN_ISSUES.map((issue) => (
-            <View key={issue.id} style={styles.gridItemContainer}>
-               <AnimatedSelectionCard
-                  selected={selectedIssue === issue.id}
-                  onPress={() => handleSelectIssue(issue.id)}
-                  disabled={loading}
-                  style={styles.cardContent}
-               >
-                  <Text
-                    variant="body"
-                    style={{
-                      color:
-                        selectedIssue === issue.id
-                          ? theme.colors.brand.primary
-                          : theme.colors.text.primary,
-                      textAlign: 'center',
-                    }}
-                  >
-                    {issue.label}
                   </Text>
                </AnimatedSelectionCard>
             </View>
@@ -264,6 +227,9 @@ const styles = StyleSheet.create({
   cardContent: {
     minHeight: 60,
     paddingVertical: theme.spacing.lg,
+  },
+  selectedCardBackground: {
+    backgroundColor: theme.colors.brand.cream,
   },
   footer: {
     paddingHorizontal: theme.spacing['2xl'],

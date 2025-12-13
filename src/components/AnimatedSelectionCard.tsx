@@ -15,6 +15,7 @@ interface AnimatedSelectionCardProps {
   style?: StyleProp<ViewStyle>;
   containerStyle?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  isCreamBg?: boolean;
 }
 
 export const AnimatedSelectionCard: React.FC<AnimatedSelectionCardProps> = ({
@@ -24,6 +25,7 @@ export const AnimatedSelectionCard: React.FC<AnimatedSelectionCardProps> = ({
   style,
   containerStyle,
   disabled = false,
+  isCreamBg = false,
 }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const selectAnim = useRef(new Animated.Value(0)).current;
@@ -54,7 +56,9 @@ export const AnimatedSelectionCard: React.FC<AnimatedSelectionCardProps> = ({
 
   const borderColor = selectAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['transparent', theme.colors.brand.primary],
+    outputRange: isCreamBg
+      ? ['transparent', theme.colors.brand.black]
+      : ['transparent', theme.colors.brand.primary],
   });
 
   const borderWidth = selectAnim.interpolate({

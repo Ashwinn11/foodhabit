@@ -24,6 +24,7 @@ interface OnboardingFirstLogScreenProps {
     energy_level: number;
     symptoms: Record<string, boolean>;
     meals: string[];
+    main_issue: string;
   }) => Promise<void>;
   onBack: () => void;
 }
@@ -31,6 +32,7 @@ interface OnboardingFirstLogScreenProps {
 const STOOL_TYPES = APP_TEXTS.stoolTypes;
 const SYMPTOMS = APP_TEXTS.symptoms;
 const ENERGY_LEVELS = APP_TEXTS.energyLevels;
+const MAIN_ISSUES = APP_TEXTS.mainIssues;
 
 export default function OnboardingFirstLogScreen({
   onContinue,
@@ -39,6 +41,7 @@ export default function OnboardingFirstLogScreen({
   const [step, setStep] = useState<'type' | 'energy' | 'symptoms' | 'meals'>('type');
   const [selectedStoolType, setSelectedStoolType] = useState<number | null>(3);
   const [selectedEnergy, setSelectedEnergy] = useState<number>(8);
+  const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
   const [selectedSymptoms, setSelectedSymptoms] = useState<Record<string, boolean>>({});
   const [mealInput, setMealInput] = useState('');
   const [meals, setMeals] = useState<string[]>([]);
@@ -87,6 +90,11 @@ export default function OnboardingFirstLogScreen({
   };
 
   const handleContinue = async () => {
+    if (!selectedIssue) {
+      alert('Please select your main concern');
+      return;
+    }
+
     setLoading(true);
     try {
       haptics.patterns.success();
@@ -95,6 +103,7 @@ export default function OnboardingFirstLogScreen({
         energy_level: selectedEnergy,
         symptoms: selectedSymptoms,
         meals,
+        main_issue: selectedIssue,
       });
     } catch (error) {
       alert('Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -162,12 +171,16 @@ export default function OnboardingFirstLogScreen({
                         haptics.selection();
                     }}
                     disabled={loading}
-                    style={styles.cardContentVertical}
+                    isCreamBg={selectedStoolType === item.type}
+                    style={[
+                      styles.cardContentVertical,
+                      selectedStoolType === item.type && styles.selectedCardBackground,
+                    ]}
                   >
-                    <Text variant="title2" style={{ color: selectedStoolType === item.type ? theme.colors.brand.primary : theme.colors.text.primary, marginBottom: 4 }}>
+                    <Text variant="title2" style={{ color: selectedStoolType === item.type ? theme.colors.brand.black : theme.colors.text.primary, marginBottom: 4 }}>
                       {item.type}
                     </Text>
-                    <Text variant="caption1" color="secondary" align="center">
+                    <Text variant="caption1" style={{ color: selectedStoolType === item.type ? theme.colors.brand.black : theme.colors.text.secondary }} align="center">
                       {item.label}
                     </Text>
                   </AnimatedSelectionCard>
@@ -196,20 +209,63 @@ export default function OnboardingFirstLogScreen({
                         haptics.selection();
                     }}
                     disabled={loading}
-                    style={styles.cardContentVertical}
+                    isCreamBg={selectedEnergy === level.value}
+                    style={[
+                      styles.cardContentVertical,
+                      selectedEnergy === level.value && styles.selectedCardBackground,
+                    ]}
                   >
                     <Ionicons
                         name={level.icon as any}
                         size={32}
-                        color={selectedEnergy === level.value ? theme.colors.brand.primary : theme.colors.text.secondary}
+                        color={selectedEnergy === level.value ? theme.colors.brand.black : theme.colors.text.secondary}
                         style={{ marginBottom: 8 }}
                     />
-                    <Text variant="body" style={{ color: selectedEnergy === level.value ? theme.colors.brand.primary : theme.colors.text.secondary }}>
+                    <Text variant="body" style={{ color: selectedEnergy === level.value ? theme.colors.brand.black : theme.colors.text.secondary }}>
                       {level.label}
                     </Text>
                   </AnimatedSelectionCard>
                 </View>
               ))}
+            </View>
+
+            {/* Main Issue Selection */}
+            <View style={{ marginTop: theme.spacing['2xl'] }}>
+              <Text variant="headline" style={{ color: theme.colors.text.primary, marginBottom: theme.spacing.md }}>
+                {APP_TEXTS.onboardingProfile.issueLabel}
+              </Text>
+              <View style={styles.gridContainer}>
+                {MAIN_ISSUES.map((issue) => (
+                  <View key={issue.id} style={styles.gridItemContainer}>
+                    <AnimatedSelectionCard
+                      selected={selectedIssue === issue.id}
+                      onPress={() => {
+                        setSelectedIssue(issue.id);
+                        haptics.selection();
+                      }}
+                      disabled={loading}
+                      isCreamBg={selectedIssue === issue.id}
+                      style={[
+                        styles.cardContent,
+                        selectedIssue === issue.id && styles.selectedCardBackground,
+                      ]}
+                    >
+                      <Text
+                        variant="body"
+                        style={{
+                          color:
+                            selectedIssue === issue.id
+                              ? theme.colors.brand.black
+                              : theme.colors.text.primary,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {issue.label}
+                      </Text>
+                    </AnimatedSelectionCard>
+                  </View>
+                ))}
+              </View>
             </View>
           </View>
         )}
@@ -230,17 +286,21 @@ export default function OnboardingFirstLogScreen({
                   selected={!!selectedSymptoms[symptom.id]}
                   onPress={() => toggleSymptom(symptom.id)}
                   disabled={loading}
+                  isCreamBg={!!selectedSymptoms[symptom.id]}
                   containerStyle={{ marginBottom: theme.spacing.md }}
-                  style={styles.cardContentHorizontal}
+                  style={[
+                    styles.cardContentHorizontal,
+                    selectedSymptoms[symptom.id] && styles.selectedCardBackground,
+                  ]}
                 >
-                  <Text variant="body" style={{ flex: 1, color: selectedSymptoms[symptom.id] ? theme.colors.brand.primary : theme.colors.text.primary }}>
+                  <Text variant="body" style={{ flex: 1, color: selectedSymptoms[symptom.id] ? theme.colors.brand.black : theme.colors.text.primary }}>
                     {symptom.label}
                   </Text>
                   {selectedSymptoms[symptom.id] && (
                     <Ionicons
                       name="checkmark-circle"
                       size={24}
-                      color={theme.colors.brand.primary}
+                      color={theme.colors.brand.black}
                     />
                   )}
                 </AnimatedSelectionCard>
@@ -272,7 +332,7 @@ export default function OnboardingFirstLogScreen({
                 variant="secondary"
                 size="medium"
                 disabled={!mealInput.trim() || loading}
-                style={{ marginLeft: theme.spacing.sm, height: 56, marginTop: 16 }}
+                style={{ marginLeft: theme.spacing.sm, height: 56 }}
               />
             </View>
 
@@ -403,6 +463,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.lg,
+  },
+  selectedCardBackground: {
+    backgroundColor: theme.colors.brand.cream,
   },
   mealInputContainer: {
     flexDirection: 'row',
