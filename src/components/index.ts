@@ -8,9 +8,6 @@ export type { ButtonProps, ButtonVariant, ButtonSize } from './Button';
 export { Card } from './Card';
 export type { CardProps, CardPadding } from './Card';
 
-export { GlassmorphismCard } from './GlassmorphismCard';
-export type { GlassmorphismCardProps, GlassCardSize, GlassCardGradient } from './GlassmorphismCard';
-
 export { Container } from './Container';
 export type { ContainerProps, ContainerVariant } from './Container';
 

@@ -159,3 +159,21 @@ export const hasAchievement = async (
   if (error) throw error;
   return data && data.length > 0;
 };
+
+/**
+ * Get current streak count
+ */
+export const getStreakCount = async (userId: string): Promise<number> => {
+  const streak = await getUserStreak(userId);
+  return streak?.current_streak || 0;
+};
+
+export const streakService = {
+  getUserStreak,
+  updateStreak,
+  addHarmonyPoints,
+  unlockAchievement,
+  getAchievements,
+  hasAchievement,
+  getStreakCount,
+};

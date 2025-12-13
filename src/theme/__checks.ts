@@ -12,7 +12,6 @@ import { theme } from './index';
 export type ValidColor =
   | typeof theme.colors.brand[keyof typeof theme.colors.brand]
   | typeof theme.colors.primary[keyof typeof theme.colors.primary]
-  | typeof theme.colors.secondary[keyof typeof theme.colors.secondary]
   | typeof theme.colors.text[keyof typeof theme.colors.text]
   | typeof theme.colors.background[keyof typeof theme.colors.background]
   | typeof theme.colors.border[keyof typeof theme.colors.border]

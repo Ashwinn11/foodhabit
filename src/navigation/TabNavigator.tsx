@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform, StyleSheet, View } from 'react-native'; // Added View import
 import * as Haptics from 'expo-haptics';
+import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { theme, r } from '../theme';
 
@@ -36,8 +37,8 @@ export default function TabNavigator(): React.ReactElement {
         tabBarIcon: ({ focused, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
 
-          if (route.name === 'Explore') {
-            iconName = focused ? 'compass' : 'compass-outline';
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Activity') {
             iconName = focused ? 'flame' : 'flame-outline';
           } else if (route.name === 'Search') {
@@ -109,6 +110,13 @@ export default function TabNavigator(): React.ReactElement {
         },
       })}
     >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarLabel: 'Home',
+        }}
+      />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}

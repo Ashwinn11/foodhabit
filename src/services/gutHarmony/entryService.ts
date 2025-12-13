@@ -143,17 +143,44 @@ export const getEntryCount = async (userId: string): Promise<number> => {
  */
 export const getEntriesByDateRange = async (
   userId: string,
-  startDate: string,
-  endDate: string
+  startDate: Date | string,
+  endDate: Date | string
 ): Promise<StoolEntry[]> => {
+  const startStr = typeof startDate === 'string' ? startDate : startDate.toISOString();
+  const endStr = typeof endDate === 'string' ? endDate : endDate.toISOString();
+
   const { data, error } = await supabase
     .from('stool_entries')
     .select('*')
     .eq('user_id', userId)
-    .gte('entry_time', startDate)
-    .lte('entry_time', endDate)
+    .gte('entry_time', startStr)
+    .lte('entry_time', endStr)
     .order('entry_time', { ascending: false });
 
   if (error) throw error;
   return data as StoolEntry[];
+};
+
+/**
+ * Get recent entries (last N days)
+ */
+export const getRecentEntries = async (
+  userId: string,
+  days = 7
+): Promise<StoolEntry[]> => {
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  return getEntriesByDateRange(userId, startDate, endDate);
+};
+
+export const entryService = {
+  logStoolEntry,
+  logMealEntry,
+  getStoolEntries,
+  getMealEntries,
+  getEntryCount,
+  getEntriesByDateRange,
+  getRecentEntries,
 };

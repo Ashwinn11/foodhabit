@@ -107,7 +107,7 @@ export default function App() {
       card: theme.colors.background.card,         // Slightly lighter blue
       text: theme.colors.text.primary,           // White
       border: theme.colors.border.main,           // Subtle white border
-      notification: theme.colors.brand.secondary,
+      notification: theme.colors.brand.primary,
     },
     fonts: {
       regular: { fontFamily: theme.fontFamily.regular, fontWeight: '400' as const },

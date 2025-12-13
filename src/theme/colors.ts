@@ -18,18 +18,10 @@ export const colors = {
     700: '#ff7664',  // Same shade
   },
 
-  // Secondary colors - Accent colors
-  secondary: {
-    500: '#78D3BF',  // Teal
-    600: '#78D3BF',
-    700: '#78D3BF',
-  },
-
   // Brand colors - Semantic naming (strictly from the provided list)
   brand: {
-    primary: '#ff7664',    // Primary brand color
-    secondary: '#78D3BF',  // Secondary color (Teal)
-    tertiary: '#cda4e8',   // Tertiary color
+    primary: '#ff7664',    // Primary brand color (Coral)
+    tertiary: '#cda4e8',   // Tertiary color (Purple)
     cream: '#FCEFDE',      // Cream (Light background)
     white: '#ffffff',      // Pure White
     black: '#000000',      // Pure Black
@@ -76,12 +68,11 @@ export const colors = {
   // ICON COLORS
   // ============================================
   icon: {
-    primary: '#ff7664',      // Primary icon color
-    secondary: '#78D3BF',    // Secondary icon color (Teal)
-    tertiary: '#cda4e8',      // Tertiary icon color
-    white: '#ffffff',         // White icons
-    black: '#000000',         // Black icons
-    default: '#ffffff',       // Default icon color (white)
+    primary: '#ff7664',      // Primary icon color (Coral)
+    tertiary: '#cda4e8',     // Tertiary icon color (Purple)
+    white: '#ffffff',        // White icons
+    black: '#000000',        // Black icons
+    default: '#ffffff',      // Default icon color (white)
   },
 
   // ============================================
@@ -98,7 +89,7 @@ export const colors = {
   // FEEDBACK COLORS
   // ============================================
   feedback: {
-    success: '#78D3BF',  // Teal
+    success: '#ff7664',  // Coral
     error: '#ff7664',    // Coral
   }
 } as const;
