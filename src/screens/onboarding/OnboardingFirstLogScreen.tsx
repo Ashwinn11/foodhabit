@@ -7,7 +7,6 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
-  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Button, Input, Container, AnimatedSelectionCard } from '../../components';
@@ -236,7 +235,7 @@ export default function OnboardingFirstLogScreen({
               </Text>
               <View style={styles.gridContainer}>
                 {MAIN_ISSUES.map((issue) => (
-                  <View key={issue.id} style={styles.gridItemContainer}>
+                  <View key={issue.id} style={styles.gridItemHalf}>
                     <AnimatedSelectionCard
                       selected={selectedIssue === issue.id}
                       onPress={() => {
@@ -246,7 +245,7 @@ export default function OnboardingFirstLogScreen({
                       disabled={loading}
                       isCreamBg={selectedIssue === issue.id}
                       style={[
-                        styles.cardContent,
+                        styles.cardContentVertical,
                         selectedIssue === issue.id && styles.selectedCardBackground,
                       ]}
                     >
