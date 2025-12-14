@@ -14,9 +14,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 import { entryService } from '../services/gutHarmony/entryService';
 import { streakService } from '../services/gutHarmony/streakService';
+import { challengeService, WeeklyChallenge } from '../services/gutHarmony/challengeService';
+import { scoringService, ScoreBreakdown } from '../services/gutHarmony/scoringService';
+import { patternService, PatternInsight } from '../services/gutHarmony/patternService';
 import { theme } from '../theme';
 import Text from '../components/Text';
 import Button from '../components/Button';
+import GutHealthCircle from '../components/GutHealthCircle';
 import QuickLogScreen from './QuickLogScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { STOOL_TYPES, getEnergyIcon } from '../constants/stoolData';
@@ -27,6 +31,9 @@ interface DashboardData {
   recentEntries: any[];
   isLoading: boolean;
   insights: string[];
+  challenge: WeeklyChallenge | null;
+  scores: ScoreBreakdown | null;
+  patternInsights: PatternInsight[];
 }
 
 export default function HomeScreen() {
@@ -38,6 +45,9 @@ export default function HomeScreen() {
     recentEntries: [],
     isLoading: true,
     insights: [],
+    challenge: null,
+    scores: null,
+    patternInsights: [],
   });
   const [refreshing, setRefreshing] = useState(false);
   const [showQuickLog, setShowQuickLog] = useState(false);
@@ -93,12 +103,19 @@ export default function HomeScreen() {
 
       setDashboardData((prev) => ({ ...prev, isLoading: true }));
 
-      const streak = await streakService.getStreakCount(user.id);
-      console.log('Streak:', streak);
-
-      // Get recent entries - users can log multiple times per day
-      const recentEntries = await entryService.getRecentEntries(user.id, 7);
-      console.log('Recent entries:', recentEntries?.length || 0);
+      const [
+        streak,
+        recentEntries,
+        thisWeekChallenge,
+        scores,
+        patternInsights,
+      ] = await Promise.all([
+        streakService.getStreakCount(user.id),
+        entryService.getRecentEntries(user.id, 7),
+        challengeService.getThisWeekChallenge(user.id),
+        scoringService.getScoreBreakdown(user.id),
+        patternService.getTopInsights(user.id),
+      ]);
 
       const insights = generateInsights(recentEntries || []);
 
@@ -108,6 +125,9 @@ export default function HomeScreen() {
         recentEntries: recentEntries || [],
         isLoading: false,
         insights,
+        challenge: thisWeekChallenge,
+        scores: scores || null,
+        patternInsights: patternInsights || [],
       });
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -221,6 +241,148 @@ export default function HomeScreen() {
             </View>
           </View>
         </Animated.View>
+
+        {/* This Week's Challenge Card */}
+        {dashboardData.challenge && (
+          <View style={styles.challengeSection}>
+            <View style={styles.challengeCard}>
+              <View style={styles.challengeHeader}>
+                <View>
+                  <Text
+                    variant="caption"
+                    weight="semiBold"
+                    style={{ color: theme.colors.brand.white }}
+                  >
+                    THIS WEEK'S CHALLENGE
+                  </Text>
+                  <Text
+                    variant="title3"
+                    weight="bold"
+                    style={{
+                      color: theme.colors.brand.white,
+                      marginTop: theme.spacing.sm,
+                    }}
+                  >
+                    {dashboardData.challenge.challenge_description}
+                  </Text>
+                </View>
+                <View style={styles.daysRemainingBadge}>
+                  <Text
+                    variant="caption"
+                    weight="bold"
+                    style={{ color: theme.colors.brand.black }}
+                  >
+                    {challengeService.getDaysRemaining(dashboardData.challenge)}d
+                  </Text>
+                </View>
+              </View>
+              {dashboardData.challenge.trigger_food && (
+                <Text
+                  variant="caption"
+                  style={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    marginTop: theme.spacing.md,
+                  }}
+                >
+                  Focus: {dashboardData.challenge.trigger_food}
+                </Text>
+              )}
+              {dashboardData.challenge.violation_count > 0 && (
+                <Text
+                  variant="caption"
+                  style={{
+                    color: theme.colors.brand.primary,
+                    marginTop: theme.spacing.sm,
+                  }}
+                >
+                  Violations: {dashboardData.challenge.violation_count}
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Current Scores Section - Animated Circles */}
+        {dashboardData.scores && (
+          <View style={styles.scoresSection}>
+            <Text variant="title2" weight="bold" style={{ marginBottom: theme.spacing.lg }}>
+              Your Scores
+            </Text>
+            <View style={styles.scoresGrid}>
+              {/* Gut Health Score - Animated Circle */}
+              <GutHealthCircle
+                value={dashboardData.scores.gutHealthScore}
+                label="Gut Health"
+                goal="Goal: >70%"
+                size={140}
+                goalAchieved={dashboardData.scores.gutHealthScore > 70}
+              />
+
+              {/* Bloating Index - Animated Circle */}
+              <GutHealthCircle
+                value={dashboardData.scores.bloatingIndex}
+                label="Bloating"
+                goal="Goal: <20%"
+                size={140}
+                goalAchieved={dashboardData.scores.bloatingIndex < 20}
+              />
+            </View>
+          </View>
+        )}
+
+        {/* Pattern Insights */}
+        {dashboardData.patternInsights.length > 0 && (
+          <View style={styles.patternsSection}>
+            <Text variant="title2" weight="bold" style={{ marginBottom: theme.spacing.lg }}>
+              Pattern Insights
+            </Text>
+            {dashboardData.patternInsights.map((insight, index) => (
+              <View key={index} style={styles.patternCard}>
+                <View style={styles.patternIcon}>
+                  <Ionicons
+                    name={insight.type === 'food_symptom' ? 'leaf' : 'heart'}
+                    size={16}
+                    color={theme.colors.brand.primary}
+                  />
+                </View>
+                <Text
+                  variant="body"
+                  style={{ flex: 1, color: theme.colors.text.primary }}
+                >
+                  {insight.description}
+                </Text>
+                <View
+                  style={[
+                    styles.confidenceBadge,
+                    {
+                      backgroundColor:
+                        insight.confidence > 0.75
+                          ? 'rgba(120, 211, 191, 0.2)'
+                          : insight.confidence > 0.5
+                            ? 'rgba(252, 239, 222, 0.2)'
+                            : 'rgba(205, 164, 232, 0.2)',
+                    },
+                  ]}
+                >
+                  <Text
+                    variant="caption"
+                    weight="semiBold"
+                    style={{
+                      color:
+                        insight.confidence > 0.75
+                          ? theme.colors.brand.secondary
+                          : insight.confidence > 0.5
+                            ? theme.colors.brand.primary
+                            : theme.colors.brand.tertiary,
+                    }}
+                  >
+                    {Math.round(insight.confidence * 100)}%
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Insights Section */}
         {dashboardData.insights.length > 0 && (
@@ -450,6 +612,69 @@ const styles = StyleSheet.create({
   },
   streakContent: {
     flex: 1,
+  },
+
+  /* Challenge Section */
+  challengeSection: {
+    paddingHorizontal: theme.spacing['2xl'],
+    marginBottom: theme.spacing['3xl'],
+  },
+  challengeCard: {
+    backgroundColor: theme.colors.brand.primary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+  },
+  challengeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  daysRemainingBadge: {
+    backgroundColor: theme.colors.brand.cream,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+  },
+
+  /* Scores Section */
+  scoresSection: {
+    paddingHorizontal: theme.spacing['2xl'],
+    marginBottom: theme.spacing['3xl'],
+  },
+  scoresGrid: {
+    flexDirection: 'row',
+    gap: theme.spacing['2xl'],
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+
+  /* Pattern Section */
+  patternsSection: {
+    paddingHorizontal: theme.spacing['2xl'],
+    marginBottom: theme.spacing['3xl'],
+  },
+  patternCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.card,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  patternIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.md,
+    flexShrink: 0,
+  },
+  confidenceBadge: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
   },
 
   /* Insights Section */

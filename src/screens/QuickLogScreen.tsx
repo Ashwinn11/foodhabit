@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -13,12 +13,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 import { entryService } from '../services/gutHarmony/entryService';
 import { streakService } from '../services/gutHarmony/streakService';
+import { moodService } from '../services/gutHarmony/moodService';
 import { theme } from '../theme';
 import Text from '../components/Text';
+import MoodWheel from '../components/MoodWheel';
 import { Ionicons } from '@expo/vector-icons';
 import { STOOL_TYPES, SYMPTOMS, getEnergyIcon } from '../constants/stoolData';
 
 interface QuickLogData {
+  mood: string | null;
   stoolType: number | null;
   energyLevel: number;
   selectedSymptoms: string[];
@@ -26,6 +29,32 @@ interface QuickLogData {
   meals: string[];
   mealInput: string;
 }
+
+/**
+ * Get frequently logged foods for quick suggestions
+ */
+const getRecentlyLoggedFoods = async (userId: string): Promise<string[]> => {
+  try {
+    const meals = await entryService.getMealEntries(userId, 20);
+    const foodFrequency: Record<string, number> = {};
+
+    for (const meal of meals) {
+      const foods = meal.foods || [];
+      for (const food of foods) {
+        foodFrequency[food] = (foodFrequency[food] || 0) + 1;
+      }
+    }
+
+    // Return top 5 most frequently logged foods
+    return Object.entries(foodFrequency)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([food]) => food);
+  } catch (error) {
+    console.error('Error getting recently logged foods:', error);
+    return [];
+  }
+};
 
 export default function QuickLogScreen({
   onComplete,
@@ -37,7 +66,9 @@ export default function QuickLogScreen({
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [recentFoods, setRecentFoods] = useState<string[]>([]);
   const [data, setData] = useState<QuickLogData>({
+    mood: null,
     stoolType: null,
     energyLevel: 5,
     selectedSymptoms: [],
@@ -45,6 +76,27 @@ export default function QuickLogScreen({
     meals: [],
     mealInput: '',
   });
+
+  useEffect(() => {
+    // Load today's mood and recently logged foods
+    const loadInitialData = async () => {
+      if (user?.id) {
+        try {
+          const [todayMood, recentlyLogged] = await Promise.all([
+            moodService.getTodayMood(user.id),
+            getRecentlyLoggedFoods(user.id),
+          ]);
+          if (todayMood) {
+            setData((prev) => ({ ...prev, mood: todayMood.mood_type }));
+          }
+          setRecentFoods(recentlyLogged);
+        } catch (error) {
+          console.error('Error loading initial data:', error);
+        }
+      }
+    };
+    loadInitialData();
+  }, [user?.id]);
 
   const isComplete = data.stoolType !== null;
 
@@ -87,6 +139,17 @@ export default function QuickLogScreen({
         }),
         {}
       );
+
+      // Log mood if selected
+      if (data.mood) {
+        try {
+          await moodService.logMoodEntry(user.id, {
+            mood_type: data.mood,
+          });
+        } catch (error) {
+          console.error('Error logging mood:', error);
+        }
+      }
 
       // Log entry with selected time
       await entryService.logStoolEntry(user.id, {
@@ -226,6 +289,24 @@ export default function QuickLogScreen({
               </TouchableOpacity>
             ))}
           </View>
+        </View>
+
+        {/* Mood Wheel */}
+        <View style={styles.section}>
+          <Text variant="title3" weight="bold" style={styles.sectionTitle}>
+            How are you feeling today?
+          </Text>
+          <Text
+            variant="caption"
+            color="secondary"
+            style={{ marginBottom: theme.spacing.lg }}
+          >
+            Your mood helps explain your patterns
+          </Text>
+          <MoodWheel
+            selectedMood={data.mood}
+            onMoodSelect={(moodId) => setData((prev) => ({ ...prev, mood: moodId }))}
+          />
         </View>
 
         {/* Stool Type - Bristol Scale with proper descriptions */}
@@ -433,6 +514,42 @@ export default function QuickLogScreen({
           >
             Help us find food triggers (optional)
           </Text>
+
+          {/* Recently Eaten Foods - Quick Add */}
+          {recentFoods.length > 0 && (
+            <View style={styles.recentFoodsContainer}>
+              <Text
+                variant="caption"
+                weight="semiBold"
+                color="secondary"
+                style={{ marginBottom: theme.spacing.md }}
+              >
+                Recently logged
+              </Text>
+              <View style={styles.recentFoodsList}>
+                {recentFoods.map((food) => (
+                  <TouchableOpacity
+                    key={food}
+                    style={styles.recentFoodButton}
+                    onPress={() => {
+                      setData((prev) => ({
+                        ...prev,
+                        meals: [...prev.meals, food],
+                      }));
+                    }}
+                  >
+                    <Text
+                      variant="caption"
+                      weight="semiBold"
+                      style={{ color: theme.colors.text.primary }}
+                    >
+                      + {food}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
 
           {/* Meal Input */}
           <View style={styles.mealInputContainer}>
@@ -740,6 +857,25 @@ const styles = StyleSheet.create({
   },
 
   /* Meal Section */
+  recentFoodsContainer: {
+    marginBottom: theme.spacing.lg,
+    backgroundColor: 'rgba(120, 211, 191, 0.1)',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+  },
+  recentFoodsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+  },
+  recentFoodButton: {
+    backgroundColor: theme.colors.background.card,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.brand.tertiary,
+  },
   mealInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -21,6 +21,7 @@ export const colors = {
   // Brand colors - Semantic naming (strictly from the provided list)
   brand: {
     primary: '#ff7664',    // Primary brand color (Coral)
+    secondary: '#78D3BF',  // Secondary brand color (Teal) - for success/positive states
     tertiary: '#cda4e8',   // Tertiary color (Purple)
     cream: '#FCEFDE',      // Cream (Light background)
     white: '#ffffff',      // Pure White
