@@ -14,6 +14,8 @@ import { useAuth } from '../hooks/useAuth';
 import { entryService } from '../services/gutHarmony/entryService';
 import { streakService } from '../services/gutHarmony/streakService';
 import { moodService } from '../services/gutHarmony/moodService';
+import { scoringService } from '../services/gutHarmony/scoringService';
+import { challengeService } from '../services/gutHarmony/challengeService';
 import { theme } from '../theme';
 import Text from '../components/Text';
 import MoodWheel from '../components/MoodWheel';
@@ -177,6 +179,27 @@ export default function QuickLogScreen({
 
       // Update streak
       await streakService.updateStreak(user.id);
+
+      // Update scores (this will trigger all calculations)
+      try {
+        await scoringService.calculateAndUpdateScores(user.id);
+      } catch (error) {
+        console.error('Error updating scores:', error);
+      }
+
+      // Create or update weekly challenge if none exists
+      try {
+        const existingChallenge = await challengeService.getThisWeekChallenge(user.id);
+        if (!existingChallenge) {
+          // Create a default challenge for first-time users
+          await challengeService.createWeeklyChallenge(user.id, {
+            challenge_type: 'symptom_focus',
+            challenge_description: 'Track your most common symptoms this week',
+          });
+        }
+      } catch (error) {
+        console.error('Error creating challenge:', error);
+      }
 
       Alert.alert(
         'Great job!',

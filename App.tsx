@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, LogBox } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -17,6 +17,10 @@ import RootNavigator from './src/navigation/RootNavigator';
 import OnboardingNavigator from './src/screens/onboarding/OnboardingNavigator';
 import { hasCompletedOnboarding } from './src/services/gutHarmony/userService';
 import { theme } from './src/theme';
+
+// Suppress known Reanimated 4 deprecation warning from react-native-circular-progress-indicator
+// The library still works fine with Reanimated 4, it just uses deprecated APIs
+LogBox.ignoreLogs(['`createAnimatedPropAdapter` is no longer necessary in Reanimated 4']);
 
 function AppContent() {
   const { session, loading, user } = useAuth();
