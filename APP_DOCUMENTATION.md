@@ -16,10 +16,12 @@
 
 Users can **discover what's triggering their gut issues in 7 days** through structured daily logging and intelligent pattern detection. Instead of expensive doctor visits or elimination diets, Gut Harmony provides:
 
-- ✅ Simple 30-second daily logging
-- ✅ Food-to-symptom correlation within 3 days
-- ✅ Personalized trigger insights
-- ✅ Progress tracking with streaks and milestones
+- ✅ Simple 30-second daily logging (stool, energy, mood, symptoms, foods)
+- ✅ Food-to-symptom correlation within 3 days (not 7)
+- ✅ Weekly challenges that test triggers ("Avoid Milk this week")
+- ✅ Real-time pattern insights on home dashboard
+- ✅ Progress tracking with transparent scoring system
+- ✅ Smart logging (recently eaten foods for quick re-logging)
 
 ---
 
@@ -72,33 +74,57 @@ Users can **discover what's triggering their gut issues in 7 days** through stru
 ### 3. Home Screen (Main Dashboard)
 
 **Components:**
-- **Header** - Welcome message with user's first name + notification icon
+
+- **Header** - Personalized greeting
+  - "Hey [Name], ready to feel better?" (dynamic based on time of day)
+  - Notification bell icon (future: for reminders/challenges)
+
+- **Mood Check Quick Access**
+  - "How are you feeling today?" with 5 emoji options
+  - Quick tap to set mood for the day
+  - Informs patterns and recommendations
+
 - **Streak Card** - Animated display of current daily logging streak with fire emoji
   - Increases by 1 for each consecutive day of logging
   - Resets if user misses a day
   - Milestone bonuses at 7-day intervals
+  - Visual flame that grows with streak
+
+- **This Week's Challenge Card** ⭐ (CRITICAL FOR ENGAGEMENT)
+  - Prominent card showing ONE focused challenge per week
+  - Example: "Avoid Milk This Week" with icon + brief explanation
+  - Time-bound: 7 days with visual countdown
+  - Suggest one common trigger based on user's data
+  - Rewards for completion (harmony points + badge)
+  - Tap to get more info or decline challenge
+
+- **Current Scores Section**
+  - Show 2-3 key metrics with animated circular progress rings
+  - Example: "Gut Health Score: 68%" (goal: >70%)
+  - Example: "Bloating Index: 22%" (goal: <20%)
+  - Show normal vs. goal threshold
+  - Transparent explanation of what drives each score
 
 - **Quick Log CTA** - Large coral button
   - Shows "Log Today's Entry" if not yet logged today
   - Shows "Logged today ✓" with success badge if already logged
   - Tappable to open Quick Log modal
 
-- **Insights Section**
-  - Dynamic insights based on logged data:
-    - "Start logging to discover your patterns" (0-2 entries)
-    - "Keep logging for 3+ days to find patterns" (2-3 entries)
-    - "You're building data for insights" (3+ entries)
-    - Trend analysis: "Recent logs trending toward softer stools"
-    - Symptom correlations: "Bloating appears after dairy"
+- **Pattern Insights Section**
+  - Surface real food-mood-symptom correlations immediately
+  - Example: "You felt great after Salmon (3 times)"
+  - Example: "Bloating peaks on days you eat Dairy"
+  - Example: "Your mood improved on low-stress days"
+  - Not buried behind another screen - visible on main dashboard
 
 - **Recent Logs Section**
   - Last 3 entries displayed as cards
-  - Shows date, energy level, symptom count for each
+  - Shows date, mood, energy level, symptom count for each
   - "View All" link to history screen
   - Empty state if no entries yet
 
 - **Pull-to-Refresh**
-  - User can refresh dashboard to get latest streak and insights
+  - User can refresh dashboard to get latest streak, scores, and patterns
   - Loading indicator during refresh
 
 ### 4. Quick Log Screen (Modal)
@@ -107,28 +133,43 @@ Users can **discover what's triggering their gut issues in 7 days** through stru
 
 **Layout:**
 - **Header** - "Quick Log" title + close button
-- **3-Step Form** (all required except symptoms):
+- **4-Step Form** (all required except foods):
 
-  1. **Stool Type Grid** (Required)
+  1. **Mood Check** (Required)
+     - "How are you feeling?" with emoji/text options
+     - 5-8 options: Anxious, Calm, Stressed, Energetic, Tired, Happy, Peaceful
+     - Selection changes emotion indicator
+     - Sets context for day's data
+
+  2. **Stool Type Grid** (Required)
      - Visual 7-button grid with Bristol scale numbers
      - Color-coded: gray (hard), green (healthy), yellow/red (soft)
      - Selected state shows coral border + background tint
 
-  2. **Energy Level Grid** (Required)
+  3. **Energy Level Grid** (Required)
      - 1-10 number grid buttons
      - Shows selected value in header
      - Selected state shows coral background
 
-  3. **Symptoms Grid** (Optional)
+  4. **Symptoms Grid** (Optional)
      - 5 symptom cards with icons
      - Multi-select with visual toggle state
      - Icons change from outline to solid when selected
      - Color changes to coral when selected
 
+  5. **Food/Meals Logged** (Optional but encouraged)
+     - **Recently Eaten Foods** (Smart Feature)
+       - Shows last 5 foods user logged
+       - One-tap to add (reduces friction on repeat logging)
+       - Smart suggestion: "You often eat [food] on Mondays"
+     - Add new food button
+     - Free text or search database
+     - Multiple foods allowed
+
 - **Save Button**
-  - Disabled until stool type + energy selected
+  - Disabled until stool type + energy + mood selected
   - Shows loading spinner during save
-  - Success alert: "Entry logged! Great job maintaining your streak."
+  - Success alert: "Entry logged! Your data helps find patterns."
   - Error handling with retry option
 
 **Integration:**
@@ -136,6 +177,7 @@ Users can **discover what's triggering their gut issues in 7 days** through stru
 - After saving: modal closes + dashboard refreshes automatically
 - Streak updates immediately
 - "Log Today's Entry" button replaced with success badge
+- Recently logged foods persist for next logging
 
 ### 5. History Screen (Future)
 - Calendar view of logged days
@@ -379,13 +421,44 @@ App.tsx
 - **Week Consistent:** 75 points
 - **Currency Used For:** Unlocking features, cosmetics, or premium analysis
 
+### Scoring System (TRANSPARENT & ACTIONABLE)
+
+**Gut Health Score (Primary Metric)**
+- **What it measures:** Overall digestive wellness based on symptom reduction + energy improvement
+- **Calculation:**
+  - Baseline: 50%
+  - Symptom-Free Days: +2% per day (max +20%)
+  - Average Energy Level: +1% per point above 5/10 (max +10%)
+  - Consistency: +1% for each consecutive logging day (max +20%)
+  - Total: 0-100%
+- **Goal:** >70% (indicates good gut health patterns)
+- **Updates:** Recalculated daily after logging
+- **Transparent Display:** Show breakdown on dashboard (tap to see details)
+
+**Bloating Index (Secondary Metric)**
+- **What it measures:** Severity and frequency of bloating
+- **Calculation:**
+  - 0% = No bloating days this week
+  - 100% = Every day has bloating logged
+  - Baseline: Average of last 7 days bloating frequency
+- **Goal:** <20% (minimal bloating)
+- **Visual:** Circular progress ring (red when high, green when low)
+- **Used For:** Identifying when triggers are working
+
+**Weekly Challenge Reward**
+- Complete challenge (avoid X for 7 days with no violations): +150 Harmony points + Badge
+- Partial completion (5-6 days): +50 Harmony points
+- Failed attempt: +0 points (no punishment, just new challenge next week)
+
 ### Achievements (Badges)
 - 🏅 First Entry - Log your first entry
 - 🔥 Week Warrior - 7-day streak
 - 🔥 Month Master - 30-day streak
-- 🎯 Trigger Tracker - First correlation found
+- 🎯 Trigger Tracker - First food-symptom correlation found
 - 📊 Data Detective - 50+ entries logged
 - 🏆 Harmony Hero - 100-day streak
+- 🎖️ Challenge Champion - Complete weekly challenge 4 weeks in a row
+- 🌟 Pattern Master - Discover 5+ food triggers
 
 ---
 
@@ -461,20 +534,25 @@ App.tsx
 
 ## Roadmap
 
-### Phase 1 (Current - MVP)
+### Phase 1 (Current - CRITICAL MVP)
 - ✅ Authentication (Apple/Google)
 - ✅ Onboarding flow
 - ✅ Daily stool entry logging
 - ✅ Streak tracking
 - ✅ Home dashboard
-- ⏳ Basic insights (stool trend tracking)
+- ⏳ Mood tracking (mood wheel on home + in quick log)
+- ⏳ **FOOD LOGGING** (recently eaten foods for quick re-logging) ⭐
+- ⏳ **WEEKLY CHALLENGE SYSTEM** ("Avoid X this week") ⭐
+- ⏳ **TRANSPARENT SCORING** (Gut Health Score + Bloating Index with goals)
+- ⏳ **PATTERN INSIGHTS ON DASHBOARD** (real food-mood-symptom correlations visible immediately, not buried)
 
 ### Phase 2 (Q1 2026)
 - 📅 History/calendar view
-- 📅 Meal logging
-- 📅 Trigger correlation engine
-- 📅 Analysis screen with insights
+- 📅 Advanced meal logging (with allergen info, portion sizes)
+- 📅 Trigger correlation engine (more sophisticated)
+- 📅 Analysis screen with deep insights
 - 📅 PDF export for doctor consultation
+- 📅 Smart food suggestions based on history
 
 ### Phase 3 (Q2 2026)
 - 📅 Wearable integration (Apple Health, Google Fit)

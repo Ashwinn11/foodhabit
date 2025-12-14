@@ -1,6 +1,7 @@
 /**
- * App Text Content - Playful & Cute Edition
- * Friendly, encouraging, and easy to understand.
+ * App Text Content - Friendly & Empathetic Edition
+ * Warm, encouraging, and relatable tone.
+ * Medical topic but human and approachable.
  */
 
 // Shared texts used across multiple screens
@@ -8,30 +9,30 @@ const SHARED_TEXTS = {
   appName: 'Gut Harmony',
   legalTerms: 'Terms',
   legalPrivacy: 'Privacy Policy',
-  disclaimer: 'Just a friendly tool! Chat with your doc for medical advice.',
+  disclaimer: 'Not a substitute for medical advice. Always chat with your doctor about health concerns.',
   valueProps: [
     {
-      title: 'Find Food Friends',
-      description: 'See what foods love you back in 3 days',
+      title: 'Find Your Food Triggers',
+      description: 'Discover which foods work for you in just 3 days',
       icons: {
-        outline: 'heart-outline',
-        solid: 'heart',
+        outline: 'search-outline',
+        solid: 'search',
       },
     },
     {
-      title: 'Track Your Vibes',
-      description: 'Spot patterns in your tummy\'s mood',
+      title: 'Track Your Progress',
+      description: 'See the patterns in how you feel',
       icons: {
-        outline: 'sparkles-outline',
-        solid: 'sparkles',
+        outline: 'stats-chart-outline',
+        solid: 'stats-chart',
       },
     },
     {
-      title: 'Share the Scoop',
-      description: 'Easy reports for your doctor visit',
+      title: 'Share with Your Doctor',
+      description: 'Easy reports for your next check-up',
       icons: {
-        outline: 'chatbubbles-outline',
-        solid: 'chatbubbles',
+        outline: 'document-outline',
+        solid: 'document',
       },
     },
   ],
@@ -44,12 +45,12 @@ export const APP_TEXTS = {
   // Auth Screen
   auth: {
     title: SHARED_TEXTS.appName,
-    subtitle: 'Let\'s make your tummy happy in 7 days!',
+    subtitle: 'Understand your gut better in 7 days. Find what works for you.',
     valueProps: SHARED_TEXTS.valueProps.map((prop) => ({
       icon: prop.icons.outline,
       text: prop.title,
     })),
-    legalPrefix: 'Joining the club means you agree to our',
+    legalPrefix: 'By signing in, you agree to our',
     termsLink: SHARED_TEXTS.legalTerms,
     privacyLink: SHARED_TEXTS.legalPrivacy,
   },
@@ -57,58 +58,58 @@ export const APP_TEXTS = {
   // Onboarding Splash Screen
   onboardingSplash: {
     title: SHARED_TEXTS.appName,
-    subtitle: 'Figuring out your gut, one bite at a time.',
+    subtitle: 'Get to know your gut. One log at a time.',
     valueProps: SHARED_TEXTS.valueProps.map((prop) => ({
       icon: prop.icons.solid,
       title: prop.title,
       description: prop.description,
     })),
-    cta: 'Let\'s Go!',
+    cta: 'Let\'s Begin',
     disclaimer: SHARED_TEXTS.disclaimer,
   },
 
   // Onboarding Profile Screen
   onboardingProfile: {
-    title: 'Who\'s This?',
-    subtitle: 'Tell us a bit about you!',
+    title: 'Tell us about you',
+    subtitle: 'So we can give you personalized insights',
     nameLabel: 'Your Name',
-    namePlaceholder: 'What should we call you?',
-    conditionLabel: 'Any known tummy troubles?',
-    issueLabel: 'What\'s bothering you most?',
-    continueButton: 'Onward!',
+    namePlaceholder: 'What\'s your name?',
+    conditionLabel: 'Any digestive issues you\'ve been diagnosed with?',
+    issueLabel: 'What bothers you most?',
+    continueButton: 'Next',
   },
 
   // Onboarding First Log Screen (Stool Entry)
   onboardingFirstLog: {
     stoolStep: {
-      title: 'The Scoop on Poop',
-      subtitle: 'What did it look like?',
+      title: 'How are things today?',
+      subtitle: 'Select the stool type that matches yours',
     },
     energyStep: {
-      title: 'Vibe Check',
-      subtitle: 'How are you feeling?',
+      title: 'How\'s your energy?',
+      subtitle: 'Rate from tired to energized',
     },
     symptomsStep: {
-      title: 'Ouchies & Feels',
-      subtitle: 'Anything else going on?',
+      title: 'Any symptoms?',
+      subtitle: 'Check anything you\'re experiencing',
     },
     mealsStep: {
-      title: 'Yum! What did you eat?',
-      subtitle: 'Any snacks or meals? (optional)',
-      mealPlaceholder: 'e.g., Pizza, Yummy Salad',
-      addButton: 'Add it!',
+      title: 'What did you eat?',
+      subtitle: 'Tell us what you had (helps us find patterns)',
+      mealPlaceholder: 'e.g., breakfast, lunch, snacks...',
+      addButton: 'Add Meal',
     },
-    nextButton: 'Next Step',
-    completeButton: 'All Done!',
+    nextButton: 'Next',
+    completeButton: 'Done',
     savingButton: 'Saving...',
   },
 
   // Onboarding Celebration Screen
   onboardingCelebration: {
-    heading: 'Woohoo! Great Job!',
-    progressText: (entryCount: number) => `${entryCount}/3 logs done!`,
-    nextText: 'Just 2 more to unlock your magic insights',
-    buttonText: 'Keep Going!',
+    heading: 'You\'re off to a great start!',
+    progressText: (entryCount: number) => `${entryCount}/3 entries logged`,
+    nextText: 'Log 2 more entries to unlock your personalized insights',
+    buttonText: 'Back to Home',
   },
 
   // Conditions (for selection screens)
@@ -124,11 +125,11 @@ export const APP_TEXTS = {
   // Main issues
   mainIssues: [
     { id: 'bloating', label: 'Bloating' },
-    { id: 'cramping', label: 'Tummy Aches' },
-    { id: 'diarrhea', label: 'The Runs' },
-    { id: 'constipation', label: 'Backed Up' },
-    { id: 'energy', label: 'Sleepy/Low Energy' },
-    { id: 'multiple', label: 'A Mix of Things' },
+    { id: 'cramping', label: 'Cramping' },
+    { id: 'diarrhea', label: 'Diarrhea' },
+    { id: 'constipation', label: 'Constipation' },
+    { id: 'energy', label: 'Low Energy' },
+    { id: 'multiple', label: 'Multiple Issues' },
   ],
 
   // Stool types - Simplified and cuter
@@ -144,10 +145,10 @@ export const APP_TEXTS = {
 
   // Energy levels
   energyLevels: [
-    { value: 1, icon: 'sad', label: 'Meh' },
+    { value: 1, icon: 'sad', label: 'Very Low' },
     { value: 5, icon: 'remove', label: 'Okay' },
     { value: 8, icon: 'happy', label: 'Good' },
-    { value: 10, icon: 'flash', label: 'Super!' },
+    { value: 10, icon: 'flash', label: 'Great' },
   ],
 
   // Symptoms

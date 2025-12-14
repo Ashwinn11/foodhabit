@@ -26,6 +26,7 @@ interface DashboardData {
   todayLogged: boolean;
   recentEntries: any[];
   isLoading: boolean;
+  insights: string[];
 }
 
 export default function HomeScreen() {
@@ -36,6 +37,7 @@ export default function HomeScreen() {
     todayLogged: false,
     recentEntries: [],
     isLoading: true,
+    insights: [],
   });
   const [refreshing, setRefreshing] = useState(false);
   const [showQuickLog, setShowQuickLog] = useState(false);
@@ -50,6 +52,37 @@ export default function HomeScreen() {
       useNativeDriver: true,
     }).start();
   }, [user?.id]);
+
+  const generateInsights = (entries: any[]): string[] => {
+    const insights: string[] = [];
+    const entryCount = entries.length;
+
+    if (entryCount === 0) {
+      insights.push('Start logging daily to discover your food triggers.');
+    } else if (entryCount < 3) {
+      insights.push(`Keep logging! ${3 - entryCount} more entries to find patterns.`);
+    } else {
+      // Calculate trend
+      const avgStoolType = entries.reduce((sum, e) => sum + (e.stool_type || 0), 0) / entryCount;
+      const avgEnergy = entries.reduce((sum, e) => sum + (e.energy_level || 0), 0) / entryCount;
+
+      if (avgStoolType > 5) {
+        insights.push('Your logs show softer stools recently. Watch for trigger foods.');
+      } else if (avgStoolType < 3) {
+        insights.push('Your logs show harder stools recently. Stay hydrated!');
+      } else {
+        insights.push('Your stools are trending healthy. Keep up the good work!');
+      }
+
+      if (avgEnergy < 5) {
+        insights.push('Your energy levels have been low. Rest up!');
+      } else if (avgEnergy > 8) {
+        insights.push('Great energy levels! Keep doing what you\'re doing.');
+      }
+    }
+
+    return insights;
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -67,11 +100,14 @@ export default function HomeScreen() {
       const recentEntries = await entryService.getRecentEntries(user.id, 7);
       console.log('Recent entries:', recentEntries?.length || 0);
 
+      const insights = generateInsights(recentEntries || []);
+
       setDashboardData({
         currentStreak: streak || 0,
         todayLogged: false, // Always allow logging (multiple entries per day)
         recentEntries: recentEntries || [],
         isLoading: false,
+        insights,
       });
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -186,6 +222,43 @@ export default function HomeScreen() {
           </View>
         </Animated.View>
 
+        {/* Insights Section */}
+        {dashboardData.insights.length > 0 && (
+          <View style={styles.insightsSection}>
+            <Text variant="title2" weight="bold" style={{ marginBottom: theme.spacing.md }}>
+              Your Insights
+            </Text>
+            {dashboardData.insights.map((insight, index) => (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.insightCard,
+                  {
+                    opacity: Animated.add(
+                      scaleAnim,
+                      new Animated.Value(0.1 * index)
+                    ),
+                  },
+                ]}
+              >
+                <View style={styles.insightIconContainer}>
+                  <Ionicons
+                    name="bulb-outline"
+                    size={18}
+                    color={theme.colors.brand.primary}
+                  />
+                </View>
+                <Text
+                  variant="body"
+                  style={{ flex: 1, color: theme.colors.text.primary }}
+                >
+                  {insight}
+                </Text>
+              </Animated.View>
+            ))}
+          </View>
+        )}
+
         {/* CTA Section - Log Entry (Multiple entries per day allowed) */}
         <View style={styles.ctaSection}>
           <TouchableOpacity
@@ -195,6 +268,11 @@ export default function HomeScreen() {
               paddingVertical: theme.spacing.lg,
               borderRadius: theme.borderRadius.pill,
               alignItems: 'center',
+              shadowColor: theme.colors.brand.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 5,
             }}
           >
             <Text
@@ -202,7 +280,7 @@ export default function HomeScreen() {
               weight="semiBold"
               style={{ color: theme.colors.brand.white }}
             >
-              Log Stool Entry
+              Log Today's Entry
             </Text>
           </TouchableOpacity>
         </View>
@@ -372,6 +450,33 @@ const styles = StyleSheet.create({
   },
   streakContent: {
     flex: 1,
+  },
+
+  /* Insights Section */
+  insightsSection: {
+    paddingHorizontal: theme.spacing['2xl'],
+    marginBottom: theme.spacing['3xl'],
+  },
+  insightCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(255, 118, 100, 0.05)',
+    borderRadius: theme.borderRadius.md,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.brand.primary,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  insightIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.md,
+    flexShrink: 0,
   },
 
   /* CTA Section */

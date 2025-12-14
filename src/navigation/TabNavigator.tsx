@@ -5,6 +5,8 @@ import { Platform, StyleSheet, View } from 'react-native'; // Added View import
 import * as Haptics from 'expo-haptics';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import HistoryScreen from '../screens/HistoryScreen';
+import TriggerAnalysisScreen from '../screens/TriggerAnalysisScreen';
 import { theme, r } from '../theme';
 
 const Tab = createBottomTabNavigator();
@@ -39,10 +41,10 @@ export default function TabNavigator(): React.ReactElement {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Activity') {
-            iconName = focused ? 'flame' : 'flame-outline';
-          } else if (route.name === 'Search') {
-            iconName = focused ? 'search' : 'search-outline';
+          } else if (route.name === 'History') {
+            iconName = focused ? 'calendar' : 'calendar-outline';
+          } else if (route.name === 'Analysis') {
+            iconName = focused ? 'pulse' : 'pulse-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           } else {
@@ -115,6 +117,20 @@ export default function TabNavigator(): React.ReactElement {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
+        }}
+      />
+      <Tab.Screen
+        name="History"
+        component={HistoryScreen}
+        options={{
+          tabBarLabel: 'History',
+        }}
+      />
+      <Tab.Screen
+        name="Analysis"
+        component={TriggerAnalysisScreen}
+        options={{
+          tabBarLabel: 'Triggers',
         }}
       />
       <Tab.Screen

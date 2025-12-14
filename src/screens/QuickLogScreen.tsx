@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  TextInput,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +23,8 @@ interface QuickLogData {
   energyLevel: number;
   selectedSymptoms: string[];
   logTime: Date;
+  meals: string[];
+  mealInput: string;
 }
 
 export default function QuickLogScreen({
@@ -39,6 +42,8 @@ export default function QuickLogScreen({
     energyLevel: 5,
     selectedSymptoms: [],
     logTime: new Date(),
+    meals: [],
+    mealInput: '',
   });
 
   const isComplete = data.stoolType !== null;
@@ -49,6 +54,23 @@ export default function QuickLogScreen({
       selectedSymptoms: prev.selectedSymptoms.includes(symptomId)
         ? prev.selectedSymptoms.filter((s) => s !== symptomId)
         : [...prev.selectedSymptoms, symptomId],
+    }));
+  };
+
+  const addMeal = () => {
+    if (data.mealInput.trim()) {
+      setData((prev) => ({
+        ...prev,
+        meals: [...prev.meals, prev.mealInput.trim()],
+        mealInput: '',
+      }));
+    }
+  };
+
+  const removeMeal = (index: number) => {
+    setData((prev) => ({
+      ...prev,
+      meals: prev.meals.filter((_, i) => i !== index),
     }));
   };
 
@@ -72,12 +94,31 @@ export default function QuickLogScreen({
         stool_type: data.stoolType!,
         energy_level: data.energyLevel,
         symptoms: symptomsObj,
+        notes: data.meals.length > 0 ? data.meals.join(', ') : undefined,
       });
+
+      // Log meals if any
+      if (data.meals.length > 0) {
+        for (const meal of data.meals) {
+          try {
+            await entryService.logMealEntry(user.id, {
+              meal_time: data.logTime.toISOString(),
+              meal_name: meal,
+              foods: [meal],
+            });
+          } catch (error) {
+            console.error('Error logging meal:', error);
+          }
+        }
+      }
 
       // Update streak
       await streakService.updateStreak(user.id);
 
-      Alert.alert('Success', 'Entry logged! Keep tracking for accurate insights.');
+      Alert.alert(
+        'Great job!',
+        'Your entry has been saved. Keep logging daily to discover your patterns!'
+      );
       onComplete();
     } catch (error) {
       console.error('Error logging entry:', error);
@@ -380,6 +421,72 @@ export default function QuickLogScreen({
           </View>
         </View>
 
+        {/* Meals - Optional */}
+        <View style={styles.section}>
+          <Text variant="title3" weight="bold" style={styles.sectionTitle}>
+            What did you eat?
+          </Text>
+          <Text
+            variant="caption"
+            color="secondary"
+            style={{ marginBottom: theme.spacing.lg }}
+          >
+            Help us find food triggers (optional)
+          </Text>
+
+          {/* Meal Input */}
+          <View style={styles.mealInputContainer}>
+            <View style={{ flex: 1 }}>
+              <TextInput
+                placeholder="e.g., Pizza, Coffee, Salad..."
+                placeholderTextColor={theme.colors.text.tertiary}
+                value={data.mealInput}
+                onChangeText={(text) =>
+                  setData((prev) => ({ ...prev, mealInput: text }))
+                }
+                onSubmitEditing={addMeal}
+                style={styles.mealInput}
+              />
+            </View>
+            {data.mealInput.trim() && (
+              <TouchableOpacity onPress={addMeal} style={styles.mealAddButton}>
+                <Ionicons
+                  name="add"
+                  size={20}
+                  color={theme.colors.brand.white}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Logged Meals */}
+          {data.meals.length > 0 && (
+            <View style={styles.mealsList}>
+              {data.meals.map((meal, index) => (
+                <View key={index} style={styles.mealTag}>
+                  <Text
+                    variant="caption"
+                    weight="semiBold"
+                    style={{ color: theme.colors.brand.white }}
+                  >
+                    {meal}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => removeMeal(index)}
+                    style={styles.mealRemoveButton}
+                  >
+                    <Ionicons
+                      name="close"
+                      size={14}
+                      color={theme.colors.brand.white}
+                    />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+
         {/* Symptoms - Optional */}
         <View style={styles.section}>
           <Text variant="title3" weight="bold" style={styles.sectionTitle}>
@@ -630,5 +737,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: theme.spacing.lg,
-  }
+  },
+
+  /* Meal Section */
+  mealInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  mealInput: {
+    backgroundColor: theme.colors.background.card,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    color: theme.colors.text.primary,
+    fontSize: 14,
+    fontFamily: 'Nunito_400Regular',
+  },
+  mealAddButton: {
+    backgroundColor: theme.colors.brand.primary,
+    width: 40,
+    height: 40,
+    borderRadius: theme.borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mealsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+  },
+  mealTag: {
+    backgroundColor: theme.colors.brand.primary,
+    borderRadius: theme.borderRadius.pill,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  mealRemoveButton: {
+    marginLeft: theme.spacing.sm,
+  },
 });
