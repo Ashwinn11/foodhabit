@@ -15,6 +15,7 @@ import { useAuth } from '../hooks/useAuth';
 import { entryService } from '../services/gutHarmony/entryService';
 import { theme } from '../theme';
 import Text from '../components/Text';
+import { EmptyState, IconButton } from '../components';
 import { Ionicons } from '@expo/vector-icons';
 import { STOOL_TYPES, getEnergyIcon } from '../constants/stoolData';
 
@@ -245,28 +246,11 @@ export default function HistoryScreen() {
         )}
 
         {entries.length === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons
-              name="calendar-outline"
-              size={48}
-              color={theme.colors.text.tertiary}
-            />
-            <Text
-              variant="title3"
-              weight="semiBold"
-              style={{ marginTop: 16 }}
-            >
-              No entries yet
-            </Text>
-            <Text
-              variant="body"
-              color="secondary"
-              align="center"
-              style={{ marginTop: 8 }}
-            >
-              Your logged entries will appear here
-            </Text>
-          </View>
+          <EmptyState
+            icon="calendar-outline"
+            title="No entries yet"
+            description="Your logged entries will appear here"
+          />
         )}
 
         <View style={{ height: 40 }} />
@@ -290,17 +274,11 @@ export default function HistoryScreen() {
           <View style={styles.modalContent}>
             {/* Header */}
             <View style={styles.modalHeader}>
-              <TouchableOpacity
-                onPress={() => {
-                  setSelectedEntry(null);
-                }}
-              >
-                <Ionicons
-                  name="close"
-                  size={24}
-                  color={theme.colors.text.primary}
-                />
-              </TouchableOpacity>
+              <IconButton
+                icon="close"
+                onPress={() => setSelectedEntry(null)}
+                color={theme.colors.text.primary}
+              />
               <Text variant="title2" weight="bold">
                 Entry Details
               </Text>
@@ -330,28 +308,11 @@ export default function HistoryScreen() {
 
                 {/* Empty State - No Data for this date */}
                 {selectedEntry.id === 'empty' && (
-                  <View style={styles.emptyDetailState}>
-                    <Ionicons
-                      name="calendar-outline"
-                      size={48}
-                      color={theme.colors.text.tertiary}
-                    />
-                    <Text
-                      variant="title3"
-                      weight="semiBold"
-                      style={{ marginTop: theme.spacing.lg }}
-                    >
-                      No entry for this date
-                    </Text>
-                    <Text
-                      variant="body"
-                      color="secondary"
-                      align="center"
-                      style={{ marginTop: theme.spacing.md }}
-                    >
-                      Start logging to track your health patterns
-                    </Text>
-                  </View>
+                  <EmptyState
+                    icon="calendar-outline"
+                    title="No entry for this date"
+                    description="Start logging to track your health patterns"
+                  />
                 )}
 
                 {/* Stool Type */}

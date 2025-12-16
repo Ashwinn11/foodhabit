@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
   ActivityIndicator,
   LayoutAnimation,
   Platform,
   UIManager,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, Input, Container, AnimatedSelectionCard } from '../../components';
+import { Text, Button, Input, Container, AnimatedSelectionCard, IconButton } from '../../components';
 import { theme, haptics } from '../../theme';
 import { APP_TEXTS } from '../../constants/appText';
 
@@ -74,20 +72,16 @@ export default function OnboardingProfileScreen({
       >
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
+        <IconButton
+          icon="arrow-back"
           onPress={() => {
             haptics.patterns.buttonPress();
             onBack();
           }}
           disabled={loading}
+          color={theme.colors.text.primary}
           style={styles.backButton}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={theme.colors.text.primary}
-          />
-        </TouchableOpacity>
+        />
       </View>
 
       {/* Title */}

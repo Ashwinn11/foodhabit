@@ -20,3 +20,15 @@ export type { InputProps } from './Input';
 export * from './Surface';
 export * from './AnimatedSelectionCard';
 export { default as AchievementsWidget } from './AchievementsWidget';
+
+// New Reusable Components
+export { default as GridCard } from './GridCard';
+export { default as SectionHeader } from './SectionHeader';
+export { default as TabBar } from './TabBar';
+export { default as StatCard } from './StatCard';
+export { default as IconButton } from './IconButton';
+export { default as ListItem } from './ListItem';
+export { default as Chip } from './Chip';
+export { default as EmptyState } from './EmptyState';
+export { default as InfoRow } from './InfoRow';
+export { default as Divider } from './Divider';

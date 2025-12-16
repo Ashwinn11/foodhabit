@@ -50,6 +50,13 @@ export default function OnboardingNavigator({
     symptoms: Record<string, boolean>;
     meals: string[];
     main_issue: string;
+    stress_level: number;
+    sleep_quality: number;
+    sleep_hours: number;
+    water_intake: number;
+    exercise_minutes: number;
+    exercise_type?: string;
+    medications?: string[];
   }) => {
     if (!user?.id) throw new Error('User not authenticated');
     if (!userData) throw new Error('User data not initialized');
@@ -69,20 +76,20 @@ export default function OnboardingNavigator({
       // Initialize streak tracking
       await initializeUserStreak(user.id);
 
-      // Log stool entry with sensible lifestyle defaults
+      // Log stool entry with lifestyle data from onboarding
       await logStoolEntry(user.id, {
         entry_time: now.toISOString(),
         stool_type: logData.stool_type,
         energy_level: logData.energy_level,
         symptoms: logData.symptoms,
-        // Lifestyle defaults for first log
-        stress_level: 5, // Neutral
-        sleep_quality: 7, // Good
-        sleep_hours: 7.5, // Recommended
-        water_intake: 2000, // 2L default
-        exercise_minutes: 0, // Haven't tracked yet
-        exercise_type: undefined,
-        medications: undefined,
+        // Lifestyle data from user input
+        stress_level: logData.stress_level,
+        sleep_quality: logData.sleep_quality,
+        sleep_hours: logData.sleep_hours,
+        water_intake: logData.water_intake,
+        exercise_minutes: logData.exercise_minutes,
+        exercise_type: logData.exercise_type || undefined,
+        medications: logData.medications,
       });
 
       // Log meal entries

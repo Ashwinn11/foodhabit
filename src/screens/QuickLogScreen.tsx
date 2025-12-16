@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
   TouchableOpacity,
   Alert,
 
@@ -21,6 +20,8 @@ import Text from '../components/Text';
 import MoodWheel from '../components/MoodWheel';
 import FoodInput from '../components/FoodInput';
 import LifestyleTracker from '../components/LifestyleTracker';
+import { IconButton, Chip } from '../components';
+import Button from '../components/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { STOOL_TYPES, SYMPTOMS, getEnergyIcon } from '../constants/stoolData';
 
@@ -244,9 +245,11 @@ export default function QuickLogScreen({
     >
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={onCancel}>
-          <Ionicons name="close" size={24} color={theme.colors.text.primary} />
-        </TouchableOpacity>
+        <IconButton
+          icon="close"
+          onPress={onCancel}
+          color={theme.colors.text.primary}
+        />
         <Text variant="title2" weight="bold">
           Quick Log
         </Text>
@@ -297,30 +300,16 @@ export default function QuickLogScreen({
               { label: 'Evening', hours: 19, minutes: 0 },
               { label: 'Now', hours: new Date().getHours(), minutes: new Date().getMinutes() },
             ].map((preset) => (
-              <TouchableOpacity
+              <Chip
                 key={preset.label}
-                style={[
-                  styles.timePreset,
+                label={preset.label}
+                selected={
                   data.logTime.getHours() === preset.hours &&
-                    data.logTime.getMinutes() === preset.minutes &&
-                    styles.timePresetSelected,
-                ]}
+                  data.logTime.getMinutes() === preset.minutes
+                }
                 onPress={() => updateTime(preset.hours, preset.minutes)}
-              >
-                <Text
-                  variant="caption"
-                  weight="semiBold"
-                  style={{
-                    color:
-                      data.logTime.getHours() === preset.hours &&
-                      data.logTime.getMinutes() === preset.minutes
-                        ? theme.colors.brand.black
-                        : theme.colors.text.secondary,
-                  }}
-                >
-                  {preset.label}
-                </Text>
-              </TouchableOpacity>
+                color={theme.colors.brand.primary}
+              />
             ))}
           </View>
         </View>
@@ -638,24 +627,15 @@ export default function QuickLogScreen({
 
       {/* Footer - Submit Button */}
       <View style={styles.footer}>
-        <TouchableOpacity
+        <Button
+          title="Save Entry"
           onPress={handleSubmit}
           disabled={!isComplete || loading}
-          style={[
-            styles.submitButton,
-            {
-              opacity: isComplete ? 1 : 0.5,
-            },
-          ]}
-        >
-          {loading ? (
-            <ActivityIndicator color={theme.colors.brand.white} size="small" />
-          ) : (
-            <Text variant="body" weight="semiBold" style={{ color: theme.colors.brand.white }}>
-              Save Entry
-            </Text>
-          )}
-        </TouchableOpacity>
+          loading={loading}
+          variant="primary"
+          size="large"
+          fullWidth
+        />
       </View>
     </View>
   );

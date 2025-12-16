@@ -13,6 +13,7 @@ import { entryService } from '../services/gutHarmony/entryService';
 import { getTopTriggers } from '../services/gutHarmony/triggerDetectionService';
 import { theme } from '../theme';
 import Text from '../components/Text';
+import { EmptyState } from '../components';
 import { Ionicons } from '@expo/vector-icons';
 
 interface TriggerInsight {
@@ -295,28 +296,11 @@ export default function TriggerAnalysisScreen() {
             </View>
           </View>
         ) : (
-          <View style={styles.emptyState}>
-            <Ionicons
-              name="pulse-outline"
-              size={48}
-              color={theme.colors.text.tertiary}
-            />
-            <Text
-              variant="title3"
-              weight="semiBold"
-              style={{ marginTop: 16 }}
-            >
-              No patterns yet
-            </Text>
-            <Text
-              variant="body"
-              color="secondary"
-              align="center"
-              style={{ marginTop: 8 }}
-            >
-              Log more entries to discover correlations between foods and symptoms
-            </Text>
-          </View>
+          <EmptyState
+            icon="pulse-outline"
+            title="No patterns yet"
+            description="Log more entries to discover correlations between foods and symptoms"
+          />
         )}
 
         <View style={{ height: 40 }} />

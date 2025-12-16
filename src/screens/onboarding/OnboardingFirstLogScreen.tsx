@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Button, Input, Container, AnimatedSelectionCard } from '../../components';
+import LifestyleTracker from '../../components/LifestyleTracker';
 import { theme, haptics } from '../../theme';
 import { APP_TEXTS } from '../../constants/appText';
 
@@ -24,6 +25,14 @@ interface OnboardingFirstLogScreenProps {
     symptoms: Record<string, boolean>;
     meals: string[];
     main_issue: string;
+    // Lifestyle data
+    stress_level: number;
+    sleep_quality: number;
+    sleep_hours: number;
+    water_intake: number;
+    exercise_minutes: number;
+    exercise_type?: string;
+    medications?: string[];
   }) => Promise<void>;
   onBack: () => void;
 }
@@ -45,6 +54,15 @@ export default function OnboardingFirstLogScreen({
   const [mealInput, setMealInput] = useState('');
   const [meals, setMeals] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Lifestyle tracking state
+  const [stressLevel, setStressLevel] = useState(5);
+  const [sleepQuality, setSleepQuality] = useState(7);
+  const [sleepHours, setSleepHours] = useState(7.5);
+  const [waterIntake, setWaterIntake] = useState(2000);
+  const [exerciseMinutes, setExerciseMinutes] = useState(0);
+  const [exerciseType, setExerciseType] = useState<string>('');
+  const [medications, setMedications] = useState<string[]>([]);
 
   useEffect(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -103,6 +121,14 @@ export default function OnboardingFirstLogScreen({
         symptoms: selectedSymptoms,
         meals,
         main_issue: selectedIssue,
+        // Lifestyle data
+        stress_level: stressLevel,
+        sleep_quality: sleepQuality,
+        sleep_hours: sleepHours,
+        water_intake: waterIntake,
+        exercise_minutes: exerciseMinutes,
+        exercise_type: exerciseType,
+        medications: medications.length > 0 ? medications : undefined,
       });
     } catch (error) {
       alert('Error: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -352,6 +378,24 @@ export default function OnboardingFirstLogScreen({
                   </TouchableOpacity>
                 ))}
             </View>
+            
+            {/* Lifestyle Tracking */}
+            <LifestyleTracker
+              stressLevel={stressLevel}
+              onStressChange={setStressLevel}
+              sleepQuality={sleepQuality}
+              onSleepQualityChange={setSleepQuality}
+              sleepHours={sleepHours}
+              onSleepHoursChange={setSleepHours}
+              waterIntake={waterIntake}
+              onWaterIntakeChange={setWaterIntake}
+              exerciseMinutes={exerciseMinutes}
+              onExerciseMinutesChange={setExerciseMinutes}
+              exerciseType={exerciseType}
+              onExerciseTypeChange={setExerciseType}
+              medications={medications}
+              onMedicationsChange={setMedications}
+            />
           </View>
         )}
 

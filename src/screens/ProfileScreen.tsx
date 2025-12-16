@@ -17,55 +17,15 @@ import { useAuth } from '../hooks/useAuth';
 import { streakService } from '../services/gutHarmony/streakService';
 import { createUserProfile, getUserProfile } from '../services/gutHarmony/userService';
 import { entryService } from '../services/gutHarmony/entryService';
+import { deleteAccount } from '../services/accountService';
 import { theme } from '../theme';
-import { Text, Card } from '../components';
+import { Text, Card, IconButton, ListItem, Divider, InfoRow } from '../components';
 import Avatar from '../components/Avatar';
 import AchievementsWidget from '../components/AchievementsWidget';
-import GridCard from '../components/GridCard';
+import TabBar from '../components/TabBar';
+import StatCard from '../components/StatCard';
 
 type TabType = 'overview' | 'health' | 'settings';
-
-interface SettingsRowProps {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  onPress: () => void;
-  showChevron?: boolean;
-  destructive?: boolean;
-  iconColor?: string;
-}
-
-const SettingsRow: React.FC<SettingsRowProps> = ({
-  icon,
-  label,
-  onPress,
-  showChevron = true,
-  destructive = false,
-  iconColor = theme.colors.icon.primary
-}) => (
-  <TouchableOpacity style={styles.settingsRow} onPress={onPress} activeOpacity={0.7}>
-    <View style={styles.settingsRowLeft}>
-      <View style={[styles.iconContainer, { backgroundColor: iconColor }]}>
-        <Ionicons
-          name={icon}
-          size={20}
-          color={theme.colors.brand.white}
-        />
-      </View>
-      <Text
-        variant="body"
-        style={StyleSheet.flatten([
-          styles.settingsLabel,
-          ...(destructive ? [styles.destructiveText] : []),
-        ])}
-      >
-        {label}
-      </Text>
-    </View>
-    {showChevron && (
-      <Ionicons name="chevron-forward" size={20} color={theme.colors.text.secondary} />
-    )}
-  </TouchableOpacity>
-);
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -81,6 +41,7 @@ export default function ProfileScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   useEffect(() => {
     loadUserStats();
@@ -161,15 +122,37 @@ export default function ProfileScreen() {
   const handleDeleteAccount = async () => {
     Alert.alert(
       'Delete Account',
-      'This action cannot be undone. All your data will be permanently deleted.',
+      'This action cannot be undone. All your data including:\n• Profile information\n• Health entries and logs\n• Achievements and streaks\n• Food triggers and analysis\n\nwill be permanently deleted. Are you absolutely sure?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Delete Everything',
           style: 'destructive',
           onPress: async () => {
-            Alert.alert('Account Deleted', 'Your account has been deleted');
-            await signOut();
+            setIsDeletingAccount(true);
+            try {
+              const result = await deleteAccount();
+
+              if (result.success) {
+                Alert.alert(
+                  'Account Deleted',
+                  `Your account and all associated data (${result.deletedRecords} records) have been permanently deleted.`
+                );
+              } else {
+                Alert.alert(
+                  'Error',
+                  `Failed to delete account: ${result.error}`
+                );
+              }
+            } catch (error) {
+              console.error('Account deletion error:', error);
+              Alert.alert(
+                'Error',
+                'An unexpected error occurred while deleting your account. Please try again or contact support.'
+              );
+            } finally {
+              setIsDeletingAccount(false);
+            }
           },
         },
       ]
@@ -193,9 +176,11 @@ export default function ProfileScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text variant="largeTitle" weight="bold">Profile</Text>
-        <TouchableOpacity onPress={() => setIsEditModalVisible(true)}>
-          <Ionicons name="pencil-outline" size={24} color={theme.colors.brand.primary} />
-        </TouchableOpacity>
+        <IconButton
+          icon="pencil-outline"
+          onPress={() => setIsEditModalVisible(true)}
+          color={theme.colors.brand.primary}
+        />
       </View>
 
       {/* Profile Header - Compact */}
@@ -212,44 +197,11 @@ export default function ProfileScreen() {
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'overview' && styles.tabActive]}
-          onPress={() => setActiveTab('overview')}
-        >
-          <Text
-            variant="body"
-            weight={activeTab === 'overview' ? 'bold' : 'regular'}
-            style={{ color: activeTab === 'overview' ? theme.colors.brand.primary : theme.colors.text.secondary }}
-          >
-            Overview
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'health' && styles.tabActive]}
-          onPress={() => setActiveTab('health')}
-        >
-          <Text
-            variant="body"
-            weight={activeTab === 'health' ? 'bold' : 'regular'}
-            style={{ color: activeTab === 'health' ? theme.colors.brand.primary : theme.colors.text.secondary }}
-          >
-            Health
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'settings' && styles.tabActive]}
-          onPress={() => setActiveTab('settings')}
-        >
-          <Text
-            variant="body"
-            weight={activeTab === 'settings' ? 'bold' : 'regular'}
-            style={{ color: activeTab === 'settings' ? theme.colors.brand.primary : theme.colors.text.secondary }}
-          >
-            Settings
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <TabBar
+        tabs={['Overview', 'Health', 'Settings']}
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab as TabType)}
+      />
 
       {/* Tab Content */}
       <ScrollView
@@ -264,27 +216,24 @@ export default function ProfileScreen() {
           <View>
             {/* Stats Grid - Compact */}
             <View style={styles.statsGrid}>
-              <GridCard>
-                <Ionicons name="flame" size={24} color={theme.colors.brand.primary} />
-                <Text variant="title2" weight="bold" style={{ marginTop: theme.spacing.sm, color: theme.colors.brand.primary }}>
-                  {currentStreak}
-                </Text>
-                <Text variant="caption" color="secondary">Streak</Text>
-              </GridCard>
-              <GridCard>
-                <Ionicons name="star" size={24} color={theme.colors.brand.tertiary} />
-                <Text variant="title2" weight="bold" style={{ marginTop: theme.spacing.sm, color: theme.colors.brand.tertiary }}>
-                  {harmonyPoints}
-                </Text>
-                <Text variant="caption" color="secondary">Points</Text>
-              </GridCard>
-              <GridCard>
-                <Ionicons name="document-text" size={24} color={theme.colors.brand.secondary} />
-                <Text variant="title2" weight="bold" style={{ marginTop: theme.spacing.sm, color: theme.colors.brand.secondary }}>
-                  {totalEntries}
-                </Text>
-                <Text variant="caption" color="secondary">Entries</Text>
-              </GridCard>
+              <StatCard
+                icon="flame"
+                iconColor={theme.colors.brand.primary}
+                value={currentStreak}
+                label="Streak"
+              />
+              <StatCard
+                icon="star"
+                iconColor={theme.colors.brand.tertiary}
+                value={harmonyPoints}
+                label="Points"
+              />
+              <StatCard
+                icon="document-text"
+                iconColor={theme.colors.brand.secondary}
+                value={totalEntries}
+                label="Entries"
+              />
             </View>
 
             {/* Achievements - Compact */}
@@ -298,17 +247,17 @@ export default function ProfileScreen() {
             {/* Health Profile */}
             {userProfile && (
               <Card style={styles.compactCard}>
-                <Text variant="body" weight="bold" style={{ marginBottom: theme.spacing.md }}>Health Profile</Text>
-                <View style={styles.infoRow}>
-                  <Text variant="caption" color="secondary">Condition</Text>
-                  <Text variant="body" weight="semiBold">{userProfile.condition || 'Not specified'}</Text>
-                </View>
-                <View style={[styles.divider, { marginVertical: theme.spacing.md }]} />
-                <View style={styles.infoRow}>
-                  <Text variant="caption" color="secondary">Main Issue</Text>
-                  <Text variant="body" weight="semiBold">{userProfile.main_issue || 'Not specified'}</Text>
-                </View>
-              </Card>
+              <Text variant="body" weight="bold" style={{ marginBottom: theme.spacing.md }}>Health Profile</Text>
+              <InfoRow
+                label="Condition"
+                value={userProfile.condition || 'Not specified'}
+              />
+              <Divider spacing="medium" />
+              <InfoRow
+                label="Main Issue"
+                value={userProfile.main_issue || 'Not specified'}
+              />
+            </Card>
             )}
 
             {/* Lifestyle Targets - Compact */}
@@ -363,55 +312,56 @@ export default function ProfileScreen() {
           <View>
             {/* Data & Privacy */}
             <Card padding="none" style={styles.settingsCard}>
-              <SettingsRow
+              <ListItem
                 icon="download-outline"
+                iconBgColor={theme.colors.brand.secondary}
                 label="Export My Data"
                 onPress={() => Alert.alert('Export Data', 'Your data will be exported as CSV.')}
-                iconColor={theme.colors.brand.secondary}
               />
-              <View style={styles.divider} />
-              <SettingsRow
+              <Divider />
+              <ListItem
                 icon="analytics-outline"
+                iconBgColor={theme.colors.brand.tertiary}
                 label="View Insights"
                 onPress={() => Alert.alert('Coming Soon', 'Advanced insights coming soon!')}
-                iconColor={theme.colors.brand.tertiary}
               />
             </Card>
 
             {/* Support */}
             <Card padding="none" style={styles.settingsCard}>
-              <SettingsRow
+              <ListItem
                 icon="help-circle-outline"
+                iconBgColor={theme.colors.brand.tertiary}
                 label="Help & Support"
                 onPress={() => Linking.openURL('mailto:support@foodhabit.app')}
-                iconColor={theme.colors.brand.tertiary}
               />
-              <View style={styles.divider} />
-              <SettingsRow
+              <Divider />
+              <ListItem
                 icon="shield-outline"
+                iconBgColor={theme.colors.brand.tertiary}
                 label="Privacy Policy"
                 onPress={() => Linking.openURL('https://foodhabit.app/privacy')}
-                iconColor={theme.colors.brand.tertiary}
               />
             </Card>
 
             {/* Account */}
             <Card padding="none" style={styles.settingsCard}>
-              <SettingsRow
+              <ListItem
                 icon="log-out-outline"
+                iconBgColor={theme.colors.brand.primary}
                 label="Sign Out"
                 onPress={handleSignOut}
                 showChevron={false}
-                iconColor={theme.colors.brand.primary}
               />
-              <View style={styles.divider} />
-              <SettingsRow
-                icon="trash-outline"
-                label="Delete Account"
+              <Divider />
+              <ListItem
+                icon={isDeletingAccount ? "ellipsis-horizontal-circle" : "trash-outline"}
+                iconBgColor={theme.colors.brand.primary}
+                label={isDeletingAccount ? "Deleting..." : "Delete Account"}
                 onPress={handleDeleteAccount}
                 showChevron={false}
                 destructive
-                iconColor={theme.colors.brand.primary}
+                disabled={isDeletingAccount}
               />
             </Card>
 
