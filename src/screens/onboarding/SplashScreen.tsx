@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from '../../components';
 import { Button } from '../../components';
 import { theme } from '../../theme';
+import { Ionicons } from '@expo/vector-icons';
 
 interface SplashScreenProps {
   onContinue: () => void;
@@ -13,9 +14,11 @@ export default function SplashScreen({ onContinue }: SplashScreenProps) {
     <View style={styles.container}>
       {/* Gutto Mascot - using emoji for now */}
       <View style={styles.mascotContainer}>
-        <Text variant="h1" style={styles.mascot}>
-          💛
-        </Text>
+        <Ionicons
+          name="heart"
+          size={60}
+          color={theme.colors.brand.primary}
+        />
       </View>
 
       {/* App Title */}
@@ -34,7 +37,7 @@ export default function SplashScreen({ onContinue }: SplashScreenProps) {
           Meet Your Gut Buddy!
         </Text>
         <Text variant="body" style={styles.promiseText}>
-          "Hey! I'm Gutto 👋 Ready to feel amazing?"
+          "Hey! I'm Gutto! Ready to feel amazing?"
         </Text>
       </View>
 

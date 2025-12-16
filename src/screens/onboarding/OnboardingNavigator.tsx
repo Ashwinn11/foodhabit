@@ -69,12 +69,20 @@ export default function OnboardingNavigator({
       // Initialize streak tracking
       await initializeUserStreak(user.id);
 
-      // Log stool entry
+      // Log stool entry with sensible lifestyle defaults
       await logStoolEntry(user.id, {
         entry_time: now.toISOString(),
         stool_type: logData.stool_type,
         energy_level: logData.energy_level,
         symptoms: logData.symptoms,
+        // Lifestyle defaults for first log
+        stress_level: 5, // Neutral
+        sleep_quality: 7, // Good
+        sleep_hours: 7.5, // Recommended
+        water_intake: 2000, // 2L default
+        exercise_minutes: 0, // Haven't tracked yet
+        exercise_type: undefined,
+        medications: undefined,
       });
 
       // Log meal entries

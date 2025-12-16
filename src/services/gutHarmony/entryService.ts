@@ -12,6 +12,14 @@ export interface StoolEntry {
   color?: string;
   symptoms: Record<string, boolean>;
   notes?: string;
+  // Lifestyle tracking
+  stress_level?: number;
+  sleep_quality?: number;
+  sleep_hours?: number;
+  water_intake?: number;
+  exercise_minutes?: number;
+  exercise_type?: string;
+  medications?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +53,14 @@ export const logStoolEntry = async (
     color?: string;
     symptoms: Record<string, boolean>;
     notes?: string;
+    // Lifestyle tracking
+    stress_level?: number;
+    sleep_quality?: number;
+    sleep_hours?: number;
+    water_intake?: number;
+    exercise_minutes?: number;
+    exercise_type?: string;
+    medications?: string[];
   }
 ): Promise<StoolEntry> => {
   const { data: result, error } = await supabase

@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   warningCard: {
     marginHorizontal: theme.spacing['2xl'],
     marginBottom: theme.spacing['2xl'],
-    backgroundColor: 'rgba(255, 118, 100, 0.05)',
+    backgroundColor: theme.colors.brand.primary + '05',
     borderRadius: theme.borderRadius.lg,
     borderLeftWidth: 3,
     borderLeftColor: theme.colors.brand.primary,
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.colors.border.separator,
   },
   triggerHeader: {
     flexDirection: 'row',
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   },
   confidenceBar: {
     height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.colors.border.light,
     borderRadius: 2,
     overflow: 'hidden',
     marginBottom: theme.spacing.lg,
@@ -392,11 +392,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   recommendationsCard: {
-    backgroundColor: 'rgba(120, 211, 191, 0.1)',
+    backgroundColor: theme.colors.brand.secondary + '10',
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(120, 211, 191, 0.3)',
+    borderColor: theme.colors.brand.secondary + '30',
     marginBottom: theme.spacing['3xl'],
   },
   recommendationsHeader: {

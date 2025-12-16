@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 118, 100, 0.15)', // Light primary color background
+    backgroundColor: theme.colors.brand.primary + '15', // Light primary color background
     justifyContent: 'center',
     alignItems: 'center',
   },

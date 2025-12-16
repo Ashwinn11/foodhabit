@@ -12,6 +12,7 @@ import { streakService } from '../services/gutHarmony/streakService';
 import { entryService } from '../services/gutHarmony/entryService';
 import { theme } from '../theme';
 import Text from './Text';
+import GridCard from './GridCard';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Achievement {
@@ -31,7 +32,7 @@ const AVAILABLE_ACHIEVEMENTS: Achievement[] = [
     name: 'First Step',
     description: 'Log your first entry',
     icon: 'checkmark-circle',
-    iconColor: '#ff7664',
+    iconColor: theme.colors.brand.primary,
     unlocked: false,
   },
   {
@@ -40,7 +41,7 @@ const AVAILABLE_ACHIEVEMENTS: Achievement[] = [
     name: 'Week Warrior',
     description: '7-day logging streak',
     icon: 'flame',
-    iconColor: '#ff7664',
+    iconColor: theme.colors.brand.primary,
     unlocked: false,
   },
   {
@@ -49,7 +50,7 @@ const AVAILABLE_ACHIEVEMENTS: Achievement[] = [
     name: 'Month Master',
     description: '30-day logging streak',
     icon: 'star',
-    iconColor: '#cda4e8',
+    iconColor: theme.colors.brand.tertiary,
     unlocked: false,
   },
   {
@@ -58,7 +59,7 @@ const AVAILABLE_ACHIEVEMENTS: Achievement[] = [
     name: 'Data Seeker',
     description: '10 entries logged',
     icon: 'document-text',
-    iconColor: '#78d3bf',
+    iconColor: theme.colors.brand.secondary,
     unlocked: false,
   },
   {
@@ -67,7 +68,7 @@ const AVAILABLE_ACHIEVEMENTS: Achievement[] = [
     name: 'Pattern Finder',
     description: '30 entries logged',
     icon: 'analytics',
-    iconColor: '#78d3bf',
+    iconColor: theme.colors.brand.secondary,
     unlocked: false,
   },
   {
@@ -76,7 +77,7 @@ const AVAILABLE_ACHIEVEMENTS: Achievement[] = [
     name: 'Committed',
     description: 'Log 5+ days in one week',
     icon: 'checkmark-done-circle',
-    iconColor: '#ff7664',
+    iconColor: theme.colors.brand.primary,
     unlocked: false,
   },
 ];
@@ -168,19 +169,21 @@ export default function AchievementsWidget({ compact = false }: AchievementsWidg
     return (
       <View style={styles.compactContainer}>
         <View style={styles.compactHeader}>
-          <Text variant="title3" weight="bold">
-            Your Achievements
+          <Text variant="body" weight="bold">
+            Achievements
           </Text>
           <Text variant="caption" color="secondary">
-            {unlockedCount} / {achievements.length} unlocked
+            {unlockedCount} / {achievements.length}
           </Text>
         </View>
         <View style={styles.compactGrid}>
           {achievements.map((achievement) => (
-            <Animated.View
+            <GridCard
               key={achievement.id}
-              style={[
-                {
+              opacity={achievement.unlocked ? 1 : 0.6}
+            >
+              <Animated.View
+                style={{
                   opacity: scaleAnim.interpolate({
                     inputRange: [0, 1],
                     outputRange: [0, 1],
@@ -189,65 +192,61 @@ export default function AchievementsWidget({ compact = false }: AchievementsWidg
                     {
                       scale: scaleAnim.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [0.8, 1],
+                        outputRange: [0.9, 1],
                       }),
                     },
                   ],
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.badgeSmallCard,
-                  !achievement.unlocked && styles.badgeSmallCardLocked,
-                ]}
+                  alignItems: 'center',
+                  width: '100%',
+                }}
               >
                 <View
                   style={[
-                    styles.badgeSmallIcon,
+                    styles.achievementIconContainer,
                     {
                       backgroundColor: achievement.unlocked
                         ? achievement.iconColor + '20'
-                        : 'rgba(255, 255, 255, 0.05)',
+                        : theme.colors.background.primary,
                     },
                   ]}
                 >
                   <Ionicons
                     name={achievement.icon as any}
-                    size={20}
+                    size={24}
                     color={
                       achievement.unlocked
                         ? achievement.iconColor
                         : theme.colors.text.tertiary
                     }
                   />
+                  {!achievement.unlocked && (
+                    <View style={styles.lockOverlay}>
+                      <Ionicons
+                        name="lock-closed"
+                        size={12}
+                        color={theme.colors.text.tertiary}
+                      />
+                    </View>
+                  )}
                 </View>
                 <Text
                   variant="caption"
                   weight="semiBold"
                   align="center"
+                  numberOfLines={2}
                   style={{
                     marginTop: theme.spacing.sm,
                     color: achievement.unlocked
                       ? theme.colors.text.primary
                       : theme.colors.text.tertiary,
                     fontSize: 11,
+                    lineHeight: 14,
                   }}
-                  numberOfLines={2}
                 >
                   {achievement.name}
                 </Text>
-                {!achievement.unlocked && (
-                  <View style={styles.lockBadgeSmall}>
-                    <Ionicons
-                      name="lock-closed"
-                      size={10}
-                      color={theme.colors.text.tertiary}
-                    />
-                  </View>
-                )}
-              </View>
-            </Animated.View>
+              </Animated.View>
+            </GridCard>
           ))}
         </View>
       </View>
@@ -303,7 +302,7 @@ export default function AchievementsWidget({ compact = false }: AchievementsWidg
                     {
                       backgroundColor: achievement.unlocked
                         ? achievement.iconColor + '20'
-                        : 'rgba(255, 255, 255, 0.05)',
+                        : theme.colors.border.light,
                     },
                   ]}
                 >
@@ -380,7 +379,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.colors.border.separator,
   },
   badgeContainerLocked: {
     opacity: 0.6,
@@ -404,47 +403,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   compactContainer: {
-    paddingHorizontal: theme.spacing['2xl'],
-    paddingVertical: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
   },
   compactHeader: {
-    marginBottom: theme.spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing['2xl'],
   },
   compactGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.lg,
-    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing['2xl'],
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
-  badgeSmallCard: {
-    flex: 1,
-    minWidth: '30%',
-    backgroundColor: theme.colors.background.card,
+  achievementIconContainer: {
+    width: 56,
+    height: 56,
     borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  badgeSmallCardLocked: {
-    opacity: 0.6,
-  },
-  badgeSmallIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
   },
-  lockBadgeSmall: {
+  lockOverlay: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    top: -4,
+    right: -4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: theme.colors.background.card,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.background.primary,
   },
 });

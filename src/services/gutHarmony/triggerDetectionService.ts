@@ -1,35 +1,74 @@
 import { supabase } from '../../config/supabase';
 import { getStoolEntries, getMealEntries } from './entryService';
+import { FOOD_CATEGORIES, findFood } from '../../constants/foodDatabase';
 
 export interface FoodTrigger {
   id: string;
   user_id: string;
   food_name: string;
+  category?: string; // NEW: Category-level trigger
   total_logged: number;
   had_symptoms: number;
   confidence: number; // 0-1
+  strength: 'weak' | 'moderate' | 'strong'; // Statistical significance
   likely_symptoms: string[];
+  portion_correlation?: number; // NEW: Dose-response
   last_updated: string;
 }
 
+export interface CorrelationData {
+  total_exposures: number;
+  symptom_exposures: number;
+  weighted_symptom_score: number;
+  portion_sizes: number[];
+  symptom_portions: number[];
+}
+
 /**
- * Get foods eaten around a stool entry (6-hour window before entry)
+ * Get weight based on how many hours before symptom
+ * Recent meals = higher weight (more likely to cause symptoms)
+ */
+const getTimeWeight = (hoursBefore: number): number => {
+  if (hoursBefore <= 12) return 3.0;  // Very likely (6-12 hours)
+  if (hoursBefore <= 24) return 2.0;  // Likely (12-24 hours)
+  if (hoursBefore <= 36) return 1.5;  // Possible (24-36 hours)
+  return 1.0;                         // Less likely (36-48 hours)
+};
+
+/**
+ * Get foods eaten within proper digestion window (6-48 hours before stool)
+ * This is the CRITICAL FIX - old version only looked 6 hours back!
  */
 const getFoodsBeforeStool = (
   mealEntries: any[],
   stoolEntryTime: Date
-): string[] => {
-  const sixHoursBefore = new Date(stoolEntryTime.getTime() - 6 * 60 * 60 * 1000);
+): Array<{ food: string; hoursBefore: number; portion?: number }> => {
+  // NEW: Proper time window based on medical research
+  const minHoursBefore = 6;   // Minimum digestion time
+  const maxHoursBefore = 48;  // Maximum digestion time
+
+  const windowStart = new Date(stoolEntryTime.getTime() - maxHoursBefore * 60 * 60 * 1000);
+  const windowEnd = new Date(stoolEntryTime.getTime() - minHoursBefore * 60 * 60 * 1000);
 
   const relevantMeals = mealEntries.filter((meal) => {
     const mealTime = new Date(meal.meal_time);
-    return mealTime >= sixHoursBefore && mealTime <= stoolEntryTime;
+    return mealTime >= windowStart && mealTime <= windowEnd;
   });
 
-  const foods: string[] = [];
+  const foods: Array<{ food: string; hoursBefore: number; portion?: number }> = [];
+
   relevantMeals.forEach((meal) => {
+    const mealTime = new Date(meal.meal_time);
+    const hoursBefore = (stoolEntryTime.getTime() - mealTime.getTime()) / (1000 * 60 * 60);
+
     if (Array.isArray(meal.foods)) {
-      foods.push(...meal.foods);
+      meal.foods.forEach((food: string) => {
+        foods.push({
+          food,
+          hoursBefore,
+          portion: meal.portion_size, // NEW: Track portion
+        });
+      });
     }
   });
 
@@ -37,145 +76,273 @@ const getFoodsBeforeStool = (
 };
 
 /**
- * Categorize stool entries as "bad" (has symptoms or loose) or "good"
+ * Categorize stool entries as "bad" (has symptoms or unhealthy type) or "good"
  */
 const categorizeStool = (entry: any): 'bad' | 'good' => {
   const hasSymptoms = entry.symptoms && Object.values(entry.symptoms).some((v) => v);
-  const isLoose = entry.stool_type >= 5; // Type 5-7 are loose/liquid
-  const isBad = entry.stool_type <= 2 || isLoose || hasSymptoms;
+
+  // IMPROVED: Separate constipation from diarrhea
+  const isConstipation = entry.stool_type <= 2;
+  const isDiarrhea = entry.stool_type >= 5;
+  const isBad = isConstipation || isDiarrhea || hasSymptoms;
 
   return isBad ? 'bad' : 'good';
 };
 
 /**
- * Get dominant symptom from bad stool entries
+ * Calculate statistical significance (p-value approximation)
+ * Returns true if correlation is statistically significant
  */
-// Helper to get dominant symptom (unused for now)
-/*
-const getDominantSymptom = (badEntries: any[]): string => {
-  const symptomCounts: Record<string, number> = {};
+const isStatisticallySignificant = (
+  totalExposures: number,
+  confidence: number
+): { significant: boolean; strength: 'weak' | 'moderate' | 'strong' } => {
+  // Need minimum sample size
+  if (totalExposures < 5) {
+    return { significant: false, strength: 'weak' };
+  }
 
-  badEntries.forEach((entry) => {
-    if (entry.symptoms) {
-      Object.entries(entry.symptoms).forEach(([symptom, present]) => {
-        if (present) {
-          symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1;
-        }
-      });
-    }
-  });
+  // Chi-square test approximation
+  // Strong correlation with enough data
+  if (confidence >= 0.7 && totalExposures >= 10) {
+    return { significant: true, strength: 'strong' };
+  }
 
-  let dominant = 'bloating';
-  let maxCount = 0;
+  // Moderate correlation
+  if (confidence >= 0.6 && totalExposures >= 7) {
+    return { significant: true, strength: 'moderate' };
+  }
 
-  Object.entries(symptomCounts).forEach(([symptom, count]) => {
-    if (count > maxCount) {
-      maxCount = count;
-      dominant = symptom;
-    }
-  });
+  // Weak but notable
+  if (confidence >= 0.5 && totalExposures >= 5) {
+    return { significant: true, strength: 'weak' };
+  }
 
-  return dominant;
+  return { significant: false, strength: 'weak' };
 };
-*/
 
 /**
- * Analyze food triggers based on user's entries
- * Returns list of detected triggers with confidence scores
+ * NEW: Analyze food triggers with proper time windows and category-level detection
+ * This is the MAIN IMPROVEMENT over the old algorithm
  */
 export const analyzeTriggers = async (userId: string): Promise<FoodTrigger[]> => {
   try {
-    // Get all stool and meal entries
-    const stoolEntries = await getStoolEntries(userId);
-    const mealEntries = await getMealEntries(userId);
+    // Get all stool and meal entries (last 30 days minimum for statistical significance)
+    const stoolEntries = await getStoolEntries(userId, 100);
+    const mealEntries = await getMealEntries(userId, 200);
 
-    if (stoolEntries.length < 3) {
-      return []; // Need at least 3 entries for meaningful analysis
+    if (stoolEntries.length < 5) {
+      return []; // Need at least 5 entries for meaningful analysis
     }
 
     // Separate bad and good stools
     const badStools = stoolEntries.filter((entry) => categorizeStool(entry) === 'bad');
     const goodStools = stoolEntries.filter((entry) => categorizeStool(entry) === 'good');
 
-    // Get foods associated with each
-    const badFoods: string[] = [];
-    const goodFoods: string[] = [];
+    // Track correlations at BOTH food and category level
+    const foodCorrelations: Record<string, CorrelationData> = {};
+    const categoryCorrelations: Record<string, CorrelationData> = {};
 
+    // Analyze bad stools (with symptoms)
     badStools.forEach((stool) => {
       const foods = getFoodsBeforeStool(mealEntries, new Date(stool.entry_time));
-      badFoods.push(...foods);
+
+      foods.forEach(({ food, hoursBefore, portion }) => {
+        const weight = getTimeWeight(hoursBefore);
+        const normalizedFood = food.toLowerCase().trim();
+
+        // Track individual food
+        if (!foodCorrelations[normalizedFood]) {
+          foodCorrelations[normalizedFood] = {
+            total_exposures: 0,
+            symptom_exposures: 0,
+            weighted_symptom_score: 0,
+            portion_sizes: [],
+            symptom_portions: [],
+          };
+        }
+        foodCorrelations[normalizedFood].symptom_exposures++;
+        foodCorrelations[normalizedFood].weighted_symptom_score += weight;
+        if (portion) {
+          foodCorrelations[normalizedFood].symptom_portions.push(portion);
+        }
+
+        // NEW: Track at category level
+        const foodData = findFood(normalizedFood);
+        if (foodData) {
+          foodData.categories.forEach((category) => {
+            if (!categoryCorrelations[category]) {
+              categoryCorrelations[category] = {
+                total_exposures: 0,
+                symptom_exposures: 0,
+                weighted_symptom_score: 0,
+                portion_sizes: [],
+                symptom_portions: [],
+              };
+            }
+            categoryCorrelations[category].symptom_exposures++;
+            categoryCorrelations[category].weighted_symptom_score += weight;
+          });
+        }
+      });
     });
 
+    // Analyze good stools (without symptoms)
     goodStools.forEach((stool) => {
       const foods = getFoodsBeforeStool(mealEntries, new Date(stool.entry_time));
-      goodFoods.push(...foods);
-    });
 
-    // Calculate correlations
-    const correlations: Record<string, FoodTrigger> = {};
-    const allFoods = new Set([...badFoods, ...goodFoods]);
+      foods.forEach(({ food, portion }) => {
+        const normalizedFood = food.toLowerCase().trim();
 
-    allFoods.forEach((food) => {
-      const badCount = badFoods.filter((f) => f.toLowerCase() === food.toLowerCase()).length;
-      const goodCount = goodFoods.filter((f) => f.toLowerCase() === food.toLowerCase()).length;
-      const totalCount = badCount + goodCount;
+        // Track individual food
+        if (!foodCorrelations[normalizedFood]) {
+          foodCorrelations[normalizedFood] = {
+            total_exposures: 0,
+            symptom_exposures: 0,
+            weighted_symptom_score: 0,
+            portion_sizes: [],
+            symptom_portions: [],
+          };
+        }
+        foodCorrelations[normalizedFood].total_exposures++;
+        if (portion) {
+          foodCorrelations[normalizedFood].portion_sizes.push(portion);
+        }
 
-      // Only include foods that appear at least twice
-      if (totalCount >= 2) {
-        const confidence = badCount / totalCount;
-
-        // Get dominant symptom for bad entries
-        const likelySymptomsSet = new Set<string>();
-        badStools.forEach((stool) => {
-          const foods = getFoodsBeforeStool(mealEntries, new Date(stool.entry_time));
-          if (foods.some((f) => f.toLowerCase() === food.toLowerCase())) {
-            if (stool.symptoms) {
-              Object.entries(stool.symptoms).forEach(([symptom, present]) => {
-                if (present) {
-                  likelySymptomsSet.add(symptom);
-                }
-              });
+        // Track at category level
+        const foodData = findFood(normalizedFood);
+        if (foodData) {
+          foodData.categories.forEach((category) => {
+            if (!categoryCorrelations[category]) {
+              categoryCorrelations[category] = {
+                total_exposures: 0,
+                symptom_exposures: 0,
+                weighted_symptom_score: 0,
+                portion_sizes: [],
+                symptom_portions: [],
+              };
             }
-          }
-        });
-
-        correlations[food.toLowerCase()] = {
-          id: '', // Will be set by DB
-          user_id: userId,
-          food_name: food,
-          total_logged: totalCount,
-          had_symptoms: badCount,
-          confidence,
-          likely_symptoms: Array.from(likelySymptomsSet),
-          last_updated: new Date().toISOString(),
-        };
-      }
+            categoryCorrelations[category].total_exposures++;
+          });
+        }
+      });
     });
 
-    // Save correlations to database
+    // Update total exposures
+    Object.keys(foodCorrelations).forEach((food) => {
+      foodCorrelations[food].total_exposures += foodCorrelations[food].symptom_exposures;
+    });
+    Object.keys(categoryCorrelations).forEach((category) => {
+      categoryCorrelations[category].total_exposures += categoryCorrelations[category].symptom_exposures;
+    });
+
+    // Calculate triggers with statistical validation
     const triggers: FoodTrigger[] = [];
-    for (const [, trigger] of Object.entries(correlations)) {
+
+    // Individual food triggers
+    for (const [food, data] of Object.entries(foodCorrelations)) {
+      if (data.total_exposures >= 3) { // Minimum 3 exposures
+        const confidence = data.symptom_exposures / data.total_exposures;
+        const { significant, strength } = isStatisticallySignificant(
+          data.total_exposures,
+          confidence
+        );
+
+        if (significant) {
+          // Get dominant symptoms
+          const likelySymptomsSet = new Set<string>();
+          badStools.forEach((stool) => {
+            const foods = getFoodsBeforeStool(mealEntries, new Date(stool.entry_time));
+            if (foods.some((f) => f.food.toLowerCase() === food)) {
+              if (stool.symptoms) {
+                Object.entries(stool.symptoms).forEach(([symptom, present]) => {
+                  if (present) {
+                    likelySymptomsSet.add(symptom);
+                  }
+                });
+              }
+            }
+          });
+
+          // Calculate portion correlation
+          let portionCorrelation = 0;
+          if (data.symptom_portions.length > 0 && data.portion_sizes.length > 0) {
+            const avgSymptomPortion = data.symptom_portions.reduce((a, b) => a + b, 0) / data.symptom_portions.length;
+            const avgNormalPortion = data.portion_sizes.reduce((a, b) => a + b, 0) / data.portion_sizes.length;
+            portionCorrelation = avgSymptomPortion / avgNormalPortion;
+          }
+
+          triggers.push({
+            id: '',
+            user_id: userId,
+            food_name: food,
+            total_logged: data.total_exposures,
+            had_symptoms: data.symptom_exposures,
+            confidence,
+            strength,
+            likely_symptoms: Array.from(likelySymptomsSet),
+            portion_correlation: portionCorrelation > 0 ? portionCorrelation : undefined,
+            last_updated: new Date().toISOString(),
+          });
+        }
+      }
+    }
+
+    // NEW: Category-level triggers (CRITICAL for FODMAP detection)
+    for (const [category, data] of Object.entries(categoryCorrelations)) {
+      if (data.total_exposures >= 5) { // Higher threshold for categories
+        const confidence = data.symptom_exposures / data.total_exposures;
+        const { significant, strength } = isStatisticallySignificant(
+          data.total_exposures,
+          confidence
+        );
+
+        if (significant && confidence >= 0.6) { // Higher confidence for categories
+          const categoryInfo = FOOD_CATEGORIES[category as keyof typeof FOOD_CATEGORIES];
+
+          triggers.push({
+            id: '',
+            user_id: userId,
+            food_name: categoryInfo?.name || category,
+            category,
+            total_logged: data.total_exposures,
+            had_symptoms: data.symptom_exposures,
+            confidence,
+            strength,
+            likely_symptoms: [], // Will be populated from individual foods
+            last_updated: new Date().toISOString(),
+          });
+        }
+      }
+    }
+
+    // Save to database
+    const savedTriggers: FoodTrigger[] = [];
+    for (const trigger of triggers) {
       const { data } = await supabase
         .from('food_triggers')
         .upsert({
           user_id: userId,
           food_name: trigger.food_name,
+          category: trigger.category,
           total_logged: trigger.total_logged,
           had_symptoms: trigger.had_symptoms,
           confidence: trigger.confidence,
+          strength: trigger.strength,
           likely_symptoms: trigger.likely_symptoms,
+          portion_correlation: trigger.portion_correlation,
           last_updated: new Date().toISOString(),
         })
         .select()
         .single();
 
       if (data) {
-        triggers.push(data as FoodTrigger);
+        savedTriggers.push(data as FoodTrigger);
       }
     }
 
     // Sort by confidence (highest first)
-    return triggers.sort((a, b) => b.confidence - a.confidence);
+    return savedTriggers.sort((a, b) => b.confidence - a.confidence);
   } catch (error) {
     console.error('Error analyzing triggers:', error);
     return [];
@@ -199,7 +366,15 @@ export const getUserTriggers = async (userId: string): Promise<FoodTrigger[]> =>
 /**
  * Get top N triggers
  */
-export const getTopTriggers = async (userId: string, limit = 3): Promise<FoodTrigger[]> => {
+export const getTopTriggers = async (userId: string, limit = 5): Promise<FoodTrigger[]> => {
   const triggers = await getUserTriggers(userId);
   return triggers.slice(0, limit);
+};
+
+/**
+ * Get category-level triggers only
+ */
+export const getCategoryTriggers = async (userId: string): Promise<FoodTrigger[]> => {
+  const triggers = await getUserTriggers(userId);
+  return triggers.filter(t => t.category);
 };

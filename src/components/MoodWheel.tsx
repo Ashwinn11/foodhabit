@@ -7,18 +7,17 @@ import Text from './Text';
 export interface MoodOption {
   id: string;
   label: string;
-  emoji: string;
   icon: string;
 }
 
 const MOOD_OPTIONS: MoodOption[] = [
-  { id: 'anxious', label: 'Anxious', emoji: '😰', icon: 'alert-circle-outline' },
-  { id: 'calm', label: 'Calm', emoji: '😌', icon: 'leaf' },
-  { id: 'stressed', label: 'Stressed', emoji: '😣', icon: 'alert' },
-  { id: 'energetic', label: 'Energetic', emoji: '⚡', icon: 'flash' },
-  { id: 'tired', label: 'Tired', emoji: '😴', icon: 'moon' },
-  { id: 'happy', label: 'Happy', emoji: '😊', icon: 'happy-outline' },
-  { id: 'peaceful', label: 'Peaceful', emoji: '☮️', icon: 'heart-outline' },
+  { id: 'anxious', label: 'Anxious', icon: 'alert-circle-outline' },
+  { id: 'calm', label: 'Calm', icon: 'leaf' },
+  { id: 'stressed', label: 'Stressed', icon: 'alert' },
+  { id: 'energetic', label: 'Energetic', icon: 'flash' },
+  { id: 'tired', label: 'Tired', icon: 'moon' },
+  { id: 'happy', label: 'Happy', icon: 'happy-outline' },
+  { id: 'peaceful', label: 'Peaceful', icon: 'heart-outline' },
 ];
 
 interface MoodWheelProps {
@@ -47,7 +46,7 @@ export default function MoodWheel({ selectedMood, onMoodSelect }: MoodWheelProps
                   {
                     backgroundColor: isSelected
                       ? theme.colors.brand.primary + '20'
-                      : 'rgba(255, 255, 255, 0.05)',
+                      : theme.colors.border.light,
                   },
                 ]}
               >
@@ -97,12 +96,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border.light,
     aspectRatio: 1,
   },
   moodCardSelected: {
     borderColor: theme.colors.brand.primary,
-    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    backgroundColor: theme.colors.brand.primary + '10',
   },
   moodIconContainer: {
     width: 48,

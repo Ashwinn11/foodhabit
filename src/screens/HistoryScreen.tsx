@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
     marginBottom: theme.spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: theme.colors.border.separator,
   },
   entryMeta: {
     marginRight: theme.spacing.lg,
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: theme.colors.border.separator,
   },
   modalBody: {
     paddingVertical: theme.spacing.lg,
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing['2xl'],
     paddingBottom: theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: theme.colors.border.separator,
   },
   detailRow: {
     flexDirection: 'row',

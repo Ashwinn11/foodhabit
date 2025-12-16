@@ -17,10 +17,12 @@ import { streakService } from '../services/gutHarmony/streakService';
 import { challengeService, WeeklyChallenge } from '../services/gutHarmony/challengeService';
 import { scoringService, ScoreBreakdown } from '../services/gutHarmony/scoringService';
 import { patternService, PatternInsight } from '../services/gutHarmony/patternService';
+import { getUserProfile } from '../services/gutHarmony/userService';
 import { theme } from '../theme';
 import Text from '../components/Text';
 import Button from '../components/Button';
-import GutHealthCircle from '../components/GutHealthCircle';
+import PetCharacter from '../components/PetCharacter';
+import Avatar from '../components/Avatar';
 import QuickLogScreen from './QuickLogScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { STOOL_TYPES, getEnergyIcon } from '../constants/stoolData';
@@ -34,6 +36,7 @@ interface DashboardData {
   challenge: WeeklyChallenge | null;
   scores: ScoreBreakdown | null;
   patternInsights: PatternInsight[];
+  userProfile: any;
 }
 
 export default function HomeScreen() {
@@ -48,6 +51,7 @@ export default function HomeScreen() {
     challenge: null,
     scores: null,
     patternInsights: [],
+    userProfile: null,
   });
   const [refreshing, setRefreshing] = useState(false);
   const [showQuickLog, setShowQuickLog] = useState(false);
@@ -109,12 +113,14 @@ export default function HomeScreen() {
         thisWeekChallenge,
         scores,
         patternInsights,
+        userProfile,
       ] = await Promise.all([
         streakService.getStreakCount(user.id),
         entryService.getRecentEntries(user.id, 7),
         challengeService.getThisWeekChallenge(user.id),
         scoringService.getScoreBreakdown(user.id),
         patternService.getTopInsights(user.id),
+        getUserProfile(user.id),
       ]);
 
       const insights = generateInsights(recentEntries || []);
@@ -128,6 +134,7 @@ export default function HomeScreen() {
         challenge: thisWeekChallenge,
         scores: scores || null,
         patternInsights: patternInsights || [],
+        userProfile: userProfile || null,
       });
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -182,16 +189,34 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* Header - Minimal */}
-        <View style={styles.header}>
-          <View>
-            <Text variant="caption" color="secondary">
-              Welcome back
-            </Text>
-            <Text variant="largeTitle" weight="bold" style={{ marginTop: 4 }}>
-              {user?.user_metadata?.full_name?.split(' ')[0] || 'there'}
+        {/* ===== CLEAN & MINIMALISTIC LAYOUT ===== */}
+
+        {/* Header - Avatar (with streak badge) + Greeting + Notification */}
+        <View style={styles.headerWithAvatar}>
+          {/* Left - Avatar */}
+          <Avatar
+            name={dashboardData.userProfile?.name || user?.user_metadata?.full_name || 'user'}
+            size={72}
+          />
+
+          {/* Center - Greeting with Title & Subtitle */}
+          <View style={{ flex: 1, marginLeft: theme.spacing.md }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
+              <Text variant="body" weight="semiBold" color="secondary">
+                Hey, {dashboardData.userProfile?.name?.split(' ')[0] || user?.user_metadata?.full_name?.split(' ')[0] || 'there'}!
+              </Text>
+              <Ionicons
+                name="sparkles"
+                size={16}
+                color={theme.colors.brand.tertiary}
+              />
+            </View>
+            <Text variant="caption" color="secondary" style={{ marginTop: 4 }}>
+              Your gut wellness journey
             </Text>
           </View>
+
+          {/* Right - Notification Icon */}
           <Ionicons
             name="notifications-outline"
             size={24}
@@ -199,16 +224,53 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* Hero Stat - Streak */}
+        {/* Spacing after header */}
+        <View style={{ height: theme.spacing.lg }} />
+
+        {/* Stats Section - Gut Health & Bloating 2 Column */}
+        {dashboardData.scores && (
+          <View style={styles.quickStatsSection}>
+            {/* Gut Health */}
+            <View style={styles.statCard}>
+              <Text variant="caption" color="secondary">
+                Gut Health
+              </Text>
+              <Text variant="title1" weight="bold" style={{ color: theme.colors.brand.primary, marginTop: theme.spacing.sm }}>
+                {Math.round(dashboardData.scores.gutHealthScore)}%
+              </Text>
+              <Text variant="caption" color="secondary" style={{ marginTop: theme.spacing.sm }}>
+                Goal: &gt;70%
+              </Text>
+            </View>
+
+            {/* Bloating */}
+            <View style={styles.statCard}>
+              <Text variant="caption" color="secondary">
+                Bloating
+              </Text>
+              <Text variant="title1" weight="bold" style={{ color: theme.colors.brand.secondary, marginTop: theme.spacing.sm }}>
+                {Math.round(dashboardData.scores.bloatingIndex)}%
+              </Text>
+              <Text variant="caption" color="secondary" style={{ marginTop: theme.spacing.sm }}>
+                Goal: &lt;20%
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Spacing before pet */}
+        <View style={{ height: theme.spacing.md }} />
+
+        {/* Pet Character - HERO SECTION (Center Stage) */}
         <Animated.View
           style={[
-            styles.streakSection,
+            styles.petSection,
             {
               transform: [
                 {
                   scale: scaleAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [0.9, 1],
+                    outputRange: [0.8, 1],
                   }),
                 },
               ],
@@ -216,207 +278,70 @@ export default function HomeScreen() {
             },
           ]}
         >
-          <View style={styles.streakCard}>
-            <View style={styles.streakIcon}>
-              <Ionicons
-                name="flame"
-                size={28}
-                color={theme.colors.brand.primary}
-              />
-            </View>
-            <View style={styles.streakContent}>
-              <Text
-                variant="caption"
-                style={{ color: theme.colors.brand.black }}
-              >
-                Current Streak
-              </Text>
-              <Text
-                variant="title1"
-                weight="bold"
-                style={{ color: theme.colors.brand.primary, marginTop: 4 }}
-              >
-                {dashboardData.currentStreak} days
-              </Text>
-            </View>
-          </View>
+          {dashboardData.scores && (
+            <PetCharacter
+              healthScore={dashboardData.scores.gutHealthScore}
+              size={220}
+            />
+          )}
         </Animated.View>
 
-        {/* This Week's Challenge Card */}
+        {/* Spacing after pet */}
+        <View style={{ height: theme.spacing.lg }} />
+
+        {/* Weekly Challenge - Compact */}
         {dashboardData.challenge && (
-          <View style={styles.challengeSection}>
-            <View style={styles.challengeCard}>
-              <View style={styles.challengeHeader}>
-                <View>
-                  <Text
-                    variant="caption"
-                    weight="semiBold"
-                    style={{ color: theme.colors.brand.white }}
-                  >
-                    THIS WEEK'S CHALLENGE
-                  </Text>
-                  <Text
-                    variant="title3"
-                    weight="bold"
-                    style={{
-                      color: theme.colors.brand.white,
-                      marginTop: theme.spacing.sm,
-                    }}
-                  >
-                    {dashboardData.challenge.challenge_description}
-                  </Text>
-                </View>
-                <View style={styles.daysRemainingBadge}>
-                  <Text
-                    variant="caption"
-                    weight="bold"
-                    style={{ color: theme.colors.brand.black }}
-                  >
-                    {challengeService.getDaysRemaining(dashboardData.challenge)}d
-                  </Text>
-                </View>
+          <View style={styles.compactChallengeSection}>
+            <View style={styles.compactChallengeCard}>
+              <View style={{ flex: 1 }}>
+                <Text
+                  variant="caption"
+                  weight="semiBold"
+                  style={{ color: theme.colors.text.placeholder }}
+                >
+                  CHALLENGE
+                </Text>
+                <Text
+                  variant="body"
+                  weight="semiBold"
+                  style={{
+                    color: theme.colors.brand.white,
+                    marginTop: 4,
+                  }}
+                >
+                  {dashboardData.challenge.challenge_description}
+                </Text>
               </View>
-              {dashboardData.challenge.trigger_food && (
+              <View style={styles.daysRemainingBadge}>
                 <Text
                   variant="caption"
-                  style={{
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    marginTop: theme.spacing.md,
-                  }}
+                  weight="bold"
+                  style={{ color: theme.colors.brand.black }}
                 >
-                  Focus: {dashboardData.challenge.trigger_food}
+                  {challengeService.getDaysRemaining(dashboardData.challenge)}d
                 </Text>
-              )}
-              {dashboardData.challenge.violation_count > 0 && (
-                <Text
-                  variant="caption"
-                  style={{
-                    color: theme.colors.brand.primary,
-                    marginTop: theme.spacing.sm,
-                  }}
-                >
-                  Violations: {dashboardData.challenge.violation_count}
-                </Text>
-              )}
+              </View>
             </View>
           </View>
         )}
 
-        {/* Current Scores Section - Animated Circles */}
-        {dashboardData.scores && (
-          <View style={styles.scoresSection}>
-            <Text variant="title2" weight="bold" style={{ marginBottom: theme.spacing.lg }}>
-              Your Scores
-            </Text>
-            <View style={styles.scoresGrid}>
-              {/* Gut Health Score - Animated Circle */}
-              <GutHealthCircle
-                value={dashboardData.scores.gutHealthScore}
-                label="Gut Health"
-                goal="Goal: >70%"
-                size={140}
-                goalAchieved={dashboardData.scores.gutHealthScore > 70}
-              />
-
-              {/* Bloating Index - Animated Circle */}
-              <GutHealthCircle
-                value={dashboardData.scores.bloatingIndex}
-                label="Bloating"
-                goal="Goal: <20%"
-                size={140}
-                goalAchieved={dashboardData.scores.bloatingIndex < 20}
-              />
-            </View>
-          </View>
-        )}
-
-        {/* Pattern Insights */}
+        {/* Pattern Insights - Minimal Cards */}
         {dashboardData.patternInsights.length > 0 && (
-          <View style={styles.patternsSection}>
-            <Text variant="title2" weight="bold" style={{ marginBottom: theme.spacing.lg }}>
-              Pattern Insights
-            </Text>
-            {dashboardData.patternInsights.map((insight, index) => (
-              <View key={index} style={styles.patternCard}>
-                <View style={styles.patternIcon}>
-                  <Ionicons
-                    name={insight.type === 'food_symptom' ? 'leaf' : 'heart'}
-                    size={16}
-                    color={theme.colors.brand.primary}
-                  />
-                </View>
-                <Text
-                  variant="body"
-                  style={{ flex: 1, color: theme.colors.text.primary }}
-                >
-                  {insight.description}
-                </Text>
-                <View
-                  style={[
-                    styles.confidenceBadge,
-                    {
-                      backgroundColor:
-                        insight.confidence > 0.75
-                          ? 'rgba(120, 211, 191, 0.2)'
-                          : insight.confidence > 0.5
-                            ? 'rgba(252, 239, 222, 0.2)'
-                            : 'rgba(205, 164, 232, 0.2)',
-                    },
-                  ]}
-                >
-                  <Text
-                    variant="caption"
-                    weight="semiBold"
-                    style={{
-                      color:
-                        insight.confidence > 0.75
-                          ? theme.colors.brand.secondary
-                          : insight.confidence > 0.5
-                            ? theme.colors.brand.primary
-                            : theme.colors.brand.tertiary,
-                    }}
-                  >
-                    {Math.round(insight.confidence * 100)}%
+          <View style={styles.compactPatternsSection}>
+            {dashboardData.patternInsights.slice(0, 2).map((insight, index) => (
+              <View key={index} style={styles.compactPatternCard}>
+                <Ionicons
+                  name={insight.type === 'food_symptom' ? 'leaf' : 'heart'}
+                  size={16}
+                  color={theme.colors.brand.primary}
+                  style={{ marginRight: theme.spacing.md }}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text variant="caption" style={{ color: theme.colors.text.primary }}>
+                    {insight.description}
                   </Text>
                 </View>
               </View>
-            ))}
-          </View>
-        )}
-
-        {/* Insights Section */}
-        {dashboardData.insights.length > 0 && (
-          <View style={styles.insightsSection}>
-            <Text variant="title2" weight="bold" style={{ marginBottom: theme.spacing.md }}>
-              Your Insights
-            </Text>
-            {dashboardData.insights.map((insight, index) => (
-              <Animated.View
-                key={index}
-                style={[
-                  styles.insightCard,
-                  {
-                    opacity: Animated.add(
-                      scaleAnim,
-                      new Animated.Value(0.1 * index)
-                    ),
-                  },
-                ]}
-              >
-                <View style={styles.insightIconContainer}>
-                  <Ionicons
-                    name="bulb-outline"
-                    size={18}
-                    color={theme.colors.brand.primary}
-                  />
-                </View>
-                <Text
-                  variant="body"
-                  style={{ flex: 1, color: theme.colors.text.primary }}
-                >
-                  {insight}
-                </Text>
-              </Animated.View>
             ))}
           </View>
         )}
@@ -588,6 +513,15 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.lg,
     paddingTop: theme.spacing['2xl'],
   },
+  headerWithAvatar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing['2xl'],
+    paddingVertical: theme.spacing.lg,
+    paddingTop: theme.spacing['2xl'],
+    gap: theme.spacing.md,
+  },
 
   /* Streak Section */
   streakSection: {
@@ -606,7 +540,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: theme.borderRadius.lg,
-    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    backgroundColor: theme.colors.brand.primary + '10',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -665,7 +599,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: theme.borderRadius.md,
-    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    backgroundColor: theme.colors.brand.primary + '10',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: theme.spacing.md,
@@ -685,7 +619,7 @@ const styles = StyleSheet.create({
   insightCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: 'rgba(255, 118, 100, 0.05)',
+    backgroundColor: theme.colors.brand.primary + '05',
     borderRadius: theme.borderRadius.md,
     borderLeftWidth: 3,
     borderLeftColor: theme.colors.brand.primary,
@@ -697,7 +631,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: theme.borderRadius.md,
-    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    backgroundColor: theme.colors.brand.primary + '10',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: theme.spacing.md,
@@ -722,7 +656,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 118, 100, 0.15)',
+    borderColor: theme.colors.brand.primary + '15',
   },
 
   /* Section */
@@ -743,7 +677,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: theme.colors.border.separator,
   },
   logIconContainer: {
     width: 40,
@@ -768,6 +702,58 @@ const styles = StyleSheet.create({
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+
+  /* Pet Section */
+  petSection: {
+    paddingHorizontal: theme.spacing['2xl'],
+    marginBottom: theme.spacing.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  /* Quick Stats - Minimal 2 Column */
+  quickStatsSection: {
+    paddingHorizontal: theme.spacing['2xl'],
+    marginBottom: theme.spacing['2xl'],
+    flexDirection: 'row',
+    gap: theme.spacing.lg,
+    justifyContent: 'space-between',
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: theme.colors.background.card,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  /* Compact Challenge */
+  compactChallengeSection: {
+    paddingHorizontal: theme.spacing['2xl'],
+    marginBottom: theme.spacing['2xl'],
+  },
+  compactChallengeCard: {
+    backgroundColor: theme.colors.brand.primary,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  /* Compact Patterns */
+  compactPatternsSection: {
+    paddingHorizontal: theme.spacing['2xl'],
+    marginBottom: theme.spacing['2xl'],
+    gap: theme.spacing.md,
+  },
+  compactPatternCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: theme.colors.background.card,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
   },
 
   /* Empty State */

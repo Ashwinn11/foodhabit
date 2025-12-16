@@ -39,56 +39,56 @@ export const borderRadius = {
  */
 export const shadows = {
   none: {
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0,
     shadowRadius: 0,
     elevation: 0,
   },
   flat: {
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.02,
     shadowRadius: 2,
     elevation: 0, // Flat usually means no elevation or very subtle
   },
   xs: {
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 }, // Dropped slightly more
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 1,
   },
   sm: {
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 3,
   },
   md: {
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 6,
   },
   lg: {
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.12,
     shadowRadius: 20,
     elevation: 10,
   },
   xl: {
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 15 },
     shadowOpacity: 0.15,
     shadowRadius: 30,
     elevation: 15,
   },
   '2xl': {
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 20 },
     shadowOpacity: 0.2,
     shadowRadius: 40,

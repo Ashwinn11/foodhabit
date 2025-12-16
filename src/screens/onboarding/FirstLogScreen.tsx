@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Text, Button, Container, Input } from '../../components';
 import { theme } from '../../theme';
+import { Ionicons } from '@expo/vector-icons';
 
 interface FirstLogScreenProps {
   onContinue: (data: {
@@ -13,21 +14,21 @@ interface FirstLogScreenProps {
 }
 
 const STOOL_TYPES = [
-  { type: 1, emoji: '●●●', label: 'Hard' },
-  { type: 2, emoji: '●●●', label: 'Lumpy' },
-  { type: 3, emoji: '●●●', label: 'Normal' },
-  { type: 4, emoji: '▐▐▐', label: 'Normal' },
-  { type: 5, emoji: 'o', label: 'Soft' },
-  { type: 6, emoji: '▲▲▲', label: 'Loose' },
-  { type: 7, emoji: '▬▬▬', label: 'Liquid' },
+  { type: 1, icon: 'ellipse', label: 'Hard' },
+  { type: 2, icon: 'albums', label: 'Lumpy' },
+  { type: 3, icon: 'radio-button-on', label: 'Normal' },
+  { type: 4, icon: 'radio-button-on', label: 'Normal' },
+  { type: 5, icon: 'ellipse-outline', label: 'Soft' },
+  { type: 6, icon: 'water', label: 'Loose' },
+  { type: 7, icon: 'water', label: 'Liquid' },
 ];
 
 const SYMPTOMS = ['Bloating', 'Gas', 'Cramping', 'Urgency', 'Burning'];
 const ENERGY_LEVELS = [
-  { value: 1, emoji: '😴', label: 'Low' },
-  { value: 5, emoji: '😐', label: 'Okay' },
-  { value: 8, emoji: '🙂', label: 'Good' },
-  { value: 10, emoji: '😊', label: 'Great' },
+  { value: 1, icon: 'battery-dead-outline', label: 'Low' },
+  { value: 5, icon: 'battery-half-outline', label: 'Okay' },
+  { value: 8, icon: 'battery-three-quarters-outline', label: 'Good' },
+  { value: 10, icon: 'battery-full', label: 'Great' },
 ];
 
 export default function FirstLogScreen({ onContinue }: FirstLogScreenProps) {
@@ -82,7 +83,7 @@ export default function FirstLogScreen({ onContinue }: FirstLogScreenProps) {
         Log Your First Entry
       </Text>
       <Text variant="body" color="secondary" style={styles.subtitle}>
-        Takes 60 seconds! 💛
+        Takes 60 seconds
       </Text>
 
       {/* Stool Type Selection */}
@@ -100,10 +101,14 @@ export default function FirstLogScreen({ onContinue }: FirstLogScreenProps) {
             onPress={() => setSelectedStoolType(item.type)}
             disabled={loading}
           >
-            <Text variant="h4">{item.emoji}</Text>
-            <Text variant="caption" style={styles.stoolTypeLabel}>
-              Type {item.type}
-            </Text>
+            <Ionicons
+                name={item.icon as any}
+                size={24}
+                color={selectedStoolType === item.type ? theme.colors.brand.primary : theme.colors.text.secondary}
+              />
+              <Text variant="caption" style={styles.stoolTypeLabel}>
+                Type {item.type}
+              </Text>
             <Text variant="caption" color="secondary">
               {item.label}
             </Text>
@@ -126,7 +131,11 @@ export default function FirstLogScreen({ onContinue }: FirstLogScreenProps) {
             onPress={() => setSelectedEnergy(level.value)}
             disabled={loading}
           >
-            <Text variant="h3">{level.emoji}</Text>
+            <Ionicons
+              name={level.icon as any}
+              size={32}
+              color={selectedEnergy === level.value ? theme.colors.brand.primary : theme.colors.text.secondary}
+            />
             <Text variant="caption">{level.label}</Text>
           </TouchableOpacity>
         ))}

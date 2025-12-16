@@ -343,7 +343,7 @@ App.tsx
 - **Primary Background:** #1a2332 (dark navy)
 - **Card Background:** #2a3847 (slightly lighter)
 - **Primary Color:** #ff7664 (coral - for CTAs, accents)
-- **Secondary Color:** #78D3BF (teal - for success/secondary actions)
+- **Secondary Color:** #A5E1A6 (pastel green - for success/secondary actions)
 - **Tertiary Color:** #cda4e8 (purple - for highlights)
 - **Cream Accent:** #FCEFDE (for hero cards, contrast)
 - **Text:** #ffffff (white on dark backgrounds)

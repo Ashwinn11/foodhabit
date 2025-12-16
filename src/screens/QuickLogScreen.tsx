@@ -6,7 +6,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
-  TextInput,
+
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +19,8 @@ import { challengeService } from '../services/gutHarmony/challengeService';
 import { theme } from '../theme';
 import Text from '../components/Text';
 import MoodWheel from '../components/MoodWheel';
+import FoodInput from '../components/FoodInput';
+import LifestyleTracker from '../components/LifestyleTracker';
 import { Ionicons } from '@expo/vector-icons';
 import { STOOL_TYPES, SYMPTOMS, getEnergyIcon } from '../constants/stoolData';
 
@@ -30,6 +32,15 @@ interface QuickLogData {
   logTime: Date;
   meals: string[];
   mealInput: string;
+  foodsWithPortions?: Array<{ name: string; portion?: number; unit?: string }>;
+  // Lifestyle tracking
+  stressLevel: number;
+  sleepQuality: number;
+  sleepHours: number;
+  waterIntake: number;
+  exerciseMinutes: number;
+  exerciseType: string;
+  medications: string[];
 }
 
 /**
@@ -77,6 +88,14 @@ export default function QuickLogScreen({
     logTime: new Date(),
     meals: [],
     mealInput: '',
+    // Lifestyle defaults
+    stressLevel: 5,
+    sleepQuality: 7,
+    sleepHours: 7.5,
+    waterIntake: 2000,
+    exerciseMinutes: 0,
+    exerciseType: '',
+    medications: [],
   });
 
   useEffect(() => {
@@ -111,22 +130,6 @@ export default function QuickLogScreen({
     }));
   };
 
-  const addMeal = () => {
-    if (data.mealInput.trim()) {
-      setData((prev) => ({
-        ...prev,
-        meals: [...prev.meals, prev.mealInput.trim()],
-        mealInput: '',
-      }));
-    }
-  };
-
-  const removeMeal = (index: number) => {
-    setData((prev) => ({
-      ...prev,
-      meals: prev.meals.filter((_, i) => i !== index),
-    }));
-  };
 
   const handleSubmit = async () => {
     if (!user?.id || !isComplete) return;
@@ -153,13 +156,21 @@ export default function QuickLogScreen({
         }
       }
 
-      // Log entry with selected time
+      // Log entry with selected time and lifestyle data
       await entryService.logStoolEntry(user.id, {
         entry_time: data.logTime.toISOString(),
         stool_type: data.stoolType!,
         energy_level: data.energyLevel,
         symptoms: symptomsObj,
         notes: data.meals.length > 0 ? data.meals.join(', ') : undefined,
+        // Lifestyle tracking
+        stress_level: data.stressLevel,
+        sleep_quality: data.sleepQuality,
+        sleep_hours: data.sleepHours,
+        water_intake: data.waterIntake,
+        exercise_minutes: data.exerciseMinutes,
+        exercise_type: data.exerciseType || undefined,
+        medications: data.medications.length > 0 ? data.medications : undefined,
       });
 
       // Log meals if any
@@ -454,10 +465,10 @@ export default function QuickLogScreen({
                 {
                   backgroundColor:
                     data.energyLevel >= 7
-                      ? 'rgba(255, 118, 100, 0.2)' // Primary with opacity
+                      ? theme.colors.brand.primary + '20' // Primary with opacity
                       : data.energyLevel >= 4
-                        ? 'rgba(252, 239, 222, 0.2)' // Cream with opacity
-                        : 'rgba(205, 164, 232, 0.2)', // Tertiary with opacity
+                        ? theme.colors.brand.cream + '20' // Cream with opacity
+                        : theme.colors.brand.tertiary + '20', // Tertiary with opacity
                 },
               ]}
             >
@@ -538,94 +549,35 @@ export default function QuickLogScreen({
             Help us find food triggers (optional)
           </Text>
 
-          {/* Recently Eaten Foods - Quick Add */}
-          {recentFoods.length > 0 && (
-            <View style={styles.recentFoodsContainer}>
-              <Text
-                variant="caption"
-                weight="semiBold"
-                color="secondary"
-                style={{ marginBottom: theme.spacing.md }}
-              >
-                Recently logged
-              </Text>
-              <View style={styles.recentFoodsList}>
-                {recentFoods.map((food) => (
-                  <TouchableOpacity
-                    key={food}
-                    style={styles.recentFoodButton}
-                    onPress={() => {
-                      setData((prev) => ({
-                        ...prev,
-                        meals: [...prev.meals, food],
-                      }));
-                    }}
-                  >
-                    <Text
-                      variant="caption"
-                      weight="semiBold"
-                      style={{ color: theme.colors.text.primary }}
-                    >
-                      + {food}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Meal Input */}
-          <View style={styles.mealInputContainer}>
-            <View style={{ flex: 1 }}>
-              <TextInput
-                placeholder="e.g., Pizza, Coffee, Salad..."
-                placeholderTextColor={theme.colors.text.tertiary}
-                value={data.mealInput}
-                onChangeText={(text) =>
-                  setData((prev) => ({ ...prev, mealInput: text }))
-                }
-                onSubmitEditing={addMeal}
-                style={styles.mealInput}
-              />
-            </View>
-            {data.mealInput.trim() && (
-              <TouchableOpacity onPress={addMeal} style={styles.mealAddButton}>
-                <Ionicons
-                  name="add"
-                  size={20}
-                  color={theme.colors.brand.white}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Logged Meals */}
-          {data.meals.length > 0 && (
-            <View style={styles.mealsList}>
-              {data.meals.map((meal, index) => (
-                <View key={index} style={styles.mealTag}>
-                  <Text
-                    variant="caption"
-                    weight="semiBold"
-                    style={{ color: theme.colors.brand.white }}
-                  >
-                    {meal}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => removeMeal(index)}
-                    style={styles.mealRemoveButton}
-                  >
-                    <Ionicons
-                      name="close"
-                      size={14}
-                      color={theme.colors.brand.white}
-                    />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          )}
+          <FoodInput
+            onFoodsChange={(foods) => {
+              setData((prev) => ({
+                ...prev,
+                meals: foods.map(f => f.name),
+                foodsWithPortions: foods,
+              }));
+            }}
+            recentFoods={recentFoods}
+          />
         </View>
+
+        {/* Lifestyle Tracking */}
+        <LifestyleTracker
+          stressLevel={data.stressLevel}
+          sleepQuality={data.sleepQuality}
+          sleepHours={data.sleepHours}
+          waterIntake={data.waterIntake}
+          exerciseMinutes={data.exerciseMinutes}
+          exerciseType={data.exerciseType}
+          medications={data.medications}
+          onStressChange={(value) => setData(prev => ({ ...prev, stressLevel: value }))}
+          onSleepQualityChange={(value) => setData(prev => ({ ...prev, sleepQuality: value }))}
+          onSleepHoursChange={(value) => setData(prev => ({ ...prev, sleepHours: value }))}
+          onWaterIntakeChange={(value) => setData(prev => ({ ...prev, waterIntake: value }))}
+          onExerciseMinutesChange={(value) => setData(prev => ({ ...prev, exerciseMinutes: value }))}
+          onExerciseTypeChange={(value) => setData(prev => ({ ...prev, exerciseType: value }))}
+          onMedicationsChange={(value) => setData(prev => ({ ...prev, medications: value }))}
+        />
 
         {/* Symptoms - Optional */}
         <View style={styles.section}>
@@ -721,7 +673,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing['2xl'],
     paddingVertical: theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: theme.colors.border.separator,
   },
   content: {
     flex: 1,
@@ -756,7 +708,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border.light,
   },
   timePresetSelected: {
     borderColor: theme.colors.brand.black,
@@ -786,7 +738,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border.light,
   },
   typeCardSelected: {
     borderColor: theme.colors.brand.black,
@@ -844,7 +796,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: theme.spacing.md,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border.light,
   },
   symptomCardSelected: {
     borderColor: theme.colors.brand.black,
@@ -882,7 +834,7 @@ const styles = StyleSheet.create({
   /* Meal Section */
   recentFoodsContainer: {
     marginBottom: theme.spacing.lg,
-    backgroundColor: 'rgba(120, 211, 191, 0.1)',
+    backgroundColor: theme.colors.brand.secondary + '10',
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
   },
@@ -909,7 +861,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.card,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border.light,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     color: theme.colors.text.primary,

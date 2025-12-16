@@ -19,7 +19,11 @@ import { createUserProfile, getUserProfile } from '../services/gutHarmony/userSe
 import { entryService } from '../services/gutHarmony/entryService';
 import { theme } from '../theme';
 import { Text, Card } from '../components';
+import Avatar from '../components/Avatar';
 import AchievementsWidget from '../components/AchievementsWidget';
+import GridCard from '../components/GridCard';
+
+type TabType = 'overview' | 'health' | 'settings';
 
 interface SettingsRowProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -58,18 +62,17 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
       </Text>
     </View>
     {showChevron && (
-      <Ionicons name="chevron-forward" size={20} color={theme.colors.text.primary} />
+      <Ionicons name="chevron-forward" size={20} color={theme.colors.text.secondary} />
     )}
   </TouchableOpacity>
 );
 
-
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [harmonyPoints, setHarmonyPoints] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
-  const [longestStreak, setLongestStreak] = useState(0);
   const [totalEntries, setTotalEntries] = useState(0);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -88,15 +91,12 @@ export default function ProfileScreen() {
       setIsLoadingStats(true);
       if (!user?.id) return;
 
-      // Load streak data
       const streak = await streakService.getUserStreak(user.id);
       if (streak) {
         setHarmonyPoints(streak.harmony_points);
         setCurrentStreak(streak.current_streak);
-        setLongestStreak(streak.longest_streak);
       }
 
-      // Load user profile
       const profile = await getUserProfile(user.id);
       if (profile) {
         setUserProfile(profile);
@@ -104,7 +104,6 @@ export default function ProfileScreen() {
         setEditAge((profile.age || '').toString());
       }
 
-      // Load total entries
       const entries = await entryService.getRecentEntries(user.id, 365);
       setTotalEntries(entries?.length || 0);
     } catch (error) {
@@ -149,16 +148,11 @@ export default function ProfileScreen() {
       'Sign Out',
       'Are you sure you want to sign out?',
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
+        { text: 'Cancel', style: 'cancel' },
         {
           text: 'Sign Out',
           style: 'destructive',
-          onPress: async () => {
-            await signOut();
-          },
+          onPress: async () => await signOut(),
         },
       ]
     );
@@ -169,63 +163,17 @@ export default function ProfileScreen() {
       'Delete Account',
       'This action cannot be undone. All your data will be permanently deleted.',
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
+        { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            Alert.alert(
-              'Confirm Delete',
-              'Type DELETE to confirm',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Delete Account',
-                  style: 'destructive',
-                  onPress: async () => {
-                    try {
-                      // In a real app, you'd call an API to delete the account
-                      Alert.alert('Account Deleted', 'Your account has been deleted');
-                      await signOut();
-                    } catch (error) {
-                      Alert.alert('Error', 'Failed to delete account');
-                    }
-                  },
-                },
-              ]
-            );
+            Alert.alert('Account Deleted', 'Your account has been deleted');
+            await signOut();
           },
         },
       ]
     );
-  };
-
-  const handleContactSupport = () => {
-    Linking.openURL('mailto:support@foodhabit.app?subject=Help with GutHarmony');
-  };
-
-  const handleOpenPrivacy = () => {
-    Linking.openURL('https://foodhabit.app/privacy');
-  };
-
-  const handleOpenTerms = () => {
-    Linking.openURL('https://foodhabit.app/terms');
-  };
-
-  const getInitials = () => {
-    if (editName) {
-      return editName.charAt(0).toUpperCase();
-    }
-    if (user?.user_metadata?.full_name) {
-      return user.user_metadata.full_name.charAt(0).toUpperCase();
-    }
-    if (user?.email) {
-      return user.email.charAt(0).toUpperCase();
-    }
-    return 'U';
   };
 
   const getDisplayName = () => {
@@ -234,332 +182,288 @@ export default function ProfileScreen() {
 
   if (isLoadingStats && !userProfile) {
     return (
-      <View
-        style={[
-          styles.container,
-          { paddingTop: insets.top, paddingBottom: insets.bottom },
-          styles.centerContent,
-        ]}
-      >
+      <View style={[styles.container, { paddingTop: insets.top }, styles.centerContent]}>
         <ActivityIndicator size="large" color={theme.colors.brand.primary} />
       </View>
     );
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}
-    >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.colors.brand.primary}
-          />
-        }
-      >
-        <View style={styles.header}>
-          <Text variant="largeTitle" weight="bold">
-            Profile
-          </Text>
-          <TouchableOpacity onPress={() => setIsEditModalVisible(true)}>
-            <Ionicons
-              name="pencil-outline"
-              size={24}
-              color={theme.colors.brand.primary}
-            />
-          </TouchableOpacity>
-        </View>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text variant="largeTitle" weight="bold">Profile</Text>
+        <TouchableOpacity onPress={() => setIsEditModalVisible(true)}>
+          <Ionicons name="pencil-outline" size={24} color={theme.colors.brand.primary} />
+        </TouchableOpacity>
+      </View>
 
-        {/* Profile Header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.avatarContainer}>
-            <Text variant="largeTitle" style={styles.avatarText}>
-              {getInitials()}
-            </Text>
-          </View>
-          <Text variant="title2" style={styles.displayName}>
-            {getDisplayName()}
-          </Text>
+      {/* Profile Header - Compact */}
+      <View style={styles.profileHeaderCompact}>
+        <Avatar name={userProfile?.name || user?.user_metadata?.full_name || 'user'} size={64} />
+        <View style={{ flex: 1, marginLeft: theme.spacing.lg }}>
+          <Text variant="title3" weight="bold">{getDisplayName()}</Text>
           {user?.email && (
-            <Text variant="body" color="secondary" style={styles.email}>
+            <Text variant="caption" color="secondary" style={{ marginTop: 2 }}>
               {user.email}
             </Text>
           )}
-          {editAge && (
-            <Text variant="caption" color="secondary" style={{ marginTop: theme.spacing.xs }}>
-              {editAge} years old
-            </Text>
-          )}
         </View>
+      </View>
 
-        {/* Stats Section */}
-        <View style={styles.statsSection}>
-          <View style={[styles.statCard, { backgroundColor: theme.colors.brand.cream }]}>
-            <Ionicons
-              name="flame"
-              size={32}
-              color={theme.colors.brand.primary}
-            />
-            <Text
-              variant="title3"
-              weight="bold"
-              style={{ marginTop: theme.spacing.md, color: theme.colors.brand.primary }}
-            >
-              {currentStreak}
-            </Text>
-            <Text
-              variant="caption"
-              style={{ marginTop: 2, color: theme.colors.brand.black }}
-            >
-              Current Streak
-            </Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: theme.colors.brand.cream }]}>
-            <Ionicons
-              name="star"
-              size={32}
-              color={theme.colors.brand.tertiary}
-            />
-            <Text
-              variant="title3"
-              weight="bold"
-              style={{ marginTop: theme.spacing.md, color: theme.colors.brand.tertiary }}
-            >
-              {harmonyPoints}
-            </Text>
-            <Text
-              variant="caption"
-              style={{ marginTop: 2, color: theme.colors.brand.black }}
-            >
-              Harmony Points
-            </Text>
-          </View>
-        </View>
+      {/* Tabs */}
+      <View style={styles.tabs}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'overview' && styles.tabActive]}
+          onPress={() => setActiveTab('overview')}
+        >
+          <Text
+            variant="body"
+            weight={activeTab === 'overview' ? 'bold' : 'regular'}
+            style={{ color: activeTab === 'overview' ? theme.colors.brand.primary : theme.colors.text.secondary }}
+          >
+            Overview
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'health' && styles.tabActive]}
+          onPress={() => setActiveTab('health')}
+        >
+          <Text
+            variant="body"
+            weight={activeTab === 'health' ? 'bold' : 'regular'}
+            style={{ color: activeTab === 'health' ? theme.colors.brand.primary : theme.colors.text.secondary }}
+          >
+            Health
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'settings' && styles.tabActive]}
+          onPress={() => setActiveTab('settings')}
+        >
+          <Text
+            variant="body"
+            weight={activeTab === 'settings' ? 'bold' : 'regular'}
+            style={{ color: activeTab === 'settings' ? theme.colors.brand.primary : theme.colors.text.secondary }}
+          >
+            Settings
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* Additional Stats */}
-        <View style={styles.statsBreakdown}>
-          <View style={styles.statsItem}>
-            <View style={styles.statsIconBg}>
-              <Ionicons name="calendar" size={20} color={theme.colors.brand.primary} />
-            </View>
-            <View style={{ flex: 1, marginLeft: theme.spacing.md }}>
-              <Text variant="caption" color="secondary">
-                Longest Streak
-              </Text>
-              <Text variant="body" weight="semiBold" style={{ marginTop: 4 }}>
-                {longestStreak} days
-              </Text>
-            </View>
-          </View>
-          <View style={styles.statsItem}>
-            <View style={styles.statsIconBg}>
-              <Ionicons name="document-text" size={20} color={theme.colors.brand.tertiary} />
-            </View>
-            <View style={{ flex: 1, marginLeft: theme.spacing.md }}>
-              <Text variant="caption" color="secondary">
-                Total Entries
-              </Text>
-              <Text variant="body" weight="semiBold" style={{ marginTop: 4 }}>
-                {totalEntries}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Achievements */}
-        <AchievementsWidget compact />
-
-        {/* Health Preferences */}
-        {userProfile && (
-          <View style={styles.section}>
-            <Text
-              variant="footnote"
-              color="secondary"
-              style={styles.sectionHeader}
-            >
-              HEALTH PROFILE
-            </Text>
-            <Card style={styles.healthCard}>
-              <View style={styles.healthItem}>
-                <Text variant="caption" color="secondary">
-                  Condition
+      {/* Tab Content */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.brand.primary} />
+        }
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <View>
+            {/* Stats Grid - Compact */}
+            <View style={styles.statsGrid}>
+              <GridCard>
+                <Ionicons name="flame" size={24} color={theme.colors.brand.primary} />
+                <Text variant="title2" weight="bold" style={{ marginTop: theme.spacing.sm, color: theme.colors.brand.primary }}>
+                  {currentStreak}
                 </Text>
-                <Text variant="body" weight="semiBold" style={{ marginTop: 4 }}>
-                  {userProfile.condition || 'Not specified'}
+                <Text variant="caption" color="secondary">Streak</Text>
+              </GridCard>
+              <GridCard>
+                <Ionicons name="star" size={24} color={theme.colors.brand.tertiary} />
+                <Text variant="title2" weight="bold" style={{ marginTop: theme.spacing.sm, color: theme.colors.brand.tertiary }}>
+                  {harmonyPoints}
                 </Text>
+                <Text variant="caption" color="secondary">Points</Text>
+              </GridCard>
+              <GridCard>
+                <Ionicons name="document-text" size={24} color={theme.colors.brand.secondary} />
+                <Text variant="title2" weight="bold" style={{ marginTop: theme.spacing.sm, color: theme.colors.brand.secondary }}>
+                  {totalEntries}
+                </Text>
+                <Text variant="caption" color="secondary">Entries</Text>
+              </GridCard>
+            </View>
+
+            {/* Achievements - Compact */}
+            <AchievementsWidget compact />
+          </View>
+        )}
+
+        {/* Health Tab */}
+        {activeTab === 'health' && (
+          <View>
+            {/* Health Profile */}
+            {userProfile && (
+              <Card style={styles.compactCard}>
+                <Text variant="body" weight="bold" style={{ marginBottom: theme.spacing.md }}>Health Profile</Text>
+                <View style={styles.infoRow}>
+                  <Text variant="caption" color="secondary">Condition</Text>
+                  <Text variant="body" weight="semiBold">{userProfile.condition || 'Not specified'}</Text>
+                </View>
+                <View style={[styles.divider, { marginVertical: theme.spacing.md }]} />
+                <View style={styles.infoRow}>
+                  <Text variant="caption" color="secondary">Main Issue</Text>
+                  <Text variant="body" weight="semiBold">{userProfile.main_issue || 'Not specified'}</Text>
+                </View>
+              </Card>
+            )}
+
+            {/* Lifestyle Targets - Compact */}
+            <Card style={styles.compactCard}>
+              <Text variant="body" weight="bold" style={{ marginBottom: theme.spacing.md }}>Lifestyle Targets</Text>
+              <View style={styles.targetRow}>
+                <Ionicons name="happy-outline" size={20} color={theme.colors.brand.secondary} />
+                <Text variant="caption" color="secondary" style={{ flex: 1, marginLeft: theme.spacing.sm }}>Stress</Text>
+                <Text variant="body" weight="semiBold">≤ 5/10</Text>
               </View>
-              <View style={[styles.divider, { marginVertical: theme.spacing.lg }]} />
-              <View style={styles.healthItem}>
-                <Text variant="caption" color="secondary">
-                  Main Issue
-                </Text>
-                <Text variant="body" weight="semiBold" style={{ marginTop: 4 }}>
-                  {userProfile.main_issue || 'Not specified'}
-                </Text>
+              <View style={styles.targetRow}>
+                <Ionicons name="moon-outline" size={20} color={theme.colors.brand.tertiary} />
+                <Text variant="caption" color="secondary" style={{ flex: 1, marginLeft: theme.spacing.sm }}>Sleep</Text>
+                <Text variant="body" weight="semiBold">7-9h</Text>
+              </View>
+              <View style={styles.targetRow}>
+                <Ionicons name="water-outline" size={20} color={theme.colors.brand.secondary} />
+                <Text variant="caption" color="secondary" style={{ flex: 1, marginLeft: theme.spacing.sm }}>Water</Text>
+                <Text variant="body" weight="semiBold">2-3L</Text>
+              </View>
+              <View style={styles.targetRow}>
+                <Ionicons name="fitness-outline" size={20} color={theme.colors.brand.primary} />
+                <Text variant="caption" color="secondary" style={{ flex: 1, marginLeft: theme.spacing.sm }}>Exercise</Text>
+                <Text variant="body" weight="semiBold">30+ min</Text>
+              </View>
+            </Card>
+
+            {/* Health Goals - Compact */}
+            <Card style={styles.compactCard}>
+              <Text variant="body" weight="bold" style={{ marginBottom: theme.spacing.md }}>Health Goals</Text>
+              <View style={styles.targetRow}>
+                <Ionicons name="heart-outline" size={20} color={theme.colors.brand.primary} />
+                <Text variant="caption" color="secondary" style={{ flex: 1, marginLeft: theme.spacing.sm }}>Gut Score</Text>
+                <Text variant="body" weight="semiBold">≥ 80</Text>
+              </View>
+              <View style={styles.targetRow}>
+                <Ionicons name="trending-down-outline" size={20} color={theme.colors.brand.secondary} />
+                <Text variant="caption" color="secondary" style={{ flex: 1, marginLeft: theme.spacing.sm }}>Symptoms</Text>
+                <Text variant="body" weight="semiBold">-50%</Text>
+              </View>
+              <View style={styles.targetRow}>
+                <Ionicons name="restaurant-outline" size={20} color={theme.colors.brand.tertiary} />
+                <Text variant="caption" color="secondary" style={{ flex: 1, marginLeft: theme.spacing.sm }}>Triggers</Text>
+                <Text variant="body" weight="semiBold">Top 5</Text>
               </View>
             </Card>
           </View>
         )}
 
-        {/* Settings & Privacy */}
-        <View style={styles.section}>
-          <Text
-            variant="footnote"
-            color="secondary"
-            style={styles.sectionHeader}
-          >
-            SUPPORT & LEGAL
-          </Text>
-          <Card padding="none" style={styles.settingsCard}>
-            <SettingsRow
-              icon="help-circle-outline"
-              label="Help & Support"
-              onPress={handleContactSupport}
-              iconColor={theme.colors.brand.tertiary}
-            />
-            <View style={styles.divider} />
-            <SettingsRow
-              icon="shield-outline"
-              label="Privacy Policy"
-              onPress={handleOpenPrivacy}
-              iconColor={theme.colors.brand.tertiary}
-            />
-            <View style={styles.divider} />
-            <SettingsRow
-              icon="document-outline"
-              label="Terms of Service"
-              onPress={handleOpenTerms}
-              iconColor={theme.colors.brand.tertiary}
-            />
-          </Card>
-        </View>
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <View>
+            {/* Data & Privacy */}
+            <Card padding="none" style={styles.settingsCard}>
+              <SettingsRow
+                icon="download-outline"
+                label="Export My Data"
+                onPress={() => Alert.alert('Export Data', 'Your data will be exported as CSV.')}
+                iconColor={theme.colors.brand.secondary}
+              />
+              <View style={styles.divider} />
+              <SettingsRow
+                icon="analytics-outline"
+                label="View Insights"
+                onPress={() => Alert.alert('Coming Soon', 'Advanced insights coming soon!')}
+                iconColor={theme.colors.brand.tertiary}
+              />
+            </Card>
 
-        {/* Account Actions */}
-        <View style={styles.section}>
-          <Text
-            variant="footnote"
-            color="secondary"
-            style={styles.sectionHeader}
-          >
-            ACCOUNT
-          </Text>
-          <Card padding="none" style={styles.settingsCard}>
-            <SettingsRow
-              icon="log-out-outline"
-              label="Sign Out"
-              onPress={handleSignOut}
-              showChevron={false}
-              iconColor={theme.colors.brand.primary}
-            />
-            <View style={styles.divider} />
-            <SettingsRow
-              icon="trash-outline"
-              label="Delete Account"
-              onPress={handleDeleteAccount}
-              showChevron={false}
-              destructive
-              iconColor={theme.colors.brand.primary}
-            />
-          </Card>
-        </View>
+            {/* Support */}
+            <Card padding="none" style={styles.settingsCard}>
+              <SettingsRow
+                icon="help-circle-outline"
+                label="Help & Support"
+                onPress={() => Linking.openURL('mailto:support@foodhabit.app')}
+                iconColor={theme.colors.brand.tertiary}
+              />
+              <View style={styles.divider} />
+              <SettingsRow
+                icon="shield-outline"
+                label="Privacy Policy"
+                onPress={() => Linking.openURL('https://foodhabit.app/privacy')}
+                iconColor={theme.colors.brand.tertiary}
+              />
+            </Card>
 
-        {/* Version Info */}
-        <View style={styles.footerSection}>
-          <Text variant="caption" color="secondary" align="center">
-            GutHarmony v1.0.0
-          </Text>
-          <Text variant="caption" color="secondary" align="center" style={{ marginTop: 4 }}>
-            Made with care for your digestive health
-          </Text>
-        </View>
+            {/* Account */}
+            <Card padding="none" style={styles.settingsCard}>
+              <SettingsRow
+                icon="log-out-outline"
+                label="Sign Out"
+                onPress={handleSignOut}
+                showChevron={false}
+                iconColor={theme.colors.brand.primary}
+              />
+              <View style={styles.divider} />
+              <SettingsRow
+                icon="trash-outline"
+                label="Delete Account"
+                onPress={handleDeleteAccount}
+                showChevron={false}
+                destructive
+                iconColor={theme.colors.brand.primary}
+              />
+            </Card>
 
-        <View style={{ height: 40 }} />
+            {/* Version */}
+            <View style={styles.versionInfo}>
+              <Text variant="caption" color="secondary" align="center">GutHarmony v1.0.0</Text>
+            </View>
+          </View>
+        )}
       </ScrollView>
 
-      {/* Edit Profile Modal */}
+      {/* Edit Modal */}
       <Modal visible={isEditModalVisible} animationType="slide">
-        <View
-          style={[
-            styles.modalContainer,
-            { paddingTop: insets.top, paddingBottom: insets.bottom },
-          ]}
-        >
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setIsEditModalVisible(false)}>
-                <Text variant="body" weight="semiBold" style={{ color: theme.colors.brand.primary }}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-              <Text variant="title2" weight="bold">
-                Edit Profile
-              </Text>
-              <TouchableOpacity
-                onPress={handleEditProfile}
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <ActivityIndicator color={theme.colors.brand.primary} size="small" />
-                ) : (
-                  <Text variant="body" weight="semiBold" style={{ color: theme.colors.brand.primary }}>
-                    Save
-                  </Text>
-                )}
-              </TouchableOpacity>
+        <View style={[styles.modalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setIsEditModalVisible(false)}>
+              <Text variant="body" weight="semiBold" style={{ color: theme.colors.brand.primary }}>Cancel</Text>
+            </TouchableOpacity>
+            <Text variant="title2" weight="bold">Edit Profile</Text>
+            <TouchableOpacity onPress={handleEditProfile} disabled={isSaving}>
+              {isSaving ? (
+                <ActivityIndicator color={theme.colors.brand.primary} size="small" />
+              ) : (
+                <Text variant="body" weight="semiBold" style={{ color: theme.colors.brand.primary }}>Save</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.editForm}>
+            <View style={styles.formSection}>
+              <Text variant="caption" color="secondary" style={styles.inputLabel}>Full Name</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter your name"
+                placeholderTextColor={theme.colors.text.tertiary}
+                value={editName}
+                onChangeText={setEditName}
+                editable={!isSaving}
+              />
             </View>
 
-            {/* Edit Form */}
-            <View style={styles.editForm}>
-              <View style={styles.formSection}>
-                <Text variant="caption" color="secondary" style={styles.inputLabel}>
-                  Full Name
-                </Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter your name"
-                  placeholderTextColor={theme.colors.text.tertiary}
-                  value={editName}
-                  onChangeText={setEditName}
-                  editable={!isSaving}
-                />
-              </View>
-
-              <View style={styles.formSection}>
-                <Text variant="caption" color="secondary" style={styles.inputLabel}>
-                  Age
-                </Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Enter your age"
-                  placeholderTextColor={theme.colors.text.tertiary}
-                  value={editAge}
-                  onChangeText={setEditAge}
-                  keyboardType="number-pad"
-                  editable={!isSaving}
-                />
-              </View>
-
-              <View style={styles.infoBox}>
-                <Ionicons
-                  name="information-circle-outline"
-                  size={20}
-                  color={theme.colors.brand.primary}
-                />
-                <Text
-                  variant="caption"
-                  color="secondary"
-                  style={{ flex: 1, marginLeft: theme.spacing.md }}
-                >
-                  Health preferences from onboarding are displayed in your profile. Go to settings to update them.
-                </Text>
-              </View>
+            <View style={styles.formSection}>
+              <Text variant="caption" color="secondary" style={styles.inputLabel}>Age</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter your age"
+                placeholderTextColor={theme.colors.text.tertiary}
+                value={editAge}
+                onChangeText={setEditAge}
+                keyboardType="number-pad"
+                editable={!isSaving}
+              />
             </View>
           </ScrollView>
         </View>
@@ -582,100 +486,56 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: theme.spacing['2xl'],
-    paddingVertical: theme.spacing['2xl'],
-    paddingTop: theme.spacing['2xl'],
-    marginBottom: theme.spacing.lg,
-  },
-  title: {
-    // No style override - use the variant typography
-  },
-  profileHeader: {
-    alignItems: 'center',
-    marginBottom: theme.spacing['3xl'],
-    paddingTop: theme.spacing.md,
-  },
-  avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: theme.colors.brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.lg,
-    ...theme.shadows.md,
-  },
-  avatarText: {
-    color: theme.colors.brand.white,
-    ...theme.typography.button,
-  },
-  displayName: {
-    marginBottom: theme.spacing.xs,
-  },
-  email: {
-    marginBottom: theme.spacing.xs,
-  },
-  statsSection: {
-    flexDirection: 'row',
-    paddingHorizontal: theme.spacing['2xl'],
-    marginBottom: theme.spacing['3xl'],
-    gap: theme.spacing.lg,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: theme.colors.background.card,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  statsBreakdown: {
-    paddingHorizontal: theme.spacing['2xl'],
-    marginBottom: theme.spacing['2xl'],
-    gap: theme.spacing.lg,
-  },
-  statsItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.background.card,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  statsIconBg: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: 'rgba(255, 118, 100, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  healthCard: {
-    paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.lg,
   },
-  healthItem: {
+  profileHeaderCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing['2xl'],
+    paddingBottom: theme.spacing.lg,
+  },
+  tabs: {
+    flexDirection: 'row',
+    paddingHorizontal: theme.spacing['2xl'],
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.light,
+    marginBottom: theme.spacing.lg,
+  },
+  tab: {
+    flex: 1,
     paddingVertical: theme.spacing.md,
-  },
-  section: {
-    marginBottom: theme.spacing.xl,
-    paddingHorizontal: theme.spacing['2xl'],
-  },
-  sectionHeader: {
-    marginLeft: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  footerSection: {
-    paddingHorizontal: theme.spacing['2xl'],
-    paddingVertical: theme.spacing['3xl'],
     alignItems: 'center',
   },
-  // Settings Card Styles
+  tabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.brand.primary,
+  },
+  scrollContent: {
+    paddingHorizontal: theme.spacing['2xl'],
+    paddingBottom: theme.spacing['3xl'],
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  compactCard: {
+    marginBottom: theme.spacing.lg,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  targetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+  },
   settingsCard: {
     overflow: 'hidden',
+    marginBottom: theme.spacing.lg,
   },
   settingsRow: {
     flexDirection: 'row',
@@ -705,9 +565,12 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.colors.border.light,
   },
-  // Modal Styles
+  versionInfo: {
+    paddingVertical: theme.spacing.xl,
+    alignItems: 'center',
+  },
   modalContainer: {
     flex: 1,
     backgroundColor: theme.colors.background.primary,
@@ -719,11 +582,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing['2xl'],
     paddingVertical: theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: theme.colors.border.light,
   },
   editForm: {
     paddingHorizontal: theme.spacing['2xl'],
-    paddingVertical: theme.spacing['2xl'],
+    paddingTop: theme.spacing['2xl'],
   },
   formSection: {
     marginBottom: theme.spacing['2xl'],
@@ -741,15 +604,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  infoBox: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255, 118, 100, 0.05)',
-    borderRadius: theme.borderRadius.lg,
-    borderLeftWidth: 3,
-    borderLeftColor: theme.colors.brand.primary,
-    padding: theme.spacing.lg,
-    alignItems: 'flex-start',
+    borderColor: theme.colors.border.light,
   },
 });
