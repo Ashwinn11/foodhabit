@@ -16,6 +16,7 @@ import {
   View,
   StyleProp,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { theme, r, haptics } from '../theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'ghost' | 'destructive';
@@ -29,7 +30,7 @@ export interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
-  icon?: React.ReactNode;
+  icon?: React.ReactNode | string;
   style?: StyleProp<ViewStyle>;
   textStyle?: TextStyle;
   hapticFeedback?: boolean;
@@ -52,9 +53,9 @@ export const Button: React.FC<ButtonProps> = ({
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
-      toValue: 0.98, // Subtle scale
+      toValue: 0.96, // Slightly more pronounced
       useNativeDriver: true,
-      ...theme.animations.springConfig.stiff,
+      ...theme.animations.springConfig.default,
     }).start();
   };
 
@@ -62,7 +63,7 @@ export const Button: React.FC<ButtonProps> = ({
     Animated.spring(scaleAnim, {
       toValue: 1,
       useNativeDriver: true,
-      ...theme.animations.springConfig.default,
+      ...theme.animations.springConfig.bouncy,
     }).start();
   };
 
@@ -112,6 +113,8 @@ export const Button: React.FC<ButtonProps> = ({
     styles[`size_${size}`],
     styles[`padding_${size}`],
     { backgroundColor, borderColor, borderWidth },
+    variant === 'primary' && theme.shadows.primary,
+    variant === 'secondary' && theme.shadows.secondary,
     fullWidth && styles.fullWidth,
     (disabled || loading) && styles.disabled,
     style,
@@ -125,15 +128,29 @@ export const Button: React.FC<ButtonProps> = ({
     textStyle,
   ].filter(Boolean) as TextStyle[];
 
+  const renderIcon = () => {
+    if (!icon) return null;
+    
+    if (typeof icon === 'string') {
+      return (
+        <View style={styles.icon}>
+          <Ionicons name={icon as any} size={20} color={textColor} />
+        </View>
+      );
+    }
+    
+    return <View style={styles.icon}>{icon}</View>;
+  };
+
   const renderContent = () => (
     <View style={styles.content}>
       {loading ? (
         <ActivityIndicator color={textColor} size="small" />
       ) : (
-        <>
-          {icon && <View style={styles.icon}>{icon}</View>}
+        <View style={styles.contentInner}>
+          {renderIcon()}
           <Text style={textStyleCombined}>{title}</Text>
-        </>
+        </View>
       )}
     </View>
   );
@@ -174,6 +191,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
+  },
+
+  contentInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   icon: {

@@ -119,20 +119,17 @@ export default function OnboardingProfileScreen({
                   selected={selectedCondition === condition.id}
                   onPress={() => handleSelectCondition(condition.id)}
                   disabled={loading}
-                  isCreamBg={selectedCondition === condition.id}
-                  style={[
-                    styles.cardContent,
-                    selectedCondition === condition.id && styles.selectedCardBackground,
-                  ]}
+                  style={styles.cardContent}
                >
                   <Text
                     variant="body"
+                    align="center"
+                    numberOfLines={3}
                     style={{
                       color:
                         selectedCondition === condition.id
                           ? theme.colors.brand.black
                           : theme.colors.text.primary,
-                      textAlign: 'center',
                     }}
                   >
                     {condition.label}
@@ -210,17 +207,18 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: theme.spacing.md,
-    alignContent: 'flex-start',
   },
   gridItemContainer: {
-    width: '47%',
-    minHeight: 70,
-    maxHeight: 100,
+    width: '48%',
+    minHeight: 80, // Increased to allow wrapping
+    marginBottom: theme.spacing.md,
   },
   cardContent: {
-    minHeight: 60,
-    paddingVertical: theme.spacing.lg,
+    minHeight: 80,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
   },
   selectedCardBackground: {
     backgroundColor: theme.colors.brand.cream,

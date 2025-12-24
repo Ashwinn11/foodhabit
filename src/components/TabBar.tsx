@@ -29,10 +29,10 @@ export default function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
             activeOpacity={0.7}
           >
             <Text
-              variant="body"
-              weight={isActive ? 'bold' : 'regular'}
+              variant="subheadline"
+              weight={isActive ? 'bold' : 'semiBold'}
               style={{
-                color: isActive ? theme.colors.brand.primary : theme.colors.text.secondary,
+                color: isActive ? theme.colors.brand.white : theme.colors.text.secondary,
               }}
             >
               {tab}
@@ -47,18 +47,21 @@ export default function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    paddingHorizontal: theme.spacing['2xl'],
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.light,
+    padding: theme.spacing.xs,
+    backgroundColor: theme.colors.background.card,
+    borderRadius: theme.borderRadius.pill,
+    marginHorizontal: theme.spacing['2xl'],
     marginBottom: theme.spacing.lg,
   },
   tab: {
     flex: 1,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     alignItems: 'center',
+    borderRadius: theme.borderRadius.pill,
+    justifyContent: 'center',
   },
   tabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: theme.colors.brand.primary,
+    backgroundColor: theme.colors.brand.primary,
+    ...theme.shadows.sm,
   },
 });

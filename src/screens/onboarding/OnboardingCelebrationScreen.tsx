@@ -13,6 +13,12 @@ interface OnboardingCelebrationScreenProps {
   onContinue: () => void;
 }
 
+const MISSION_STEPS = [
+  { id: 1, status: 'complete', title: 'STRIKE 1', icon: 'checkmark-circle' },
+  { id: 2, status: 'locked', title: 'STRIKE 2', icon: 'lock-closed' },
+  { id: 3, status: 'locked', title: 'ENEMY REVEAL', icon: 'skull' },
+];
+
 export default function OnboardingCelebrationScreen({
   onContinue,
 }: OnboardingCelebrationScreenProps) {
@@ -21,18 +27,17 @@ export default function OnboardingCelebrationScreen({
   const slideAnim = useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
-    // Celebrate icon animation
     Animated.sequence([
       Animated.spring(scaleAnim, {
         toValue: 1,
-        tension: 30,
-        friction: 8,
+        tension: 40,
+        friction: 7,
         useNativeDriver: true,
       }),
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 800,
+          duration: 600,
           useNativeDriver: true,
         }),
         Animated.spring(slideAnim, {
@@ -50,113 +55,98 @@ export default function OnboardingCelebrationScreen({
   return (
     <View style={styles.container}>
       <Container variant="plain" style={styles.contentContainer} scrollable>
-        {/* Celebration Icon */}
-        <Animated.View
-          style={[
-            styles.iconContainer,
-            {
-              transform: [{ scale: scaleAnim }],
-            },
-          ]}
-        >
-          <View style={styles.iconCircle}>
-            <Ionicons
-              name="checkmark"
-              size={64}
-              color={theme.colors.brand.white}
-            />
+        {/* Spacer */}
+        <View style={{ height: 40 }} />
+
+        {/* Hero Section */}
+        <Animated.View style={{ alignItems: 'center', transform: [{ scale: scaleAnim }] }}>
+          <View style={styles.heroCircle}>
+             <Ionicons name="flash" size={60} color={theme.colors.brand.primary} />
           </View>
+          <Text variant="largeTitle" align="center" weight="bold" style={styles.heroTitle}>
+            STRIKE SUCCESSFUL
+          </Text>
+          <Text variant="headline" align="center" color="secondary" style={{ letterSpacing: 1 }}>
+            INTEL SECURED: 33%
+          </Text>
         </Animated.View>
 
-        {/* Spacer */}
-        <View style={{ flex: 0.1 }} />
-
-        {/* Content */}
-        <Animated.View
+        {/* Tactical Map */}
+        <Animated.View 
           style={[
-            styles.content,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
+            styles.mapSection, 
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
           ]}
         >
-          <Text variant="largeTitle" align="center" style={styles.title}>
-            You Did It!
+          <Text variant="headline" weight="bold" style={styles.sectionTitle}>
+            MISSION TIMELINE
           </Text>
-
-          <Text
-            variant="body"
-            align="center"
-            style={[styles.subtitle, { color: theme.colors.text.secondary }]}
-          >
-            Entry 1 of 3
-          </Text>
-
-          {/* Progress towards insight */}
-          <View style={styles.progressSection}>
-            <Text variant="headline" style={styles.progressLabel}>
-              Progress to First Insight
-            </Text>
-            <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { width: '33%' }]} />
-            </View>
-            <View style={styles.progressSteps}>
-              {[1, 2, 3].map((num) => (
-                <View key={num} style={styles.progressStep}>
-                  <View
-                    style={[
-                      styles.stepNumber,
-                      num <= 1 && styles.stepNumberActive,
-                    ]}
-                  >
-                    {num <= 1 ? (
-                      <Ionicons
-                        name="checkmark"
-                        size={16}
-                        color={theme.colors.brand.white}
-                      />
-                    ) : (
-                      <Text style={styles.stepNumberText}>{num}</Text>
-                    )}
+          
+          <View style={styles.cardsRow}>
+            {MISSION_STEPS.map((step, index) => {
+              const isComplete = step.status === 'complete';
+              const isLast = index === 2;
+              
+              return (
+                <View 
+                  key={step.id} 
+                  style={[
+                    styles.missionCard, 
+                    isComplete ? styles.cardComplete : styles.cardLocked,
+                    isLast && styles.cardDanger
+                  ]}
+                >
+                  <View style={styles.cardIcon}>
+                    <Ionicons 
+                      name={step.icon as any} 
+                      size={24} 
+                      color={isComplete ? theme.colors.brand.white : (isLast ? theme.colors.brand.secondary : theme.colors.text.tertiary)} 
+                    />
                   </View>
+                  <Text 
+                    variant="caption2" 
+                    weight="bold" 
+                    align="center"
+                    style={{ 
+                      color: isComplete ? theme.colors.brand.white : (isLast ? theme.colors.text.primary : theme.colors.text.secondary),
+                      marginTop: 8,
+                      fontSize: 10
+                    }}
+                  >
+                    {step.title}
+                  </Text>
                 </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Next Steps */}
-          <View style={styles.nextStepsSection}>
-            <Text variant="headline" style={styles.nextStepsTitle}>
-              What's Next?
-            </Text>
-
-            <NextStep
-              icon="logo-apple"
-              title="Log 2 More Entries"
-              description="Once you have 3 entries, I'll reveal your first trigger"
-            />
-
-            <NextStep
-              icon="mail"
-              title="Daily Reminder"
-              description="I'll remind you tomorrow morning to log your entry"
-            />
-
-            <NextStep
-              icon="analytics"
-              title="First Insight"
-              description="After 3 days, you'll discover what's triggering your issues"
-            />
+              );
+            })}
+            
+            {/* Connecting Lines */}
+            <View style={styles.connectorLine} />
           </View>
         </Animated.View>
 
-        {/* Spacer */}
+        {/* Debrief Card */}
+        <Animated.View 
+          style={[
+            styles.debriefCard,
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+          ]}
+        >
+          <View style={styles.debriefHeader}>
+            <Ionicons name="warning" size={20} color={theme.colors.brand.primary} />
+            <Text variant="headline" weight="bold" style={{ marginLeft: 8, color: theme.colors.text.primary }}>
+              NEXT DEPLOYMENT
+            </Text>
+          </View>
+          <Text variant="body" color="secondary" style={{ lineHeight: 22 }}>
+            I will signal you tomorrow morning. We need 2 more reports to expose your gut's enemy. Stay sharp.
+          </Text>
+        </Animated.View>
+
         <View style={{ flex: 1 }} />
 
-        {/* Continue Button */}
+        {/* Action Button */}
         <Button
-          title="Go to Home"
+          title="RETURN TO BASE"
           onPress={() => {
             haptics.patterns.buttonPress();
             onContinue();
@@ -171,34 +161,6 @@ export default function OnboardingCelebrationScreen({
   );
 }
 
-interface NextStepProps {
-  icon: string;
-  title: string;
-  description: string;
-}
-
-function NextStep({ icon, title, description }: NextStepProps) {
-  return (
-    <View style={styles.nextStep}>
-      <View style={styles.nextStepIcon}>
-        <Ionicons
-          name={icon as any}
-          size={24}
-          color={theme.colors.brand.primary}
-        />
-      </View>
-      <View style={styles.nextStepContent}>
-        <Text variant="headline" style={styles.nextStepTitle}>
-          {title}
-        </Text>
-        <Text variant="body" color="secondary" style={styles.nextStepDesc}>
-          {description}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -206,117 +168,97 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    paddingHorizontal: theme.spacing['2xl'],
-    paddingTop: theme.spacing['2xl'],
+    paddingHorizontal: theme.spacing.xl,
+    paddingBottom: theme.spacing.xl,
   },
-  iconContainer: {
-    alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-  },
-  iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: theme.colors.brand.primary,
+  heroCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: theme.colors.brand.primary + '15',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.brand.primary,
+    marginBottom: theme.spacing.lg,
     shadowColor: theme.colors.brand.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
   },
-  content: {
-    flex: 1,
-  },
-  title: {
-    marginBottom: theme.spacing.lg,
-    color: theme.colors.brand.primary,
-    letterSpacing: 0.5,
-  },
-  subtitle: {
-    marginBottom: theme.spacing['3xl'],
-  },
-  progressSection: {
-    marginBottom: theme.spacing['3xl'],
-    padding: theme.spacing.xl,
-    backgroundColor: theme.colors.background.card,
-    borderRadius: theme.spacing.lg,
-  },
-  progressLabel: {
-    marginBottom: theme.spacing.lg,
+  heroTitle: {
     color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+    fontSize: 28,
   },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: theme.colors.background.primary,
-    borderRadius: 4,
-    overflow: 'hidden',
+  sectionTitle: {
     marginBottom: theme.spacing.lg,
+    color: theme.colors.text.tertiary,
+    fontSize: 12,
+    letterSpacing: 1.5,
   },
-  progressBar: {
-    height: '100%',
-    backgroundColor: theme.colors.brand.primary,
-    borderRadius: 4,
+  mapSection: {
+    marginTop: theme.spacing['4xl'],
+    marginBottom: theme.spacing['2xl'],
   },
-  progressSteps: {
+  cardsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.md,
-  },
-  progressStep: {
     alignItems: 'center',
+    position: 'relative',
+    height: 100,
   },
-  stepNumber: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.colors.background.primary,
-    borderWidth: 1,
-    borderColor: theme.colors.border.light,
+  connectorLine: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    right: 20,
+    height: 2,
+    backgroundColor: theme.colors.border.light,
+    zIndex: -1,
+  },
+  missionCard: {
+    width: '30%',
+    height: 100,
+    borderRadius: theme.borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 8,
+    borderWidth: 1,
   },
-  stepNumberActive: {
+  cardComplete: {
     backgroundColor: theme.colors.brand.primary,
     borderColor: theme.colors.brand.primary,
+    transform: [{ scale: 1.05 }],
+    shadowColor: theme.colors.brand.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
-  stepNumberText: {
-    color: theme.colors.text.secondary,
+  cardLocked: {
+    backgroundColor: theme.colors.background.card,
+    borderColor: theme.colors.border.light,
   },
-  nextStepsSection: {
-    marginBottom: theme.spacing['3xl'],
+  cardDanger: {
+    borderColor: theme.colors.text.primary,
+    borderStyle: 'dashed',
   },
-  nextStepsTitle: {
-    marginBottom: theme.spacing.xl,
-    color: theme.colors.text.primary,
+  cardIcon: {
+    marginBottom: 8,
   },
-  nextStep: {
+  debriefCard: {
+    backgroundColor: theme.colors.background.card,
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.brand.primary,
+  },
+  debriefHeader: {
     flexDirection: 'row',
-    gap: theme.spacing.lg,
-    marginBottom: theme.spacing.xl,
-    alignItems: 'flex-start',
-  },
-  nextStepIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: theme.colors.background.card, // Solid background
-    justifyContent: 'center',
     alignItems: 'center',
-  },
-  nextStepContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  nextStepTitle: {
     marginBottom: theme.spacing.sm,
-    color: theme.colors.text.primary,
-  },
-  nextStepDesc: {
-    lineHeight: 20,
   },
   button: {
-    marginBottom: theme.spacing['3xl'],
+    marginBottom: theme.spacing.xl,
   },
 });

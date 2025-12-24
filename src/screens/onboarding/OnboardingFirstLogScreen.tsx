@@ -188,7 +188,7 @@ export default function OnboardingFirstLogScreen({
 
             <View style={styles.gridContainer}>
               {STOOL_TYPES.map((item) => (
-                <View key={item.type} style={styles.gridItemHalf}>
+                <View key={item.type} style={styles.gridItemStool}>
                   <AnimatedSelectionCard
                     selected={selectedStoolType === item.type}
                     onPress={() => {
@@ -196,11 +196,7 @@ export default function OnboardingFirstLogScreen({
                         haptics.selection();
                     }}
                     disabled={loading}
-                    isCreamBg={selectedStoolType === item.type}
-                    style={[
-                      styles.cardContentVertical,
-                      selectedStoolType === item.type && styles.selectedCardBackground,
-                    ]}
+                    style={styles.cardContentVertical}
                   >
                     <Text variant="title2" style={{ color: selectedStoolType === item.type ? theme.colors.brand.black : theme.colors.text.primary, marginBottom: 4 }}>
                       {item.type}
@@ -226,7 +222,7 @@ export default function OnboardingFirstLogScreen({
 
             <View style={styles.gridContainer}>
               {ENERGY_LEVELS.map((level) => (
-                <View key={level.value} style={styles.gridItemHalf}>
+                <View key={level.value} style={styles.gridItemEnergy}>
                   <AnimatedSelectionCard
                     selected={selectedEnergy === level.value}
                     onPress={() => {
@@ -234,11 +230,7 @@ export default function OnboardingFirstLogScreen({
                         haptics.selection();
                     }}
                     disabled={loading}
-                    isCreamBg={selectedEnergy === level.value}
-                    style={[
-                      styles.cardContentVertical,
-                      selectedEnergy === level.value && styles.selectedCardBackground,
-                    ]}
+                    style={styles.cardContentVertical}
                   >
                     <Ionicons
                         name={level.icon as any}
@@ -261,7 +253,7 @@ export default function OnboardingFirstLogScreen({
               </Text>
               <View style={styles.gridContainer}>
                 {MAIN_ISSUES.map((issue) => (
-                  <View key={issue.id} style={styles.gridItemHalf}>
+                  <View key={issue.id} style={styles.gridItemIssue}>
                     <AnimatedSelectionCard
                       selected={selectedIssue === issue.id}
                       onPress={() => {
@@ -269,20 +261,17 @@ export default function OnboardingFirstLogScreen({
                         haptics.selection();
                       }}
                       disabled={loading}
-                      isCreamBg={selectedIssue === issue.id}
-                      style={[
-                        styles.cardContentVertical,
-                        selectedIssue === issue.id && styles.selectedCardBackground,
-                      ]}
+                      style={styles.cardContentVertical}
                     >
                       <Text
                         variant="body"
+                        align="center"
+                        numberOfLines={3}
                         style={{
                           color:
                             selectedIssue === issue.id
                               ? theme.colors.brand.black
                               : theme.colors.text.primary,
-                          textAlign: 'center',
                         }}
                       >
                         {issue.label}
@@ -304,31 +293,35 @@ export default function OnboardingFirstLogScreen({
               {APP_TEXTS.onboardingFirstLog.symptomsStep.subtitle}
             </Text>
 
-            <View style={styles.listContainer}>
+            <View style={styles.gridContainer}>
               {SYMPTOMS.map((symptom) => (
-                <AnimatedSelectionCard
-                  key={symptom.id}
-                  selected={!!selectedSymptoms[symptom.id]}
-                  onPress={() => toggleSymptom(symptom.id)}
-                  disabled={loading}
-                  isCreamBg={!!selectedSymptoms[symptom.id]}
-                  containerStyle={{ marginBottom: theme.spacing.md }}
-                  style={[
-                    styles.cardContentHorizontal,
-                    selectedSymptoms[symptom.id] && styles.selectedCardBackground,
-                  ]}
-                >
-                  <Text variant="body" style={{ flex: 1, color: selectedSymptoms[symptom.id] ? theme.colors.brand.black : theme.colors.text.primary }}>
-                    {symptom.label}
-                  </Text>
-                  {selectedSymptoms[symptom.id] && (
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={24}
-                      color={theme.colors.brand.black}
-                    />
-                  )}
-                </AnimatedSelectionCard>
+                <View key={symptom.id} style={styles.gridItemIssue}>
+                  <AnimatedSelectionCard
+                    selected={!!selectedSymptoms[symptom.id]}
+                    onPress={() => toggleSymptom(symptom.id)}
+                    disabled={loading}
+                    style={styles.cardContentVertical}
+                  >
+                    <Text 
+                      variant="headline" 
+                      weight="bold" 
+                      align="center"
+                      style={{ 
+                        color: selectedSymptoms[symptom.id] ? theme.colors.brand.black : theme.colors.text.primary,
+                        marginBottom: selectedSymptoms[symptom.id] ? 4 : 0
+                      }}
+                    >
+                      {symptom.label}
+                    </Text>
+                    {selectedSymptoms[symptom.id] && (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={24}
+                        color={theme.colors.brand.black}
+                      />
+                    )}
+                  </AnimatedSelectionCard>
+                </View>
               ))}
             </View>
           </View>
@@ -482,13 +475,23 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: theme.spacing.md,
-    alignContent: 'flex-start',
   },
-  gridItemHalf: {
-    width: '47%',
-    minHeight: 70,
-    maxHeight: 100,
+  gridItemStool: {
+    width: '31%',
+    aspectRatio: 1,
+    marginBottom: theme.spacing.md,
+  },
+  gridItemEnergy: {
+    width: '48%',
+    aspectRatio: 1.5,
+    marginBottom: theme.spacing.md,
+  },
+  gridItemIssue: {
+    width: '48%',
+    minHeight: 80,
+    marginBottom: theme.spacing.sm,
   },
   listContainer: {
     flexDirection: 'column',
@@ -498,7 +501,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: theme.spacing.xl,
+    paddingVertical: theme.spacing.md, // Reduced from xl to prevent squeezing
   },
   cardContentHorizontal: {
     flexDirection: 'row',
@@ -506,6 +509,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.lg,
+    minHeight: 72, // Increased for better touch target and visibility
   },
   selectedCardBackground: {
     backgroundColor: theme.colors.brand.cream,

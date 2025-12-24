@@ -90,8 +90,24 @@ export const colors = {
   // FEEDBACK COLORS
   // ============================================
   feedback: {
-    success: '#ff7664',  // Coral
+    success: '#A5E1A6',  // Green (mapped to brand.secondary)
     error: '#ff7664',    // Coral
+    warning: '#FCEFDE',  // Cream
+    info: '#cda4e8',     // Purple
+  },
+
+  // ============================================
+  // GLASS & OVERLAY SYSTEM (New)
+  // ============================================
+  glass: {
+    light: 'rgba(255, 255, 255, 0.12)',
+    medium: 'rgba(255, 255, 255, 0.18)',
+    heavy: 'rgba(255, 255, 255, 0.25)',
+    border: 'rgba(255, 255, 255, 0.2)',
+    overlay: 'rgba(0, 0, 0, 0.4)',
+    primary: 'rgba(255, 118, 100, 0.15)',    // Primary with transparency
+    secondary: 'rgba(165, 225, 166, 0.15)',  // Secondary with transparency
+    tertiary: 'rgba(205, 164, 232, 0.15)',   // Tertiary with transparency
   }
 } as const;
 

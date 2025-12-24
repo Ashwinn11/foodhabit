@@ -15,23 +15,20 @@ export interface DeleteAccountResult {
  */
 export const deleteAccount = async (): Promise<DeleteAccountResult> => {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    // Refresh the session to ensure we have a valid token
+    const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
 
-    if (!session) {
+    if (sessionError || !session) {
       return {
         success: false,
-        error: 'No authenticated user found'
+        error: 'No authenticated user found or session expired'
       };
     }
 
-    // Supabase URL is handled automatically by the client
-
     // Call the Edge Function for complete account deletion
+    // The Supabase client automatically handles authentication headers
     const { data, error } = await supabase.functions.invoke('delete-account', {
-      body: { confirmed: true },
-      headers: {
-        Authorization: `Bearer ${session.access_token}`
-      }
+      body: { confirmed: true }
     });
 
     if (error) {

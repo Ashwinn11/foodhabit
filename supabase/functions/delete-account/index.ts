@@ -1,3 +1,4 @@
+// @ts-nocheck - Deno runtime types not available in IDE
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@^2.39.0";
 
@@ -28,10 +29,11 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || Deno.env.get("EXPO_PUBLIC_SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Create Supabase client with auto-injected environment variables
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
     // Verify user is authenticated
     const token = authHeader.replace("Bearer ", "");
@@ -49,6 +51,7 @@ Deno.serve(async (req: Request) => {
 
     // Parse request body to get confirmation
     const { confirmed } = await req.json();
+
     if (!confirmed) {
       return new Response(
         JSON.stringify({ error: "Account deletion must be confirmed" }),
@@ -63,11 +66,24 @@ Deno.serve(async (req: Request) => {
     const { data: deleteResult, error: deleteError } = await supabase
       .rpc("delete_user_account", { user_id_to_delete: user.id });
 
-    if (deleteError || !deleteResult?.success) {
+    if (deleteError) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: deleteError?.message || deleteResult?.error || "Failed to delete user data"
+          error: deleteError.message || "Failed to delete user data",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    if (!deleteResult?.success) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: deleteResult?.error || "Failed to delete user data",
         }),
         {
           status: 500,
@@ -77,14 +93,18 @@ Deno.serve(async (req: Request) => {
     }
 
     // Delete user from Supabase Auth (admin operation)
+    console.log("Attempting to delete auth user:", user.id);
     const { error: adminDeleteError } = await supabase.auth.admin.deleteUser(
       user.id
     );
 
     if (adminDeleteError) {
       console.error("Error deleting auth user:", adminDeleteError);
+      console.error("Auth error details:", JSON.stringify(adminDeleteError, null, 2));
       // Even if auth deletion fails, we've already deleted the user data
       // Log this for manual cleanup
+    } else {
+      console.log("Successfully deleted auth user");
     }
 
     return new Response(
@@ -101,10 +121,12 @@ Deno.serve(async (req: Request) => {
 
   } catch (error) {
     console.error("Unexpected error:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : "An unexpected error occurred"
+        error: error instanceof Error ? error.message : "An unexpected error occurred",
+        stack: error instanceof Error ? error.stack : undefined
       }),
       {
         status: 500,

@@ -4,35 +4,35 @@
  * Medical topic but human and approachable.
  */
 
-// Shared texts used across multiple screens
+// Shared texts used across multiple screens - CRUSH CRAVINGS EDITION
 const SHARED_TEXTS = {
   appName: 'Gut Harmony',
   legalTerms: 'Terms',
   legalPrivacy: 'Privacy Policy',
-  disclaimer: 'Not a substitute for medical advice. Always chat with your doctor about health concerns.',
+  disclaimer: 'This app is not medical advice. Consult your doctor immediately for health concerns.',
   valueProps: [
     {
-      title: 'Find Your Food Triggers',
-      description: 'Discover which foods work for you in just 3 days',
+      title: 'Triggered?',
+      description: 'When symptoms hit, track them immediately.',
       icons: {
-        outline: 'search-outline',
-        solid: 'search',
+        outline: 'flame-outline',
+        solid: 'flame',
       },
     },
     {
-      title: 'Track Your Progress',
-      description: 'See the patterns in how you feel',
+      title: 'Action',
+      description: 'Log your data. Fight back with knowledge.',
       icons: {
-        outline: 'stats-chart-outline',
-        solid: 'stats-chart',
+        outline: 'fitness-outline',
+        solid: 'fitness',
       },
     },
     {
-      title: 'Share with Your Doctor',
-      description: 'Easy reports for your next check-up',
+      title: 'Progress',
+      description: 'Destroy your triggers and reclaim your life.',
       icons: {
-        outline: 'document-outline',
-        solid: 'document',
+        outline: 'trending-up-outline',
+        solid: 'trending-up',
       },
     },
   ],
@@ -45,10 +45,10 @@ export const APP_TEXTS = {
   // Auth Screen
   auth: {
     title: SHARED_TEXTS.appName,
-    subtitle: 'Understand your gut better in 7 days. Find what works for you.',
+    subtitle: 'Turn your gut issues into physical strength with data-powered tracking.',
     valueProps: SHARED_TEXTS.valueProps.map((prop) => ({
       icon: prop.icons.outline,
-      text: prop.title,
+      text: prop.description,
     })),
     legalPrefix: 'By signing in, you agree to our',
     termsLink: SHARED_TEXTS.legalTerms,
@@ -58,86 +58,86 @@ export const APP_TEXTS = {
   // Onboarding Splash Screen
   onboardingSplash: {
     title: SHARED_TEXTS.appName,
-    subtitle: 'Get to know your gut. One log at a time.',
+    subtitle: 'Stop guessing. Start crushing your triggers.',
     valueProps: SHARED_TEXTS.valueProps.map((prop) => ({
       icon: prop.icons.solid,
       title: prop.title,
       description: prop.description,
     })),
-    cta: 'Let\'s Begin',
+    cta: 'Start Now',
     disclaimer: SHARED_TEXTS.disclaimer,
   },
 
   // Onboarding Profile Screen
   onboardingProfile: {
-    title: 'Tell us about you',
-    subtitle: 'So we can give you personalized insights',
+    title: 'Who are we fighting for?',
+    subtitle: 'Tell us about yourself so we can help you win',
     nameLabel: 'Your Name',
-    namePlaceholder: 'What\'s your name?',
-    conditionLabel: 'Any digestive issues you\'ve been diagnosed with?',
-    issueLabel: 'What bothers you most?',
-    continueButton: 'Next',
+    namePlaceholder: 'Enter your name',
+    conditionLabel: 'What are you battling?',
+    issueLabel: 'What\'s your biggest enemy?',
+    continueButton: 'Lock In',
   },
 
   // Onboarding First Log Screen (Stool Entry)
   onboardingFirstLog: {
     stoolStep: {
-      title: 'How are things today?',
-      subtitle: 'Select the stool type that matches yours',
+      title: 'First Strike',
+      subtitle: 'Log your current state immediately',
     },
     energyStep: {
-      title: 'How\'s your energy?',
-      subtitle: 'Rate from tired to energized',
+      title: 'Energy Check',
+      subtitle: 'How drained are you right now?',
     },
     symptomsStep: {
-      title: 'Any symptoms?',
-      subtitle: 'Check anything you\'re experiencing',
+      title: 'What hit you today?',
+      subtitle: 'Select every symptom attacking you',
     },
     mealsStep: {
-      title: 'What did you eat?',
-      subtitle: 'Tell us what you had (helps us find patterns)',
-      mealPlaceholder: 'e.g., breakfast, lunch, snacks...',
-      addButton: 'Add Meal',
+      title: 'What triggered this?',
+      subtitle: 'Log what you ate (we\'ll find the culprit)',
+      mealPlaceholder: 'List everything you consumed...',
+      addButton: 'Add Trigger',
     },
     nextButton: 'Next',
-    completeButton: 'Done',
-    savingButton: 'Saving...',
+    completeButton: 'Complete Strike',
+    savingButton: 'Logging...',
   },
 
   // Onboarding Celebration Screen
   onboardingCelebration: {
-    heading: 'You\'re off to a great start!',
-    progressText: (entryCount: number) => `${entryCount}/3 entries logged`,
-    nextText: 'Log 2 more entries to unlock your personalized insights',
-    buttonText: 'Back to Home',
+    heading: 'First Strike Complete!',
+    progressText: (entryCount: number) => `${entryCount}/3 entries to unlock insights`,
+    nextText: '2 more logs to identify your triggers. Keep pushing.',
+    buttonText: 'Continue Fighting',
   },
 
   // Conditions (for selection screens)
   conditions: [
     { id: 'IBS', label: 'IBS' },
-    { id: 'crohns', label: 'Crohn\'s' },
+    { id: 'crohns', label: 'Crohn\'s Disease' },
     { id: 'colitis', label: 'Colitis' },
-    { id: 'celiac', label: 'Celiac' },
-    { id: 'gerd', label: 'GERD' },
-    { id: 'general', label: 'Just figuring it out' },
+    { id: 'celiac', label: 'Celiac Disease' },
+    { id: 'gerd', label: 'GERD/Acid Reflux' },
+    { id: 'general', label: 'Fighting to figure it out' },
   ],
 
   // Main issues
   mainIssues: [
-    { id: 'bloating', label: 'Bloating' },
-    { id: 'cramping', label: 'Cramping' },
-    { id: 'diarrhea', label: 'Diarrhea' },
+    { id: 'bloating', label: 'Bloating Attacks' },
+    { id: 'cramping', label: 'Severe Cramping' },
+    { id: 'diarrhea', label: 'Diarrhea Episodes' },
     { id: 'constipation', label: 'Constipation' },
-    { id: 'energy', label: 'Low Energy' },
-    { id: 'multiple', label: 'Multiple Issues' },
+    { id: 'energy', label: 'Energy Crashes' },
+    { id: 'multiple', label: 'Multiple Enemies' },
   ],
 
-  // Stool types - Simplified and cuter
+  // Stool types - Bristol Scale (Direct \u0026 Clinical)
   stoolTypes: [
-    { type: 1, label: 'Hard Pellets' },
-    { type: 2, label: 'Lumpy Log' },
-    { type: 3, label: 'Cracked Log' },
-    { type: 4, label: 'Smooth Log' },
+    { type: 1, label: 'Hard Lumps' },
+    { type: 2, label: 'Lumpy Sausage' },
+    { type: 3, label: 'Cracked Sausage' },
+    { type: 4, label: 'Smooth Sausage' },
     { type: 5, label: 'Soft Blobs' },
     { type: 6, label: 'Mushy' },
     { type: 7, label: 'Liquid' },
@@ -145,18 +145,18 @@ export const APP_TEXTS = {
 
   // Energy levels
   energyLevels: [
-    { value: 1, icon: 'sad', label: 'Very Low' },
-    { value: 5, icon: 'remove', label: 'Okay' },
-    { value: 8, icon: 'happy', label: 'Good' },
-    { value: 10, icon: 'flash', label: 'Great' },
+    { value: 1, icon: 'sad', label: 'Drained' },
+    { value: 5, icon: 'remove', label: 'Surviving' },
+    { value: 8, icon: 'happy', label: 'Strong' },
+    { value: 10, icon: 'flash', label: 'Peak' },
   ],
 
   // Symptoms
   symptoms: [
-    { id: 'bloating', label: 'Bloated' },
-    { id: 'gas', label: 'Gassy' },
-    { id: 'cramping', label: 'Crampy' },
-    { id: 'urgency', label: 'Urgent' },
+    { id: 'bloating', label: 'Bloating' },
+    { id: 'gas', label: 'Gas' },
+    { id: 'cramping', label: 'Cramping' },
+    { id: 'urgency', label: 'Urgency' },
     { id: 'burning', label: 'Burning' },
   ],
 } as const;

@@ -7,7 +7,8 @@ import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../theme';
 import Text from './Text';
-import GridCard from './GridCard';
+import Card from './Card';
+import { StyleSheet } from 'react-native';
 
 interface StatCardProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -18,7 +19,12 @@ interface StatCardProps {
 
 export default function StatCard({ icon, iconColor, value, label }: StatCardProps) {
   return (
-    <GridCard>
+    <Card
+      padding="small"
+      style={styles.card}
+      backgroundColor={theme.colors.glass.primary}
+      borderRadius="lg"
+    >
       <Ionicons name={icon} size={24} color={iconColor} />
       <Text
         variant="title2"
@@ -30,6 +36,15 @@ export default function StatCard({ icon, iconColor, value, label }: StatCardProp
       <Text variant="caption" color="secondary">
         {label}
       </Text>
-    </GridCard>
+    </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    width: '30.5%',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+  },
+});

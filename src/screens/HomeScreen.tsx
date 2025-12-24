@@ -8,7 +8,6 @@ import {
   Animated,
   Easing,
   Modal,
-  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
@@ -19,7 +18,7 @@ import { scoringService, ScoreBreakdown } from '../services/gutHarmony/scoringSe
 import { patternService, PatternInsight } from '../services/gutHarmony/patternService';
 import { getUserProfile } from '../services/gutHarmony/userService';
 import { theme } from '../theme';
-import Text from '../components/Text';
+import { Text, Card, SectionHeader } from '../components';
 import Button from '../components/Button';
 import PetCharacter from '../components/PetCharacter';
 import Avatar from '../components/Avatar';
@@ -72,26 +71,26 @@ export default function HomeScreen() {
     const entryCount = entries.length;
 
     if (entryCount === 0) {
-      insights.push('Start logging daily to discover your food triggers.');
+      insights.push('Start tracking now. Identify your enemies.');
     } else if (entryCount < 3) {
-      insights.push(`Keep logging! ${3 - entryCount} more entries to find patterns.`);
+      insights.push(`${3 - entryCount} more logs to unlock trigger detection.`);
     } else {
       // Calculate trend
       const avgStoolType = entries.reduce((sum, e) => sum + (e.stool_type || 0), 0) / entryCount;
       const avgEnergy = entries.reduce((sum, e) => sum + (e.energy_level || 0), 0) / entryCount;
 
       if (avgStoolType > 5) {
-        insights.push('Your logs show softer stools recently. Watch for trigger foods.');
+        insights.push('Soft stools detected. Trigger foods likely present.');
       } else if (avgStoolType < 3) {
-        insights.push('Your logs show harder stools recently. Stay hydrated!');
+        insights.push('Hard stools detected. Hydration critical.');
       } else {
-        insights.push('Your stools are trending healthy. Keep up the good work!');
+        insights.push('Optimal range maintained. Keep fighting.');
       }
 
       if (avgEnergy < 5) {
-        insights.push('Your energy levels have been low. Rest up!');
+        insights.push('Energy levels depleted. Recovery needed.');
       } else if (avgEnergy > 8) {
-        insights.push('Great energy levels! Keep doing what you\'re doing.');
+        insights.push('Peak energy maintained. Winning strategy.');
       }
     }
 
@@ -211,8 +210,8 @@ export default function HomeScreen() {
                 color={theme.colors.brand.tertiary}
               />
             </View>
-            <Text variant="caption" color="secondary" style={{ marginTop: 4 }}>
-              Your gut wellness journey
+            <Text variant="caption1" color="secondary" style={{ marginTop: 4 }}>
+              Ready to crush your triggers?
             </Text>
           </View>
 
@@ -231,30 +230,48 @@ export default function HomeScreen() {
         {dashboardData.scores && (
           <View style={styles.quickStatsSection}>
             {/* Gut Health */}
-            <View style={styles.statCard}>
-              <Text variant="caption" color="secondary">
-                Gut Health
+            <Card
+              padding="medium"
+              style={styles.statCard}
+              backgroundColor={theme.colors.background.card}
+              borderRadius="xl"
+              elevation="primary"
+            >
+              <Text variant="caption1" color="secondary" weight="bold">
+                GUT HEALTH
               </Text>
-              <Text variant="title1" weight="bold" style={{ color: theme.colors.brand.primary, marginTop: theme.spacing.sm }}>
+              <Text variant="title1" weight="bold" style={{ color: theme.colors.brand.primary, marginTop: 4 }}>
                 {Math.round(dashboardData.scores.gutHealthScore)}%
               </Text>
-              <Text variant="caption" color="secondary" style={{ marginTop: theme.spacing.sm }}>
-                Goal: &gt;70%
-              </Text>
-            </View>
+              <View style={[styles.inlineBadge, { backgroundColor: theme.colors.brand.primary + '15' }]}>
+                <Ionicons name="trending-up" size={12} color={theme.colors.brand.primary} />
+                <Text variant="caption2" style={{ color: theme.colors.brand.primary, marginLeft: 4 }}>
+                  Optimal
+                </Text>
+              </View>
+            </Card>
 
             {/* Bloating */}
-            <View style={styles.statCard}>
-              <Text variant="caption" color="secondary">
-                Bloating
+            <Card
+              padding="medium"
+              style={styles.statCard}
+              backgroundColor={theme.colors.background.card}
+              borderRadius="xl"
+              elevation="secondary"
+            >
+              <Text variant="caption1" color="secondary" weight="bold">
+                BLOATING
               </Text>
-              <Text variant="title1" weight="bold" style={{ color: theme.colors.brand.secondary, marginTop: theme.spacing.sm }}>
+              <Text variant="title1" weight="bold" style={{ color: theme.colors.brand.secondary, marginTop: 4 }}>
                 {Math.round(dashboardData.scores.bloatingIndex)}%
               </Text>
-              <Text variant="caption" color="secondary" style={{ marginTop: theme.spacing.sm }}>
-                Goal: &lt;20%
-              </Text>
-            </View>
+              <View style={[styles.inlineBadge, { backgroundColor: theme.colors.brand.secondary + '15' }]}>
+                <Ionicons name="water" size={12} color={theme.colors.brand.secondary} />
+                <Text variant="caption2" style={{ color: theme.colors.brand.secondary, marginLeft: 4 }}>
+                  Stable
+                </Text>
+              </View>
+            </Card>
           </View>
         )}
 
@@ -292,44 +309,56 @@ export default function HomeScreen() {
         {/* Weekly Challenge - Compact */}
         {dashboardData.challenge && (
           <View style={styles.compactChallengeSection}>
-            <View style={styles.compactChallengeCard}>
-              <View style={{ flex: 1 }}>
-                <Text
-                  variant="caption"
-                  weight="semiBold"
-                  style={{ color: theme.colors.text.placeholder }}
-                >
-                  CHALLENGE
-                </Text>
-                <Text
-                  variant="body"
-                  weight="semiBold"
-                  style={{
-                    color: theme.colors.brand.white,
-                    marginTop: 4,
-                  }}
-                >
-                  {dashboardData.challenge.challenge_description}
-                </Text>
+            <Card
+              padding="medium"
+              backgroundColor={theme.colors.brand.primary}
+              borderRadius="xl"
+              elevation="primary"
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={styles.challengeIconContainer}>
+                   <Ionicons name="trophy" size={20} color={theme.colors.brand.white} />
+                </View>
+                <View style={{ flex: 1, marginLeft: theme.spacing.md }}>
+                  <Text
+                    variant="caption"
+                    weight="bold"
+                    style={{ color: theme.colors.brand.white + '80' }}
+                  >
+                    WEEKLY CHALLENGE
+                  </Text>
+                  <Text
+                    variant="body"
+                    weight="bold"
+                    style={{
+                      color: theme.colors.brand.white,
+                      marginTop: 2,
+                    }}
+                  >
+                    {dashboardData.challenge.challenge_description}
+                  </Text>
+                </View>
+                <View style={styles.daysBadge}>
+                 <Text variant="caption1" weight="bold" color="primary">
+                     {challengeService.getDaysRemaining(dashboardData.challenge)}d left
+                   </Text>
+                </View>
               </View>
-              <View style={styles.daysRemainingBadge}>
-                <Text
-                  variant="caption"
-                  weight="bold"
-                  style={{ color: theme.colors.brand.black }}
-                >
-                  {challengeService.getDaysRemaining(dashboardData.challenge)}d
-                </Text>
-              </View>
-            </View>
+            </Card>
           </View>
         )}
 
         {/* Pattern Insights - Minimal Cards */}
-        {dashboardData.patternInsights.length > 0 && (
+        {dashboardData.patternInsights.length > 0 ? (
           <View style={styles.compactPatternsSection}>
             {dashboardData.patternInsights.slice(0, 2).map((insight, index) => (
-              <View key={index} style={styles.compactPatternCard}>
+              <Card
+                key={index}
+                padding="small"
+                style={styles.compactPatternCard}
+                backgroundColor={theme.colors.background.card}
+                borderRadius="lg"
+              >
                 <Ionicons
                   name={insight.type === 'food_symptom' ? 'leaf' : 'heart'}
                   size={16}
@@ -337,118 +366,95 @@ export default function HomeScreen() {
                   style={{ marginRight: theme.spacing.md }}
                 />
                 <View style={{ flex: 1 }}>
-                  <Text variant="caption" style={{ color: theme.colors.text.primary }}>
-                    {insight.description}
-                  </Text>
+                   <Text variant="caption1" style={{ color: theme.colors.text.primary }}>
+                     {insight.description}
+                   </Text>
                 </View>
-              </View>
+              </Card>
             ))}
           </View>
-        )}
+        ) : null}
 
-        {/* CTA Section - Log Entry (Multiple entries per day allowed) */}
+        {/* CTA Section - Log Entry */}
         <View style={styles.ctaSection}>
-          <TouchableOpacity
+          <Button
+            title="Log Attack Now"
             onPress={() => setShowQuickLog(true)}
-            style={{
-              backgroundColor: theme.colors.brand.primary,
-              paddingVertical: theme.spacing.lg,
-              borderRadius: theme.borderRadius.pill,
-              alignItems: 'center',
-              shadowColor: theme.colors.brand.primary,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 5,
-            }}
-          >
-            <Text
-              variant="body"
-              weight="semiBold"
-              style={{ color: theme.colors.brand.white }}
-            >
-              Log Today's Entry
-            </Text>
-          </TouchableOpacity>
+            variant="primary"
+            size="large"
+            fullWidth
+            icon="add-circle"
+          />
         </View>
 
         {/* Recent Logs Section */}
-        {dashboardData.recentEntries.length > 0 && (
+        {dashboardData.recentEntries.length > 0 ? (
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text variant="title2" weight="bold">
-                Recent
-              </Text>
-              <Button
-                title="All"
-                variant="ghost"
-                onPress={() => console.log('Navigate to history')}
-              />
-            </View>
+            <SectionHeader 
+               title="Recent Activity" 
+               onActionPress={() => console.log('Navigate to history')} 
+               actionIcon="arrow-forward"
+            />
 
             {dashboardData.recentEntries.slice(0, 3).map((entry, index) => {
               const stoolType = STOOL_TYPES.find(t => t.type === entry.stool_type);
               const energyIcon = getEnergyIcon(entry.energy_level);
               
               return (
-                <View key={index} style={styles.logItem}>
-                  {/* Left: Stool Icon */}
-                  <View style={[styles.logIconContainer, { backgroundColor: stoolType?.color ? stoolType.color + '20' : theme.colors.background.card }]}>
-                     {stoolType && (
-                       <stoolType.iconLib 
-                         name={stoolType.icon as any} 
-                         size={20} 
-                         color={stoolType.color} 
-                       />
-                     )}
-                  </View>
+                <Card
+                  key={index}
+                  padding="medium"
+                  style={{ marginBottom: theme.spacing.md }}
+                  backgroundColor={theme.colors.background.card}
+                  borderRadius="xl"
+                  onPress={() => console.log('View entry')}
+                >
+                  <View style={styles.logItemRow}>
+                    <View style={[styles.logIconContainer, { backgroundColor: stoolType?.color ? stoolType.color + '20' : theme.colors.background.card }]}>
+                       {stoolType && (
+                         <stoolType.iconLib 
+                           name={stoolType.icon as any} 
+                           size={20} 
+                           color={stoolType.color} 
+                         />
+                       )}
+                    </View>
 
-                  {/* Middle: Info */}
-                  <View style={styles.logContent}>
-                    <Text variant="body" weight="semiBold">
-                       {stoolType?.label || `Type ${entry.stool_type}`}
-                    </Text>
-                    <Text variant="caption" color="secondary">
-                      {new Date(entry.created_at).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </Text>
-                  </View>
+                    <View style={styles.logContent}>
+                      <Text variant="body" weight="bold">
+                         {stoolType?.label || `Type ${entry.stool_type}`}
+                      </Text>
+                       <Text variant="caption1" color="secondary">
+                         {new Date(entry.created_at).toLocaleDateString('en-US', {
+                           month: 'short',
+                           day: 'numeric',
+                           hour: '2-digit',
+                           minute: '2-digit',
+                         })}
+                       </Text>
+                    </View>
 
-                  {/* Right: Energy & Symptoms */}
-                  <View style={styles.logMeta}>
-                    <View style={styles.metaItem}>
+                    <View style={styles.logMeta}>
+                      <View style={[styles.energyIconSmall, { backgroundColor: energyIcon.color + '20' }]}>
+                        <Ionicons
+                          name={energyIcon.name as any}
+                          size={14}
+                          color={energyIcon.color}
+                        />
+                      </View>
                       <Ionicons
-                        name={energyIcon.name as any}
-                        size={16}
-                        color={energyIcon.color}
+                        name="chevron-forward"
+                        size={18}
+                        color={theme.colors.text.tertiary}
+                        style={{ marginLeft: theme.spacing.sm }}
                       />
                     </View>
-                    {entry.symptoms && entry.symptoms.length > 0 && (
-                      <View style={styles.metaItem}>
-                        <Ionicons
-                          name="alert-circle-outline"
-                          size={16}
-                          color={theme.colors.brand.tertiary}
-                        />
-                        <Text
-                          variant="caption"
-                          style={{ marginLeft: 2 }}
-                          weight="semiBold"
-                        >
-                          {entry.symptoms.length}
-                        </Text>
-                      </View>
-                    )}
                   </View>
-                </View>
+                </Card>
               );
             })}
           </View>
-        )}
+        ) : null}
 
         {/* Empty State */}
         {dashboardData.recentEntries.length === 0 && !dashboardData.isLoading && (
@@ -471,7 +477,7 @@ export default function HomeScreen() {
               align="center"
               style={{ marginTop: 8 }}
             >
-              Start logging daily patterns to discover your triggers
+              Start logging immediately to identify your enemies
             </Text>
           </View>
         )}
@@ -661,7 +667,6 @@ const styles = StyleSheet.create({
 
   /* Section */
   section: {
-    paddingHorizontal: theme.spacing['2xl'],
     marginBottom: theme.spacing['3xl'],
   },
   sectionHeader: {
@@ -669,6 +674,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing['2xl'],
   },
 
   /* Log Items - Minimal list */
@@ -723,8 +729,6 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: theme.colors.background.card,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -760,6 +764,41 @@ const styles = StyleSheet.create({
   emptySection: {
     paddingHorizontal: theme.spacing['2xl'],
     paddingVertical: theme.spacing['3xl'],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  /* New Modern Styles */
+  inlineBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    marginTop: theme.spacing.md,
+  },
+  challengeIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  daysBadge: {
+    backgroundColor: theme.colors.brand.white,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.pill,
+  },
+  logItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  energyIconSmall: {
+    width: 28,
+    height: 28,
+    borderRadius: theme.borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
   },

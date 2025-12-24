@@ -4,7 +4,6 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  TouchableOpacity,
   Animated,
   Easing,
   Modal,
@@ -14,8 +13,7 @@ import { Calendar } from 'react-native-calendars';
 import { useAuth } from '../hooks/useAuth';
 import { entryService } from '../services/gutHarmony/entryService';
 import { theme } from '../theme';
-import Text from '../components/Text';
-import { EmptyState, IconButton } from '../components';
+import { Text, EmptyState, IconButton, Card, SectionHeader } from '../components';
 import { Ionicons } from '@expo/vector-icons';
 import { STOOL_TYPES, getEnergyIcon } from '../constants/stoolData';
 
@@ -132,14 +130,10 @@ export default function HistoryScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text variant="largeTitle" weight="bold">
-            Your History
+            History
           </Text>
-          <Text
-            variant="body"
-            color="secondary"
-            style={{ marginTop: 4 }}
-          >
-            {entries.length} entries logged
+          <Text variant="subheadline" color="secondary" style={{ marginTop: 4 }}>
+            {entries.length} entries tracked
           </Text>
         </View>
 
@@ -188,62 +182,67 @@ export default function HistoryScreen() {
         </Animated.View>
 
         {/* Recent Entries List */}
-        {entries.length > 0 && (
+        {entries.length > 0 ? (
           <View style={styles.entriesSection}>
-            <Text
-              variant="title2"
-              weight="bold"
-              style={{ marginBottom: theme.spacing.lg }}
-            >
-              Recent Entries
-            </Text>
-            {entries.slice(0, 5).map((entry, index) => {
+            <SectionHeader title="Recent Entries" />
+            {entries.slice(0, 5).map((entry) => {
               const stoolType = STOOL_TYPES.find(t => t.type === entry.stool_type);
               const energyIcon = entry.energy_level !== undefined ? getEnergyIcon(entry.energy_level) : null;
 
               return (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => {
-                    setSelectedEntry(entry);
-                  }}
-                  style={styles.entryRow}
+                <Card
+                  key={entry.id}
+                  padding="medium"
+                  onPress={() => setSelectedEntry(entry)}
+                  style={styles.entryCard}
+                  backgroundColor={theme.colors.background.card}
+                  borderRadius="xl"
                 >
-                  <View style={{ flex: 1 }}>
-                    <Text variant="body" weight="semiBold">
-                      {new Date(entry.created_at).toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </Text>
-                    <Text
-                      variant="caption"
-                      color="secondary"
-                      style={{ marginTop: 2 }}
-                    >
-                      {stoolType?.label || `Type ${entry.stool_type}`}
-                    </Text>
-                  </View>
-                  <View style={styles.entryMeta}>
-                    {energyIcon && (
+                  <View style={styles.entryRow}>
+                    <View style={[styles.typeIconContainer, { backgroundColor: stoolType?.color + '20' }]}>
+                      {stoolType?.iconLib && (
+                        <stoolType.iconLib
+                          name={stoolType.icon as any}
+                          size={24}
+                          color={stoolType.color}
+                        />
+                      )}
+                    </View>
+                    <View style={{ flex: 1, marginLeft: theme.spacing.md }}>
+                      <Text variant="body" weight="bold">
+                        {new Date(entry.created_at).toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </Text>
+                      <Text variant="caption" color="secondary">
+                        {stoolType?.label || `Type ${entry.stool_type}`}
+                      </Text>
+                    </View>
+                    <View style={styles.entryMeta}>
+                      {energyIcon && (
+                        <View style={[styles.energyDot, { backgroundColor: energyIcon.color + '20' }]}>
+                          <Ionicons
+                            name={energyIcon.name as any}
+                            size={14}
+                            color={energyIcon.color}
+                          />
+                        </View>
+                      )}
                       <Ionicons
-                        name={energyIcon.name as any}
+                        name="chevron-forward"
                         size={18}
-                        color={energyIcon.color}
+                        color={theme.colors.text.tertiary}
+                        style={{ marginLeft: theme.spacing.sm }}
                       />
-                    )}
+                    </View>
                   </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={theme.colors.text.secondary}
-                  />
-                </TouchableOpacity>
+                </Card>
               );
             })}
           </View>
-        )}
+        ) : null}
 
         {entries.length === 0 && (
           <EmptyState
@@ -406,7 +405,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: theme.spacing['2xl'],
     paddingVertical: theme.spacing['2xl'],
-    paddingTop: theme.spacing['2xl'],
   },
   calendarContainer: {
     paddingHorizontal: theme.spacing['2xl'],
@@ -416,25 +414,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing['2xl'],
     marginBottom: theme.spacing['3xl'],
   },
+  entryCard: {
+    marginBottom: theme.spacing.md,
+  },
   entryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.background.card,
+  },
+  typeIconContainer: {
+    width: 48,
+    height: 48,
     borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border.separator,
-  },
-  entryMeta: {
-    marginRight: theme.spacing.lg,
-  },
-  emptyState: {
-    paddingHorizontal: theme.spacing['2xl'],
-    paddingVertical: theme.spacing['3xl'],
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: theme.spacing['3xl'],
+  },
+  entryMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  energyDot: {
+    width: 28,
+    height: 28,
+    borderRadius: theme.borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContainer: {
     flex: 1,
@@ -454,21 +457,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.separator,
+    borderBottomColor: theme.colors.border.light,
   },
   modalBody: {
     paddingVertical: theme.spacing.lg,
-  },
-  emptyDetailState: {
-    paddingVertical: theme.spacing['3xl'],
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   detailSection: {
     marginBottom: theme.spacing['2xl'],
     paddingBottom: theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.separator,
+    borderBottomColor: theme.colors.border.light,
   },
   detailRow: {
     flexDirection: 'row',
@@ -490,7 +488,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   symptomTag: {
-    backgroundColor: theme.colors.brand.primary,
+    backgroundColor: theme.colors.brand.primary + '20',
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,

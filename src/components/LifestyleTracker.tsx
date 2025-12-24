@@ -1,14 +1,10 @@
-/**
- * Lifestyle Tracking Component
- * Compact, beautiful UI for tracking stress, sleep, water, exercise, and medications
- */
-
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, TextInput as RNTextInput } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../theme';
 import Text from './Text';
+import Card from './Card';
 import {
   STRESS_LEVELS,
   SLEEP_QUALITY,
@@ -63,7 +59,13 @@ export default function LifestyleTracker({
   };
 
   return (
-    <View style={styles.container}>
+    <Card 
+      padding="none" 
+      borderRadius="xl" 
+      elevation="flat" 
+      style={styles.container}
+      backgroundColor={theme.colors.background.card}
+    >
       {/* Header - Always Visible */}
       <TouchableOpacity
         style={styles.header}
@@ -71,15 +73,17 @@ export default function LifestyleTracker({
         activeOpacity={0.7}
       >
         <View style={styles.headerLeft}>
-          <Ionicons name="fitness-outline" size={24} color={theme.colors.brand.primary} />
+          <View style={styles.iconCircle}>
+            <Ionicons name="fitness" size={18} color={theme.colors.brand.primary} />
+          </View>
           <Text variant="title3" weight="bold" style={{ marginLeft: theme.spacing.md }}>
             Lifestyle Tracking
           </Text>
         </View>
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={24}
-          color={theme.colors.text.secondary}
+          size={20}
+          color={theme.colors.text.tertiary}
         />
       </TouchableOpacity>
 
@@ -87,20 +91,20 @@ export default function LifestyleTracker({
       {!expanded && (
         <View style={styles.summary}>
           <View style={styles.summaryItem}>
-            <Ionicons name={stressData.icon as any} size={16} color={stressData.color} />
-            <Text variant="caption" color="secondary" style={{ marginLeft: 4 }}>
+            <Ionicons name={stressData.icon as any} size={14} color={stressData.color} />
+            <Text variant="caption1" weight="bold" color="secondary" style={{ marginLeft: 4 }}>
               Stress: {stressLevel}/10
             </Text>
           </View>
           <View style={styles.summaryItem}>
-            <Ionicons name={sleepData.icon as any} size={16} color={sleepData.color} />
-            <Text variant="caption" color="secondary" style={{ marginLeft: 4 }}>
+            <Ionicons name={sleepData.icon as any} size={14} color={sleepData.color} />
+            <Text variant="caption1" weight="bold" color="secondary" style={{ marginLeft: 4 }}>
               Sleep: {sleepHours}h
             </Text>
           </View>
           <View style={styles.summaryItem}>
-            <Ionicons name="water-outline" size={16} color={theme.colors.brand.secondary} />
-            <Text variant="caption" color="secondary" style={{ marginLeft: 4 }}>
+            <Ionicons name="water" size={14} color={theme.colors.brand.secondary} />
+            <Text variant="caption1" weight="bold" color="secondary" style={{ marginLeft: 4 }}>
               {(waterIntake / 1000).toFixed(1)}L
             </Text>
           </View>
@@ -110,241 +114,256 @@ export default function LifestyleTracker({
       {/* Expanded Content */}
       {expanded && (
         <View style={styles.content}>
-          {/* Stress Level */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name={stressData.icon as any} size={20} color={stressData.color} />
-              <Text variant="body" weight="semiBold" style={{ marginLeft: theme.spacing.sm }}>
-                Stress Level
-              </Text>
-            </View>
-            <View style={styles.sliderContainer}>
-              <Text variant="caption" color="secondary">Relaxed</Text>
-              <Slider
-                style={styles.slider}
-                minimumValue={1}
-                maximumValue={10}
-                step={1}
-                value={stressLevel}
-                onValueChange={onStressChange}
-                minimumTrackTintColor={stressData.color}
-                maximumTrackTintColor={theme.colors.border.light}
-                thumbTintColor={stressData.color}
-              />
-              <Text variant="caption" color="secondary">Stressed</Text>
-            </View>
-            <Text variant="caption" style={{ color: stressData.color, textAlign: 'center' }}>
-              {stressLevel}/10 - {stressData.label}
-            </Text>
-          </View>
-
-          {/* Sleep Quality */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name={sleepData.icon as any} size={20} color={sleepData.color} />
-              <Text variant="body" weight="semiBold" style={{ marginLeft: theme.spacing.sm }}>
-                Sleep Quality
-              </Text>
-            </View>
-            <View style={styles.sliderContainer}>
-              <Text variant="caption" color="secondary">Poor</Text>
-              <Slider
-                style={styles.slider}
-                minimumValue={1}
-                maximumValue={10}
-                step={1}
-                value={sleepQuality}
-                onValueChange={onSleepQualityChange}
-                minimumTrackTintColor={sleepData.color}
-                maximumTrackTintColor={theme.colors.border.light}
-                thumbTintColor={sleepData.color}
-              />
-              <Text variant="caption" color="secondary">Excellent</Text>
-            </View>
-            <Text variant="caption" style={{ color: sleepData.color, textAlign: 'center' }}>
-              {sleepQuality}/10 - {sleepData.label}
-            </Text>
-
-            {/* Sleep Hours */}
-            <View style={styles.inputRow}>
-              <Ionicons name="moon-outline" size={18} color={theme.colors.brand.tertiary} />
-              <Text variant="body" style={{ marginLeft: theme.spacing.sm, flex: 1 }}>
-                Hours slept
-              </Text>
-              <View style={styles.numberInput}>
-                <RNTextInput
-                  value={sleepHours.toString()}
-                  onChangeText={(text) => {
-                    const num = parseFloat(text);
-                    if (!isNaN(num) && num >= 0 && num <= 24) {
-                      onSleepHoursChange(num);
-                    }
-                  }}
-                  keyboardType="decimal-pad"
-                  style={styles.input}
-                  placeholderTextColor={theme.colors.text.tertiary}
+          {/* Stress & Sleep Group */}
+          <View style={styles.metricGroup}>
+            {/* Stress Level Card */}
+            <View style={[styles.metricCard, { backgroundColor: stressData.color + '10', borderColor: stressData.color + '30', borderWidth: 1 }]}>
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.titleRow}>
+                  <Ionicons name={stressData.icon as any} size={20} color={stressData.color} />
+                  <Text variant="headline" weight="bold" style={{ marginLeft: theme.spacing.sm, color: theme.colors.text.primary }}>
+                    Stress
+                  </Text>
+                </View>
+                <Text variant="title2" weight="bold" style={{ color: stressData.color }}>
+                  {stressLevel}/10
+                </Text>
+              </View>
+              
+              <View style={styles.sliderContainer}>
+                <Slider
+                  style={styles.slider}
+                  minimumValue={1}
+                  maximumValue={10}
+                  step={1}
+                  value={stressLevel}
+                  onValueChange={onStressChange}
+                  minimumTrackTintColor={stressData.color}
+                  maximumTrackTintColor={theme.colors.background.field}
+                  thumbTintColor={stressData.color}
                 />
-                <Text variant="caption" color="secondary">hours</Text>
+              </View>
+              <Text variant="caption1" weight="bold" align="center" style={{ color: stressData.color, marginTop: 4 }}>
+                {stressData.label}
+              </Text>
+            </View>
+
+            {/* Sleep Quality Card */}
+            <View style={[styles.metricCard, { backgroundColor: sleepData.color + '10', borderColor: sleepData.color + '30', borderWidth: 1 }]}>
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.titleRow}>
+                  <Ionicons name={sleepData.icon as any} size={20} color={sleepData.color} />
+                  <Text variant="headline" weight="bold" style={{ marginLeft: theme.spacing.sm, color: theme.colors.text.primary }}>
+                    Sleep Quality
+                  </Text>
+                </View>
+                <Text variant="title2" weight="bold" style={{ color: sleepData.color }}>
+                  {sleepQuality}/10
+                </Text>
+              </View>
+
+              <View style={styles.sliderContainer}>
+                <Slider
+                  style={styles.slider}
+                  minimumValue={1}
+                  maximumValue={10}
+                  step={1}
+                  value={sleepQuality}
+                  onValueChange={onSleepQualityChange}
+                  minimumTrackTintColor={sleepData.color}
+                  maximumTrackTintColor={theme.colors.background.field}
+                  thumbTintColor={sleepData.color}
+                />
+              </View>
+              <Text variant="caption1" weight="bold" align="center" style={{ color: sleepData.color, marginTop: 4 }}>
+                {sleepData.label}
+              </Text>
+
+              {/* Hours Input Integrated */}
+              <View style={styles.divider} />
+              <View style={styles.miniInputRow}>
+                <Text variant="body" weight="semiBold" color="secondary">Duration</Text>
+                <View style={styles.inlineInputWrapper}>
+                  <RNTextInput
+                    value={sleepHours === 0 ? '' : sleepHours.toString()}
+                    onChangeText={(text) => {
+                      if (text === '') {
+                        onSleepHoursChange(0);
+                        return;
+                      }
+                      const num = parseFloat(text);
+                      if (!isNaN(num) && num >= 0 && num <= 24) onSleepHoursChange(num);
+                    }}
+                    keyboardType="decimal-pad"
+                    selectTextOnFocus
+                    placeholder="0"
+                    style={styles.inlineInput}
+                    placeholderTextColor={theme.colors.text.tertiary}
+                  />
+                  <Text variant="body" weight="bold" color="secondary">h</Text>
+                </View>
               </View>
             </View>
           </View>
 
-          {/* Water Intake */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="water-outline" size={20} color={theme.colors.brand.secondary} />
-              <Text variant="body" weight="semiBold" style={{ marginLeft: theme.spacing.sm }}>
-                Water Intake
-              </Text>
-            </View>
-            <View style={styles.inputRow}>
-              <Text variant="body" style={{ flex: 1 }}>
-                Amount
-              </Text>
-              <View style={styles.numberInput}>
+          {/* Water & Exercise Row */}
+          <View style={styles.rowGrid}>
+            {/* Water Card */}
+            <View style={[styles.gridCard, { backgroundColor: theme.colors.brand.secondary + '10', borderColor: theme.colors.brand.secondary + '30' }]}>
+              <View style={styles.gridHeader}>
+                <Ionicons name="water" size={24} color={theme.colors.brand.secondary} />
+                <Text variant="headline" weight="bold" style={{ marginTop: 8 }}>Water</Text>
+              </View>
+              <View style={styles.gridInputWrapper}>
                 <RNTextInput
-                  value={(waterIntake / 1000).toFixed(1)}
+                  value={waterIntake === 0 ? '' : (waterIntake / 1000).toString()}
                   onChangeText={(text) => {
-                    const num = parseFloat(text);
-                    if (!isNaN(num) && num >= 0) {
-                      onWaterIntakeChange(Math.round(num * 1000));
+                    if (text === '') {
+                        onWaterIntakeChange(0);
+                        return;
                     }
+                    const num = parseFloat(text);
+                    if (!isNaN(num) && num >= 0) onWaterIntakeChange(Math.round(num * 1000));
                   }}
                   keyboardType="decimal-pad"
-                  style={styles.input}
+                  selectTextOnFocus
+                  placeholder="0"
+                  style={styles.gridInput}
                   placeholderTextColor={theme.colors.text.tertiary}
                 />
-                <Text variant="caption" color="secondary">liters</Text>
+                <Text variant="body" weight="bold" color="secondary" style={{ marginTop: 4 }}>Liters</Text>
               </View>
             </View>
-          </View>
 
-          {/* Exercise */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="fitness-outline" size={20} color={theme.colors.brand.primary} />
-              <Text variant="body" weight="semiBold" style={{ marginLeft: theme.spacing.sm }}>
-                Exercise
-              </Text>
-            </View>
-            <View style={styles.inputRow}>
-              <Text variant="body" style={{ flex: 1 }}>
-                Duration
-              </Text>
-              <View style={styles.numberInput}>
+            {/* Exercise Card */}
+            <View style={[styles.gridCard, { backgroundColor: theme.colors.brand.primary + '10', borderColor: theme.colors.brand.primary + '30' }]}>
+              <View style={styles.gridHeader}>
+                <Ionicons name="fitness" size={24} color={theme.colors.brand.primary} />
+                <Text variant="headline" weight="bold" style={{ marginTop: 8 }}>Workout</Text>
+              </View>
+              <View style={styles.gridInputWrapper}>
                 <RNTextInput
-                  value={exerciseMinutes.toString()}
+                  value={exerciseMinutes === 0 ? '' : exerciseMinutes.toString()}
                   onChangeText={(text) => {
+                    if (text === '') {
+                        onExerciseMinutesChange(0);
+                        return;
+                    }
                     const num = parseInt(text);
-                    if (!isNaN(num) && num >= 0) {
-                      onExerciseMinutesChange(num);
-                    }
+                    if (!isNaN(num) && num >= 0) onExerciseMinutesChange(num);
                   }}
                   keyboardType="number-pad"
-                  style={styles.input}
+                  selectTextOnFocus
+                  placeholder="0"
+                  style={styles.gridInput}
                   placeholderTextColor={theme.colors.text.tertiary}
                 />
-                <Text variant="caption" color="secondary">min</Text>
+                <Text variant="body" weight="bold" color="secondary" style={{ marginTop: 4 }}>Mins</Text>
               </View>
             </View>
+          </View>
 
-            {exerciseMinutes > 0 && (
-              <View style={styles.exerciseTypes}>
-                {EXERCISE_TYPES.map((type) => (
+          {/* Exercise Types Chips (Conditional) */}
+          {exerciseMinutes > 0 && (
+            <View style={styles.exerciseTypes}>
+              {EXERCISE_TYPES.map((type) => {
+                const isSelected = exerciseType === type.value;
+                return (
                   <TouchableOpacity
                     key={type.value}
                     style={[
                       styles.exerciseChip,
-                      exerciseType === type.value && styles.exerciseChipSelected,
+                      isSelected && { borderColor: theme.colors.brand.primary, backgroundColor: theme.colors.brand.primary + '20' },
                     ]}
                     onPress={() => onExerciseTypeChange(type.value)}
                   >
                     <Ionicons
                       name={type.icon as any}
                       size={16}
-                      color={
-                        exerciseType === type.value
-                          ? theme.colors.brand.white
-                          : theme.colors.text.secondary
-                      }
+                      color={isSelected ? theme.colors.brand.primary : theme.colors.text.secondary}
                     />
                     <Text
-                      variant="caption"
-                      weight="semiBold"
+                      variant="caption1"
+                      weight="bold"
                       style={{
-                        marginLeft: 4,
-                        color:
-                          exerciseType === type.value
-                            ? theme.colors.brand.white
-                            : theme.colors.text.secondary,
+                        marginLeft: 6,
+                        color: isSelected ? theme.colors.text.primary : theme.colors.text.secondary,
                       }}
                     >
                       {type.label}
                     </Text>
                   </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
+                );
+              })}
+            </View>
+          )}
 
           {/* Medications */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Ionicons name="medical-outline" size={20} color={theme.colors.brand.tertiary} />
-              <Text variant="body" weight="semiBold" style={{ marginLeft: theme.spacing.sm }}>
+              <Ionicons name="medical" size={20} color={theme.colors.brand.tertiary} />
+              <Text variant="headline" weight="bold" style={{ marginLeft: theme.spacing.sm }}>
                 Medications
               </Text>
             </View>
             <View style={styles.medicationsList}>
-              {COMMON_MEDICATIONS.map((med) => (
-                <TouchableOpacity
-                  key={med}
-                  style={[
-                    styles.medicationChip,
-                    medications.includes(med) && styles.medicationChipSelected,
-                  ]}
-                  onPress={() => toggleMedication(med)}
-                >
-                  <Text
-                    variant="caption"
-                    weight="semiBold"
-                    style={{
-                      color: medications.includes(med)
-                        ? theme.colors.brand.white
-                        : theme.colors.text.secondary,
-                    }}
+              {COMMON_MEDICATIONS.map((med) => {
+                const isSelected = medications.includes(med);
+                return (
+                  <TouchableOpacity
+                    key={med}
+                    style={[
+                      styles.medicationChip,
+                      isSelected && { borderColor: theme.colors.brand.tertiary, backgroundColor: theme.colors.brand.tertiary + '20' },
+                    ]}
+                    onPress={() => toggleMedication(med)}
                   >
-                    {med}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      variant="caption1"
+                      weight="bold"
+                      style={{
+                        color: isSelected ? theme.colors.text.primary : theme.colors.text.secondary,
+                      }}
+                    >
+                      {med}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
         </View>
       )}
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.background.card,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    padding: theme.spacing.lg,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  iconCircle: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: theme.colors.brand.primary + '15',
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
   summary: {
     flexDirection: 'row',
-    marginTop: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
     gap: theme.spacing.lg,
   },
   summaryItem: {
@@ -352,9 +371,99 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: {
-    marginTop: theme.spacing.lg,
-    gap: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
+    gap: theme.spacing.md,
   },
+  // Dashboard Styles
+  metricGroup: {
+    gap: theme.spacing.md,
+  },
+  metricCard: {
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sliderContainer: {
+    flex: 1,
+    marginBottom: theme.spacing.xs,
+  },
+  slider: {
+    height: 40,
+    width: '100%',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: theme.colors.border.light,
+    marginVertical: theme.spacing.md,
+    opacity: 0.5,
+  },
+  miniInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  inlineInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.field, // distinct field background
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+  },
+  inlineInput: {
+    fontSize: 16,
+    fontFamily: theme.fontFamily.bold,
+    color: theme.colors.text.primary,
+    width: 50,
+    textAlign: 'center',
+    padding: 0,
+  },
+  // Grid Row
+  rowGrid: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  gridCard: {
+    flex: 1,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  gridHeader: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  gridInputWrapper: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  gridInput: {
+    fontSize: 28, // Large number
+    fontFamily: theme.fontFamily.bold,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+    width: '100%',
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.background.field, // clear input background
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+    marginBottom: 4,
+  },
+  // Legacy & Shared
   section: {
     gap: theme.spacing.md,
   },
@@ -362,14 +471,46 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  sliderContainer: {
+  exerciseTypes: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.xs,
+  },
+  exerciseChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.pill,
+    backgroundColor: theme.colors.background.field,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
-  slider: {
-    flex: 1,
-    height: 40,
+  medicationsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+  },
+  medicationChip: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.pill,
+    backgroundColor: theme.colors.background.field,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  // Generic input style (legacy fallback)
+  input: {
+    backgroundColor: theme.colors.background.field,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    color: theme.colors.text.primary,
+    fontSize: 18,
+    fontFamily: theme.fontFamily.bold,
+    minWidth: 80,
+    textAlign: 'center',
   },
   inputRow: {
     flexDirection: 'row',
@@ -381,51 +522,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.sm,
   },
-  input: {
-    backgroundColor: theme.colors.background.primary,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    color: theme.colors.text.primary,
-    fontSize: 16,
-    fontFamily: theme.fontFamily.regular,
-    minWidth: 60,
-    textAlign: 'center',
-  },
-  exerciseTypes: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-  },
-  exerciseChip: {
+  rowLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.pill,
-    backgroundColor: theme.colors.background.primary,
-    borderWidth: 1,
-    borderColor: theme.colors.border.light,
-  },
-  exerciseChipSelected: {
-    backgroundColor: theme.colors.brand.primary,
-    borderColor: theme.colors.brand.primary,
-  },
-  medicationsList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-  },
-  medicationChip: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.pill,
-    backgroundColor: theme.colors.background.primary,
-    borderWidth: 1,
-    borderColor: theme.colors.border.light,
-  },
-  medicationChipSelected: {
-    backgroundColor: theme.colors.brand.tertiary,
-    borderColor: theme.colors.brand.tertiary,
   },
 });

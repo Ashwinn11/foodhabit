@@ -19,6 +19,26 @@ export interface SurfaceProps {
    * Border radius of the surface. Defaults to theme.borderRadius.md.
    */
   borderRadius?: keyof typeof theme.borderRadius | number;
+  /**
+   * Alignment of children along the cross-axis.
+   */
+  align?: ViewStyle['alignItems'];
+  /**
+   * Alignment of children along the main-axis.
+   */
+  justify?: ViewStyle['justifyContent'];
+  /**
+   * Flex direction of the children.
+   */
+  flexDirection?: ViewStyle['flexDirection'];
+  /**
+   * Border color of the surface.
+   */
+  borderColor?: string;
+  /**
+   * Border width of the surface.
+   */
+  borderWidth?: number;
 }
 
 export const Surface: React.FC<SurfaceProps> = ({
@@ -28,12 +48,18 @@ export const Surface: React.FC<SurfaceProps> = ({
   elevation = 'md',
   backgroundColor = theme.colors.background.card,
   borderRadius = 'md',
+  align,
+  justify,
+  flexDirection,
+  borderColor,
+  borderWidth,
 }) => {
   const resolvedBorderRadius = typeof borderRadius === 'string'
-    ? theme.borderRadius[borderRadius]
+    ? theme.borderRadius[borderRadius as keyof typeof theme.borderRadius]
     : borderRadius;
 
-  const shadowStyle = elevation === 'none' ? theme.shadows.none : theme.shadows[elevation];
+  const shadowKey = elevation as keyof typeof theme.shadows;
+  const shadowStyle = elevation === 'none' ? theme.shadows.none : theme.shadows[shadowKey];
 
   return (
     <View
@@ -42,12 +68,24 @@ export const Surface: React.FC<SurfaceProps> = ({
         {
           backgroundColor,
           borderRadius: resolvedBorderRadius,
+          borderColor,
+          borderWidth,
         },
         shadowStyle,
         style,
       ]}
     >
-      <View style={[styles.content, contentContainerStyle]}>
+      <View 
+        style={[
+          styles.content, 
+          { 
+            alignItems: align, 
+            justifyContent: justify, 
+            flexDirection: flexDirection 
+          }, 
+          contentContainerStyle
+        ]}
+      >
         {children}
       </View>
     </View>
@@ -60,6 +98,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    width: '100%',
     // Android requires overflow hidden on content to respect borderRadius with elevation
     ...Platform.select({
       android: {

@@ -12,7 +12,8 @@ import { streakService } from '../services/gutHarmony/streakService';
 import { entryService } from '../services/gutHarmony/entryService';
 import { theme } from '../theme';
 import Text from './Text';
-import GridCard from './GridCard';
+import Card from './Card';
+import SectionHeader from './SectionHeader';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Achievement {
@@ -168,36 +169,27 @@ export default function AchievementsWidget({ compact = false }: AchievementsWidg
   if (compact) {
     return (
       <View style={styles.compactContainer}>
-        <View style={styles.compactHeader}>
-          <Text variant="body" weight="bold">
-            Achievements
-          </Text>
-          <Text variant="caption" color="secondary">
-            {unlockedCount} / {achievements.length}
-          </Text>
-        </View>
+        <SectionHeader 
+          title="Achievements" 
+          subtitle={`${unlockedCount} / ${achievements.length}`}
+          variant="compact"
+        />
         <View style={styles.compactGrid}>
           {achievements.map((achievement) => (
-            <GridCard
+            <Card
               key={achievement.id}
-              opacity={achievement.unlocked ? 1 : 0.6}
+              padding="none"
+              style={styles.compactCard}
+              backgroundColor={achievement.unlocked ? theme.colors.glass.primary : theme.colors.background.card}
+              elevation={achievement.unlocked ? 'flat' : 'none'}
+              borderRadius="lg"
             >
               <Animated.View
                 style={{
-                  opacity: scaleAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 1],
-                  }),
-                  transform: [
-                    {
-                      scale: scaleAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.9, 1],
-                      }),
-                    },
-                  ],
+                  opacity: scaleAnim,
+                  transform: [{ scale: scaleAnim }],
                   alignItems: 'center',
-                  width: '100%',
+                  padding: theme.spacing.md,
                 }}
               >
                 <View
@@ -212,7 +204,7 @@ export default function AchievementsWidget({ compact = false }: AchievementsWidg
                 >
                   <Ionicons
                     name={achievement.icon as any}
-                    size={24}
+                    size={20}
                     color={
                       achievement.unlocked
                         ? achievement.iconColor
@@ -223,30 +215,28 @@ export default function AchievementsWidget({ compact = false }: AchievementsWidg
                     <View style={styles.lockOverlay}>
                       <Ionicons
                         name="lock-closed"
-                        size={12}
+                        size={10}
                         color={theme.colors.text.tertiary}
                       />
                     </View>
                   )}
                 </View>
                 <Text
-                  variant="caption"
-                  weight="semiBold"
+                  variant="caption2"
+                  weight="bold"
                   align="center"
-                  numberOfLines={2}
+                  numberOfLines={1}
                   style={{
-                    marginTop: theme.spacing.sm,
+                    marginTop: theme.spacing.xs,
                     color: achievement.unlocked
                       ? theme.colors.text.primary
                       : theme.colors.text.tertiary,
-                    fontSize: 11,
-                    lineHeight: 14,
                   }}
                 >
                   {achievement.name}
                 </Text>
               </Animated.View>
-            </GridCard>
+            </Card>
           ))}
         </View>
       </View>
@@ -273,84 +263,75 @@ export default function AchievementsWidget({ compact = false }: AchievementsWidg
           {achievements.map((achievement) => (
             <Animated.View
               key={achievement.id}
-              style={[
-                {
-                  opacity: scaleAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 1],
-                  }),
-                  transform: [
-                    {
-                      translateY: scaleAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [20, 0],
-                      }),
-                    },
-                  ],
-                },
-              ]}
+              style={{
+                opacity: scaleAnim,
+                transform: [
+                  {
+                    translateY: scaleAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [20, 0],
+                    }),
+                  },
+                ],
+              }}
             >
-              <View
-                style={[
-                  styles.badgeContainer,
-                  !achievement.unlocked && styles.badgeContainerLocked,
-                ]}
+              <Card
+                padding="none"
+                style={styles.badgeCard}
+                backgroundColor={achievement.unlocked ? theme.colors.glass.primary : theme.colors.background.card}
+                elevation={achievement.unlocked ? 'secondary' : 'none'}
               >
-                <View
-                  style={[
-                    styles.badge,
-                    {
-                      backgroundColor: achievement.unlocked
-                        ? achievement.iconColor + '20'
-                        : theme.colors.border.light,
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name={achievement.icon as any}
-                    size={32}
-                    color={
-                      achievement.unlocked
-                        ? achievement.iconColor
-                        : theme.colors.text.tertiary
-                    }
-                  />
-                </View>
-                <Text
-                  variant="caption"
-                  weight="semiBold"
-                  align="center"
-                  style={{
-                    marginTop: theme.spacing.md,
-                    color: achievement.unlocked
-                      ? theme.colors.text.primary
-                      : theme.colors.text.tertiary,
-                  }}
-                >
-                  {achievement.name}
-                </Text>
-                <Text
-                  variant="caption"
-                  color="secondary"
-                  align="center"
-                  style={{
-                    marginTop: 2,
-                    fontSize: 10,
-                  }}
-                >
-                  {achievement.description}
-                </Text>
-
-                {!achievement.unlocked && (
-                  <View style={styles.lockBadge}>
+                <View style={styles.badgeCardInner}>
+                  <View
+                    style={[
+                      styles.badge,
+                      {
+                        backgroundColor: achievement.unlocked
+                          ? achievement.iconColor + '20'
+                          : theme.colors.background.primary,
+                      },
+                    ]}
+                  >
                     <Ionicons
-                      name="lock-closed"
-                      size={12}
-                      color={theme.colors.text.tertiary}
+                      name={achievement.icon as any}
+                      size={32}
+                      color={
+                        achievement.unlocked
+                          ? achievement.iconColor
+                          : theme.colors.text.tertiary
+                      }
                     />
+                    {!achievement.unlocked && (
+                      <View style={styles.lockBadge}>
+                        <Ionicons
+                          name="lock-closed"
+                          size={12}
+                          color={theme.colors.text.tertiary}
+                        />
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
+                  <Text
+                    variant="bodyEmphasized"
+                    align="center"
+                    style={{
+                      color: achievement.unlocked
+                        ? theme.colors.text.primary
+                        : theme.colors.text.tertiary,
+                    }}
+                  >
+                    {achievement.name}
+                  </Text>
+                  <Text
+                    variant="caption2"
+                    color="secondary"
+                    align="center"
+                    style={{ marginTop: 2 }}
+                  >
+                    {achievement.description}
+                  </Text>
+                </View>
+              </Card>
             </Animated.View>
           ))}
         </View>
@@ -364,64 +345,59 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.lg,
   },
   header: {
-    paddingHorizontal: theme.spacing['2xl'],
     marginBottom: theme.spacing.lg,
   },
   grid: {
     flexDirection: 'row',
     paddingHorizontal: theme.spacing['2xl'],
     gap: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
   },
-  badgeContainer: {
-    width: 100,
-    backgroundColor: theme.colors.background.card,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
+  badgeCard: {
+    width: 140,
+    marginRight: theme.spacing.md,
+  },
+  badgeCardInner: {
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border.separator,
-  },
-  badgeContainerLocked: {
-    opacity: 0.6,
+    padding: theme.spacing.lg,
   },
   badge: {
     width: 64,
     height: 64,
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.xl,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: theme.spacing.md,
+    position: 'relative',
   },
   lockBadge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    top: -4,
+    right: -4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: theme.colors.background.card,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.background.primary,
   },
   compactContainer: {
-    marginBottom: theme.spacing.lg,
-  },
-  compactHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
-    paddingHorizontal: theme.spacing['2xl'],
+    marginBottom: theme.spacing.xl,
   },
   compactGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: theme.spacing['2xl'],
     gap: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+  },
+  compactCard: {
+    width: '30.5%',
   },
   achievementIconContainer: {
-    width: 56,
-    height: 56,
+    width: 48,
+    height: 48,
     borderRadius: theme.borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
@@ -431,9 +407,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: theme.colors.background.card,
     justifyContent: 'center',
     alignItems: 'center',
