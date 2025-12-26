@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
   },
   valuePropText: {
     flex: 1,
-    color: theme.colors.text.white,
+    color: theme.colors.brand.black,
   },
   footer: {
     width: '100%',
