@@ -53,7 +53,7 @@ export default function App() {
     dark: true,
     colors: {
       primary: theme.colors.brand.coral,
-      background: theme.colors.brand.black,
+      background: theme.colors.brand.background,
       card: theme.colors.brand.cream,
       text: theme.colors.text.white,
       border: theme.colors.brand.cream,
@@ -72,7 +72,7 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer theme={NavigationTheme}>
         <AppContent />
-        <StatusBar style="light" backgroundColor={theme.colors.brand.black} />
+        <StatusBar style="light" backgroundColor={theme.colors.brand.background} />
       </NavigationContainer>
     </SafeAreaProvider>
   );
@@ -81,7 +81,7 @@ export default function App() {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    backgroundColor: theme.colors.brand.black,
+    backgroundColor: theme.colors.brand.background,
     alignItems: 'center',
     justifyContent: 'center',
   },

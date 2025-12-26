@@ -16,7 +16,8 @@ export const colors = {
     purple: '#cda4e8',   // Tertiary color (Purple)
     cream: '#FCEFDE',      // Cream (Light background)
     white: '#ffffff',      // Pure White
-    black: '#000000',      // Pure Black
+    black: '#000000',
+    background:"#1a2332",
   },
 
 

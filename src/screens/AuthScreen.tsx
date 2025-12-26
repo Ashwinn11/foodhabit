@@ -224,7 +224,7 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.brand.black,
+    backgroundColor: theme.colors.brand.background,
   },
   contentContainer: {
     flex: 1,
