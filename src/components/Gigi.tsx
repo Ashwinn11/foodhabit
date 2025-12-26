@@ -227,7 +227,7 @@ export default function Gigi({
             </RadialGradient>
           </Defs>
 
-          <AnimatedG animatedProps={containerTransform} origin="512, 512">
+          <AnimatedG animatedProps={containerTransform}>
             {/* SVG Content from icon.svg - Excluded face paths */}
             
             {/* Outline/Background parts could go here if needed, but icon.svg starts with path4 */}
