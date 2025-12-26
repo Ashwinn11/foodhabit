@@ -12,7 +12,9 @@ import {
   Nunito_700Bold,
 } from '@expo-google-fonts/nunito';
 import { useAuth } from './src/hooks/useAuth';
-import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen } from './src/screens';
+import { registerForPushNotificationsAsync } from './src/services/notificationService';
+import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, PaywallScreen, OnboardingScreen } from './src/screens';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthCallbackScreen from './src/screens/AuthCallbackScreen';
 import { theme } from './src/theme';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -67,16 +69,37 @@ function MainTabs() {
   );
 }
 
+const ONBOARDING_KEY = '@gutscan_onboarding_complete';
+
 function AppContent() {
   const { session, loading } = useAuth();
+  const [hasOnboarded, setHasOnboarded] = React.useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    checkOnboarding();
+  }, []);
+
+  const checkOnboarding = async () => {
+    try {
+      const value = await AsyncStorage.getItem(ONBOARDING_KEY);
+      setHasOnboarded(value === 'true');
+    } catch {
+      setHasOnboarded(true); // Skip onboarding on error
+    }
+  };
+
+  const completeOnboarding = async () => {
+    await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+    setHasOnboarded(true);
+  };
 
   // Handle auth callback on web only
   const isWeb = typeof window !== 'undefined' && window.location;
-  if (isWeb && window.location.pathname === '/auth/callback') {
+  if (isWeb && window!.location.pathname === '/auth/callback') {
     return <AuthCallbackScreen />;
   }
 
-  if (loading) {
+  if (loading || hasOnboarded === null) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.brand.coral} />
@@ -85,6 +108,11 @@ function AppContent() {
         </RNText>
       </View>
     );
+  }
+
+  // Show onboarding first (before auth)
+  if (!hasOnboarded) {
+    return <OnboardingScreen onComplete={completeOnboarding} />;
   }
 
   if (!session) {
@@ -102,6 +130,11 @@ function AppContent() {
       <Stack.Screen name="Main" component={MainTabs} />
       <Stack.Screen name="Camera" component={CameraScreen} />
       <Stack.Screen name="Result" component={ResultScreen} />
+      <Stack.Screen 
+        name="Paywall" 
+        component={PaywallScreen}
+        options={{ presentation: 'modal', gestureEnabled: true }}
+      />
     </Stack.Navigator>
   );
 }
@@ -114,6 +147,10 @@ export default function App() {
     Nunito_600SemiBold,
     Nunito_700Bold,
   });
+
+  React.useEffect(() => {
+    registerForPushNotificationsAsync();
+  }, []);
 
   if (!fontsLoaded) {
     return (

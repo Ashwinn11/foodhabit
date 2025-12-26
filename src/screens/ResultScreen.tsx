@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text } from '../components';
+import { Text, Gigi, GigiEmotion } from '../components';
 import { theme } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 import { 
@@ -27,10 +27,8 @@ import {
 const { width } = Dimensions.get('window');
 
 interface GigiReaction {
-  emotion: 'happy' | 'neutral' | 'sad';
+  emotion: GigiEmotion;
   message: string;
-  emoji: string;
-  color: string;
 }
 
 function getGigiReaction(score: number, message: string): GigiReaction {
@@ -38,22 +36,16 @@ function getGigiReaction(score: number, message: string): GigiReaction {
     return {
       emotion: 'happy',
       message,
-      emoji: '🦠',
-      color: theme.colors.brand.teal,
     };
   } else if (score >= 60) {
     return {
       emotion: 'neutral',
       message,
-      emoji: '🦠',
-      color: theme.colors.brand.purple,
     };
   } else {
     return {
       emotion: 'sad',
       message,
-      emoji: '🦠',
-      color: theme.colors.brand.coral,
     };
   }
 }
@@ -177,26 +169,22 @@ export default function ResultScreen({ route, navigation }: any) {
 
         {/* Gigi Reaction */}
         <View style={styles.gigiContainer}>
-          <View style={[styles.gigiCircle, { backgroundColor: gigi.color }]}>
-            <Text style={styles.gigiEmoji}>{gigi.emoji}</Text>
-          </View>
-          <Text variant="title3" weight="semiBold" style={styles.gigiMessage}>
+          <Gigi emotion={gigi.emotion} size="xl" />
+          <Text variant="title1" style={styles.reactionText}>
             {gigi.message}
           </Text>
         </View>
 
         {/* Score */}
         <View style={styles.scoreContainer}>
-          <Text variant="largeTitle" weight="bold" style={styles.scoreNumber}>
-            {score}
+          <Text weight="bold" style={styles.scoreText}>
+            {Math.round(score)}
+            <Text style={styles.scoreLabel}>/100</Text>
           </Text>
-          <Text variant="title3" style={styles.scoreLabel}>
-            /100
+          <Text variant="body" style={styles.scoreSubtext}>
+            Gut Health Score
           </Text>
         </View>
-        <Text variant="body" style={styles.scoreSubtext}>
-          Gut Health Score
-        </Text>
 
         {/* Score Label */}
         <View style={styles.scoreLabelContainer}>
@@ -206,21 +194,39 @@ export default function ResultScreen({ route, navigation }: any) {
         </View>
 
         {/* Identified Foods */}
-        <View style={styles.section}>
+        <View style={styles.foodsContainer}>
           <Text variant="title3" weight="semiBold" style={styles.sectionTitle}>
             What's in this meal?
           </Text>
-          {foods.map((food, index) => (
+          {foods
+            .filter(f => {
+              const name = f.name.toLowerCase();
+              const excluded = [
+                'food', 'tableware', 'ingredient', 'recipe', 'cuisine', 'dish', 'meal', 
+                'cooking', 'produce', 'vegetable', 'dishware', 'serveware', 'cutlery'
+              ];
+              
+              // Filter exact matches
+              if (excluded.includes(name)) return false;
+              
+              // Filter "Cuisine" types (e.g., "Indian cuisine")
+              if (name.includes('cuisine')) return false;
+
+              // Filter generic "Food" suffix (optional, depends on preference)
+              // if (name.endsWith(' food')) return false;
+
+              return true;
+            })
+            .slice(0, 5) // Limit to top 5 real foods
+            .map((food, index) => (
             <View key={index} style={styles.foodItem}>
               <Text variant="body" style={styles.foodText}>
-                • {food.name}
+                • {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
               </Text>
             </View>
           ))}
-          <TouchableOpacity style={styles.editButton}>
-            <Text variant="body" style={styles.editButtonText}>
-              Edit foods
-            </Text>
+          <TouchableOpacity>
+            <Text style={styles.editFoodsText}>Edit foods</Text>
           </TouchableOpacity>
         </View>
 
@@ -330,20 +336,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: theme.spacing.xl,
   },
+  reactionText: {
+    color: theme.colors.text.white,
+    textAlign: 'center',
+    paddingHorizontal: theme.spacing.xl,
+    marginTop: theme.spacing.xs,
+  },
   scoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     justifyContent: 'center',
     marginBottom: theme.spacing.xs,
   },
-  scoreNumber: {
+  scoreText: {
     color: theme.colors.text.white,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xs,
     fontSize: 64,
+    lineHeight: 72,
+    includeFontPadding: false,
   },
   scoreLabel: {
+    fontSize: 24,
     color: theme.colors.text.white,
     opacity: 0.7,
-    marginLeft: theme.spacing.xs,
+    fontWeight: 'normal',
   },
   scoreSubtext: {
     color: theme.colors.text.white,
@@ -357,6 +373,10 @@ const styles = StyleSheet.create({
   },
   scoreLabelText: {
     color: theme.colors.brand.teal,
+  },
+  foodsContainer: {
+    paddingHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing['2xl'],
   },
   section: {
     paddingHorizontal: theme.spacing.xl,
@@ -372,11 +392,9 @@ const styles = StyleSheet.create({
   foodText: {
     color: theme.colors.text.white,
   },
-  editButton: {
-    marginTop: theme.spacing.sm,
-  },
-  editButtonText: {
+  editFoodsText: {
     color: theme.colors.brand.cream,
+    marginTop: theme.spacing.sm,
   },
   breakdownItem: {
     flexDirection: 'row',

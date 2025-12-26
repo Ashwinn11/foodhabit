@@ -14,12 +14,27 @@ interface FoodLabel {
 
 interface RecognitionResult {
     success: boolean;
-    foods: FoodLabel[];
+    foods: any[];
     error?: string;
+    debug?: any;
 }
 
+// Hierarchy: if Key (Specific) is found, remove Values (Generic)
+const HIERARCHY: Record<string, string[]> = {
+    "biryani": ["rice", "spiced rice", "white rice", "fried rice", "pilaf", "dish"],
+    "burger": ["bread", "sandwich", "beef", "meat", "fast food"],
+    "pizza": ["bread", "cheese", "tomato", "fast food"],
+    "salad": ["vegetable", "leaf vegetable", "produce", "ingredient", "dish"],
+    "pasta": ["noodle", "dish"],
+    "steak": ["meat", "beef", "dish"],
+    "chicken": ["meat", "poultry", "bird", "dish"],
+    "salmon": ["fish", "seafood", "dish"],
+    "sushi": ["fish", "seafood", "rice", "dish"],
+    "taco": ["tortilla", "fast food", "dish"],
+    "soup": ["liquid", "dish"],
+};
+
 serve(async (req) => {
-    // Handle CORS preflight
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
@@ -34,18 +49,15 @@ serve(async (req) => {
             );
         }
 
-        // Get Google Vision API key from environment
         const apiKey = Deno.env.get("GOOGLE_VISION_API_KEY");
         if (!apiKey) {
             throw new Error("Google Vision API key not configured");
         }
 
-        // Download image and convert to base64
         const imageResponse = await fetch(imageUrl);
         const imageBuffer = await imageResponse.arrayBuffer();
-        const base64Image = encode(new Uint8Array(imageBuffer));
+        const base64Image = encode(imageBuffer);
 
-        // Call Google Vision API
         const visionResponse = await fetch(
             `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
             {
@@ -56,9 +68,9 @@ serve(async (req) => {
                         {
                             image: { content: base64Image },
                             features: [
-                                { type: "LABEL_DETECTION", maxResults: 10 },
-                                { type: "WEB_DETECTION", maxResults: 5 },
-                                { type: "SAFE_SEARCH_DETECTION" }, // Added to ensure we get SOMETHING
+                                { type: "LABEL_DETECTION", maxResults: 20 },
+                                { type: "WEB_DETECTION", maxResults: 10 },
+                                { type: "SAFE_SEARCH_DETECTION" },
                             ],
                         },
                     ],
@@ -73,92 +85,145 @@ serve(async (req) => {
 
         const visionData = await visionResponse.json();
         const annotations = visionData.responses?.[0] || {};
-
-        // Extract food-related labels
         const labels = annotations.labelAnnotations || [];
         const webEntities = annotations.webDetection?.webEntities || [];
 
-        // Combine and filter for food items
-        const foodKeywords = [
-            "food", "dish", "meal", "cuisine", "ingredient", "vegetable", "fruit",
-            "meat", "protein", "grain", "dairy", "snack", "breakfast", "lunch", "dinner"
-        ];
-
-        const allLabels = [
+        // 1. Combine all raw labels
+        const allLabels: FoodLabel[] = [
             ...labels.map((l: any) => ({ name: l.description, confidence: l.score })),
             ...webEntities.map((e: any) => ({ name: e.description, confidence: e.score || 0.5 })),
         ];
 
-        // Filter for likely food items
-        const foodLabels = allLabels
-            .filter((label: FoodLabel) => {
-                const lowerName = label.name.toLowerCase();
-                return (
-                    foodKeywords.some(keyword => lowerName.includes(keyword)) ||
-                    label.confidence > 0.8
-                );
-            })
-            .sort((a: FoodLabel, b: FoodLabel) => b.confidence - a.confidence)
-            .slice(0, 5); // Top 5 results
+        // 2. Initial Strict Filter
+        const excludedTerms = [
+            'food', 'tableware', 'ingredient', 'recipe', 'cuisine', 'dish', 'meal',
+            'cooking', 'produce', 'vegetable', 'dishware', 'serveware', 'cutlery',
+            'plate', 'bowl', 'fork', 'spoon', 'knife', 'platter', 'delicacy',
+            'comfort food', 'staple food', 'superfood', 'whole food', 'natural foods',
+            'local food', 'vegan nutrition', 'vegetarian food', 'garnish', 'supper', 'lunch', 'dinner',
+            'laotian cuisine', 'thai cuisine', 'indian cuisine', 'chinese cuisine',
+            'iranian cuisine', 'sri lankan cuisine', 'asian food', 'street food'
+        ];
 
-        // Match to food database
+        let candidates = allLabels.filter(label => {
+            const name = label.name.toLowerCase();
+            if (excludedTerms.includes(name)) return false;
+            // Remove "Cuisine" suffix
+            if (name.includes(' cuisine')) return false;
+            // Remove generic "Food" suffix (e.g. "Asian food")
+            if (name.endsWith(' food') && name !== 'fast food') return false;
+
+            return label.confidence > 0.60;
+        });
+
+        // 3. Smart Deduplication (Hierarchy & Redundancy)
+        candidates.sort((a, b) => b.confidence - a.confidence);
+
+        const toRemove = new Set<string>();
+
+        // Check against hierarchy
+        candidates.forEach(winner => {
+            const winnerName = winner.name.toLowerCase();
+
+            // Apply hierarchy rules (e.g. if Biryani, remove Rice)
+            Object.entries(HIERARCHY).forEach(([parent, children]) => {
+                if (winnerName.includes(parent)) {
+                    children.forEach(child => toRemove.add(child));
+                }
+            });
+
+            // Also logic: If we have "Hyderabadi Biryani", remove generic "Biryani"
+            candidates.forEach(other => {
+                if (winner === other) return;
+                const otherName = other.name.toLowerCase();
+
+                if (winnerName.includes(otherName) && winnerName !== otherName) {
+                    toRemove.add(otherName);
+                }
+            });
+        });
+
+        const uniqueFoods: FoodLabel[] = [];
+        const seenNames = new Set<string>();
+
+        for (const candidate of candidates) {
+            const lower = candidate.name.toLowerCase();
+
+            // Skip if marked for removal
+            if (toRemove.has(lower)) continue;
+
+            // Skip if duplicate
+            if (seenNames.has(lower)) continue;
+
+            uniqueFoods.push(candidate);
+            seenNames.add(lower);
+        }
+
+        // 4. Match to Supabase Database
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
         const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        const matchedFoods = [];
-        for (const label of foodLabels) {
-            const { data } = await supabase
-                .from("food_database")
-                .select("*")
-                .ilike("name", `%${label.name}%`)
-                .limit(1)
-                .single();
+        // Get top 5 unique foods
+        const topFoods = uniqueFoods.slice(0, 5);
+        const finalFoods = [];
 
-            if (data) {
-                matchedFoods.push({
-                    ...data,
-                    confidence: label.confidence,
-                });
-            } else {
-                matchedFoods.push({
-                    name: label.name,
-                    confidence: label.confidence,
-                    category: "unknown",
-                    fiber_score: 0,
-                    trigger_risk: 5,
-                    is_plant: false,
-                    common_triggers: [],
-                });
+        for (const food of topFoods) {
+            // Try to find exact or partial match in DB
+            const { data: exactMatch } = await supabase
+                .from('food_database')
+                .select('*')
+                .ilike('name', food.name)
+                .maybeSingle();
+
+            if (exactMatch) {
+                finalFoods.push({ ...exactMatch, confidence: food.confidence });
+                continue;
             }
+
+            // Try fuzzy match / contains
+            const { data: fuzzyMatch } = await supabase
+                .from('food_database')
+                .select('*')
+                .ilike('name', `%${food.name}%`)
+                .limit(1)
+                .maybeSingle();
+
+            if (fuzzyMatch) {
+                finalFoods.push({ ...fuzzyMatch, name: food.name, confidence: food.confidence }); // Keep original detected name? Or use DB name? Using original name for now to match user expectation
+                continue;
+            }
+
+            // Defaults if not found in DB
+            finalFoods.push({
+                name: food.name,
+                confidence: food.confidence,
+                category: 'unknown',
+                fiber_score: 5, // Default for unknown - neutral
+                trigger_risk: 1,
+                is_plant: true, // Optimistic default
+                common_triggers: []
+            });
         }
 
         const result: RecognitionResult = {
             success: true,
-            foods: matchedFoods,
-            // @ts-ignore
+            foods: finalFoods,
             debug: {
-                imageSize: imageBuffer.byteLength,
-                base64Header: base64Image.substring(0, 50), // Check file signature
-                allLabels: allLabels.map(l => ({ name: l.name, confidence: l.confidence })),
-                rawVisionResponse: annotations
+                allLabels: allLabels.map(l => l.name)
             }
         };
 
         return new Response(JSON.stringify(result), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+
     } catch (error) {
         console.error("Error:", error);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
         return new Response(
-            JSON.stringify({
-                success: false,
-                error: error.message,
-            }),
-            {
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-                status: 500,
-            }
+            JSON.stringify({ success: false, error: errorMessage }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
         );
     }
 });

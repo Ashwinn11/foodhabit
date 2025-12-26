@@ -47,26 +47,8 @@ export async function recognizeFood(imageUrl: string): Promise<IdentifiedFood[]>
         }
 
         return data.foods || [];
-    } catch (error) {
-        console.error('Error recognizing food:', error);
-        throw error;
-    }
-}
-
-/**
- * Check if food recognition is available
- */
-export async function isFoodRecognitionAvailable(): Promise<boolean> {
-    try {
-        // Try a test call to see if the function is deployed
-        const { error } = await supabase.functions.invoke('recognize-food', {
-            body: { imageUrl: 'test' },
-        });
-
-        // If we get a response (even an error), the function exists
-        return true;
-    } catch (error) {
-        console.error('Food recognition not available:', error);
-        return false;
+        } catch {
+        console.error('Food recognition not available');
+        return [];
     }
 }

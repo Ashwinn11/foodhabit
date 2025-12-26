@@ -144,7 +144,45 @@ export default function AuthScreen() {
             scaleAnim={scaleAnim}
             bounceAnim={bounceAnim}
           />
+          
+          {/* Welcome Text */}
+          <Text variant="largeTitle" weight="bold" style={styles.title}>
+            GutScan
+          </Text>
+          <Text variant="body" style={styles.subtitle}>
+            Your personal gut health companion
+          </Text>
         </View>
+
+        {/* Value Propositions */}
+        <Animated.View style={[styles.valuePropsContainer, { opacity: fadeAnim }]}>
+          <View style={styles.valuePropRow}>
+            <View style={styles.valuePropIconContainer}>
+              <Ionicons name="camera" size={24} color={theme.colors.brand.coral} />
+            </View>
+            <Text variant="body" style={styles.valuePropText}>
+              Scan meals & get instant gut scores
+            </Text>
+          </View>
+          
+          <View style={styles.valuePropRow}>
+            <View style={styles.valuePropIconContainer}>
+              <Ionicons name="analytics" size={24} color={theme.colors.brand.coral} />
+            </View>
+            <Text variant="body" style={styles.valuePropText}>
+              Track fiber, triggers & plant diversity
+            </Text>
+          </View>
+          
+          <View style={styles.valuePropRow}>
+            <View style={styles.valuePropIconContainer}>
+              <Ionicons name="heart" size={24} color={theme.colors.brand.coral} />
+            </View>
+            <Text variant="body" style={styles.valuePropText}>
+              Build healthy habits with Gigi
+            </Text>
+          </View>
+        </Animated.View>
 
         {/* Bottom Section: Buttons + Legal */}
         <Animated.View

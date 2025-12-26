@@ -23,7 +23,7 @@ const AuthCallback: React.FC = () => {
           }
         } else {
           // Check URL params for PKCE code first
-          const urlParams = new URLSearchParams(window.location.search);
+          const urlParams = new URLSearchParams(window!.location.search);
           const code = urlParams.get('code');
           
           if (code) {
@@ -36,7 +36,7 @@ const AuthCallback: React.FC = () => {
           }
 
           // Check hash for tokens (implicit flow - used by Google OAuth on web)
-          const hashParams = new URLSearchParams(window.location.hash.replace('#', ''));
+          const hashParams = new URLSearchParams(window!.location.hash.replace('#', ''));
           const accessToken = hashParams.get('access_token');
           const refreshToken = hashParams.get('refresh_token');
 
