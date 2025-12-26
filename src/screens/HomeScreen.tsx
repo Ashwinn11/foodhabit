@@ -98,7 +98,7 @@ export default function HomeScreen({ navigation }: any) {
         <TouchableOpacity style={styles.gigiContainer} activeOpacity={0.9} onPress={() => {}}>
            <Gigi 
             emotion={streak > 3 ? 'excited' : streak > 0 ? 'happy' : 'neutral'} 
-            size="xl" 
+            size="lg" 
           />
            <View style={styles.messageBubble}>
             <Text variant="body" weight="medium" style={styles.gigiMessageText}>

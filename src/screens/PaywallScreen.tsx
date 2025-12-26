@@ -22,7 +22,7 @@ export default function PaywallScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top }]}>
+      <ScrollView contentContainerStyle={styles.content}>
         {/* Close Button */}
         <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
           <Ionicons name="close" size={28} color={theme.colors.text.white} />
@@ -30,7 +30,7 @@ export default function PaywallScreen({ navigation }: any) {
 
         {/* Hero Section */}
         <View style={styles.hero}>
-          <Gigi emotion="excited" size="xl" />
+          <Gigi emotion="excited" size="md" />
           <Text variant="title1" style={styles.title}>
             Unlock Full Potential
           </Text>
@@ -98,11 +98,13 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     alignSelf: 'flex-end',
-    padding: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.lg,
   },
   hero: {
     alignItems: 'center',
-    marginVertical: theme.spacing.xl,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
   },
   title: {
     textAlign: 'center',

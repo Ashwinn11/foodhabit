@@ -104,7 +104,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         {/* Gigi */}
         <View style={styles.gigiContainer}>
-          <Gigi emotion={slide.gigiEmotion} size="xl" />
+          <Gigi emotion={slide.gigiEmotion} size="md" />
         </View>
 
         {/* Text */}
