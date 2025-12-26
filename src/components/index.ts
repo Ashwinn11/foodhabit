@@ -19,9 +19,8 @@ export type { InputProps } from './Input';
 
 export * from './Surface';
 export * from './AnimatedSelectionCard';
-export { default as AchievementsWidget } from './AchievementsWidget';
 
-// New Reusable Components
+// Reusable Components
 export { default as GridCard } from './GridCard';
 export { default as SectionHeader } from './SectionHeader';
 export { default as TabBar } from './TabBar';

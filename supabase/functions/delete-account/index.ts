@@ -29,7 +29,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Create Supabase client with auto-injected environment variables
+    // Create Supabase client with service role key
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -62,56 +62,29 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Delete user data using the secure function
-    const { data: deleteResult, error: deleteError } = await supabase
-      .rpc("delete_user_account", { user_id_to_delete: user.id });
-
-    if (deleteError) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: deleteError.message || "Failed to delete user data",
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    if (!deleteResult?.success) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: deleteResult?.error || "Failed to delete user data",
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Delete user from Supabase Auth (admin operation)
-    console.log("Attempting to delete auth user:", user.id);
+    // Delete user from Supabase Auth (this is all we need now!)
     const { error: adminDeleteError } = await supabase.auth.admin.deleteUser(
       user.id
     );
 
     if (adminDeleteError) {
       console.error("Error deleting auth user:", adminDeleteError);
-      console.error("Auth error details:", JSON.stringify(adminDeleteError, null, 2));
-      // Even if auth deletion fails, we've already deleted the user data
-      // Log this for manual cleanup
-    } else {
-      console.log("Successfully deleted auth user");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Failed to delete user account",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        deletedRecords: deleteResult.deleted_records,
-        authDeleted: !adminDeleteError
+        message: "Account deleted successfully"
       }),
       {
         status: 200,
@@ -121,12 +94,10 @@ Deno.serve(async (req: Request) => {
 
   } catch (error) {
     console.error("Unexpected error:", error);
-    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
     return new Response(
       JSON.stringify({
         success: false,
         error: error instanceof Error ? error.message : "An unexpected error occurred",
-        stack: error instanceof Error ? error.stack : undefined
       }),
       {
         status: 500,

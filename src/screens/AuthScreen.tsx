@@ -4,26 +4,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { theme, haptics } from '../theme';
 import { Container, Text } from '../components';
-import { APP_TEXTS } from '../constants/appText';
 
-// Solid, modern value prop component
-interface ValuePropRowProps {
-  icon: string;
-  text: string;
-  index: number;
-}
-
-const ValuePropRow: React.FC<ValuePropRowProps> = ({ icon, text }) => {
-  return (
-    <View style={styles.valuePropRow}>
-      <View style={[styles.valuePropIconContainer, { borderRadius: theme.borderRadius.xl }]}>
-         <Ionicons name={icon as any} size={28} color={theme.colors.brand.primary} />
-      </View>
-      <Text variant="body" style={styles.valuePropText}>
-        {text}
-      </Text>
-    </View>
-  );
+// Legal text for footer
+const LEGAL_TEXT = {
+  prefix: 'By continuing, you agree to our',
+  terms: 'Terms of Service',
+  privacy: 'Privacy Policy',
 };
 
 // Simplified solid mascot/logo component
@@ -150,41 +136,13 @@ export default function AuthScreen() {
       {/* Main Content */}
       <Container variant="plain" style={styles.contentContainer} edges={['top', 'left', 'right', 'bottom']}>
         
-        {/* Top Section: Mascot + Header */}
+        {/* Top Section: App Icon */}
         <View style={styles.topSection}>
            <AnimatedMascot
             fadeAnim={fadeAnim}
             scaleAnim={scaleAnim}
             bounceAnim={bounceAnim}
           />
-
-          <Animated.View
-            style={[
-              styles.header,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
-          >
-            <Text variant="largeTitle" align="center" style={styles.title}>
-              {APP_TEXTS.auth.title}
-            </Text>
-            <Text variant="body" align="center" style={styles.subtitle}>
-              {APP_TEXTS.auth.subtitle}
-            </Text>
-
-            <View style={styles.valuePropsContainer}>
-              {APP_TEXTS.auth.valueProps.map((prop, index) => (
-                <ValuePropRow
-                  key={prop.text}
-                  icon={prop.icon}
-                  text={prop.text}
-                  index={index}
-                />
-              ))}
-            </View>
-          </Animated.View>
         </View>
 
         {/* Bottom Section: Buttons + Legal */}
@@ -247,13 +205,13 @@ export default function AuthScreen() {
           {/* Legal Text */}
           <View style={styles.legalContainer}>
             <Text variant="caption1" align="center" style={styles.legalText}>
-              {APP_TEXTS.auth.legalPrefix}{' '}
+              {LEGAL_TEXT.prefix}{' '}
               <Text variant="caption1" style={styles.legalLink}>
-                {APP_TEXTS.auth.termsLink}
+                {LEGAL_TEXT.terms}
               </Text>
               {' '}and{' '}
               <Text variant="caption1" style={styles.legalLink}>
-                {APP_TEXTS.auth.privacyLink}
+                {LEGAL_TEXT.privacy}
               </Text>
             </Text>
           </View>

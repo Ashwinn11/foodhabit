@@ -30,7 +30,7 @@ export const useAuth = (): UseAuthReturn => {
       setLoading(false);
     });
 
-    // Listen for auth changes - this is the single source of truth
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });

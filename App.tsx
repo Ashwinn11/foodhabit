@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, LogBox } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -12,76 +12,27 @@ import {
   Nunito_700Bold,
 } from '@expo-google-fonts/nunito';
 import { useAuth } from './src/hooks/useAuth';
-import AuthScreen from './src/screens/AuthScreen';
-import RootNavigator from './src/navigation/RootNavigator';
-import OnboardingNavigator from './src/screens/onboarding/OnboardingNavigator';
-import { hasCompletedOnboarding } from './src/services/gutHarmony/userService';
+import { AuthScreen, ProfileScreen } from './src/screens';
 import { theme } from './src/theme';
-
-// Suppress known Reanimated 4 deprecation warning from react-native-circular-progress-indicator
-// The library still works fine with Reanimated 4, it just uses deprecated APIs
-LogBox.ignoreLogs(['`createAnimatedPropAdapter` is no longer necessary in Reanimated 4']);
+import { Text } from './src/components';
 
 function AppContent() {
-  const { session, loading, user } = useAuth();
-  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
-
-  // Check if user has completed onboarding
-  useEffect(() => {
-    const checkOnboarding = async () => {
-      if (user?.id) {
-        try {
-          const completed = await hasCompletedOnboarding(user.id);
-          setOnboardingComplete(completed);
-        } catch (error) {
-          console.error('Error checking onboarding:', error);
-          setOnboardingComplete(false);
-        }
-      } else {
-        // User not authenticated yet
-        setOnboardingComplete(null);
-      }
-    };
-
-    checkOnboarding();
-  }, [user?.id]);
+  const { session, loading } = useAuth();
 
   // Show loading while auth is initializing
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.brand.primary} />
-        <Text style={styles.loadingText}>Loading...</Text>
+        <Text variant="body" color="secondary" style={{ marginTop: theme.spacing.md }}>
+          Loading...
+        </Text>
       </View>
     );
   }
 
-  // Not signed in - show auth screen
-  if (!session) {
-    return <AuthScreen />;
-  }
-
-  // Signed in but onboarding status unknown - show loading
-  if (onboardingComplete === null) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.brand.primary} />
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
-    );
-  }
-
-  // Signed in but onboarding not complete - show onboarding
-  if (!onboardingComplete) {
-    return (
-      <OnboardingNavigator
-        onComplete={() => setOnboardingComplete(true)}
-      />
-    );
-  }
-
-  // Signed in and onboarded - show main app
-  return <RootNavigator />;
+  // Simple flow: Not signed in → AuthScreen, Signed in → ProfileScreen
+  return session ? <ProfileScreen /> : <AuthScreen />;
 }
 
 export default function App() {
@@ -97,20 +48,19 @@ export default function App() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.brand.primary} />
-        <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
 
-  // Custom Navigation Theme to match the new design system
+  // Custom Navigation Theme
   const NavigationTheme = {
     dark: true,
     colors: {
       primary: theme.colors.brand.primary,
-      background: theme.colors.background.screen, // Dark Blue
-      card: theme.colors.background.card,         // Slightly lighter blue
-      text: theme.colors.text.primary,           // White
-      border: theme.colors.border.main,           // Subtle white border
+      background: theme.colors.background.screen,
+      card: theme.colors.background.card,
+      text: theme.colors.text.primary,
+      border: theme.colors.border.main,
       notification: theme.colors.brand.primary,
     },
     fonts: {
@@ -138,10 +88,5 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.primary,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  loadingText: {
-    ...theme.typography.body,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.md,
   },
 });
