@@ -11,7 +11,7 @@ import Animated, {
   Easing
 } from 'react-native-reanimated';
 
-export type GigiEmotion = 'happy' | 'neutral' | 'sad' | 'excited';
+export type GigiEmotion = 'happy' | 'neutral' | 'sad' | 'excited' | 'worried' | 'sick' | 'thinking';
 export type GigiSize = 'sm' | 'md' | 'lg' | 'xl';
 
 interface GigiProps {
@@ -28,15 +28,21 @@ const SIZE_MAP = {
 };
 
 const COLORS = {
-  teal: { r: 135, g: 221, b: 204 }, // #87DDCC
-  sad: { r: 148, g: 163, b: 184 },
+  teal: { r: 135, g: 221, b: 204 }, // #87DDCC - healthy
+  sad: { r: 148, g: 163, b: 184 },   // #94A3B8 - blue-gray
+  worried: { r: 251, g: 191, b: 36 }, // #FBBF24 - amber/yellow
+  sick: { r: 167, g: 199, b: 163 },   // #A7C7A3 - pale green
+  thinking: { r: 147, g: 197, b: 253 }, // #93C5FD - light blue
 };
 
-const EMOTION_COLORS = {
+const EMOTION_COLORS: Record<GigiEmotion, { r: number; g: number; b: number }> = {
   happy: COLORS.teal,
   excited: COLORS.teal,
   neutral: COLORS.teal,
   sad: COLORS.sad,
+  worried: COLORS.worried,
+  sick: COLORS.sick,
+  thinking: COLORS.thinking,
 };
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -69,6 +75,7 @@ export default function Gigi({
   const bounce = useSharedValue(0);
   const eyeOffsetX = useSharedValue(0);
   const eyeOffsetY = useSharedValue(0);
+  const cheekOpacity = useSharedValue(0);
 
   useEffect(() => {
     if (!animated) return;
@@ -79,17 +86,31 @@ export default function Gigi({
     g.value = withTiming(targetColor.g, { duration: 500 });
     b.value = withTiming(targetColor.b, { duration: 500 });
 
-    // Mouth Targets (Matching gut_say_hi.svg: gentle smile between eyes)
+    // Mouth Targets - MORE DISTINCT shapes for each emotion
     // Center X is ~520. Eye Y is ~407-415.
-    // Neutral: Small smile at y=430-448
     let tm = { x1: 495, y1: 430, cx: 520, cy: 448, x2: 545, y2: 430 }; 
     
-    if (emotion === 'sad') {
-        // Small frown
-        tm = { x1: 495, y1: 448, cx: 520, cy: 420, x2: 545, y2: 448 }; 
+    if (emotion === 'happy') {
+        // Clear smile
+        tm = { x1: 495, y1: 430, cx: 520, cy: 452, x2: 545, y2: 430 }; 
+    } else if (emotion === 'sad') {
+        // Clear frown (inverted curve)
+        tm = { x1: 490, y1: 455, cx: 520, cy: 415, x2: 550, y2: 455 }; 
     } else if (emotion === 'excited') {
-        // Bigger smile
-        tm = { x1: 490, y1: 430, cx: 520, cy: 460, x2: 550, y2: 430 }; 
+        // Cute smile (same width as happy, slightly more curved, not creepy wide)
+        tm = { x1: 492, y1: 428, cx: 520, cy: 458, x2: 548, y2: 428 }; 
+    } else if (emotion === 'worried') {
+        // Wavy/asymmetric concerned mouth
+        tm = { x1: 490, y1: 448, cx: 515, cy: 432, x2: 545, y2: 452 }; 
+    } else if (emotion === 'sick') {
+        // Tight squiggly distressed
+        tm = { x1: 500, y1: 450, cx: 520, cy: 435, x2: 540, y2: 455 }; 
+    } else if (emotion === 'thinking') {
+        // Small 'o' shape
+        tm = { x1: 508, y1: 435, cx: 520, cy: 450, x2: 532, y2: 435 }; 
+    } else {
+        // neutral - gentle slight smile
+        tm = { x1: 495, y1: 432, cx: 520, cy: 445, x2: 545, y2: 432 }; 
     }
 
     mx1.value = withTiming(tm.x1);
@@ -108,20 +129,66 @@ export default function Gigi({
     );
 
     const moveEyes = () => {
-        const range = 20; // Scaled up movement
+        const range = 20;
         eyeOffsetX.value = withSpring((Math.random() - 0.5) * range);
         eyeOffsetY.value = withSpring((Math.random() - 0.5) * range);
     };
     const interval = setInterval(moveEyes, 3000);
 
-    // Bounce for excited
+    // Emotion-specific animations
     if (emotion === 'excited') {
-         bounce.value = withRepeat(
-            withSequence(withTiming(-100, { duration: 250 }), withTiming(0, { duration: 250 })),
+        // Happy bounce
+        bounce.value = withRepeat(
+            withSequence(withTiming(-80, { duration: 200 }), withTiming(0, { duration: 200 })),
+            -1, true
+        );
+    } else if (emotion === 'happy') {
+        // Gentle sway
+        bounce.value = withRepeat(
+            withSequence(withTiming(-20, { duration: 800 }), withTiming(0, { duration: 800 })),
+            -1, true
+        );
+    } else if (emotion === 'sad') {
+        // Slow droop
+        bounce.value = withTiming(30, { duration: 1000 });
+    } else if (emotion === 'worried') {
+        // Nervous shake
+        bounce.value = withRepeat(
+            withSequence(
+                withTiming(-8, { duration: 100 }), 
+                withTiming(8, { duration: 100 }),
+                withTiming(-5, { duration: 100 }),
+                withTiming(0, { duration: 100 })
+            ),
+            -1, false
+        );
+    } else if (emotion === 'sick') {
+        // Wobbly
+        bounce.value = withRepeat(
+            withSequence(
+                withTiming(-15, { duration: 300 }), 
+                withTiming(15, { duration: 300 })
+            ),
+            -1, true
+        );
+    } else if (emotion === 'thinking') {
+        // Slight tilt back and forth (simulated with bounce)
+        bounce.value = withRepeat(
+            withSequence(
+                withTiming(-10, { duration: 1200 }), 
+                withTiming(10, { duration: 1200 })
+            ),
             -1, true
         );
     } else {
         bounce.value = withTiming(0);
+    }
+
+    // Cheek blushing for happy/excited
+    if (emotion === 'happy' || emotion === 'excited') {
+        cheekOpacity.value = withTiming(0.5, { duration: 400 });
+    } else {
+        cheekOpacity.value = withTiming(0, { duration: 300 });
     }
 
     return () => clearInterval(interval);
@@ -152,7 +219,7 @@ export default function Gigi({
   return (
     <View style={{ width, height, alignItems: 'center', justifyContent: 'center' }}>
       <Animated.View style={{ width: '100%', height: '100%' }}>
-        <Svg width="100%" height="100%" viewBox="0 0 1024 1024">
+        <Svg width="100%" height="100%" viewBox="180 200 700 620">
           <Defs>
              <RadialGradient id="highlight" cx="50%" cy="0%" rx="60%" ry="40%">
                 <Stop offset="0" stopColor="white" stopOpacity="0.5" />
@@ -224,6 +291,22 @@ export default function Gigi({
                     strokeLinecap="round"
                     fill="none"
                     animatedProps={mouthProps}
+                />
+
+                {/* Blushing Cheeks */}
+                <AnimatedCircle 
+                    cx="355" 
+                    cy="430" 
+                    r="28" 
+                    fill="#FDA4AF"
+                    animatedProps={useAnimatedProps(() => ({ opacity: cheekOpacity.value }))}
+                />
+                <AnimatedCircle 
+                    cx="665" 
+                    cy="430" 
+                    r="28" 
+                    fill="#FDA4AF"
+                    animatedProps={useAnimatedProps(() => ({ opacity: cheekOpacity.value }))}
                 />
             </G>
 

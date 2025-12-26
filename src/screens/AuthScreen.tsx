@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { theme, haptics } from '../theme';
 import { Container, Text } from '../components';
+import Gigi from '../components/Gigi';
 
 // Legal text for footer
 const LEGAL_TEXT = {
@@ -12,7 +13,7 @@ const LEGAL_TEXT = {
   privacy: 'Privacy Policy',
 };
 
-// Simplified solid mascot/logo component
+// Animated mascot component using Gigi
 interface AnimatedMascotProps {
   fadeAnim: Animated.Value;
   scaleAnim: Animated.Value;
@@ -33,13 +34,7 @@ const AnimatedMascot: React.FC<AnimatedMascotProps> = ({ fadeAnim, scaleAnim, bo
         },
       ]}
     >
-      <View style={[styles.mascotBg, { borderRadius: theme.borderRadius['3xl'] }]}>
-         <Image
-           source={require('../../assets/icon.png')}
-           style={[styles.mascot, { width: 110, height: 110 }]}
-           resizeMode="contain"
-         />
-      </View>
+      <Gigi emotion="happy" size="md" animated={true} />
     </Animated.View>
   );
 };
@@ -160,27 +155,42 @@ export default function AuthScreen() {
             <View style={styles.valuePropIconContainer}>
               <Ionicons name="camera" size={24} color={theme.colors.brand.coral} />
             </View>
-            <Text variant="body" style={styles.valuePropText}>
-              Scan meals & get instant gut scores
-            </Text>
+            <View style={styles.valuePropTextContainer}>
+              <Text variant="headline" style={styles.valuePropTitle}>
+                Scan
+              </Text>
+              <Text variant="caption1" style={styles.valuePropSubtitle}>
+                Take a photo and get instant gut scores.
+              </Text>
+            </View>
           </View>
           
           <View style={styles.valuePropRow}>
             <View style={styles.valuePropIconContainer}>
               <Ionicons name="analytics" size={24} color={theme.colors.brand.coral} />
             </View>
-            <Text variant="body" style={styles.valuePropText}>
-              Track fiber, triggers & plant diversity
-            </Text>
+            <View style={styles.valuePropTextContainer}>
+              <Text variant="headline" style={styles.valuePropTitle}>
+                Track
+              </Text>
+              <Text variant="caption1" style={styles.valuePropSubtitle}>
+                Monitor fiber, triggers & plant diversity.
+              </Text>
+            </View>
           </View>
           
           <View style={styles.valuePropRow}>
             <View style={styles.valuePropIconContainer}>
               <Ionicons name="heart" size={24} color={theme.colors.brand.coral} />
             </View>
-            <Text variant="body" style={styles.valuePropText}>
-              Build healthy habits with Gigi
-            </Text>
+            <View style={styles.valuePropTextContainer}>
+              <Text variant="headline" style={styles.valuePropTitle}>
+                Grow
+              </Text>
+              <Text variant="caption1" style={styles.valuePropSubtitle}>
+                Build healthy habits with Gigi.
+              </Text>
+            </View>
           </View>
         </Animated.View>
 
@@ -274,12 +284,12 @@ const styles = StyleSheet.create({
   topSection: {
     alignItems: 'center',
     width: '100%',
-    paddingTop: theme.spacing['2xl'], // Add some top padding
+    paddingTop: theme.spacing.md,
   },
   // Mascot styles
   mascotContainer: {
     alignItems: 'center',
-    marginBottom: theme.spacing['2xl'],
+    marginBottom: theme.spacing.md,
   },
   mascotBg: {
     width: 140,
@@ -302,42 +312,49 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
   },
   title: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.xs,
     color: theme.colors.text.white,
   },
   subtitle: {
-    marginBottom: theme.spacing['2xl'],
+    marginBottom: theme.spacing.lg,
     color: theme.colors.text.white,
   },
   valuePropsContainer: {
-    gap: theme.spacing.lg,
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing['2xl'],
+    gap: theme.spacing.xl,
+    marginTop: theme.spacing.xs,
+    marginBottom: theme.spacing.md,
     width: '100%',
   },
   valuePropRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.lg,
-    backgroundColor: theme.colors.brand.cream,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.xl,
+    gap: theme.spacing.md,
   },
   valuePropIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: theme.colors.brand.coral + '15',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.brand.coral + '20',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  valuePropText: {
+  valuePropTextContainer: {
     flex: 1,
-    color: theme.colors.brand.black,
+  },
+  valuePropTitle: {
+    color: theme.colors.text.white,
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  valuePropSubtitle: {
+    color: theme.colors.text.white,
+    fontSize: 14,
+    opacity: 0.7,
   },
   footer: {
     width: '100%',
-    paddingBottom: theme.spacing.xl,
+    paddingBottom: theme.spacing.xs,
   },
   authButtons: {
     width: '100%',

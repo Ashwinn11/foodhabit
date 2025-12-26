@@ -18,7 +18,7 @@ interface OnboardingSlide {
   title: string;
   description: string;
   icon: keyof typeof Ionicons.glyphMap;
-  gigiEmotion: 'happy' | 'excited' | 'neutral';
+  gigiEmotion: 'happy' | 'excited' | 'neutral' | 'thinking' | 'worried';
 }
 
 const slides: OnboardingSlide[] = [
@@ -34,14 +34,14 @@ const slides: OnboardingSlide[] = [
     title: 'Scan Your Meals',
     description: 'Simply take a photo of your food and get an instant gut health score based on fiber, plant diversity, and more.',
     icon: 'camera',
-    gigiEmotion: 'happy',
+    gigiEmotion: 'thinking',
   },
   {
     id: 3,
     title: 'Track Your Progress',
     description: 'Build streaks, level up Gigi, and watch your gut health improve over time.',
     icon: 'trending-up',
-    gigiEmotion: 'excited',
+    gigiEmotion: 'happy',
   },
 ];
 
