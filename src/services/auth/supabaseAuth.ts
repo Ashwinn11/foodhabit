@@ -78,6 +78,25 @@ const hashNonce = async (nonce: string): Promise<string> => {
  * Sign in with Google - Handles both PKCE and implicit flow
  */
 export const signInWithGoogle = async (): Promise<void> => {
+  // Handle web vs mobile
+  if (typeof window !== 'undefined' && window.location) {
+    // Web: Use direct OAuth redirect
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) throw error;
+    if (!data.url) throw new Error('No OAuth URL returned');
+
+    // Direct redirect on web
+    window.location.href = data.url;
+    return;
+  }
+
+  // Mobile: Use WebBrowser for OAuth
   const redirectUrl = getSupabaseRedirectUrl();
 
   // Start OAuth flow

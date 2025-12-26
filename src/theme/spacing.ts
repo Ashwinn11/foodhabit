@@ -39,74 +39,44 @@ export const borderRadius = {
  */
 export const shadows = {
   none: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
+    boxShadow: 'none',
     elevation: 0,
   },
   flat: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 2,
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
     elevation: 0, // Flat usually means no elevation or very subtle
   },
   xs: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 }, // Dropped slightly more
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
+    boxShadow: '0 2px 3px rgba(0, 0, 0, 0.05)',
     elevation: 1,
   },
   sm: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    boxShadow: '0 3px 6px rgba(0, 0, 0, 0.08)',
     elevation: 3,
   },
   md: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1)',
     elevation: 6,
   },
   lg: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
+    boxShadow: '0 10px 20px rgba(0, 0, 0, 0.12)',
     elevation: 10,
   },
   xl: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 15 },
-    shadowOpacity: 0.15,
-    shadowRadius: 30,
+    boxShadow: '0 15px 30px rgba(0, 0, 0, 0.15)',
     elevation: 15,
   },
   '2xl': {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.2,
-    shadowRadius: 40,
+    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
     elevation: 20,
   },
   // Playful brand shadows
   primary: {
-    shadowColor: '#ff7664',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
+    boxShadow: '0 8px 16px rgba(255, 118, 100, 0.3)',
     elevation: 8,
   },
   secondary: {
-    shadowColor: '#A5E1A6',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
+    boxShadow: '0 8px 16px rgba(165, 225, 166, 0.3)',
     elevation: 8,
   },
 } as const;

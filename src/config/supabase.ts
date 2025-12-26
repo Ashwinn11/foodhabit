@@ -20,6 +20,12 @@ export const getSupabaseRedirectUrl = (): string => {
     return `https://auth.expo.io/@${expoUsername}/${expoSlug}/--/auth/callback`;
   }
 
+  // Handle web vs native
+  if (typeof window !== 'undefined' && window.location) {
+    // Web environment
+    return `${window.location.origin}/auth/callback`;
+  }
+
   return 'foodhabit://auth/callback';
 };
 
@@ -29,5 +35,11 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+  },
+  global: {
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
   },
 });

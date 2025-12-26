@@ -12,11 +12,69 @@ import {
   Nunito_700Bold,
 } from '@expo-google-fonts/nunito';
 import { useAuth } from './src/hooks/useAuth';
-import { AuthScreen, ProfileScreen } from './src/screens';
+import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen } from './src/screens';
+import AuthCallbackScreen from './src/screens/AuthCallbackScreen';
 import { theme } from './src/theme';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
+
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: theme.colors.brand.background,
+          borderTopColor: 'rgba(255, 255, 255, 0.1)',
+          borderTopWidth: 1,
+          paddingBottom: 8,
+          paddingTop: 8,
+          height: 60,
+        },
+        tabBarActiveTintColor: theme.colors.brand.cream,
+        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontFamily: theme.fontFamily.semiBold,
+        },
+      }}
+    >
+      <Tab.Screen 
+        name="HomeTab" 
+        component={HomeScreen}
+        options={{
+          tabBarLabel: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="ProfileTab" 
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
 
 function AppContent() {
   const { session, loading } = useAuth();
+
+  // Handle auth callback on web only
+  const isWeb = typeof window !== 'undefined' && window.location;
+  if (isWeb && window.location.pathname === '/auth/callback') {
+    return <AuthCallbackScreen />;
+  }
 
   if (loading) {
     return (
@@ -29,7 +87,23 @@ function AppContent() {
     );
   }
 
-  return session ? <ProfileScreen /> : <AuthScreen />;
+  if (!session) {
+    return <AuthScreen />;
+  }
+
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: theme.colors.brand.background },
+        presentation: 'modal',
+      }}
+    >
+      <Stack.Screen name="Main" component={MainTabs} />
+      <Stack.Screen name="Camera" component={CameraScreen} />
+      <Stack.Screen name="Result" component={ResultScreen} />
+    </Stack.Navigator>
+  );
 }
 
 export default function App() {

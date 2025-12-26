@@ -35,9 +35,10 @@ const AnimatedMascot: React.FC<AnimatedMascotProps> = ({ fadeAnim, scaleAnim, bo
     >
       <View style={[styles.mascotBg, { borderRadius: theme.borderRadius['3xl'] }]}>
          <Image
-          source={require('../../assets/icon.png')}
-          style={[styles.mascot, { width: 110, height: 110 }]}
-        />
+           source={require('../../assets/icon.png')}
+           style={[styles.mascot, { width: 110, height: 110 }]}
+           resizeMode="contain"
+         />
       </View>
     </Animated.View>
   );
@@ -250,17 +251,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     // Subtle shadow
-    shadowColor: theme.colors.brand.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
     elevation: 4,
   },
   mascot: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    resizeMode: 'contain',
   },
   header: {
     width: '100%',

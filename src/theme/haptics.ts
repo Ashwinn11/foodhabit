@@ -5,6 +5,7 @@
  */
 
 import * as Haptics from 'expo-haptics';
+import { Platform } from 'react-native';
 
 /**
  * Haptic feedback types based on Apple's haptic engine
@@ -15,7 +16,9 @@ export const hapticFeedback = {
    * Use for: Toggle switches, picker selections
    */
   light: () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   },
 
   /**
@@ -23,7 +26,9 @@ export const hapticFeedback = {
    * Use for: Button taps, list item selections
    */
   medium: () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
   },
 
   /**
@@ -31,7 +36,9 @@ export const hapticFeedback = {
    * Use for: Confirmations, important actions
    */
   heavy: () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
   },
 
   /**
@@ -39,7 +46,9 @@ export const hapticFeedback = {
    * Use for: Successful form submissions, task completions
    */
   success: () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
   },
 
   /**
@@ -47,7 +56,9 @@ export const hapticFeedback = {
    * Use for: Validation errors, warnings
    */
   warning: () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
   },
 
   /**
@@ -55,7 +66,9 @@ export const hapticFeedback = {
    * Use for: Failed operations, critical errors
    */
   error: () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
   },
 
   /**
@@ -63,7 +76,9 @@ export const hapticFeedback = {
    * Use for: Scrolling through picker values, slider adjustments
    */
   selection: () => {
-    Haptics.selectionAsync();
+    if (Platform.OS !== 'web') {
+      Haptics.selectionAsync();
+    }
   },
 
   /**
@@ -71,11 +86,13 @@ export const hapticFeedback = {
    * iOS 13+ only
    */
   rigid: () => {
-    if (Haptics.ImpactFeedbackStyle.Rigid) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
-    } else {
-      // Fallback to medium for older iOS versions
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS !== 'web') {
+      if (Haptics.ImpactFeedbackStyle.Rigid) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
+      } else {
+        // Fallback to medium for older iOS versions
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
     }
   },
 
@@ -84,11 +101,13 @@ export const hapticFeedback = {
    * iOS 13+ only
    */
   soft: () => {
-    if (Haptics.ImpactFeedbackStyle.Soft) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
-    } else {
-      // Fallback to light for older iOS versions
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      if (Haptics.ImpactFeedbackStyle.Soft) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+      } else {
+        // Fallback to light for older iOS versions
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     }
   },
 } as const;

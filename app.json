@@ -23,12 +23,33 @@
       ]
     },
     "web": {
-      "favicon": "./assets/icon.png"
+      "favicon": "./assets/icon.png",
+      "bundler": "metro",
+      "output": "single",
+      "build": {
+        "babel": {
+          "include": [
+            "@expo/vector-icons"
+          ]
+        }
+      }
     },
     "plugins": [
       "expo-apple-authentication",
       "expo-web-browser",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow GutScan to access your camera to scan meals"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow GutScan to access your photos to select meal images"
+        }
+      ]
     ]
   }
 }

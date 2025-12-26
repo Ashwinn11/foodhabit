@@ -95,6 +95,7 @@ export default function Avatar({ name = 'user', size = 56 }: AvatarProps) {
           console.error('Failed to load avatar image, falling back to letter avatar');
           setAvatarUrl(null);
         }}
+        resizeMode="cover"
       />
     </View>
   );
@@ -106,14 +107,11 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.brand.cream,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: theme.colors.brand.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.25)',
     elevation: 4,
   },
   avatarImage: {
-    resizeMode: 'cover',
+    // resizeMode removed from style, used as prop instead
   },
   letterFallback: {
     flex: 1,
