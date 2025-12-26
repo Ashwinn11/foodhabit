@@ -11,7 +11,7 @@ import { useAuth } from '../hooks/useAuth';
 import { deleteAccount } from '../services/accountService';
 import { theme } from '../theme';
 import { Text } from '../components';
-import Avatar from '../components/Avatar';
+import { Avatar } from '../components';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -105,7 +105,7 @@ export default function ProfileScreen() {
             style={styles.signOutButton}
             onPress={handleSignOut}
           >
-            <Text variant="body" weight="semiBold" style={{ color: theme.colors.text.primary }}>
+            <Text variant="body" weight="semiBold" style={{ color: theme.colors.text.black }}>
               Sign Out
             </Text>
           </TouchableOpacity>
@@ -115,7 +115,7 @@ export default function ProfileScreen() {
             onPress={handleDeleteAccount}
             disabled={isDeletingAccount}
           >
-            <Text variant="body" weight="semiBold" style={{ color: theme.colors.brand.primary }}>
+            <Text variant="body" weight="semiBold" style={{ color: theme.colors.brand.coral }}>
               {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
             </Text>
           </TouchableOpacity>
@@ -123,7 +123,7 @@ export default function ProfileScreen() {
 
         {/* Version */}
         <View style={styles.versionInfo}>
-          <Text variant="caption" color="secondary" align="center">
+          <Text variant="caption1" color="secondary" align="center">
             GutHarmony v1.0.0
           </Text>
         </View>
@@ -135,7 +135,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background.primary,
+    backgroundColor: theme.colors.brand.black,
   },
   scrollContent: {
     paddingHorizontal: theme.spacing['2xl'],
@@ -157,12 +157,12 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   signOutButton: {
-    backgroundColor: theme.colors.background.card,
+    backgroundColor: theme.colors.brand.cream,
     borderRadius: theme.borderRadius.lg,
     paddingVertical: theme.spacing.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: theme.colors.border.light,
+    borderColor: theme.colors.brand.cream,
   },
   deleteButton: {
     backgroundColor: 'transparent',
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: theme.colors.brand.primary,
+    borderColor: theme.colors.brand.coral,
   },
   versionInfo: {
     paddingVertical: theme.spacing.xl,

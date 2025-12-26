@@ -1,109 +1,38 @@
-/**
- * Apple Design System - Container Component
- * Safe area aware container with Apple-style padding and background
- */
-
 import React from 'react';
-import {
-  View,
-  StyleSheet,
-  ViewStyle,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { View, StyleSheet, ViewStyle, ScrollView } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
-import { theme, r } from '../theme';
-
-export type ContainerVariant = 'default' | 'grouped' | 'card' | 'plain';
+import { theme } from '../theme';
 
 export interface ContainerProps {
-  /**
-   * Container content
-   */
   children: React.ReactNode;
-
-  /**
-   * Background variant
-   * @default 'default'
-   */
-  variant?: ContainerVariant;
-
-  /**
-   * Enable safe area insets
-   * @default true
-   */
   safeArea?: boolean;
-
-  /**
-   * Safe area edges to apply
-   * @default ['top', 'left', 'right']
-   */
   edges?: Edge[];
-
-  /**
-   * Enable scrolling
-   * @default false
-   */
   scrollable?: boolean;
-
-  /**
-   * Horizontal padding
-   * @default true
-   */
-  padding?: boolean;
-
-  /**
-   * Center content vertically
-   * @default false
-   */
   center?: boolean;
-
-  /**
-   * Enable keyboard avoiding view
-   * @default false
-   */
-  keyboardAvoiding?: boolean;
-
-  /**
-   * Custom style override
-   */
   style?: ViewStyle;
+  contentContainerStyle?: ViewStyle;
 }
 
 export const Container: React.FC<ContainerProps> = ({
   children,
-  variant = 'default',
   safeArea = true,
   edges = ['top', 'left', 'right'],
   scrollable = false,
-  padding = true,
   center = false,
-  keyboardAvoiding = false,
   style,
+  contentContainerStyle,
 }) => {
-  const containerStyle: ViewStyle[] = [
-    styles.base,
-    styles[`variant_${variant}`],
-    padding && styles.padding,
-    center && styles.center,
-    style,
-  ].filter(Boolean) as ViewStyle[];
-
-  // Extract backgroundColor from the variant style
-  const variantStyle = styles[`variant_${variant}`] as ViewStyle;
-  const backgroundColor = variantStyle?.backgroundColor;
+  const containerStyle: ViewStyle = {
+    ...styles.container,
+    ...(center ? styles.center : {}),
+    ...(style || {}),
+  };
 
   const content = scrollable ? (
     <ScrollView
-      style={[styles.scrollView, { backgroundColor }]}
-      contentContainerStyle={[
-        styles.scrollContent,
-        center && styles.center,
-        padding && { paddingHorizontal: r.adaptiveSpacing.lg },
-      ]}
+      style={styles.scrollView}
+      contentContainerStyle={[styles.scrollContent, center && styles.center, contentContainerStyle]}
       showsVerticalScrollIndicator={false}
-      bounces={true}
     >
       {children}
     </ScrollView>
@@ -111,71 +40,31 @@ export const Container: React.FC<ContainerProps> = ({
     children
   );
 
-  const wrappedContent = keyboardAvoiding ? (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
-      {content}
-    </KeyboardAvoidingView>
-  ) : (
-    content
-  );
-
   if (safeArea) {
     return (
       <SafeAreaView style={containerStyle} edges={edges}>
-        {wrappedContent}
+        {content}
       </SafeAreaView>
     );
   }
 
-  return <View style={containerStyle}>{wrappedContent}</View>;
+  return <View style={containerStyle}>{content}</View>;
 };
 
 const styles = StyleSheet.create({
-  base: {
+  container: {
     flex: 1,
+    backgroundColor: theme.colors.brand.black,
   },
-
-  flex: {
-    flex: 1,
-  },
-
   scrollView: {
     flex: 1,
   },
-
   scrollContent: {
     flexGrow: 1,
-    paddingVertical: r.adaptiveSpacing.lg,
   },
-
-  padding: {
-    paddingHorizontal: r.adaptiveSpacing.lg,
-  },
-
   center: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-
-  // Variants
-  variant_default: {
-    backgroundColor: theme.colors.background.primary, // Dark blue
-  },
-
-  variant_grouped: {
-    backgroundColor: theme.colors.background.grouped, // Dark blue
-  },
-
-  variant_card: {
-    backgroundColor: theme.colors.background.card, // Dark blue
-  },
-
-  variant_plain: {
-    backgroundColor: 'transparent',
   },
 });
 

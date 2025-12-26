@@ -44,7 +44,7 @@ export default function Avatar({ name = 'user', size = 56 }: AvatarProps) {
           },
         ]}
       >
-        <ActivityIndicator size="small" color={theme.colors.brand.primary} />
+        <ActivityIndicator size="small" color={theme.colors.brand.coral} />
       </View>
     );
   }
@@ -63,7 +63,7 @@ export default function Avatar({ name = 'user', size = 56 }: AvatarProps) {
           },
         ]}
       >
-        <Text variant="title1" weight="bold" style={{ color: theme.colors.brand.white }}>
+        <Text variant="title1" weight="bold" style={{ color: theme.colors.brand.cream }}>
           {initial}
         </Text>
       </View>

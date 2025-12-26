@@ -82,29 +82,29 @@ export const Button: React.FC<ButtonProps> = ({
 
   switch (variant) {
     case 'primary':
-      backgroundColor = theme.colors.button.primary;
-      textColor = theme.colors.button.primaryText;
+      backgroundColor = theme.colors.brand.coral;
+      textColor = theme.colors.brand.white;
       break;
     case 'secondary':
-      backgroundColor = theme.colors.background.card; // Solid card background
-      textColor = theme.colors.brand.primary; // Primary color text
-      borderWidth = 0; // No border for cleaner look, or use brand color
+      backgroundColor = theme.colors.brand.cream;
+      textColor = theme.colors.brand.coral;
+      borderWidth = 0;
       break;
     case 'tertiary':
       backgroundColor = 'transparent';
-      textColor = theme.colors.brand.tertiary;
+      textColor = theme.colors.brand.purple;
       break;
     case 'ghost':
       backgroundColor = 'transparent';
-      textColor = theme.colors.text.secondary;
+      textColor = theme.colors.text.white;
       break;
     case 'destructive':
-      backgroundColor = theme.colors.feedback.error; // Assuming an error color exists
-      textColor = theme.colors.button.primaryText;
+      backgroundColor = theme.colors.brand.coral;
+      textColor = theme.colors.brand.white;
       break;
     default:
-      backgroundColor = theme.colors.button.primary;
-      textColor = theme.colors.button.primaryText;
+      backgroundColor = theme.colors.brand.coral;
+      textColor = theme.colors.brand.white;
   }
 
   // Combine all button styles

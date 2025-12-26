@@ -134,7 +134,7 @@ export default function AuthScreen() {
       <View style={StyleSheet.absoluteFillObject} />
 
       {/* Main Content */}
-      <Container variant="plain" style={styles.contentContainer} edges={['top', 'left', 'right', 'bottom']}>
+      <Container style={styles.contentContainer} edges={['top', 'left', 'right', 'bottom']}>
         
         {/* Top Section: App Icon */}
         <View style={styles.topSection}>
@@ -170,7 +170,7 @@ export default function AuthScreen() {
                 activeOpacity={1} 
               >
                 {loadingButton === 'apple' ? (
-                  <ActivityIndicator size="small" color={theme.colors.brand.white} />
+                  <ActivityIndicator size="small" color={theme.colors.brand.cream} />
                 ) : (
                   <Ionicons name="logo-apple" size={24} color={theme.colors.brand.black} />
                 )}
@@ -224,7 +224,7 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background.primary,
+    backgroundColor: theme.colors.brand.black,
   },
   contentContainer: {
     flex: 1,
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: theme.colors.background.card, // Solid card background
+    backgroundColor: theme.colors.brand.cream,
     justifyContent: 'center',
     alignItems: 'center',
     // Subtle shadow
@@ -268,11 +268,11 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: theme.spacing.md,
-    color: theme.colors.text.primary,
+    color: theme.colors.text.white,
   },
   subtitle: {
     marginBottom: theme.spacing['2xl'],
-    color: theme.colors.text.secondary,
+    color: theme.colors.text.white,
   },
   valuePropsContainer: {
     gap: theme.spacing.lg,
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.lg,
-    backgroundColor: theme.colors.background.card, // Add background to row for card-like feel
+    backgroundColor: theme.colors.brand.cream,
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.xl,
   },
@@ -292,13 +292,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: theme.colors.brand.primary + '15', // Light primary color background
+    backgroundColor: theme.colors.brand.coral + '15',
     justifyContent: 'center',
     alignItems: 'center',
   },
   valuePropText: {
     flex: 1,
-    color: theme.colors.text.primary,
+    color: theme.colors.text.white,
   },
   footer: {
     width: '100%',
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.brand.primary,
+    backgroundColor: theme.colors.brand.coral,
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.xl,
     borderRadius: theme.borderRadius.pill,
@@ -344,11 +344,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
   },
   legalText: {
-    color: theme.colors.text.secondary,
+    color: theme.colors.text.white,
     lineHeight: 18,
   },
   legalLink: {
-    color: theme.colors.text.primary,
+    color: theme.colors.text.white,
     textDecorationLine: 'underline',
   },
 });

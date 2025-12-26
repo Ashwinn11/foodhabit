@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Text as RNText } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -14,24 +14,21 @@ import {
 import { useAuth } from './src/hooks/useAuth';
 import { AuthScreen, ProfileScreen } from './src/screens';
 import { theme } from './src/theme';
-import { Text } from './src/components';
 
 function AppContent() {
   const { session, loading } = useAuth();
 
-  // Show loading while auth is initializing
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.brand.primary} />
-        <Text variant="body" color="secondary" style={{ marginTop: theme.spacing.md }}>
+        <ActivityIndicator size="large" color={theme.colors.brand.coral} />
+        <RNText style={{ marginTop: theme.spacing.md, color: theme.colors.text.white }}>
           Loading...
-        </Text>
+        </RNText>
       </View>
     );
   }
 
-  // Simple flow: Not signed in → AuthScreen, Signed in → ProfileScreen
   return session ? <ProfileScreen /> : <AuthScreen />;
 }
 
@@ -47,21 +44,20 @@ export default function App() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.brand.primary} />
+        <ActivityIndicator size="large" color={theme.colors.brand.coral} />
       </View>
     );
   }
 
-  // Custom Navigation Theme
   const NavigationTheme = {
     dark: true,
     colors: {
-      primary: theme.colors.brand.primary,
-      background: theme.colors.background.screen,
-      card: theme.colors.background.card,
-      text: theme.colors.text.primary,
-      border: theme.colors.border.main,
-      notification: theme.colors.brand.primary,
+      primary: theme.colors.brand.coral,
+      background: theme.colors.brand.black,
+      card: theme.colors.brand.cream,
+      text: theme.colors.text.white,
+      border: theme.colors.brand.cream,
+      notification: theme.colors.brand.coral,
     },
     fonts: {
       regular: { fontFamily: theme.fontFamily.regular, fontWeight: '400' as const },
@@ -76,7 +72,7 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer theme={NavigationTheme}>
         <AppContent />
-        <StatusBar style="light" backgroundColor={theme.colors.background.primary} />
+        <StatusBar style="light" backgroundColor={theme.colors.brand.black} />
       </NavigationContainer>
     </SafeAreaProvider>
   );
@@ -85,7 +81,7 @@ export default function App() {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    backgroundColor: theme.colors.background.primary,
+    backgroundColor: theme.colors.brand.black,
     alignItems: 'center',
     justifyContent: 'center',
   },

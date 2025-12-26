@@ -49,6 +49,6 @@ export const getUserProfile = async (userId: string): Promise<GutHarmonyUser | n
 /**
  * Check if user completed onboarding (always true now - no onboarding)
  */
-export const hasCompletedOnboarding = async (userId: string): Promise<boolean> => {
+export const hasCompletedOnboarding = async (_userId: string): Promise<boolean> => {
   return true; // No onboarding required anymore
 };
