@@ -20,7 +20,7 @@ interface AnimatedMascotProps {
   bounceAnim: Animated.Value;
 }
 
-const AnimatedMascot: React.FC<AnimatedMascotProps> = ({ fadeAnim, scaleAnim, bounceAnim }) => {
+const AnimatedMascot: React.FC<AnimatedMascotProps> = ({ fadeAnim, scaleAnim }) => {
   return (
     <Animated.View
       style={[
@@ -29,12 +29,11 @@ const AnimatedMascot: React.FC<AnimatedMascotProps> = ({ fadeAnim, scaleAnim, bo
           opacity: fadeAnim,
           transform: [
             { scale: scaleAnim },
-            { translateY: bounceAnim },
           ],
         },
       ]}
     >
-      <Gigi emotion="happy" size="md" animated={true} />
+      <Gigi emotion="happy" size="md" />
     </Animated.View>
   );
 };
@@ -77,21 +76,6 @@ export default function AuthScreen() {
       }),
     ]).start();
 
-     // Gentle float animation for mascot
-     Animated.loop(
-      Animated.sequence([
-        Animated.spring(bounceAnim, { // Using spring for bouncier feel
-          toValue: -15, // Increased vertical movement
-          useNativeDriver: true,
-          ...theme.animations.springConfig.bouncy, // Use bouncy config
-        }),
-        Animated.spring(bounceAnim, {
-          toValue: 0,
-          useNativeDriver: true,
-          ...theme.animations.springConfig.bouncy,
-        }),
-      ])
-    ).start();
 
   }, []);
 

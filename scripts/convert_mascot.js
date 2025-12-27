@@ -55,6 +55,17 @@ function convertEPSToSVG(content) {
   const liRe = /([.\d]+)\s+([.\d]+)\s+li/;
   const cvRe = /([.\d]+)\s+([.\d]+)\s+([.\d]+)\s+([.\d]+)\s+([.\d]+)\s+([.\d]+)\s+cv/;
   
+  let bbox = { minX: 0, minY: 0, maxX: 1024, maxY: 1024 };
+  if (bboxMatch) {
+      bbox.minX = parseFloat(bboxMatch[1]);
+      bbox.minY = parseFloat(bboxMatch[2]);
+      bbox.maxX = parseFloat(bboxMatch[3]);
+      bbox.maxY = parseFloat(bboxMatch[4]);
+  }
+
+  let subPaths = [];
+  let currentSubPath = '';
+
   for (const line of lines) {
     // Check for color
     const newColor = parseColor(line);
@@ -65,35 +76,84 @@ function convertEPSToSVG(content) {
     // Path commands
     const mo = line.match(moRe);
     if (mo) {
-      currentPath += `M${mo[1]} ${mo[2]} `;
+      if (currentSubPath.trim()) subPaths.push(currentSubPath.trim());
+      currentSubPath = `M${mo[1]} ${mo[2]} `;
     }
     
     const li = line.match(liRe);
     if (li) {
-      currentPath += `L${li[1]} ${li[2]} `;
+      currentSubPath += `L${li[1]} ${li[2]} `;
     }
 
     const cv = line.match(cvRe);
     if (cv) {
-      currentPath += `C${cv[1]} ${cv[2]} ${cv[3]} ${cv[4]} ${cv[5]} ${cv[6]} `;
+      currentSubPath += `C${cv[1]} ${cv[2]} ${cv[3]} ${cv[4]} ${cv[5]} ${cv[6]} `;
     }
 
     if (line.trim() === 'cp') {
-      currentPath += 'Z ';
+      currentSubPath += 'Z ';
     }
 
     // Fill command - emit shape
-    // Note: Some files might use 'f' or 'F' or 'fill'
-    // The previous analysis suggests 'f' is used.
     if (line.trim() === 'f' || line.trim() === 'fill') {
-      if (currentPath.trim()) {
-        if (currentColor) {
+      if (currentSubPath.trim()) subPaths.push(currentSubPath.trim());
+      
+      if (subPaths.length > 0) {
+        let effectiveColor = currentColor;
+        
+        let cleanedPaths = subPaths;
+
+        if (!currentColor) {
+            // Filter out BBox artifacts
+            cleanedPaths = subPaths.filter(p => {
+                // Check if this path is a simple rectangle matching BBox (approx)
+                // A simple rect is usually M x y L x y L x y L x y Z with NO curves 'C'
+                if (p.includes('C')) return true; // Keep curves
+                
+                // Very rough check for BBox extents
+                // If it contains ALL 4 corners roughly, it's likely the box.
+                // We'll just check if it's purely linear and touches min and max of both axes.
+                
+                // Extractall numbers
+                const matches = p.match(/[0-9.]+/g);
+                if (!matches) return true; // Keep weird paths if we can't parse them (safest)
+                const nums = matches.map(parseFloat);
+                if (nums.length < 4) return true;
+                
+                const pMinX = Math.min(...nums.filter((_, i) => i % 2 === 0));
+                const pMaxX = Math.max(...nums.filter((_, i) => i % 2 === 0));
+                const pMinY = Math.min(...nums.filter((_, i) => i % 2 !== 0));
+                const pMaxY = Math.max(...nums.filter((_, i) => i % 2 !== 0));
+                
+                const tolerance = 2.0; 
+                const matchesBBox = 
+                    Math.abs(pMinX - bbox.minX) < tolerance &&
+                    Math.abs(pMaxX - bbox.maxX) < tolerance &&
+                    Math.abs(pMinY - bbox.minY) < tolerance &&
+                    Math.abs(pMaxY - bbox.maxY) < tolerance;
+                
+                // If matches BBox exactly and has no curves, DROP IT.
+                return !matchesBBox;
+            });
+
+            // If we have remaining paths and they look like content (have curves), invoke default
+            // User feedback: Legs were black, hands were red. Legs should match hands.
+            // Using the standard maroon/dark red outline color found elsewhere: rgb(164,6,52)
+            const hasCurves = cleanedPaths.some(p => p.includes('C'));
+            if (hasCurves && cleanedPaths.length > 0) {
+                effectiveColor = 'rgb(164,6,52)';
+            }
+        }
+
+        if (effectiveColor && cleanedPaths.length > 0) {
           shapes.push({
-            d: currentPath.trim(),
-            fill: currentColor
+            d: cleanedPaths.join(' '),
+            fill: effectiveColor
           });
         }
-        currentPath = '';
+        
+        subPaths = [];
+        currentSubPath = '';
       }
     }
   }

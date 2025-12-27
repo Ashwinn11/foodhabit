@@ -1,13 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle,
-  withRepeat, 
-  withSequence,
-  withTiming, 
-  Easing
-} from 'react-native-reanimated';
 import { 
   GigiHappy, 
   GigiSad, 
@@ -40,7 +32,7 @@ export type GigiSize = 'sm' | 'md' | 'lg' | 'xl';
 interface GigiProps {
   emotion?: GigiEmotion;
   size?: GigiSize;
-  animated?: boolean;
+  animated?: boolean; // Kept for prop compatibility, but ignored
 }
 
 const SIZE_MAP = {
@@ -53,49 +45,13 @@ const SIZE_MAP = {
 export default function Gigi({ 
   emotion = 'happy', 
   size = 'md', 
-  animated = true 
 }: GigiProps) {
   const pixelSize = SIZE_MAP[size];
-
-  // Animation States
-  const breath = useSharedValue(1);
-  const bounce = useSharedValue(0);
-
-  useEffect(() => {
-    if (!animated) return;
-
-    // Breathing animation
-    breath.value = withRepeat(
-      withSequence(
-        withTiming(1.03, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.97, { duration: 2000, easing: Easing.inOut(Easing.ease) })
-      ), -1, true
-    );
-
-    // Bounce animation based on emotion
-    if (['happy', 'excited', 'love', 'crown', 'balloon'].includes(emotion)) {
-      bounce.value = withRepeat(
-        withSequence(withTiming(-10, { duration: 1500 }), withTiming(0, { duration: 1500 })),
-        -1, true
-      );
-    } else if (['angry', 'confused', 'worried'].includes(emotion)) {
-       // Rigid / shake?
-       bounce.value = withTiming(0);
-    } else {
-       // Calm
-       bounce.value = withTiming(0);
-    }
-
-  }, [emotion, animated]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: breath.value }, { translateY: bounce.value }]
-  }));
 
   const renderMascot = () => {
     switch (emotion) {
       case 'happy':
-      case 'neutral': // Map neutral to happy for now
+      case 'neutral': 
         return <GigiHappy size={pixelSize} />;
       case 'sad':
         return <GigiSad size={pixelSize} />;
@@ -122,9 +78,7 @@ export default function Gigi({
 
   return (
     <View style={{ width: pixelSize, height: pixelSize, alignItems: 'center', justifyContent: 'center' }}>
-      <Animated.View style={animatedStyle}>
-        {renderMascot()}
-      </Animated.View>
+      {renderMascot()}
     </View>
   );
 }
