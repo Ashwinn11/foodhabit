@@ -15,6 +15,11 @@ Notifications.setNotificationHandler({
 export async function registerForPushNotificationsAsync() {
     let token;
 
+    if (Platform.OS === 'web') {
+        console.log('Push notifications are not supported on web');
+        return;
+    }
+
     if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('daut-reminders', {
             name: 'Daily Reminders',
@@ -46,6 +51,11 @@ export async function registerForPushNotificationsAsync() {
 }
 
 export async function scheduleDailyReminder() {
+    if (Platform.OS === 'web') {
+        console.log('Scheduled notifications are not supported on web');
+        return;
+    }
+
     // Cancel existing notifications to avoid duplicates
     await Notifications.cancelAllScheduledNotificationsAsync();
 
@@ -72,20 +82,6 @@ export async function scheduleDailyReminder() {
         },
         trigger: {
             hour: 19,
-            minute: 0,
-            repeats: true,
-        } as any,
-    });
-
-    // Schedule for 7:00 PM (Dinner)
-    await Notifications.scheduleNotificationAsync({
-        content: {
-            title: "Dinner time! 🥗",
-            body: "Scan your meal to keep your streak alive!",
-            sound: true,
-        },
-        trigger: {
-            hour: 12,
             minute: 0,
             repeats: true,
         } as any,

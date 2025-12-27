@@ -17,7 +17,7 @@ export const colors = {
     cream: '#FCEFDE',      // Cream (Light background)
     white: '#ffffff',      // Pure White
     black: '#000000',
-    background:"#1a2332",
+    background: "#1a2332",
   },
 
 
@@ -28,7 +28,7 @@ export const colors = {
     white: '#ffffff',      // Primary text (white)
     black: '#000000',      // Inverse text (black for light backgrounds if needed)
   },
-  
+
 } as const;
 
 export type ColorScheme = typeof colors;

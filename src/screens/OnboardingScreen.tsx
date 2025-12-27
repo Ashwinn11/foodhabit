@@ -1,147 +1,173 @@
-import React, { useState, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { Text, Gigi } from '../components';
 import { theme } from '../theme';
-import { registerForPushNotificationsAsync } from '../services/notificationService';
-
-
-
-interface OnboardingSlide {
-  id: number;
-  title: string;
-  description: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  gigiEmotion: 'happy' | 'excited' | 'neutral' | 'thinking' | 'worried';
-}
-
-const slides: OnboardingSlide[] = [
-  {
-    id: 1,
-    title: 'Welcome to GutScan!',
-    description: 'Meet Gigi, your friendly gut health companion who will help you build better eating habits.',
-    icon: 'heart',
-    gigiEmotion: 'excited',
-  },
-  {
-    id: 2,
-    title: 'Scan Your Meals',
-    description: 'Simply take a photo of your food and get an instant gut health score based on fiber, plant diversity, and more.',
-    icon: 'camera',
-    gigiEmotion: 'thinking',
-  },
-  {
-    id: 3,
-    title: 'Track Your Progress',
-    description: 'Build streaks, level up Gigi, and watch your gut health improve over time.',
-    icon: 'trending-up',
-    gigiEmotion: 'happy',
-  },
-];
+import { ProgressBar } from '../components';
+import { 
+  QuizStep, 
+  ResultsStep, 
+  InsightStep, 
+  PlanStep, 
+  PaywallStep,
+  RulesStep,
+  ReviewsStep
+} from './onboarding';
 
 interface OnboardingScreenProps {
   onComplete: () => void;
 }
 
+type Step = 
+  | 'quiz' 
+  | 'results' 
+  | 'insight_symptom' 
+  | 'insight_solution' 
+  | 'reviews'
+  | 'insight_features'
+  | 'plan' 
+  | 'paywall' 
+  | 'rules';
+
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const insets = useSafeAreaInsets();
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [currentStep, setCurrentStep] = useState<Step>('quiz');
+  const [progress, setProgress] = useState(0.1);
 
-  const handleNext = async () => {
-    console.log('handleNext called, currentSlide:', currentSlide);
-    
-    if (currentSlide < slides.length - 1) {
-      // Fade out
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }).start(() => {
-        setCurrentSlide(currentSlide + 1);
-        // Fade in
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }).start();
-      });
-    } else {
-      // Last slide - request notifications and complete
-      console.log('Last slide - completing onboarding');
-      try {
-        await registerForPushNotificationsAsync();
-      } catch (error) {
-        console.log('Notification permission error (non-blocking):', error);
-      }
-      onComplete();
+  // Simple state machine for navigation
+  const nextStep = () => {
+    switch (currentStep) {
+      case 'quiz':
+        setCurrentStep('results');
+        setProgress(0.3);
+        break;
+      case 'results':
+        setCurrentStep('insight_symptom');
+        setProgress(0.4);
+        break;
+      case 'insight_symptom':
+        setCurrentStep('insight_solution');
+        setProgress(0.5);
+        break;
+      case 'insight_solution':
+        setCurrentStep('reviews');
+        setProgress(0.6);
+        break;
+      case 'reviews':
+        setCurrentStep('insight_features');
+        setProgress(0.7);
+        break;
+      case 'insight_features':
+        setCurrentStep('plan');
+        setProgress(0.8);
+        break;
+      case 'plan':
+        setCurrentStep('paywall');
+        setProgress(0.9);
+        break;
+      case 'paywall':
+        setCurrentStep('rules');
+        setProgress(1.0);
+        break;
+      case 'rules':
+        onComplete();
+        break;
     }
   };
 
-  const handleSkip = () => {
-    onComplete();
+  const handleBack = () => {
+    switch (currentStep) {
+      case 'results':
+        setCurrentStep('quiz');
+        setProgress(0.1);
+        break;
+      case 'insight_symptom':
+        setCurrentStep('results');
+        setProgress(0.3);
+        break;
+      case 'insight_solution':
+        setCurrentStep('insight_symptom');
+        setProgress(0.4);
+        break;
+      case 'reviews':
+        setCurrentStep('insight_solution');
+        setProgress(0.5);
+        break;
+      case 'insight_features':
+        setCurrentStep('reviews');
+        setProgress(0.6);
+        break;
+      case 'plan':
+        setCurrentStep('insight_features');
+        setProgress(0.7);
+        break;
+      case 'paywall':
+        setCurrentStep('plan');
+        setProgress(0.8);
+        break;
+      case 'rules':
+        setCurrentStep('paywall');
+        setProgress(0.9);
+        break;
+      default:
+        // No back action for quiz start
+        break;
+    }
   };
 
-  const slide = slides[currentSlide];
-  const isLastSlide = currentSlide === slides.length - 1;
+  const handleQuizUpdate = (val: number) => {
+    // Minor progress updates during quiz
+    setProgress(Math.min(val, 0.25)); 
+  };
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 'quiz':
+        return (
+          <QuizStep 
+            onComplete={nextStep} 
+            onBack={handleBack} 
+            updateProgress={handleQuizUpdate} 
+          />
+        );
+      case 'results':
+        return <ResultsStep onComplete={nextStep} />;
+      case 'insight_symptom':
+        return <InsightStep type="symptoms" onComplete={nextStep} />;
+      case 'insight_solution':
+        return <InsightStep type="solution" onComplete={nextStep} />;
+      case 'reviews':
+        return <ReviewsStep onComplete={nextStep} />;
+      case 'insight_features':
+        return <InsightStep type="features" onComplete={nextStep} />;
+      case 'plan':
+        return <PlanStep onComplete={nextStep} />;
+      case 'paywall':
+        return <PaywallStep onComplete={nextStep} />;
+      case 'rules':
+        return <RulesStep onComplete={nextStep} />;
+      default:
+        return null; // Should not happen
+    }
+  };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      {/* Skip Button */}
-      {!isLastSlide && (
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-          <Text variant="body" style={styles.skipText}>Skip</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Content */}
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-        {/* Gigi */}
-        <View style={styles.gigiContainer}>
-          <Gigi emotion={slide.gigiEmotion} size="md" />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header / Progress */}
+      <View style={styles.header}>
+        <View style={styles.progressBarContainer}>
+          <ProgressBar progress={progress} />
         </View>
+        
+        {currentStep !== 'quiz' && currentStep !== 'results' && (
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
-        {/* Text */}
-        <Text variant="title1" weight="bold" style={styles.title}>
-          {slide.title}
-        </Text>
-        <Text variant="body" style={styles.description}>
-          {slide.description}
-        </Text>
-      </Animated.View>
-
-      {/* Bottom Section */}
-      <View style={styles.bottomSection}>
-        {/* Dots */}
-        <View style={styles.dotsContainer}>
-          {slides.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.dot,
-                index === currentSlide && styles.dotActive,
-              ]}
-            />
-          ))}
-        </View>
-
-        {/* Next Button */}
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text variant="headline" weight="bold" style={styles.nextButtonText}>
-            {isLastSlide ? 'Get Started' : 'Next'}
-          </Text>
-          <Ionicons 
-            name={isLastSlide ? 'checkmark' : 'arrow-forward'} 
-            size={20} 
-            color={theme.colors.brand.black} 
-          />
-        </TouchableOpacity>
+      {/* Main Content Area */}
+      <View style={styles.content}>
+        {renderStep()}
       </View>
     </View>
   );
@@ -151,65 +177,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.brand.background,
-    paddingHorizontal: theme.spacing.xl,
   },
-  skipButton: {
-    alignSelf: 'flex-end',
-    padding: theme.spacing.md,
+  header: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    height: 60,
+    justifyContent: 'center',
   },
-  skipText: {
+  progressBarContainer: {
+    width: '100%',
+    paddingHorizontal: theme.spacing.xl, // Center it visually a bit more
+  },
+  backButton: {
+    position: 'absolute',
+    left: theme.spacing.lg,
+    padding: theme.spacing.sm,
+  },
+  backIcon: {
+    fontSize: 28,
     color: theme.colors.text.white,
-    opacity: 0.6,
+    fontWeight: '300',
   },
   content: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: theme.spacing.lg,
-  },
-  gigiContainer: {
-    marginBottom: theme.spacing['3xl'],
-  },
-  title: {
-    color: theme.colors.text.white,
-    textAlign: 'center',
-    marginBottom: theme.spacing.lg,
-  },
-  description: {
-    color: theme.colors.text.white,
-    textAlign: 'center',
-    opacity: 0.8,
-    lineHeight: 24,
-  },
-  bottomSection: {
-    paddingVertical: theme.spacing.xl,
-  },
-  dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.xl,
-    gap: theme.spacing.sm,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  dotActive: {
-    backgroundColor: theme.colors.brand.coral,
-    width: 24,
-  },
-  nextButton: {
-    backgroundColor: theme.colors.brand.cream,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: theme.spacing.lg,
-    borderRadius: theme.borderRadius.xl,
-    gap: theme.spacing.sm,
-  },
-  nextButtonText: {
-    color: theme.colors.brand.black,
   },
 });
