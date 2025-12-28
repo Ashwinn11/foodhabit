@@ -89,8 +89,8 @@ export default function ResultScreen({ route, navigation }: any) {
       const result = calculateGutHealthScore(identifiedFoods, userTriggers);
       
       setScore(result.score);
-      setFoods(identifiedFoods);
-      setBreakdown(result); // Store full result with foodImpacts and tips
+      setFoods(result.foodImpacts.map((i: any) => ({ name: i.food }))); 
+      setBreakdown(result.breakdown);
       setGigiMessage(result.message);
       setLoading(false);
 

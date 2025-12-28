@@ -16,7 +16,7 @@ export const InsightStep: React.FC<InsightStepProps> = ({ onComplete, type }) =>
       case 'symptoms':
         return (
           <>
-            <Gigi emotion="thinking" size="md" />
+            <Gigi emotion="shock-awe" size="md" />
             <Text variant="title2" style={styles.title}>
               We noticed you're struggling with bloating.
             </Text>
@@ -32,7 +32,7 @@ export const InsightStep: React.FC<InsightStepProps> = ({ onComplete, type }) =>
       case 'solution':
         return (
           <>
-            <Gigi emotion="excited" size="md" />
+            <Gigi emotion="happy-cute" size="md" />
             <Text variant="title2" style={styles.title}>
               Meet Your New Gut Coach
             </Text>

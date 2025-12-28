@@ -60,7 +60,7 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
 
   // Color mapping from original SVG classes
   const colors = {
-    cls1: '#a40634',  // Dark maroon - outlines, details, feet
+    cls1: '#ff3b5c',  // Vibrant Rose - improved contrast for outlines and limbs
     cls2: '#ff2242',  // Bright red - hearts fill
     cls3: '#ff9796',  // Light pink - body highlight
     cls4: '#d34059',  // Medium pink - hand detail
@@ -169,8 +169,8 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
       <Animated.View
         style={{
           position: 'absolute',
-          left: (svgSize * 40) / 345.89, 
-          top: (svgSize * 180) / 434.18, 
+          left: (svgSize * 10) / 345.89, 
+          top: (svgSize * 150) / 434.18, 
           transform: [
             { translateY: heart1Anim.interpolate({ inputRange: [0, 1], outputRange: [0, -800] }) },
             { rotate: heart1Anim.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: ['0deg', '-15deg', '0deg', '15deg', '0deg'] }) },
@@ -178,13 +178,14 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
           opacity: heart1Anim.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.8, 0] }),
         }}
       >
-        <Svg width={svgSize * 0.12} height={svgSize * 0.12} viewBox="0 0 48 48">
-           {/* Clean, standard heart path with mascot-style outline */}
+        <Svg width={svgSize * 0.12} height={svgSize * 0.12} viewBox="0 155 45 70">
            <Path 
-             d="M24 42.7l-2.9-2.63C10.8 30.72 4 24.55 4 17 4 10.83 8.83 6 15 6c3.48 0 6.82 1.62 9 4.17C26.18 7.62 29.52 6 33 6c6.17 0 11 4.83 11 11 0 7.55-6.8 13.72-17.1 23.07L24 42.7z" 
+             d="M41.44,181.3c-6.44-9.7-18.34,9.4-18.44,9.55-.14-.11-17.68-14.2-20.56-2.92-2.88,11.27,25.32,32.36,25.59,32.56.19-.28,19.84-29.5,13.4-39.19Z"
              fill={colors.cls2} 
-             stroke={colors.cls1}
-             strokeWidth="3"
+           />
+           <Path 
+             d="M28.03,222.74c-.48,0-.95-.15-1.34-.44-3.04-2.26-29.61-22.46-26.43-34.92.93-3.66,3.14-5.09,4.82-5.66,5.54-1.85,13.49,3.11,17.37,5.9,2.66-3.79,8.62-11.22,14.43-11.31,1.78-.05,4.33.6,6.42,3.75h0c7.11,10.69-11.29,38.55-13.41,41.69-.34.51-.88.85-1.48.96-.13.02-.25.03-.38.03ZM7.79,185.79c-.47,0-.9.06-1.28.19-.58.19-1.42.67-1.88,2.5-1.73,6.79,12.4,20.62,22.86,28.76,7.18-11.15,15.95-28.87,12.08-34.7-1.05-1.58-1.99-1.74-2.61-1.74-3.53.05-9.17,6.6-12.05,11.23-.34.55-.9.92-1.53,1.03-.63.11-1.28-.06-1.79-.46-3.53-2.84-9.95-6.81-13.8-6.81Z"
+             fill={colors.cls1}
            />
         </Svg>
       </Animated.View>
@@ -193,8 +194,8 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
       <Animated.View
         style={{
           position: 'absolute',
-          left: (svgSize * 160) / 345.89,
-          top: (svgSize * 5) / 434.18,
+          left: (svgSize * 150) / 345.89,
+          top: (svgSize * -20) / 434.18,
           transform: [
             { translateY: heart2Anim.interpolate({ inputRange: [0, 1], outputRange: [0, -800] }) },
             { rotate: heart2Anim.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: ['0deg', '15deg', '0deg', '-15deg', '0deg'] }) },
@@ -202,12 +203,14 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
           opacity: heart2Anim.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.8, 0] }),
         }}
       >
-        <Svg width={svgSize * 0.14} height={svgSize * 0.14} viewBox="0 0 48 48">
+        <Svg width={svgSize * 0.14} height={svgSize * 0.14} viewBox="120 -5 45 55">
            <Path 
-             d="M24 42.7l-2.9-2.63C10.8 30.72 4 24.55 4 17 4 10.83 8.83 6 15 6c3.48 0 6.82 1.62 9 4.17C26.18 7.62 29.52 6 33 6c6.17 0 11 4.83 11 11 0 7.55-6.8 13.72-17.1 23.07L24 42.7z" 
+             d="M160.78,5.77c-4.73-10.64-19.66,6.19-19.78,6.33-.12-.13-15.05-16.97-19.78-6.33-4.72,10.63,19.54,36.14,19.78,36.39.23-.24,24.5-25.76,19.78-36.39Z"
              fill={colors.cls2} 
-             stroke={colors.cls1}
-             strokeWidth="3"
+           />
+           <Path 
+             d="M141,44.4c-.61,0-1.2-.25-1.63-.7-2.62-2.74-25.4-27.15-20.2-38.85,1.53-3.45,3.95-4.5,5.7-4.77,5.75-.89,12.86,5.44,16.12,8.73,3.25-3.29,10.34-9.61,16.12-8.73,1.76.27,4.18,1.31,5.71,4.77,5.07,11.41-15.94,34.36-20.2,38.85-.42.45-1.01.7-1.63.7,0,0,0,0,0,0ZM126.06,4.49c-.17,0-.34.01-.5.04-.61.09-1.51.42-2.28,2.15-2.83,6.37,8.78,22.38,17.72,32.18,8.94-9.82,20.54-25.83,17.72-32.18-.77-1.73-1.67-2.06-2.28-2.15-3.83-.58-10.92,5.85-13.76,9.05-.43.48-1.04.76-1.69.76h0c-.64,0-1.26-.27-1.68-.76-3.45-3.9-9.67-9.09-13.26-9.09Z"
+             fill={colors.cls1}
            />
         </Svg>
       </Animated.View>
@@ -217,7 +220,7 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
         style={{
           position: 'absolute',
           left: (svgSize * 300) / 345.89,
-          top: (svgSize * 80) / 434.18,
+          top: (svgSize * 60) / 434.18,
           transform: [
             { translateY: heart3Anim.interpolate({ inputRange: [0, 1], outputRange: [0, -800] }) },
             { rotate: heart3Anim.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: ['0deg', '-10deg', '0deg', '10deg', '0deg'] }) },
@@ -225,12 +228,14 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
           opacity: heart3Anim.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.8, 0] }),
         }}
       >
-        <Svg width={svgSize * 0.12} height={svgSize * 0.12} viewBox="0 0 48 48">
+        <Svg width={svgSize * 0.12} height={svgSize * 0.12} viewBox="300 60 45 70">
            <Path 
-             d="M24 42.7l-2.9-2.63C10.8 30.72 4 24.55 4 17 4 10.83 8.83 6 15 6c3.48 0 6.82 1.62 9 4.17C26.18 7.62 29.52 6 33 6c6.17 0 11 4.83 11 11 0 7.55-6.8 13.72-17.1 23.07L24 42.7z" 
+             d="M342.41,83.38c-6.44-9.7-18.34,9.4-18.44,9.55-.14-.11-17.68-14.2-20.56-2.92-2.88,11.27,25.32,32.36,25.59,32.56.19-.28,19.84-29.5,13.4-39.19Z"
              fill={colors.cls2} 
-             stroke={colors.cls1}
-             strokeWidth="3"
+           />
+           <Path 
+             d="M329.01,124.82c-.48,0-.95-.15-1.34-.45-3.04-2.27-29.59-22.5-26.43-34.92.93-3.66,3.13-5.09,4.82-5.66,5.53-1.85,13.49,3.11,17.37,5.9,2.74-3.92,8.61-11.22,14.44-11.3,1.74-.03,4.32.6,6.41,3.75h0c7.09,10.66-11.29,38.54-13.41,41.69-.34.51-.88.86-1.49.96-.13.02-.25.03-.38.03ZM308.76,87.87c-.47,0-.9.06-1.28.19-.58.2-1.42.67-1.88,2.5-1.73,6.76,12.4,20.6,22.86,28.76,7.18-11.16,15.94-28.89,12.08-34.69h0c-1.05-1.58-1.99-1.74-2.61-1.74-3.71.05-9.36,6.92-12.05,11.23-.34.55-.9.92-1.53,1.03s-1.28-.06-1.78-.46c-3.53-2.84-9.95-6.81-13.8-6.81Z"
+             fill={colors.cls1}
            />
         </Svg>
       </Animated.View>

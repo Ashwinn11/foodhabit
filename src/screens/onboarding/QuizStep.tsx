@@ -103,7 +103,7 @@ export const QuizStep: React.FC<QuizStepProps> = ({ onComplete, updateProgress }
           ) : currentQuestion.id === 'goal' ? (
             <HappyBalloon size={150} />
           ) : (
-            <Gigi emotion="thinking" size="md" />
+            <Gigi emotion="shock-awe" size="md" />
           )}
         </View>
         

@@ -19,7 +19,7 @@ export const ResultsStep: React.FC<ResultsStepProps> = ({ onComplete }) => {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Gigi emotion="happy" size="lg" />
+        <Gigi emotion="happy-clap" size="lg" />
         <Text variant="title2" style={styles.title}>
           Analyzing your gut profile...
         </Text>

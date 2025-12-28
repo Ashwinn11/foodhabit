@@ -11,25 +11,14 @@ import MascotSadSick from './mascots/SadSick';
 import MascotShockAwe from './mascots/ShockAwe';
 
 export type GigiEmotion = 
-  | 'happy' 
-  | 'sad' 
-  | 'angry' 
-  | 'confused' 
-  | 'love' 
-  | 'crown' 
-  | 'balloon' 
-  | 'ill'
-  | 'clap'
-  | 'cute'
-  | 'cry'
-  | 'frustrate'
-  | 'sick'
-  | 'shock'
-  // Legacy mappings
-  | 'neutral' 
-  | 'excited' 
-  | 'worried' 
-  | 'thinking';
+  | 'happy-clap'
+  | 'happy-crown'
+  | 'happy-cute'
+  | 'happy-balloon'
+  | 'sad-cry'
+  | 'sad-frustrate'
+  | 'sad-sick'
+  | 'shock-awe';
 
 export type GigiSize = 'sm' | 'md' | 'lg' | 'xl';
 
@@ -47,50 +36,36 @@ const SIZE_MAP = {
 };
 
 export default function Gigi({ 
-  emotion = 'happy', 
+  emotion = 'happy-clap', 
   size = 'md',
-  animated = false, // Will be used when we add animations
+  animated = true, // Animation is now enabled by default
 }: GigiProps) {
   const pixelSize = SIZE_MAP[size];
 
   const renderMascot = () => {
-    // Map emotions to mascot components
-    // Structure ready for adding animated prop to each component
     switch (emotion) {
-      case 'happy':
-      case 'neutral':
+      case 'happy-clap':
         return <MascotHappyClap size={pixelSize} animated={animated} />;
       
-      case 'clap':
-        return <MascotHappyClap size={pixelSize} animated={animated} />;
-      
-      case 'crown':
+      case 'happy-crown':
         return <MascotHappyCrown size={pixelSize} animated={animated} />;
       
-      case 'cute':
-      case 'love':
-      case 'excited':
+      case 'happy-cute':
         return <MascotHappyCute size={pixelSize} animated={animated} />;
       
-      case 'balloon':
+      case 'happy-balloon':
         return <MascotHappyBalloon size={pixelSize} animated={animated} />;
       
-      case 'sad':
-      case 'cry':
+      case 'sad-cry':
         return <MascotSadCry size={pixelSize} animated={animated} />;
       
-      case 'angry':
-      case 'frustrate':
+      case 'sad-frustrate':
         return <MascotSadFrustrate size={pixelSize} animated={animated} />;
       
-      case 'ill':
-      case 'sick':
+      case 'sad-sick':
         return <MascotSadSick size={pixelSize} animated={animated} />;
       
-      case 'confused':
-      case 'thinking':
-      case 'worried':
-      case 'shock':
+      case 'shock-awe':
         return <MascotShockAwe size={pixelSize} animated={animated} />;
       
       default:

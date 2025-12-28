@@ -10,7 +10,7 @@ export const PlanStep: React.FC<PlanStepProps> = ({ onComplete }) => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Gigi emotion="excited" size="md" />
+        <Gigi emotion="happy-cute" size="md" />
         <Text variant="title2" style={styles.title}>Your Custom Plan</Text>
         <Text variant="body" style={styles.subtitle}>
           Based on your goal to <Text weight="bold" style={{color: theme.colors.brand.coral}}>Improve Digestion</Text>:

@@ -98,15 +98,15 @@ export default function HomeScreen({ navigation }: any) {
         <TouchableOpacity style={styles.gigiContainer} activeOpacity={0.9} onPress={() => {}}>
            <Gigi 
             emotion={
-              avgScore >= 90 ? 'crown' :        // 90-100: Crown - Champion level!
-              avgScore >= 80 ? 'balloon' :      // 80-89: Balloon - Celebrating
-              avgScore >= 70 ? 'cute' :         // 70-79: Cute/Love - Very happy
-              avgScore >= 60 ? 'clap' :         // 60-69: Clapping - Good job
-              avgScore >= 50 ? 'shock' :        // 50-59: Shocked - Could be better
-              avgScore >= 40 ? 'frustrate' :    // 40-49: Frustrated - Not ideal
-              avgScore >= 30 ? 'sick' :         // 30-39: Sick - Unhealthy
-              avgScore > 0 ? 'cry' :            // 0-29: Crying - Very unhealthy
-              'clap'                            // No score yet - Neutral/ready
+              avgScore >= 90 ? 'happy-crown' :        // 90-100: Crown - Champion level!
+              avgScore >= 80 ? 'happy-balloon' :      // 80-89: Balloon - Celebrating
+              avgScore >= 70 ? 'happy-cute' :         // 70-79: Cute/Love - Very happy
+              avgScore >= 60 ? 'happy-clap' :         // 60-69: Clapping - Good job
+              avgScore >= 50 ? 'shock-awe' :          // 50-59: Shocked - Could be better
+              avgScore >= 40 ? 'sad-frustrate' :      // 40-49: Frustrated - Not ideal
+              avgScore >= 30 ? 'sad-sick' :           // 30-39: Sick - Unhealthy
+              avgScore > 0 ? 'sad-cry' :              // 0-29: Crying - Very unhealthy
+              'happy-clap'                            // No score yet - Neutral/ready
             } 
             size="lg"
             animated={true}

@@ -51,7 +51,7 @@ export default function PaywallScreen({
 
         {/* Hero Section */}
         <View style={styles.hero}>
-          <Gigi emotion="crown" size="md" />
+          <Gigi emotion="happy-crown" size="md" />
           <Text variant="title1" style={styles.title}>
             Unlock Full Potential
           </Text>

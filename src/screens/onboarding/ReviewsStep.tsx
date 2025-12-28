@@ -12,7 +12,7 @@ export const ReviewsStep: React.FC<ReviewsStepProps> = ({ onComplete }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Gigi emotion="happy" size="md" />
+        <Gigi emotion="happy-clap" size="md" />
         <Text variant="title2" style={styles.title}>Loved by thousands</Text>
         <Text variant="body" style={styles.subtitle}>
           Join the community healing their gut naturally.
