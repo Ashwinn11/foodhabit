@@ -88,6 +88,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: theme.spacing.xl,
     paddingBottom: 0,
+    overflow: 'visible',
   },
   title: {
     marginTop: theme.spacing.lg,

@@ -94,9 +94,11 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xl,
     flexGrow: 1,
     justifyContent: 'center',
+    overflow: 'visible',
   },
   mainContent: {
     alignItems: 'center',
+    overflow: 'visible',
   },
   title: {
     textAlign: 'center',

@@ -136,6 +136,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.xl,
+    overflow: 'visible',
   },
   title: {
     textAlign: 'center',

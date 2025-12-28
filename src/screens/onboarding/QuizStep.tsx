@@ -155,6 +155,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: theme.spacing.lg,
     marginTop: theme.spacing.md,
+    overflow: 'visible',
   },
   question: {
     textAlign: 'center',

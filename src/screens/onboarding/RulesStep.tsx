@@ -57,12 +57,14 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: theme.spacing['2xl'],
+    overflow: 'visible',
   },
   mascotContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: theme.spacing.lg,
     height: 120,
+    overflow: 'visible',
   },
   title: {
     marginTop: theme.spacing.lg,

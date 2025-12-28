@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme';
-import { ProgressBar } from '../components';
+import { ProgressBar, Container } from '../components';
 import { 
   QuizStep, 
   ResultsStep, 
@@ -29,7 +28,6 @@ type Step =
   | 'rules';
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
-  const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState<Step>('quiz');
   const [progress, setProgress] = useState(0.1);
 
@@ -155,7 +153,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <Container style={styles.container}>
       {/* Header / Progress */}
       <View style={styles.header}>
         <View style={styles.progressBarContainer}>
@@ -173,14 +171,13 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       <View style={styles.content}>
         {renderStep()}
       </View>
-    </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.brand.background,
   },
   header: {
     paddingHorizontal: theme.spacing.lg,

@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
   content: {
     padding: theme.spacing.xl,
     alignItems: 'center',
+    overflow: 'visible',
   },
   title: {
     marginTop: theme.spacing.lg,

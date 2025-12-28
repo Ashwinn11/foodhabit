@@ -38,9 +38,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: theme.spacing.xl,
+    overflow: 'visible',
   },
   content: {
     alignItems: 'center',
+    overflow: 'visible',
   },
   title: {
     marginTop: theme.spacing.xl,

@@ -115,11 +115,6 @@ export default function AuthScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Solid Background */}
-      <View style={StyleSheet.absoluteFillObject} />
-
-      {/* Main Content */}
       <Container style={styles.contentContainer} edges={['top', 'left', 'right', 'bottom']}>
         
         {/* Top Section: App Icon */}
@@ -266,15 +261,10 @@ export default function AuthScreen() {
             variant="error"
         />
       </Container>
-    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.brand.background,
-  },
   contentContainer: {
     flex: 1,
     paddingHorizontal: theme.spacing['2xl'],
@@ -285,11 +275,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     paddingTop: theme.spacing.md,
+    overflow: 'visible',
   },
   // Mascot styles
   mascotContainer: {
     alignItems: 'center',
     marginBottom: theme.spacing.md,
+    overflow: 'visible',
   },
   mascotBg: {
     width: 140,

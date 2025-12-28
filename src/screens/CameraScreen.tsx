@@ -9,7 +9,7 @@ import {
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { Text, Modal } from '../components';
+import { Text, Modal, Container } from '../components';
 import { theme } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -25,27 +25,25 @@ export default function CameraScreen({ navigation }: any) {
   const [errorMessage, setErrorMessage] = useState('');
 
   if (!permission) {
-    return <View style={styles.container} />;
+    return <Container safeArea={false}><></></Container>;
   }
 
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <View style={styles.permissionContainer}>
-          <Ionicons name="camera-outline" size={64} color={theme.colors.brand.cream} />
-          <Text variant="title2" weight="semiBold" style={styles.permissionText}>
-            Camera Access Required
+      <Container center>
+        <Ionicons name="camera-outline" size={64} color={theme.colors.brand.cream} />
+        <Text variant="title2" weight="semiBold" style={styles.permissionText}>
+          Camera Access Required
+        </Text>
+        <Text variant="body" style={styles.permissionSubtext}>
+          We need camera access to scan your meals
+        </Text>
+        <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+          <Text variant="body" weight="semiBold" style={styles.permissionButtonText}>
+            Grant Permission
           </Text>
-          <Text variant="body" style={styles.permissionSubtext}>
-            We need camera access to scan your meals
-          </Text>
-          <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-            <Text variant="body" weight="semiBold" style={styles.permissionButtonText}>
-              Grant Permission
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        </TouchableOpacity>
+      </Container>
     );
   }
 
@@ -88,7 +86,7 @@ export default function CameraScreen({ navigation }: any) {
 
   if (photo) {
     return (
-      <View style={styles.container}>
+      <Container safeArea={false} style={styles.fullScreen}>
         <Image source={{ uri: photo }} style={styles.preview} resizeMode="cover" />
         
         {/* Top Bar */}
@@ -111,40 +109,38 @@ export default function CameraScreen({ navigation }: any) {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </Container>
     );
   }
 
   // Web-specific UI - Camera doesn't work on web, so show image picker
   if (Platform.OS === 'web') {
     return (
-      <View style={styles.container}>
-        <View style={styles.webContainer}>
-          <Ionicons name="image-outline" size={80} color={theme.colors.brand.cream} />
-          <Text variant="title2" weight="semiBold" style={styles.webTitle}>
-            Select a Photo
+      <Container center>
+        <Ionicons name="image-outline" size={80} color={theme.colors.brand.cream} />
+        <Text variant="title2" weight="semiBold" style={styles.webTitle}>
+          Select a Photo
+        </Text>
+        <Text variant="body" style={styles.webSubtext}>
+          Camera is not available on web. Please select an image from your device.
+        </Text>
+        <TouchableOpacity style={styles.webPickButton} onPress={pickImage}>
+          <Ionicons name="images" size={24} color={theme.colors.brand.black} />
+          <Text variant="body" weight="semiBold" style={styles.webPickButtonText}>
+            Choose from Gallery
           </Text>
-          <Text variant="body" style={styles.webSubtext}>
-            Camera is not available on web. Please select an image from your device.
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.webCloseButton} onPress={() => navigation.goBack()}>
+          <Text variant="body" style={styles.webCloseButtonText}>
+            Cancel
           </Text>
-          <TouchableOpacity style={styles.webPickButton} onPress={pickImage}>
-            <Ionicons name="images" size={24} color={theme.colors.brand.black} />
-            <Text variant="body" weight="semiBold" style={styles.webPickButtonText}>
-              Choose from Gallery
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.webCloseButton} onPress={() => navigation.goBack()}>
-            <Text variant="body" style={styles.webCloseButtonText}>
-              Cancel
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        </TouchableOpacity>
+      </Container>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <Container safeArea={false} style={styles.fullScreen}>
       <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
       
       {/* Top Bar - Absolute positioned */}
@@ -189,14 +185,13 @@ export default function CameraScreen({ navigation }: any) {
           onClose={() => setErrorModalVisible(false)}
           variant="error"
       />
-    </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  fullScreen: {
     flex: 1,
-    backgroundColor: theme.colors.brand.background,
   },
   camera: {
     flex: 1,
@@ -309,12 +304,6 @@ const styles = StyleSheet.create({
   useText: {
     color: theme.colors.brand.black,
   },
-  permissionContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: theme.spacing['3xl'],
-  },
   permissionText: {
     color: theme.colors.text.white,
     marginTop: theme.spacing.xl,
@@ -325,6 +314,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     marginTop: theme.spacing.sm,
     textAlign: 'center',
+    paddingHorizontal: theme.spacing['3xl'],
   },
   permissionButton: {
     marginTop: theme.spacing['2xl'],
@@ -335,12 +325,6 @@ const styles = StyleSheet.create({
   },
   permissionButtonText: {
     color: theme.colors.brand.black,
-  },
-  webContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: theme.spacing['3xl'],
   },
   webTitle: {
     color: theme.colors.text.white,
@@ -353,6 +337,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
     textAlign: 'center',
     maxWidth: 400,
+    paddingHorizontal: theme.spacing['3xl'],
   },
   webPickButton: {
     marginTop: theme.spacing['2xl'],

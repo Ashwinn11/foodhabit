@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, Modal } from '../components';
+import { Text, Modal, Container } from '../components';
 import { theme } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 import { 
@@ -135,17 +135,17 @@ export default function ResultScreen({ route, navigation }: any) {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.loadingContainer]}>
+      <Container center>
         <ActivityIndicator size="large" color={theme.colors.brand.cream} />
         <Text variant="body" style={styles.loadingText}>
           Analyzing your meal...
         </Text>
-      </View>
+      </Container>
     );
   };
 
   return (
-    <View style={styles.container}>
+    <Container safeArea={true} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -369,19 +369,11 @@ export default function ResultScreen({ route, navigation }: any) {
           variant="error"
       />
 
-    </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.brand.background,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   loadingText: {
     color: theme.colors.text.white,
     marginTop: theme.spacing.lg,

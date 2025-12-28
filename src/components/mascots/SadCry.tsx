@@ -75,7 +75,7 @@ export default function SadCry({ size = 160, style, animated = true }: MascotPro
 
   return (
     <MascotWrapper size={size} style={style}>
-      <Svg viewBox="0 0 349.62 435.2" width={svgSize} height={svgSize}>
+      <Svg viewBox="-30 0 409.62 455.2" width={svgSize} height={svgSize}>
         <Defs>
           <RadialGradient
             id="sadCryGradient"

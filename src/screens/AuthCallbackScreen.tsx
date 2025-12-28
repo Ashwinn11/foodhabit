@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import { supabase } from '../config/supabase';
 import { theme } from '../theme';
+import { Container, Text } from '../components';
 
 const AuthCallback: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -67,28 +68,29 @@ const AuthCallback: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.brand.background }}>
+      <Container center>
         <ActivityIndicator size="large" color={theme.colors.brand.coral} />
-        <Text style={{ marginTop: theme.spacing.md, color: theme.colors.text.white }}>
+        <Text variant="body" style={{ marginTop: theme.spacing.md, color: theme.colors.text.white }}>
           Completing sign in...
         </Text>
-      </View>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.brand.background }}>
-        <Text style={{ color: theme.colors.brand.coral, textAlign: 'center', paddingHorizontal: theme.spacing.lg }}>
+      <Container center>
+        <Text variant="body" style={{ color: theme.colors.brand.coral, textAlign: 'center', paddingHorizontal: theme.spacing.lg }}>
           Error: {error}
         </Text>
         <Text 
+          variant="body"
           style={{ color: theme.colors.brand.cream, marginTop: theme.spacing.md, textDecorationLine: 'underline' }}
           onPress={() => typeof window !== 'undefined' && (window.location.href = '/')}
         >
           Return to app
         </Text>
-      </View>
+      </Container>
     );
   }
 

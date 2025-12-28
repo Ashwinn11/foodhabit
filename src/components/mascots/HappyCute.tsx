@@ -149,7 +149,7 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
     <MascotWrapper size={size} style={style}>
       {/* MAIN BODY SVG */}
       <Svg 
-        viewBox="0 0 345.89 434.18" 
+        viewBox="-50 -200 445.89 634.18" 
         width={svgSize} 
         height={svgSize}
         style={{ overflow: 'visible' }} 
