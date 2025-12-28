@@ -4,14 +4,12 @@ import Svg, { Path, G, Ellipse, Circle } from 'react-native-svg';
 import Animated, { 
   useSharedValue, 
   useAnimatedProps, 
-  useAnimatedStyle, 
   withSequence, 
   withTiming, 
   withRepeat,
   withDelay,
   interpolate,
-  Extrapolation,
-  SharedValue
+  Extrapolation
 } from 'react-native-reanimated';
 import MascotWrapper from './MascotWrapper';
 
@@ -76,10 +74,11 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
     return () => clearTimeout(timeout);
   }, [animated]);
 
-  // Animated styles for hearts
-  const createHeartStyle = (sharedVal: SharedValue<number>, leftPos: number, topPos: number, rotationPattern: number[]) => {
-    return useAnimatedStyle(() => {
-      const translateY = interpolate(sharedVal.value, [0, 1], [0, -800]);
+  // Animated props for hearts
+  // Pivot points approximated from original viewBox centers
+  const createHeartProps = (sharedVal: Animated.SharedValue<number>, cx: number, cy: number, rotationPattern: number[]) => {
+    return useAnimatedProps(() => {
+      const translateY = interpolate(sharedVal.value, [0, 1], [0, -200]); // Reduced distance for SVG units
       const rotateDeg = interpolate(
         sharedVal.value, 
         [0, 0.25, 0.5, 0.75, 1], 
@@ -93,35 +92,22 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
       );
 
       return {
-        position: 'absolute',
-        left: leftPos,
-        top: topPos,
-        transform: [{ translateY }, { rotate: `${rotateDeg}deg` }],
+        transform: [
+          { translateY },
+          { translateX: cx },
+          { translateY: cy },
+          { rotate: `${rotateDeg}deg` },
+          { translateX: -cx },
+          { translateY: -cy },
+        ],
         opacity,
       };
     });
   };
 
-  const heart1Style = createHeartStyle(
-    heart1, 
-    (svgSize * 10) / 345.89, 
-    (svgSize * 150) / 434.18, 
-    [0, -15, 0, 15, 0]
-  );
-
-  const heart2Style = createHeartStyle(
-    heart2, 
-    (svgSize * 150) / 345.89, 
-    (svgSize * -20) / 434.18, 
-    [0, 15, 0, -15, 0]
-  );
-
-  const heart3Style = createHeartStyle(
-    heart3, 
-    (svgSize * 300) / 345.89, 
-    (svgSize * 60) / 434.18, 
-    [0, -10, 0, 10, 0]
-  );
+  const heart1Props = createHeartProps(heart1, 22.5, 190, [0, -15, 0, 15, 0]);
+  const heart2Props = createHeartProps(heart2, 142.5, 22.5, [0, 15, 0, -15, 0]);
+  const heart3Props = createHeartProps(heart3, 322.5, 95, [0, -10, 0, 10, 0]);
 
   // Eye blinking props
   // Right eye pivot: 230.53, 183.25
@@ -245,17 +231,9 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
             <Path d="M239.9,183.28c.9-3.4,2.66-5.88,3.93-5.54s1.58,3.36.68,6.76-2.66,5.88-3.93,5.54c-1.27-.34-1.58-3.36-.68-6.76Z" fill={colors.cls5}/>
           </AnimatedG>
         </G>
-      </Svg>
-
-      {/* 
-          ANIMATED HEARTS - Rendered OUTSIDE the main SVG 
-          to allow them to float across the whole screen 
-          without being clipped by the mascot's viewBox.
-      */}
-      
-      {/* Heart 1 (bottom left) */}
-      <Animated.View style={heart1Style}>
-        <Svg width={svgSize * 0.12} height={svgSize * 0.12} viewBox="0 155 45 70">
+        
+        {/* Animated Hearts - Moved inside SVG */}
+        <AnimatedG animatedProps={heart1Props}>
            <Path 
              d="M41.44,181.3c-6.44-9.7-18.34,9.4-18.44,9.55-.14-.11-17.68-14.2-20.56-2.92-2.88,11.27,25.32,32.36,25.59,32.56.19-.28,19.84-29.5,13.4-39.19Z"
              fill={colors.cls2} 
@@ -264,12 +242,9 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
              d="M28.03,222.74c-.48,0-.95-.15-1.34-.44-3.04-2.26-29.61-22.46-26.43-34.92.93-3.66,3.14-5.09,4.82-5.66,5.54-1.85,13.49,3.11,17.37,5.9,2.66-3.79,8.62-11.22,14.43-11.31,1.78-.05,4.33.6,6.42,3.75h0c7.11,10.69-11.29,38.55-13.41,41.69-.34.51-.88.85-1.48.96-.13.02-.25.03-.38.03ZM7.79,185.79c-.47,0-.9.06-1.28.19-.58.19-1.42.67-1.88,2.5-1.73,6.79,12.4,20.62,22.86,28.76,7.18-11.15,15.95-28.87,12.08-34.7-1.05-1.58-1.99-1.74-2.61-1.74-3.53.05-9.17,6.6-12.05,11.23-.34.55-.9.92-1.53,1.03-.63.11-1.28-.06-1.79-.46-3.53-2.84-9.95-6.81-13.8-6.81Z"
              fill={colors.cls1}
            />
-        </Svg>
-      </Animated.View>
-
-      {/* Heart 2 (top center) */}
-      <Animated.View style={heart2Style}>
-        <Svg width={svgSize * 0.14} height={svgSize * 0.14} viewBox="120 -5 45 55">
+        </AnimatedG>
+        
+        <AnimatedG animatedProps={heart2Props}>
            <Path 
              d="M160.78,5.77c-4.73-10.64-19.66,6.19-19.78,6.33-.12-.13-15.05-16.97-19.78-6.33-4.72,10.63,19.54,36.14,19.78,36.39.23-.24,24.5-25.76,19.78-36.39Z"
              fill={colors.cls2} 
@@ -278,12 +253,9 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
              d="M141,44.4c-.61,0-1.2-.25-1.63-.7-2.62-2.74-25.4-27.15-20.2-38.85,1.53-3.45,3.95-4.5,5.7-4.77,5.75-.89,12.86,5.44,16.12,8.73,3.25-3.29,10.34-9.61,16.12-8.73,1.76.27,4.18,1.31,5.71,4.77,5.07,11.41-15.94,34.36-20.2,38.85-.42.45-1.01.7-1.63.7,0,0,0,0,0,0ZM126.06,4.49c-.17,0-.34.01-.5.04-.61.09-1.51.42-2.28,2.15-2.83,6.37,8.78,22.38,17.72,32.18,8.94-9.82,20.54-25.83,17.72-32.18-.77-1.73-1.67-2.06-2.28-2.15-3.83-.58-10.92,5.85-13.76,9.05-.43.48-1.04.76-1.69.76h0c-.64,0-1.26-.27-1.68-.76-3.45-3.9-9.67-9.09-13.26-9.09Z"
              fill={colors.cls1}
            />
-        </Svg>
-      </Animated.View>
+        </AnimatedG>
 
-      {/* Heart 3 (top right) */}
-      <Animated.View style={heart3Style}>
-        <Svg width={svgSize * 0.12} height={svgSize * 0.12} viewBox="300 60 45 70">
+        <AnimatedG animatedProps={heart3Props}>
            <Path 
              d="M342.41,83.38c-6.44-9.7-18.34,9.4-18.44,9.55-.14-.11-17.68-14.2-20.56-2.92-2.88,11.27,25.32,32.36,25.59,32.56.19-.28,19.84-29.5,13.4-39.19Z"
              fill={colors.cls2} 
@@ -292,8 +264,8 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
              d="M329.01,124.82c-.48,0-.95-.15-1.34-.45-3.04-2.27-29.59-22.5-26.43-34.92.93-3.66,3.13-5.09,4.82-5.66,5.53-1.85,13.49,3.11,17.37,5.9,2.74-3.92,8.61-11.22,14.44-11.3,1.74-.03,4.32.6,6.41,3.75h0c7.09,10.66-11.29,38.54-13.41,41.69-.34.51-.88.86-1.49.96-.13.02-.25.03-.38.03ZM308.76,87.87c-.47,0-.9.06-1.28.19-.58.2-1.42.67-1.88,2.5-1.73,6.76,12.4,20.6,22.86,28.76,7.18-11.16,15.94-28.89,12.08-34.69h0c-1.05-1.58-1.99-1.74-2.61-1.74-3.71.05-9.36,6.92-12.05,11.23-.34.55-.9.92-1.53,1.03s-1.28-.06-1.78-.46c-3.53-2.84-9.95-6.81-13.8-6.81Z"
              fill={colors.cls1}
            />
-        </Svg>
-      </Animated.View>
+        </AnimatedG>
+      </Svg>
     </MascotWrapper>
   );
 }
