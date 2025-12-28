@@ -7,10 +7,9 @@ import {
   ScrollView,
   Dimensions,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, Gigi, GigiEmotion } from '../components';
+import { Text, Modal } from '../components';
 import { theme } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 import { 
@@ -26,30 +25,6 @@ import {
 
 const { width } = Dimensions.get('window');
 
-interface GigiReaction {
-  emotion: GigiEmotion;
-  message: string;
-}
-
-function getGigiReaction(score: number, message: string): GigiReaction {
-  if (score >= 80) {
-    return {
-      emotion: 'happy',
-      message,
-    };
-  } else if (score >= 60) {
-    return {
-      emotion: 'neutral',
-      message,
-    };
-  } else {
-    return {
-      emotion: 'sad',
-      message,
-    };
-  }
-}
-
 export default function ResultScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
   const { photoUri } = route.params;
@@ -59,6 +34,10 @@ export default function ResultScreen({ route, navigation }: any) {
   const [foods, setFoods] = useState<IdentifiedFood[]>([]);
   const [breakdown, setBreakdown] = useState({ fiber: 0, plants: 0, triggers: 0, processed: 0 });
   const [gigiMessage, setGigiMessage] = useState('');
+
+  // Modal State
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     calculateScore();
@@ -70,7 +49,7 @@ export default function ResultScreen({ route, navigation }: any) {
       const profile = await getUserProfile();
       const userTriggers = profile?.known_triggers || [];
 
-      // Upload image first
+      // Upload image temporarily for AI recognition
       const imageUpload = await uploadScanImage(photoUri);
       if (!imageUpload.success) {
         throw new Error('Failed to upload image');
@@ -79,7 +58,7 @@ export default function ResultScreen({ route, navigation }: any) {
       let identifiedFoods: IdentifiedFood[];
       
       try {
-        // Try AI food recognition
+        // Try AI food recognition with uploaded URL
         const { recognizeFood } = await import('../services/foodRecognitionService');
         identifiedFoods = await recognizeFood(imageUpload.url!);
         
@@ -93,6 +72,18 @@ export default function ResultScreen({ route, navigation }: any) {
         // Fallback to mock data if AI fails
         identifiedFoods = getMockFoodData();
       }
+
+      // Delete the uploaded image immediately after AI analysis
+      if (imageUpload.url) {
+        try {
+          const { deleteImage } = await import('../services/databaseService');
+          await deleteImage(imageUpload.url);
+          console.log('Temporary image deleted from storage');
+        } catch (deleteError) {
+          console.error('Failed to delete temporary image:', deleteError);
+          // Continue anyway - not critical
+        }
+      }
       
       // Calculate score
       const result = calculateGutHealthScore(identifiedFoods, userTriggers);
@@ -103,20 +94,21 @@ export default function ResultScreen({ route, navigation }: any) {
       setGigiMessage(result.message);
       setLoading(false);
 
-      // Save scan to database
-      await saveToDatabase(imageUpload.url!, identifiedFoods, result);
+      // Save scan to database WITHOUT image URL
+      await saveToDatabase(null, identifiedFoods, result);
     } catch (error) {
       console.error('Error calculating score:', error);
       setLoading(false);
-      Alert.alert('Error', 'Failed to analyze meal. Please try again.');
+      setErrorMessage('Failed to analyze meal. Please try again.');
+      setErrorModalVisible(true);
     }
   };
 
-  const saveToDatabase = async (imageUrl: string, identifiedFoods: IdentifiedFood[], result: any) => {
+  const saveToDatabase = async (imageUrl: string | null, identifiedFoods: IdentifiedFood[], result: any) => {
     try {
-      // Save scan (image already uploaded)
+      // Save scan metadata only (no image URL)
       await saveFoodScan(
-        imageUrl,
+        imageUrl, // Will be null
         identifiedFoods,
         result.score,
         result.breakdown,
@@ -128,14 +120,17 @@ export default function ResultScreen({ route, navigation }: any) {
     }
   };
 
-  const gigi = getGigiReaction(score, gigiMessage);
-
   const handleScanAnother = () => {
-    navigation.navigate('Camera');
+    // Close the Result modal first (go back to Main), then navigate to Camera
+    navigation.goBack();
+    // Use setTimeout to ensure the modal closes before navigating
+    setTimeout(() => {
+      navigation.navigate('Camera');
+    }, 100);
   };
 
   const handleGoHome = () => {
-    navigation.navigate('Main', { screen: 'HomeTab' });
+    navigation.goBack();
   };
 
   if (loading) {
@@ -150,7 +145,7 @@ export default function ResultScreen({ route, navigation }: any) {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -169,9 +164,8 @@ export default function ResultScreen({ route, navigation }: any) {
 
         {/* Gigi Reaction */}
         <View style={styles.gigiContainer}>
-          <Gigi emotion={gigi.emotion} size="xl" />
           <Text variant="title1" style={styles.reactionText}>
-            {gigi.message}
+            {gigiMessage}
           </Text>
         </View>
 
@@ -283,6 +277,17 @@ export default function ResultScreen({ route, navigation }: any) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Error Modal */}
+      <Modal
+          visible={errorModalVisible}
+          title="Error"
+          message={errorMessage}
+          primaryButtonText="OK"
+          onPrimaryPress={() => setErrorModalVisible(false)}
+          onClose={() => setErrorModalVisible(false)}
+          variant="error"
+      />
     </View>
   );
 }
@@ -305,7 +310,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
+    paddingBottom: theme.spacing.xs,
   },
   photoContainer: {
     width: width,

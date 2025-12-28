@@ -4,13 +4,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Alert,
   Platform,
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { Text } from '../components';
+import { Text, Modal } from '../components';
 import { theme } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -20,6 +19,10 @@ export default function CameraScreen({ navigation }: any) {
   const [permission, requestPermission] = useCameraPermissions();
   const [photo, setPhoto] = useState<string | null>(null);
   const cameraRef = useRef<any>(null);
+
+  // Modal State
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   if (!permission) {
     return <View style={styles.container} />;
@@ -55,7 +58,8 @@ export default function CameraScreen({ navigation }: any) {
         setPhoto(photo.uri);
       } catch (error) {
         console.error('Error taking picture:', error);
-        Alert.alert('Error', 'Failed to take picture');
+        setErrorMessage('Failed to take picture');
+        setErrorModalVisible(true);
       }
     }
   };
@@ -78,8 +82,8 @@ export default function CameraScreen({ navigation }: any) {
   };
 
   const handleUsePicture = () => {
-    // TODO: Navigate to result screen with photo
-    navigation.navigate('Result', { photoUri: photo });
+    // Replace Camera with Result so Camera is removed from stack
+    navigation.replace('Result', { photoUri: photo });
   };
 
   if (photo) {
@@ -174,6 +178,17 @@ export default function CameraScreen({ navigation }: any) {
         
         <View style={{ width: 60 }} />
       </View>
+
+      {/* Error Modal */}
+      <Modal
+          visible={errorModalVisible}
+          title="Error"
+          message={errorMessage}
+          primaryButtonText="OK"
+          onPrimaryPress={() => setErrorModalVisible(false)}
+          onClose={() => setErrorModalVisible(false)}
+          variant="error"
+      />
     </View>
   );
 }

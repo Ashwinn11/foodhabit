@@ -114,7 +114,7 @@ export const Button: React.FC<ButtonProps> = ({
     styles[`padding_${size}`],
     { backgroundColor, borderColor, borderWidth },
     variant === 'primary' && theme.shadows.primary,
-    variant === 'secondary' && theme.shadows.secondary,
+    // variant === 'secondary' && theme.shadows.secondary, // Removed shadow for secondary button
     fullWidth && styles.fullWidth,
     (disabled || loading) && styles.disabled,
     style,

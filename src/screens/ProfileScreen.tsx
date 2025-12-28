@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
-  Alert,
   TouchableOpacity,
   ScrollView,
   Switch,
@@ -15,7 +14,7 @@ import { useAuth } from '../hooks/useAuth';
 import { deleteAccount } from '../services/accountService';
 import { getUserProfile } from '../services/databaseService';
 import { theme } from '../theme';
-import { Text, Avatar } from '../components';
+import { Text, Avatar, Modal } from '../components';
 
 const PRIVACY_POLICY_URL = 'https://gutscan.app/privacy';
 const TERMS_URL = 'https://gutscan.app/terms';
@@ -28,6 +27,14 @@ export default function ProfileScreen({ navigation }: any) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [totalScans, setTotalScans] = useState(0);
   const [gigiLevel, setGigiLevel] = useState(1);
+  
+  // Modal states
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
+  const [showDeleteErrorModal, setShowDeleteErrorModal] = useState(false);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
 
   useEffect(() => {
     loadProfile();
@@ -41,63 +48,43 @@ export default function ProfileScreen({ navigation }: any) {
     }
   };
 
-  const handleSignOut = async () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => await signOut(),
-        },
-      ]
-    );
+  const handleSignOut = () => {
+    setShowSignOutModal(true);
   };
 
-  const handleDeleteAccount = async () => {
-    Alert.alert(
-      'Delete Account',
-      'This will permanently delete:\n\n• Your profile and preferences\n• All scan history and photos\n• Your Gigi level progress\n• Any subscription data\n\nThis action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete Everything',
-          style: 'destructive',
-          onPress: () => confirmDelete(),
-        },
-      ]
-    );
+  const confirmSignOut = async () => {
+    setShowSignOutModal(false);
+    await signOut();
   };
 
-  const confirmDelete = () => {
-    Alert.alert(
-      'Are you absolutely sure?',
-      'Type "DELETE" to confirm account deletion.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Yes, Delete My Account',
-          style: 'destructive',
-          onPress: async () => {
-            setIsDeletingAccount(true);
-            try {
-              const result = await deleteAccount();
-              if (result.success) {
-                Alert.alert('Account Deleted', 'Your account has been permanently deleted.');
-              } else {
-                Alert.alert('Error', `Failed to delete account: ${result.error}`);
-              }
-            } catch (error) {
-              Alert.alert('Error', 'An unexpected error occurred. Please contact support.');
-            } finally {
-              setIsDeletingAccount(false);
-            }
-          },
-        },
-      ]
-    );
+  const handleDeleteAccount = () => {
+    setShowDeleteModal(true);
+  };
+
+  const proceedToDeleteConfirm = () => {
+    setShowDeleteModal(false);
+    setTimeout(() => {
+        setShowDeleteConfirmModal(true);
+    }, 300); // Small delay for smooth transition
+  };
+
+  const confirmDelete = async () => {
+    setShowDeleteConfirmModal(false);
+    setIsDeletingAccount(true);
+    try {
+      const result = await deleteAccount();
+      if (result.success) {
+        setShowDeleteSuccessModal(true);
+      } else {
+        setDeleteErrorMessage(`Failed to delete account: ${result.error}`);
+        setShowDeleteErrorModal(true);
+      }
+    } catch (error) {
+      setDeleteErrorMessage('An unexpected error occurred. Please contact support.');
+      setShowDeleteErrorModal(true);
+    } finally {
+      setIsDeletingAccount(false);
+    }
   };
 
   const openURL = (url: string) => {
@@ -242,6 +229,64 @@ export default function ProfileScreen({ navigation }: any) {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Modals */}
+      <Modal
+        visible={showSignOutModal}
+        title="Sign Out"
+        message="Are you sure you want to sign out?"
+        primaryButtonText="Sign Out"
+        secondaryButtonText="Cancel"
+        onPrimaryPress={confirmSignOut}
+        onSecondaryPress={() => setShowSignOutModal(false)}
+        onClose={() => setShowSignOutModal(false)}
+        variant="error" // Use error variant for destructive actions
+      />
+
+      <Modal
+        visible={showDeleteModal}
+        title="Delete Account"
+        message={'This will permanently delete:\n\n• Your profile and preferences\n• All scan history and photos\n• Your Gigi level progress\n• Any subscription data\n\nThis action cannot be undone.'}
+        primaryButtonText="Delete Everything"
+        secondaryButtonText="Cancel"
+        onPrimaryPress={proceedToDeleteConfirm}
+        onSecondaryPress={() => setShowDeleteModal(false)}
+        onClose={() => setShowDeleteModal(false)}
+        variant="error"
+      />
+
+      <Modal
+        visible={showDeleteConfirmModal}
+        title="Are you absolutely sure?"
+        message="This action is irreversible. Are you sure you want to delete your account?"
+        primaryButtonText="Yes, Delete My Account"
+        secondaryButtonText="Cancel"
+        onPrimaryPress={confirmDelete}
+        onSecondaryPress={() => setShowDeleteConfirmModal(false)}
+        onClose={() => setShowDeleteConfirmModal(false)}
+        variant="error"
+        loading={isDeletingAccount}
+      />
+
+      <Modal
+        visible={showDeleteSuccessModal}
+        title="Account Deleted"
+        message="Your account has been permanently deleted."
+        primaryButtonText="OK"
+        onPrimaryPress={() => setShowDeleteSuccessModal(false)}
+        onClose={() => setShowDeleteSuccessModal(false)}
+        variant="info"
+      />
+
+      <Modal
+        visible={showDeleteErrorModal}
+        title="Error"
+        message={deleteErrorMessage}
+        primaryButtonText="OK"
+        onPrimaryPress={() => setShowDeleteErrorModal(false)}
+        onClose={() => setShowDeleteErrorModal(false)}
+        variant="error"
+      />
     </View>
   );
 }

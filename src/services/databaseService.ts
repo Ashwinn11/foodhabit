@@ -295,3 +295,33 @@ export async function uploadScanImage(uri: string): Promise<{ success: boolean; 
         return { success: false, error: 'Failed to upload image' };
     }
 }
+
+/**
+ * Delete image from Supabase Storage
+ */
+export async function deleteImage(imageUrl: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        // Extract the file path from the public URL
+        // URL format: https://<project>.supabase.co/storage/v1/object/public/scan-images/<filepath>
+        const urlParts = imageUrl.split('/scan-images/');
+        if (urlParts.length < 2) {
+            return { success: false, error: 'Invalid image URL format' };
+        }
+
+        const filePath = urlParts[1];
+
+        const { error } = await supabase.storage
+            .from('scan-images')
+            .remove([filePath]);
+
+        if (error) {
+            console.error('Error deleting image:', error);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        return { success: false, error: 'Failed to delete image' };
+    }
+}

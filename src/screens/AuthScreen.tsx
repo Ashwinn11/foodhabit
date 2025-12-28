@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Platform, Alert, ActivityIndicator, Animated, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Platform, ActivityIndicator, Animated, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { theme, haptics } from '../theme';
-import { Container, Text } from '../components';
+import { Container, Text, Modal } from '../components';
 import Gigi from '../components/Gigi';
 
 // Legal text for footer
@@ -42,6 +42,10 @@ export default function AuthScreen() {
   const { signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
   const [loadingButton, setLoadingButton] = useState<'apple' | 'google' | null>(null);
+  
+  // Modal State
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -90,7 +94,8 @@ export default function AuthScreen() {
     try {
       await signInWithApple();
     } catch (error: any) {
-      Alert.alert('Authentication Error', error.message || 'Failed to sign in');
+      setErrorMessage(error.message || 'Failed to sign in');
+      setErrorModalVisible(true);
     } finally {
       setLoadingButton(null);
     }
@@ -102,7 +107,8 @@ export default function AuthScreen() {
     try {
       await signInWithGoogle();
     } catch (error: any) {
-      Alert.alert('Authentication Error', error.message || 'Failed to sign in');
+      setErrorMessage(error.message || 'Failed to sign in');
+      setErrorModalVisible(true);
     } finally {
       setLoadingButton(null);
     }
@@ -249,6 +255,16 @@ export default function AuthScreen() {
             </Text>
           </View>
         </Animated.View>
+        
+        <Modal
+            visible={errorModalVisible}
+            title="Authentication Error"
+            message={errorMessage}
+            primaryButtonText="OK"
+            onPrimaryPress={() => setErrorModalVisible(false)}
+            onClose={() => setErrorModalVisible(false)}
+            variant="error"
+        />
       </Container>
     </View>
   );

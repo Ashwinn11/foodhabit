@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, Gigi } from '../components';
+import { Text, Button, Gigi, Modal } from '../components';
 import { theme } from '../theme';
 
 interface PaywallScreenProps {
@@ -19,6 +19,7 @@ export default function PaywallScreen({
   showCloseButton = true 
 }: PaywallScreenProps) {
   const insets = useSafeAreaInsets();
+  const [showModal, setShowModal] = useState(false);
 
   const handleSubscribe = () => {
     if (onSubscribeProp) {
@@ -26,9 +27,7 @@ export default function PaywallScreen({
     } else {
       // Default behavior for navigation-based usage
       console.log('Purchase intent logged');
-      Alert.alert('Coming Soon', 'Premium features are coming soon!', [
-        { text: 'OK', onPress: () => navigation?.goBack() }
-      ]);
+      setShowModal(true);
     }
   };
 
@@ -94,6 +93,18 @@ export default function PaywallScreen({
           <Text variant="caption1" style={styles.restoreText}>Restore Purchases</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={showModal}
+        title="Coming Soon"
+        message="Premium features are coming soon!"
+        primaryButtonText="OK"
+        onPrimaryPress={() => {
+            setShowModal(false);
+            navigation?.goBack();
+        }}
+        onClose={() => setShowModal(false)}
+      />
     </View>
   );
 }

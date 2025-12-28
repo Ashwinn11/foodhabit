@@ -124,13 +124,27 @@ function AppContent() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: theme.colors.brand.background },
-        presentation: 'modal',
-        gestureEnabled: true,
+        animation: 'slide_from_right', 
       }}
     >
-      <Stack.Screen name="Main" component={MainTabs} />
-      <Stack.Screen name="Camera" component={CameraScreen} />
-      <Stack.Screen name="Result" component={ResultScreen} />
+      <Stack.Screen 
+        name="Main" 
+        component={MainTabs} 
+        options={{ presentation: 'card' }}
+      />
+      <Stack.Screen 
+        name="Camera" 
+        component={CameraScreen} 
+        options={{ presentation: 'card' }}
+      />
+      <Stack.Screen 
+        name="Result" 
+        component={ResultScreen} 
+        options={{ 
+          presentation: 'modal',
+          gestureEnabled: true,
+        }}
+      />
       <Stack.Screen 
         name="Paywall" 
         component={PaywallScreen}
