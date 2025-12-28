@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Circle } from 'react-native-svg';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedProps, 
+  withSequence, 
+  withTiming 
+} from 'react-native-reanimated';
 import MascotWrapper from './MascotWrapper';
+
+const AnimatedG = Animated.createAnimatedComponent(G);
 
 interface MascotProps {
   size?: number;
@@ -12,6 +20,48 @@ interface MascotProps {
 export default function ShockAwe({ size = 160, style, animated = true }: MascotProps) {
   // SVG will render at 85% of the container size for consistent visual appearance
   const svgSize = size * 0.85;
+  const eyeScale = useSharedValue(1);
+
+  useEffect(() => {
+    if (!animated) return;
+
+    let timeout: NodeJS.Timeout;
+
+    const blink = () => {
+      eyeScale.value = withSequence(
+        withTiming(0.1, { duration: 100 }),
+        withTiming(1, { duration: 100 })
+      );
+      
+      const nextBlink = Math.random() * 3000 + 2000;
+      timeout = setTimeout(blink, nextBlink);
+    };
+
+    // Initial delay
+    timeout = setTimeout(blink, 2000);
+
+    return () => clearTimeout(timeout);
+  }, [animated]);
+
+  const rightEyeAnimatedProps = useAnimatedProps(() => ({
+    transform: [
+      { translateX: 273.92 },
+      { translateY: 177.7 },
+      { scaleY: eyeScale.value },
+      { translateX: -273.92 },
+      { translateY: -177.7 },
+    ]
+  }));
+
+  const leftEyeAnimatedProps = useAnimatedProps(() => ({
+    transform: [
+      { translateX: 163.1 },
+      { translateY: 177.72 },
+      { scaleY: eyeScale.value },
+      { translateX: -163.1 },
+      { translateY: -177.72 },
+    ]
+  }));
 
   return (
     <MascotWrapper size={size} style={style}>
@@ -41,16 +91,16 @@ export default function ShockAwe({ size = 160, style, animated = true }: MascotP
             <Path d="M69.68,355.47c7.49-3.34,16.12-2.92,17.49,1.05.86,2.48-4.84-1.15-15.21,3.37-9.34,4.07-11.05,10.29-11.9,8.71-2-3.7,2.13-9.79,9.62-13.13Z" fill="#ff3b5c"/>
           </G>
           {/* Eyes */}
-          <G>
+          <AnimatedG animatedProps={rightEyeAnimatedProps}>
             <Circle cx="273.92" cy="177.7" r="19.48" fill="#5e041c"/>
             <Path d="M286.64,172.73c0-2.87-2.32-5.19-5.19-5.19s-5.19,2.32-5.19,5.19,2.32,5.19,5.19,5.19,5.19-2.33,5.19-5.19Z" fill="#fff"/>
             <Path d="M263.9,179.44c-1.58-3.48-3.92-5.82-5.23-5.23-1.31.59-1.08,3.9.5,7.38,1.58,3.48,3.92,5.82,5.23,5.23s1.08-3.9-.5-7.38Z" fill="#fff"/>
-          </G>
-          <G>
+          </AnimatedG>
+          <AnimatedG animatedProps={leftEyeAnimatedProps}>
             <Circle cx="163.1" cy="177.72" r="19.48" fill="#5e041c"/>
             <Path d="M175.81,172.73c0-2.87-2.32-5.19-5.19-5.19s-5.19,2.32-5.19,5.19,2.32,5.19,5.19,5.19,5.19-2.33,5.19-5.19Z" fill="#fff"/>
             <Path d="M153.08,179.44c-1.58-3.48-3.92-5.82-5.23-5.23-1.31.59-1.08,3.9.5,7.38,1.58,3.48,3.92,5.82,5.23,5.23s1.08-3.9-.5-7.38Z" fill="#fff"/>
-          </G>
+          </AnimatedG>
           {/* Body outline */}
           <Path d="M68.48,380.18c-11.54,0-15.85-8.47-16.09-8.87-10.06-17.39-14.61-32.48-13.53-44.87,1.71-19.72,13.58-30.43,32.92-45.74,14.06-11.13,11.77-24.44,10.91-29.45-.78-4.52-1.51-8.57-2.23-12.47-1.74-9.56-3.39-18.6-5.03-31.72-7.72-61.78,7.62-119.87,42.08-159.37C143.64,17.76,178.14,1.7,217.29,1.25l.03,2.45-.03-2.45c41.19-.45,76.59,14.23,102.44,42.53,33.2,36.35,49.33,94.17,43.15,154.66-5.28,51.6-21.1,93.81-45.76,122.08-23.3,26.71-53.99,40.82-88.76,40.82-29.65,0-61.04-9.5-86.12-26.07-15.7-10.38-28.61-14.32-38.34-11.71-7.35,1.97-11.4,7.4-13.5,11.6-2.93,5.85-.16,10.86,2.27,15.27.66,1.19,4.6,6.89,1.86,14.15-1.96,5.2-6.81,9.54-14.4,12.89-4.37,1.93-8.25,2.7-11.63,2.7ZM219.21,6.13c-.62,0-1.24,0-1.86.01-37.72.43-70.96,15.91-96.13,44.76-33.06,37.89-48.36,96.03-40.92,155.55,1.62,12.99,3.26,21.96,4.99,31.45.71,3.92,1.46,7.98,2.23,12.52.90,5.24,3.63,21.18-12.70,34.11-20,15.84-29.59,25.17-31.08,42.33-.99,11.36,3.35,25.49,12.89,41.99.40.70,6.01,10.99,21.50,4.14,6.35-2.81,10.32-6.22,11.80-10.15,1.82-4.82-.70-8.49-1.57-10.06-2.56-4.65-6.44-11.67-2.36-19.82,2.55-5.11,7.51-11.70,16.62-14.14,11.15-2.99,25.38,1.17,42.31,12.35,24.30,16.06,54.71,25.27,83.43,25.27,71.03,0,119.50-59.26,129.65-158.51,6.05-59.13-9.61-115.52-41.89-150.86-24.49-26.81-57.97-40.95-96.91-40.95Z" fill="#ff3b5c"/>
           <Path d="M160.25,42.31c-13.91-9.52-61.45,52.53-45.59,68.39s64.42-55.5,45.59-68.39Z" fill="#ffafa4"/>

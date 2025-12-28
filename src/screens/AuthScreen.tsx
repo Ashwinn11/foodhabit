@@ -33,7 +33,7 @@ const AnimatedMascot: React.FC<AnimatedMascotProps> = ({ fadeAnim, scaleAnim }) 
         },
       ]}
     >
-      <Gigi emotion="sad-sick" size="md" />
+      <Gigi emotion="happy-balloon" size="md" />
     </Animated.View>
   );
 };

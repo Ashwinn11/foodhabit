@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Ellipse, Circle } from 'react-native-svg';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedProps, 
+  withSequence, 
+  withTiming 
+} from 'react-native-reanimated';
 import MascotWrapper from './MascotWrapper';
+
+const AnimatedG = Animated.createAnimatedComponent(G);
 
 interface MascotProps {
   size?: number;
@@ -12,6 +20,48 @@ interface MascotProps {
 export default function SadSick({ size = 160, style, animated = true }: MascotProps) {
   // SVG will render at 85% of the container size for consistent visual appearance
   const svgSize = size * 0.85;
+  const eyeScale = useSharedValue(1);
+
+  useEffect(() => {
+    if (!animated) return;
+
+    let timeout: NodeJS.Timeout;
+
+    const blink = () => {
+      eyeScale.value = withSequence(
+        withTiming(0.1, { duration: 100 }),
+        withTiming(1, { duration: 100 })
+      );
+      
+      const nextBlink = Math.random() * 3000 + 2000;
+      timeout = setTimeout(blink, nextBlink);
+    };
+
+    // Initial delay
+    timeout = setTimeout(blink, 2000);
+
+    return () => clearTimeout(timeout);
+  }, [animated]);
+
+  const leftEyeAnimatedProps = useAnimatedProps(() => ({
+    transform: [
+      { translateX: 123.71 },
+      { translateY: 171.18 },
+      { scaleY: eyeScale.value },
+      { translateX: -123.71 },
+      { translateY: -171.18 },
+    ]
+  }));
+
+  const rightEyeAnimatedProps = useAnimatedProps(() => ({
+    transform: [
+      { translateX: 231.21 },
+      { translateY: 171.19 },
+      { scaleY: eyeScale.value },
+      { translateX: -231.21 },
+      { translateY: -171.19 },
+    ]
+  }));
 
   return (
     <MascotWrapper size={size} style={style}>
@@ -36,7 +86,7 @@ export default function SadSick({ size = 160, style, animated = true }: MascotPr
               fill="#ff3b5c"
             />
             <Path 
-              d="M141.07,403.98s-8.9-6.12-20.02-5.56c-11.12.56-13.35,11.12-12.23,12.79,1.11,1.67,25.9.78,30.58,0,3.34-.56,1.67-7.23,1.67-7.23Z" 
+              d="M141.07,403.98s-8.9-6.12-20.02-5.56c-11.12.56-13.35,11.12-12.23,12.79-1.11,1.67-25.9.78,30.58,0,3.34-.56-1.67-7.23-1.67-7.23Z" 
               fill="#ff3b5c"
             />
           </G>
@@ -160,7 +210,7 @@ export default function SadSick({ size = 160, style, animated = true }: MascotPr
           />
           
           {/* Left Eye Detail */}
-          <G>
+          <AnimatedG animatedProps={leftEyeAnimatedProps}>
             <Circle cx="123.71" cy="171.18" r="18.43" fill="#5e041c" />
             <Path 
               d="M135.74,166.47c0-2.71-2.20-4.91-4.91-4.91s-4.91,2.20-4.91,4.91,2.20,4.91,4.91,4.91,4.91-2.20,4.91-4.91Z" 
@@ -170,10 +220,10 @@ export default function SadSick({ size = 160, style, animated = true }: MascotPr
               d="M114.22,172.83c-1.50-3.30-3.71-5.51-4.95-4.95-1.24.56-1.02,3.69.47,6.98,1.50,3.30,3.71,5.51,4.95,4.95,1.24-.56,1.02-3.69-.47-6.98Z" 
               fill="#fff"
             />
-          </G>
+          </AnimatedG>
           
           {/* Right Eye Detail */}
-          <G>
+          <AnimatedG animatedProps={rightEyeAnimatedProps}>
             <Circle cx="231.21" cy="171.19" r="18.43" fill="#5e041c" />
             <Path 
               d="M243.25,166.47c0-2.71-2.20-4.91-4.91-4.91s-4.92,2.20-4.92,4.91,2.20,4.91,4.92,4.91,4.91-2.20,4.91-4.91Z" 
@@ -183,7 +233,7 @@ export default function SadSick({ size = 160, style, animated = true }: MascotPr
               d="M221.73,172.83c-1.50-3.30-3.71-5.51-4.95-4.95-1.24.56-1.02,3.69.47,6.98,1.50,3.30,3.71,5.51,4.95,4.95,1.24-.56,1.02-3.69-.47-6.98Z" 
               fill="#fff"
             />
-          </G>
+          </AnimatedG>
         </G>
       </Svg>
     </MascotWrapper>
