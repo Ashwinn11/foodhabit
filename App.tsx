@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, ActivityIndicator, Text as RNText } from 'react-native';
+import { StyleSheet, ActivityIndicator, Text as RNText } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
+import { BackgroundBlobs } from './src/components';
 import {
   useFonts,
   Nunito_300Light,
@@ -121,12 +123,16 @@ function AppContent() {
 
   if (loading || hasOnboarded === null) {
     return (
-      <View style={styles.loadingContainer}>
+      <LinearGradient
+        colors={[theme.colors.brand.backgroundGradientStart, theme.colors.brand.backgroundGradientEnd]}
+        style={styles.loadingContainer}
+      >
+        <BackgroundBlobs />
         <ActivityIndicator size="large" color={theme.colors.brand.coral} />
         <RNText style={{ marginTop: theme.spacing.md, color: theme.colors.text.white }}>
           Loading...
         </RNText>
-      </View>
+      </LinearGradient>
     );
   }
 
@@ -190,9 +196,13 @@ export default function App() {
 
   if (!fontsLoaded) {
     return (
-      <View style={styles.loadingContainer}>
+      <LinearGradient
+        colors={[theme.colors.brand.backgroundGradientStart, theme.colors.brand.backgroundGradientEnd]}
+        style={styles.loadingContainer}
+      >
+        <BackgroundBlobs />
         <ActivityIndicator size="large" color={theme.colors.brand.coral} />
-      </View>
+      </LinearGradient>
     );
   }
 
@@ -240,8 +250,6 @@ export default function App() {
     loadingContainer: {
 
       flex: 1,
-
-      backgroundColor: theme.colors.brand.backgroundGradientStart,
 
       alignItems: 'center',
 
