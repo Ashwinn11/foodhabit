@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, ScrollView } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../theme';
 
 export interface ContainerProps {
@@ -23,7 +24,7 @@ export const Container: React.FC<ContainerProps> = ({
   contentContainerStyle,
 }) => {
   const containerStyle: ViewStyle = {
-    ...styles.container,
+    flex: 1,
     ...(center ? styles.center : {}),
     ...(style || {}),
   };
@@ -40,21 +41,27 @@ export const Container: React.FC<ContainerProps> = ({
     children
   );
 
-  if (safeArea) {
-    return (
-      <SafeAreaView style={containerStyle} edges={edges}>
-        {content}
-      </SafeAreaView>
-    );
-  }
+  const innerContent = safeArea ? (
+    <SafeAreaView style={containerStyle} edges={edges}>
+      {content}
+    </SafeAreaView>
+  ) : (
+    <View style={containerStyle}>{content}</View>
+  );
 
-  return <View style={containerStyle}>{content}</View>;
+  return (
+    <LinearGradient
+      colors={[theme.colors.brand.backgroundGradientStart, theme.colors.brand.backgroundGradientEnd]}
+      style={styles.container}
+    >
+      {innerContent}
+    </LinearGradient>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.brand.background,
   },
   scrollView: {
     flex: 1,

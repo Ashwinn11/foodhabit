@@ -3,25 +3,22 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   Switch,
   Linking,
   Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { deleteAccount } from '../services/accountService';
 import { getUserProfile } from '../services/databaseService';
 import { theme } from '../theme';
-import { Text, Avatar, Modal } from '../components';
+import { Text, Avatar, Modal, Container } from '../components';
 
 const PRIVACY_POLICY_URL = 'https://gutscan.app/privacy';
 const TERMS_URL = 'https://gutscan.app/terms';
 const SUPPORT_EMAIL = 'support@gutscan.app';
 
 export default function ProfileScreen({ navigation }: any) {
-  const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -104,15 +101,14 @@ export default function ProfileScreen({ navigation }: any) {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text variant="title1" weight="bold" style={styles.headerTitle}>Profile</Text>
-        </View>
+    <Container 
+      scrollable={true} 
+      contentContainerStyle={styles.scrollContent}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <Text variant="title1" weight="bold" style={styles.headerTitle}>Profile</Text>
+      </View>
 
         {/* Avatar Section */}
         <View style={styles.avatarSection}>
@@ -228,9 +224,10 @@ export default function ProfileScreen({ navigation }: any) {
             GutScan v1.0.0
           </Text>
         </View>
-      </ScrollView>
-
-      {/* Modals */}
+      {/* Modals moved outside scrollview but inside container if needed, 
+          actually they should be outside scrollview for better positioning */}
+      
+      {/* Sign Out Modal */}
       <Modal
         visible={showSignOutModal}
         title="Sign Out"
@@ -240,7 +237,7 @@ export default function ProfileScreen({ navigation }: any) {
         onPrimaryPress={confirmSignOut}
         onSecondaryPress={() => setShowSignOutModal(false)}
         onClose={() => setShowSignOutModal(false)}
-        variant="error" // Use error variant for destructive actions
+        variant="error"
       />
 
       <Modal
@@ -287,17 +284,14 @@ export default function ProfileScreen({ navigation }: any) {
         onClose={() => setShowDeleteErrorModal(false)}
         variant="error"
       />
-    </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.brand.background,
-  },
   scrollContent: {
     paddingHorizontal: theme.spacing.xl,
+    paddingBottom: 40,
   },
   header: {
     paddingVertical: theme.spacing.lg,

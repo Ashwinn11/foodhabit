@@ -31,7 +31,7 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: theme.colors.brand.background,
+          backgroundColor: theme.colors.brand.backgroundGradientEnd,
           borderTopColor: 'rgba(255, 255, 255, 0.1)',
           borderTopWidth: 1,
           paddingBottom: 8,
@@ -144,7 +144,7 @@ function AppContent() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: theme.colors.brand.background },
+        contentStyle: { backgroundColor: 'transparent' },
         animation: 'slide_from_right', 
       }}
     >
@@ -200,10 +200,10 @@ export default function App() {
     dark: true,
     colors: {
       primary: theme.colors.brand.coral,
-      background: theme.colors.brand.background,
-      card: theme.colors.brand.cream,
+      background: theme.colors.brand.backgroundGradientStart,
+      card: theme.colors.brand.backgroundGradientEnd,
       text: theme.colors.text.white,
-      border: theme.colors.brand.cream,
+      border: 'rgba(255, 255, 255, 0.1)',
       notification: theme.colors.brand.coral,
     },
     fonts: {
@@ -215,21 +215,40 @@ export default function App() {
     },
   };
 
-  return (
-    <SafeAreaProvider>
-      <NavigationContainer theme={NavigationTheme}>
-        <AppContent />
-        <StatusBar style="light" backgroundColor={theme.colors.brand.background} />
-      </NavigationContainer>
-    </SafeAreaProvider>
-  );
-}
+    return (
 
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: theme.colors.brand.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+      <SafeAreaProvider>
+
+        <NavigationContainer theme={NavigationTheme}>
+
+          <AppContent />
+
+          <StatusBar style="light" backgroundColor={theme.colors.brand.backgroundGradientStart} />
+
+        </NavigationContainer>
+
+      </SafeAreaProvider>
+
+    );
+
+  }
+
+  
+
+  const styles = StyleSheet.create({
+
+    loadingContainer: {
+
+      flex: 1,
+
+      backgroundColor: theme.colors.brand.backgroundGradientStart,
+
+      alignItems: 'center',
+
+      justifyContent: 'center',
+
+    },
+
+  });
+
+  

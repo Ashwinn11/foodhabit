@@ -18,6 +18,8 @@ export const colors = {
     white: '#ffffff',      // Pure White
     black: '#000000',
     background: "#1a2332",
+    backgroundGradientStart: "#2E2345", // Deep Indigo
+    backgroundGradientEnd: "#1A1429",   // Darker Plum
   },
 
 

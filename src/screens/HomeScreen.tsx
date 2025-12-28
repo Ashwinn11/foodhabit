@@ -4,8 +4,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, Gigi } from '../components';
+import { Text, Gigi, Container } from '../components';
 import { theme } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 import { 
@@ -16,12 +15,9 @@ import {
 } from '../services/databaseService';
 import { useFocusEffect } from '@react-navigation/native';
 
-
-
 const LEVELS = [50, 100, 500, 1000];
 
 export default function HomeScreen({ navigation }: any) {
-  const insets = useSafeAreaInsets();
   const [todayScans, setTodayScans] = useState(0);
   const [avgScore, setAvgScore] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -69,7 +65,7 @@ export default function HomeScreen({ navigation }: any) {
   const scansNeeded = nextLevelTarget - totalScans;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <Container style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text variant="title1" weight="bold" style={styles.headerText}>
@@ -158,14 +154,13 @@ export default function HomeScreen({ navigation }: any) {
             </View>
         </View>
       </View>
-    </View>
+    </Container>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.brand.background,
   },
   header: {
     flexDirection: 'row',

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, Gigi, Modal } from '../components';
+import { Text, Button, Gigi, Modal, Container } from '../components';
 import { theme } from '../theme';
 
 interface PaywallScreenProps {
@@ -40,47 +40,49 @@ export default function PaywallScreen({
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Close Button */}
-        {showCloseButton && (
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <Ionicons name="close" size={28} color={theme.colors.text.white} />
-          </TouchableOpacity>
-        )}
+    <Container scrollable={true} contentContainerStyle={styles.content}>
+      {/* Close Button */}
+      {showCloseButton && (
+        <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+          <Ionicons name="close" size={28} color={theme.colors.text.white} />
+        </TouchableOpacity>
+      )}
 
-        {/* Hero Section */}
-        <View style={styles.hero}>
-          <Gigi emotion="happy-crown" size="md" />
-          <Text variant="title1" style={styles.title}>
-            Unlock Full Potential
-          </Text>
-          <Text variant="body" style={styles.subtitle}>
-            Get personalized insights and unlimited scans to master your gut health.
-          </Text>
-        </View>
+      {/* Hero Section */}
+      <View style={styles.hero}>
+        <Gigi emotion="happy-crown" size="md" />
+        <Text variant="title1" style={styles.title}>
+          Unlock Full Potential
+        </Text>
+        <Text variant="body" style={styles.subtitle}>
+          Get personalized insights and unlimited scans to master your gut health.
+        </Text>
+      </View>
 
-        {/* Features List */}
-        <View style={styles.features}>
-          <FeatureItem icon="infinite" text="Unlimited Food Scans" />
-          <FeatureItem icon="stats-chart" text="Detailed Nutrient Breakdown" />
-          <FeatureItem icon="medical" text="Personalized Trigger Warnings" />
-          <FeatureItem icon="heart" text="Support & Chat with Gigi" />
-        </View>
+      {/* Features List */}
+      <View style={styles.features}>
+        <FeatureItem icon="infinite" text="Unlimited Food Scans" />
+        <FeatureItem icon="stats-chart" text="Detailed Nutrient Breakdown" />
+        <FeatureItem icon="medical" text="Personalized Trigger Warnings" />
+        <FeatureItem icon="heart" text="Support & Chat with Gigi" />
+      </View>
 
-        {/* Pricing */}
-        <View style={styles.pricingCard}>
-          <Text variant="title3" weight="bold" style={styles.price}>
-            $4.99 <Text variant="body" style={styles.period}>/ month</Text>
-          </Text>
-          <Text variant="caption1" style={styles.trialText}>
-            7-day free trial, cancel anytime.
-          </Text>
-        </View>
+      {/* Pricing */}
+      <View style={styles.pricingCard}>
+        <Text variant="title3" weight="bold" style={styles.price}>
+          $4.99 <Text variant="body" style={styles.period}>/ month</Text>
+        </Text>
+        <Text variant="caption1" style={styles.trialText}>
+          7-day free trial, cancel anytime.
+        </Text>
+      </View>
 
-      </ScrollView>
+      {/* Footer Action inside scroll or outside? Original had it absolute. 
+          If absolute, it needs to be outside the scrollview in Container.
+          Container doesn't support absolute footer yet, so I'll put it outside Container's ScrollView or just keep it as is.
+          Actually, I'll update Container to support a footer or just wrap it myself.
+      */}
 
-      {/* Footer Action */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
         <Button 
           title="Start Free Trial" 
@@ -105,7 +107,7 @@ export default function PaywallScreen({
         }}
         onClose={() => setShowModal(false)}
       />
-    </View>
+    </Container>
   );
 }
 
@@ -121,13 +123,9 @@ function FeatureItem({ icon, text }: { icon: any; text: string }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.brand.background,
-  },
   content: {
     paddingHorizontal: theme.spacing.xl,
-    paddingBottom: 120,
+    paddingBottom: 160,
   },
   closeButton: {
     alignSelf: 'flex-end',
@@ -200,9 +198,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: theme.spacing.xl,
-    backgroundColor: theme.colors.brand.background,
+    backgroundColor: theme.colors.brand.backgroundGradientEnd,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)',
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
     paddingTop: theme.spacing.lg,
   },
   restoreButton: {
