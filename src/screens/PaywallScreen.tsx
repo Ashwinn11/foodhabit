@@ -5,32 +5,54 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text, Button, Gigi } from '../components';
 import { theme } from '../theme';
 
-export default function PaywallScreen({ navigation }: any) {
+interface PaywallScreenProps {
+  navigation?: any;
+  onSubscribe?: () => void;
+  onClose?: () => void;
+  showCloseButton?: boolean;
+}
+
+export default function PaywallScreen({ 
+  navigation, 
+  onSubscribe: onSubscribeProp,
+  onClose: onCloseProp,
+  showCloseButton = true 
+}: PaywallScreenProps) {
   const insets = useSafeAreaInsets();
 
   const handleSubscribe = () => {
-    // Fake purchase intent for MVP
-    console.log('Purchase intent logged');
-    Alert.alert('Coming Soon', 'Premium features are coming soon!', [
-      { text: 'OK', onPress: () => navigation.goBack() }
-    ]);
+    if (onSubscribeProp) {
+      onSubscribeProp();
+    } else {
+      // Default behavior for navigation-based usage
+      console.log('Purchase intent logged');
+      Alert.alert('Coming Soon', 'Premium features are coming soon!', [
+        { text: 'OK', onPress: () => navigation?.goBack() }
+      ]);
+    }
   };
 
   const handleClose = () => {
-    navigation.goBack();
+    if (onCloseProp) {
+      onCloseProp();
+    } else {
+      navigation?.goBack();
+    }
   };
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Close Button */}
-        <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-          <Ionicons name="close" size={28} color={theme.colors.text.white} />
-        </TouchableOpacity>
+        {showCloseButton && (
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <Ionicons name="close" size={28} color={theme.colors.text.white} />
+          </TouchableOpacity>
+        )}
 
         {/* Hero Section */}
         <View style={styles.hero}>
-          <Gigi emotion="excited" size="md" />
+          <Gigi emotion="crown" size="md" />
           <Text variant="title1" style={styles.title}>
             Unlock Full Potential
           </Text>

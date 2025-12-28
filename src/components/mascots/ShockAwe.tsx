@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, ViewStyle } from 'react-native';
+import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Circle } from 'react-native-svg';
+import MascotWrapper from './MascotWrapper';
 
 interface MascotProps {
   size?: number;
@@ -9,13 +10,12 @@ interface MascotProps {
 }
 
 export default function ShockAwe({ size = 160, style, animated = false }: MascotProps) {
-  const aspectRatio = 418.23 / 435.2;
-  const width = size;
-  const height = size * aspectRatio;
+  // SVG will render at 85% of the container size for consistent visual appearance
+  const svgSize = size * 0.85;
 
   return (
-    <View style={[{ width, height, alignItems: 'center', justifyContent: 'center' }, style]}>
-      <Svg viewBox="0 0 435.2 418.23" width="100%" height="100%">
+    <MascotWrapper size={size} style={style}>
+      <Svg viewBox="0 0 435.2 418.23" width={svgSize} height={svgSize}>
         <G>
           {/* Feet */}
           <G>
@@ -77,6 +77,6 @@ export default function ShockAwe({ size = 160, style, animated = false }: Mascot
           <Path d="M315.13,227.31h-33.47c-1.35,0-2.45-1.1-2.45-2.45s1.09-2.45,2.45-2.45h33.47c1.35,0,2.45,1.1,2.45,2.45s-1.10,2.45-2.45,2.45Z" fill="#ff0d36"/>
         </G>
       </Svg>
-    </View>
+    </MascotWrapper>
   );
 }

@@ -1,5 +1,4 @@
 import React from 'react';
-import { View } from 'react-native';
 
 // Import all mascot variants
 import MascotHappyClap from './mascots/HappyClap';
@@ -99,9 +98,5 @@ export default function Gigi({
     }
   };
 
-  return (
-    <View style={{ width: pixelSize, height: pixelSize, alignItems: 'center', justifyContent: 'center' }}>
-      {renderMascot()}
-    </View>
-  );
+  return renderMascot();
 }

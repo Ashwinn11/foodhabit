@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, ViewStyle } from 'react-native';
+import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Ellipse, Defs, RadialGradient, Stop, Mask } from 'react-native-svg';
+import MascotWrapper from './MascotWrapper';
 
 interface MascotProps {
   size?: number;
@@ -9,13 +10,12 @@ interface MascotProps {
 }
 
 export default function SadCry({ size = 160, style, animated = false }: MascotProps) {
-  const aspectRatio = 435.2 / 349.62;
-  const width = size;
-  const height = size * aspectRatio;
+  // SVG will render at 85% of the container size for consistent visual appearance
+  const svgSize = size * 0.85;
 
   return (
-    <View style={[{ width, height, alignItems: 'center', justifyContent: 'center' }, style]}>
-      <Svg viewBox="0 0 349.62 435.2" width="100%" height="100%">
+    <MascotWrapper size={size} style={style}>
+      <Svg viewBox="0 0 349.62 435.2" width={svgSize} height={svgSize}>
         <Defs>
           <RadialGradient
             id="sadCryGradient"
@@ -111,6 +111,6 @@ export default function SadCry({ size = 160, style, animated = false }: MascotPr
           </G>
         </G>
       </Svg>
-    </View>
+    </MascotWrapper>
   );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, ViewStyle } from 'react-native';
+import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Ellipse, Circle } from 'react-native-svg';
+import MascotWrapper from './MascotWrapper';
 
 interface MascotProps {
   size?: number;
@@ -9,13 +10,12 @@ interface MascotProps {
 }
 
 export default function HappyCrown({ size = 160, style, animated = false }: MascotProps) {
-  const aspectRatio = 435.2 / 349.95;
-  const width = size;
-  const height = size * aspectRatio;
+  // SVG will render at 85% of the container size for consistent visual appearance
+  const svgSize = size * 0.85;
 
   return (
-    <View style={[{ width, height, alignItems: 'center', justifyContent: 'center' }, style]}>
-      <Svg viewBox="0 0 349.95 435.2" width="100%" height="100%">
+    <MascotWrapper size={size} style={style}>
+      <Svg viewBox="0 0 349.95 435.2" width={svgSize} height={svgSize}>
         <G>
           <Path d="M3.22,329.97s-2.8,15.59,1.76,21.09,14.83-1.08,13.74-6.5-12.85-16.09-12.85-16.09l-2.64,1.5Z" fill="#a40634"/>
           <G>
@@ -88,6 +88,6 @@ export default function HappyCrown({ size = 160, style, animated = false }: Masc
           <Path d="M5.3,334.59c-1,0-1.9-.69-2.13-1.71-6.14-27.98-3.3-57.9,7.98-84.23.47-1.11,1.75-1.62,2.86-1.15,1.11.47,1.62,1.76,1.14,2.86-10.93,25.5-13.68,54.48-7.73,81.58.26,1.18-.49,2.34-1.66,2.6-.16.04-.31.05-.47.05Z" fill="#a40634"/>
         </G>
       </Svg>
-    </View>
+    </MascotWrapper>
   );
 }

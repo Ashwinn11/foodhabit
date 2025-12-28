@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, Button } from '../../components';
-import { SadSick } from '../../components/mascots';
+import { HappyClap } from '../../components/mascots';
 import { theme } from '../../theme';
 interface RulesStepProps {
   onComplete: () => void;
@@ -12,7 +12,7 @@ export const RulesStep: React.FC<RulesStepProps> = ({ onComplete }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.mascotContainer}>
-          <SadSick size={100} />
+          <HappyClap size={100} />
         </View>
         <Text variant="title2" style={styles.title}>House Rules</Text>
         <Text variant="body" style={styles.subtitle}>

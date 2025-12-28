@@ -80,20 +80,20 @@ export default function HomeScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
+      {/* Level Progress */}
+      <View style={styles.levelContainer}>
+        <View style={styles.levelInfo}>
+          <Text variant="caption1" style={styles.levelLabel}>Level {level}</Text>
+          <Text variant="caption1" style={styles.levelNext}>{scansNeeded} scans to next level</Text>
+        </View>
+        <View style={styles.progressBarBg}>
+          <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
+        </View>
+      </View>
+
       {/* Main Content */}
       <View style={styles.content}>
         
-        {/* Level Progress */}
-        <View style={styles.levelContainer}>
-          <View style={styles.levelInfo}>
-            <Text variant="caption1" style={styles.levelLabel}>Level {level}</Text>
-            <Text variant="caption1" style={styles.levelNext}>{scansNeeded} scans to next level</Text>
-          </View>
-          <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
-          </View>
-        </View>
-
         {/* Gigi Character */}
         <TouchableOpacity style={styles.gigiContainer} activeOpacity={0.9} onPress={() => {}}>
            <Gigi 
@@ -132,7 +132,9 @@ export default function HomeScreen({ navigation }: any) {
             </View>
              <View style={styles.statDivider} />
             <View style={styles.statItem}>
-                <Text variant="title3" weight="bold" style={styles.statValue}>{avgScore || '-'}</Text>
+                <Text variant="title3" weight="bold" style={styles.statValue}>
+                  {avgScore !== null && avgScore !== undefined ? avgScore : '-'}
+                </Text>
                 <Text variant="caption1" style={styles.statLabel}>Avg Score</Text>
             </View>
         </View>
@@ -173,8 +175,9 @@ const styles = StyleSheet.create({
   },
   levelContainer: {
     width: '100%',
-    marginBottom: theme.spacing['3xl'],
-    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
   },
   levelInfo: {
     flexDirection: 'row',

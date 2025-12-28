@@ -10,6 +10,7 @@ const corsHeaders = {
 interface FoodLabel {
     name: string;
     confidence: number;
+    isWebEntity?: boolean;
 }
 
 interface RecognitionResult {
@@ -88,21 +89,47 @@ serve(async (req) => {
         const labels = annotations.labelAnnotations || [];
         const webEntities = annotations.webDetection?.webEntities || [];
 
-        // 1. Combine all raw labels
+        // 1. Combine all raw labels - PRIORITIZE web entities (more specific)
         const allLabels: FoodLabel[] = [
-            ...labels.map((l: any) => ({ name: l.description, confidence: l.score })),
-            ...webEntities.map((e: any) => ({ name: e.description, confidence: e.score || 0.5 })),
+            // Web entities first (usually more specific like "Chicken Biryani")
+            ...webEntities.map((e: any) => ({
+                name: e.description,
+                confidence: e.score ? e.score * 1.1 : 0.6, // Boost web entities slightly
+                isWebEntity: true
+            })),
+            // Then regular labels
+            ...labels.map((l: any) => ({
+                name: l.description,
+                confidence: l.score,
+                isWebEntity: false
+            })),
         ];
 
-        // 2. Initial Strict Filter
+        // 2. Initial Strict Filter - Remove all non-food labels
         const excludedTerms = [
-            'food', 'tableware', 'ingredient', 'recipe', 'cuisine', 'dish', 'meal',
-            'cooking', 'produce', 'vegetable', 'dishware', 'serveware', 'cutlery',
-            'plate', 'bowl', 'fork', 'spoon', 'knife', 'platter', 'delicacy',
+            // Generic food terms
+            'food', 'ingredient', 'recipe', 'cuisine', 'dish', 'meal',
+            'cooking', 'produce', 'vegetable', 'delicacy',
             'comfort food', 'staple food', 'superfood', 'whole food', 'natural foods',
-            'local food', 'vegan nutrition', 'vegetarian food', 'garnish', 'supper', 'lunch', 'dinner',
+            'local food', 'vegan nutrition', 'vegetarian food', 'garnish',
+
+            // Meal times
+            'supper', 'lunch', 'dinner', 'breakfast', 'brunch',
+
+            // Cuisine types
             'laotian cuisine', 'thai cuisine', 'indian cuisine', 'chinese cuisine',
-            'iranian cuisine', 'sri lankan cuisine', 'asian food', 'street food'
+            'iranian cuisine', 'sri lankan cuisine', 'asian food', 'street food',
+
+            // Tableware & utensils (not food!)
+            'tableware', 'dishware', 'serveware', 'cutlery',
+            'plate', 'bowl', 'fork', 'spoon', 'knife', 'platter', 'cup', 'glass',
+            'kitchen utensil', 'utensil', 'chopsticks', 'napkin', 'tablecloth',
+
+            // Restaurant/dining context (not food!)
+            'menu', 'restaurant', 'restaurant design', 'dining', 'table',
+
+            // Image/design metadata (not food!)
+            'image', 'graphics', 'art', 'design', 'photography', 'photo'
         ];
 
         let candidates = allLabels.filter(label => {
@@ -113,7 +140,8 @@ serve(async (req) => {
             // Remove generic "Food" suffix (e.g. "Asian food")
             if (name.endsWith(' food') && name !== 'fast food') return false;
 
-            return label.confidence > 0.60;
+            // Higher threshold for better accuracy (was 0.60)
+            return label.confidence > 0.75;
         });
 
         // 3. Smart Deduplication (Hierarchy & Redundancy)
@@ -164,8 +192,16 @@ serve(async (req) => {
         const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        // Get top 5 unique foods
-        const topFoods = uniqueFoods.slice(0, 5);
+        // Get top 3 unique foods (reduced from 5 for better specificity)
+        // Prioritize web entities (more specific) over generic labels
+        const topFoods = uniqueFoods
+            .sort((a, b) => {
+                // Web entities first, then by confidence
+                if (a.isWebEntity && !b.isWebEntity) return -1;
+                if (!a.isWebEntity && b.isWebEntity) return 1;
+                return b.confidence - a.confidence;
+            })
+            .slice(0, 3);
         const finalFoods = [];
 
         for (const food of topFoods) {

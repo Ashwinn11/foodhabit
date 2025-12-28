@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, ViewStyle } from 'react-native';
+import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Ellipse, Circle, Polygon } from 'react-native-svg';
+import MascotWrapper from './MascotWrapper';
 
 interface MascotProps {
   size?: number;
@@ -9,13 +10,12 @@ interface MascotProps {
 }
 
 export default function HappyBalloon({ size = 160, style, animated = false }: MascotProps) {
-  const aspectRatio = 417.79 / 435.05;
-  const width = size;
-  const height = size * aspectRatio;
+  // SVG will render at 85% of the container size for consistent visual appearance
+  const svgSize = size * 0.85;
 
   return (
-    <View style={[{ width, height, alignItems: 'center', justifyContent: 'center' }, style]}>
-      <Svg viewBox="0 0 435.05 417.79" width="100%" height="100%">
+    <MascotWrapper size={size} style={style}>
+      <Svg viewBox="0 0 435.05 417.79" width={svgSize} height={svgSize}>
         <G>
           {/* Stars decorations */}
           <G>
@@ -103,6 +103,6 @@ export default function HappyBalloon({ size = 160, style, animated = false }: Ma
           <Path d="M370.78,313.79c-.63,0-1.26-.28-1.68-.81-.74-.93-.58-2.28.35-3.02,12.24-9.69,16.78-28.43,10.35-42.65-1.31-2.9-3.08-5.76-4.78-8.52-3.29-5.33-6.70-10.85-7.43-17.36-1-8.92,3.23-16.83,7.33-24.48,3.12-5.83,6.35-11.86,7.06-18.13,1.11-9.88-3.5-23-12.86-26.98-1.09-.46-1.6-1.72-1.14-2.81s1.72-1.6,2.81-1.14c11.34,4.81,16.76,19.75,15.45,31.41-.79,7.09-4.22,13.49-7.54,19.68-3.96,7.39-7.70,14.38-6.85,21.97.62,5.55,3.63,10.42,6.81,15.58,1.78,2.88,3.61,5.86,5.04,9.01,7.33,16.2,2.34,36.74-11.59,47.79-.40.31-.86.47-1.33.47Z" fill="#a40634"/>
         </G>
       </Svg>
-    </View>
+    </MascotWrapper>
   );
 }

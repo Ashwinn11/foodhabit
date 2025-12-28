@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, ViewStyle } from 'react-native';
+import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Ellipse, Circle } from 'react-native-svg';
+import MascotWrapper from './MascotWrapper';
 
 interface MascotProps {
   size?: number;
@@ -9,13 +10,12 @@ interface MascotProps {
 }
 
 export default function SadSick({ size = 160, style, animated = false }: MascotProps) {
-  const aspectRatio = 383.62 / 412.16;
-  const width = size;
-  const height = size * aspectRatio;
+  // SVG will render at 85% of the container size for consistent visual appearance
+  const svgSize = size * 0.85;
 
   return (
-    <View style={[{ width, height, alignItems: 'center', justifyContent: 'center' }, style]}>
-      <Svg viewBox="0 0 383.62 412.16" width="100%" height="100%">
+    <MascotWrapper size={size} style={style}>
+      <Svg viewBox="0 0 383.62 412.16" width={svgSize} height={svgSize}>
         <G>
           {/* Right Leg */}
           <G>
@@ -186,6 +186,6 @@ export default function SadSick({ size = 160, style, animated = false }: MascotP
           </G>
         </G>
       </Svg>
-    </View>
+    </MascotWrapper>
   );
 }

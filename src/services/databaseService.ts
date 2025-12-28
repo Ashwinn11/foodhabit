@@ -149,7 +149,11 @@ export async function getTodayAverageScore(): Promise<number> {
     if (scans.length === 0) return 0;
 
     const total = scans.reduce((sum, scan) => sum + scan.gut_health_score, 0);
-    return Math.round(total / scans.length);
+    const avg = Math.round(total / scans.length);
+
+
+
+    return avg;
 }
 
 /**

@@ -37,7 +37,7 @@ function MainTabs() {
           paddingTop: 8,
           height: 60,
         },
-        tabBarActiveTintColor: theme.colors.brand.cream,
+        tabBarActiveTintColor: theme.colors.brand.coral,
         tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
         tabBarLabelStyle: {
           fontSize: 12,
@@ -125,6 +125,7 @@ function AppContent() {
         headerShown: false,
         contentStyle: { backgroundColor: theme.colors.brand.background },
         presentation: 'modal',
+        gestureEnabled: true,
       }}
     >
       <Stack.Screen name="Main" component={MainTabs} />

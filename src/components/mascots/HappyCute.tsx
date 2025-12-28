@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, ViewStyle } from 'react-native';
+import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Ellipse, Circle } from 'react-native-svg';
+import MascotWrapper from './MascotWrapper';
 
 interface MascotProps {
   size?: number;
@@ -9,9 +10,8 @@ interface MascotProps {
 }
 
 export default function HappyCute({ size = 160, style, animated = false }: MascotProps) {
-  const aspectRatio = 434.18 / 345.89;
-  const width = size;
-  const height = size * aspectRatio;
+  // SVG will render at 85% of the container size for consistent visual appearance
+  const svgSize = size * 0.85;
 
   // Color mapping from original SVG classes
   const colors = {
@@ -27,8 +27,8 @@ export default function HappyCute({ size = 160, style, animated = false }: Masco
   };
 
   return (
-    <View style={[{ width, height, alignItems: 'center', justifyContent: 'center' }, style]}>
-      <Svg viewBox="0 0 345.89 434.18" width="100%" height="100%">
+    <MascotWrapper size={size} style={style}>
+      <Svg viewBox="0 0 345.89 434.18" width={svgSize} height={svgSize}>
         <G>
           {/* Left foot - cls-1 */}
           <G>
@@ -125,6 +125,6 @@ export default function HappyCute({ size = 160, style, animated = false }: Masco
           </G>
         </G>
       </Svg>
-    </View>
+    </MascotWrapper>
   );
 }

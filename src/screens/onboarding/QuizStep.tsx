@@ -99,11 +99,11 @@ export const QuizStep: React.FC<QuizStepProps> = ({ onComplete, updateProgress }
       >
         <View style={styles.gigi}>
           {currentQuestion.id === 'symptom' ? (
-            <SadCry size={80} />
+            <SadCry size={150} />
           ) : currentQuestion.id === 'goal' ? (
-            <HappyBalloon size={80} />
+            <HappyBalloon size={150} />
           ) : (
-            <Gigi emotion="thinking" size="sm" />
+            <Gigi emotion="thinking" size="md" />
           )}
         </View>
         
