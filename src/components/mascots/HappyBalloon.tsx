@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Ellipse, Circle, Polygon } from 'react-native-svg';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedProps, 
+  withSequence, 
+  withTiming 
+} from 'react-native-reanimated';
 import MascotWrapper from './MascotWrapper';
+
+const AnimatedG = Animated.createAnimatedComponent(G);
 
 interface MascotProps {
   size?: number;
@@ -12,6 +20,48 @@ interface MascotProps {
 export default function HappyBalloon({ size = 160, style, animated = true }: MascotProps) {
   // SVG will render at 85% of the container size for consistent visual appearance
   const svgSize = size * 0.85;
+  const eyeScale = useSharedValue(1);
+
+  useEffect(() => {
+    if (!animated) return;
+
+    let timeout: NodeJS.Timeout;
+
+    const blink = () => {
+      eyeScale.value = withSequence(
+        withTiming(0.1, { duration: 100 }),
+        withTiming(1, { duration: 100 })
+      );
+      
+      const nextBlink = Math.random() * 3000 + 2000;
+      timeout = setTimeout(blink, nextBlink);
+    };
+
+    // Initial delay
+    timeout = setTimeout(blink, 2000);
+
+    return () => clearTimeout(timeout);
+  }, [animated]);
+
+  const rightEyeAnimatedProps = useAnimatedProps(() => ({
+    transform: [
+      { translateX: 237.07 },
+      { translateY: 204.02 },
+      { scaleY: eyeScale.value },
+      { translateX: -237.07 },
+      { translateY: -204.02 },
+    ]
+  }));
+
+  const leftEyeAnimatedProps = useAnimatedProps(() => ({
+    transform: [
+      { translateX: 139.84 },
+      { translateY: 204.02 },
+      { scaleY: eyeScale.value },
+      { translateX: -139.84 },
+      { translateY: -204.02 },
+    ]
+  }));
 
   return (
     <MascotWrapper size={size} style={style}>
@@ -42,18 +92,18 @@ export default function HappyBalloon({ size = 160, style, animated = true }: Mas
           </G>
           
           {/* Right eye */}
-          <G>
+          <AnimatedG animatedProps={rightEyeAnimatedProps}>
             <Circle cx="237.07" cy="204.02" r="17.09" fill="#5e041c"/>
             <Path d="M248.21,199.65c0-2.52-2.04-4.56-4.56-4.56s-4.56,2.04-4.56,4.56,2.04,4.56,4.56,4.56,4.56-2.04,4.56-4.56Z" fill="#fff"/>
             <Path d="M228.26,205.54c-1.39-3.05-3.44-5.11-4.59-4.59-1.14.52-.95,3.42.44,6.47s3.44,5.11,4.59,4.59c1.14-.52.95-3.42-.44-6.47Z" fill="#fff"/>
-          </G>
+          </AnimatedG>
           
           {/* Left eye */}
-          <G>
+          <AnimatedG animatedProps={leftEyeAnimatedProps}>
             <Circle cx="139.84" cy="204.02" r="17.09" fill="#5e041c"/>
             <Path d="M145.38,195.21c2.45-.58,4.9.93,5.49,3.38.58,2.45-.93,4.9-3.38,5.49-2.45.58-4.9-.93-5.49-3.38-.58-2.45.93-4.9,3.38-5.49Z" fill="#fff"/>
             <Path d="M131.05,205.54c-1.39-3.05-3.44-5.11-4.59-4.59-1.15.52-.95,3.42.44,6.47s3.44,5.11,4.59,4.59c1.14-.52.95-3.42-.44-6.47Z" fill="#fff"/>
-          </G>
+          </AnimatedG>
           
           {/* Mouth */}
           <G>

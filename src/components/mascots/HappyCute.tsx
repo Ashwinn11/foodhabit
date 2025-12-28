@@ -1,7 +1,21 @@
-import React, { useEffect, useRef } from 'react';
-import { ViewStyle, Animated } from 'react-native';
+import React, { useEffect } from 'react';
+import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Ellipse, Circle } from 'react-native-svg';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedProps, 
+  useAnimatedStyle, 
+  withSequence, 
+  withTiming, 
+  withRepeat,
+  withDelay,
+  interpolate,
+  Extrapolation,
+  SharedValue
+} from 'react-native-reanimated';
 import MascotWrapper from './MascotWrapper';
+
+const AnimatedG = Animated.createAnimatedComponent(G);
 
 interface MascotProps {
   size?: number;
@@ -13,62 +27,136 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
   // SVG will render at 85% of the container size for consistent visual appearance
   const svgSize = size * 0.85;
 
-  // Animation values for each heart
-  const heart1Anim = useRef(new Animated.Value(0)).current;
-  const heart2Anim = useRef(new Animated.Value(0)).current;
-  const heart3Anim = useRef(new Animated.Value(0)).current;
+  // Animation values
+  const heart1 = useSharedValue(0);
+  const heart2 = useSharedValue(0);
+  const heart3 = useSharedValue(0);
+  const eyeScale = useSharedValue(1);
 
   useEffect(() => {
     if (!animated) return;
 
-    // Create floating animation for each heart with different delays
-    const createFloatingAnimation = (animValue: Animated.Value, delay: number) => {
-      return Animated.loop(
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.parallel([
-            Animated.timing(animValue, {
-              toValue: 1,
-              duration: 3500, // Slightly slower for more grace
-              useNativeDriver: false,
-            }),
-          ]),
-          Animated.timing(animValue, {
-            toValue: 0,
-            duration: 0,
-            useNativeDriver: false,
-          }),
-        ])
+    // Heart animations
+    const duration = 3500;
+    
+    heart1.value = withRepeat(
+      withDelay(0, withTiming(1, { duration })),
+      -1, 
+      false
+    );
+
+    heart2.value = withRepeat(
+      withDelay(1200, withTiming(1, { duration })),
+      -1, 
+      false
+    );
+
+    heart3.value = withRepeat(
+      withDelay(2400, withTiming(1, { duration })),
+      -1, 
+      false
+    );
+
+    // Eye blinking animation
+    let timeout: NodeJS.Timeout;
+
+    const blink = () => {
+      eyeScale.value = withSequence(
+        withTiming(0.1, { duration: 100 }),
+        withTiming(1, { duration: 100 })
       );
+      
+      const nextBlink = Math.random() * 3000 + 2000;
+      timeout = setTimeout(blink, nextBlink);
     };
 
-    // Start animations with staggered delays
-    const anim1 = createFloatingAnimation(heart1Anim, 0);
-    const anim2 = createFloatingAnimation(heart2Anim, 1200);
-    const anim3 = createFloatingAnimation(heart3Anim, 2400);
+    // Initial delay for blink
+    timeout = setTimeout(blink, 2000);
 
-    anim1.start();
-    anim2.start();
-    anim3.start();
+    return () => clearTimeout(timeout);
+  }, [animated]);
 
-    return () => {
-      anim1.stop();
-      anim2.stop();
-      anim3.stop();
-    };
-  }, [animated, heart1Anim, heart2Anim, heart3Anim]);
+  // Animated styles for hearts
+  const createHeartStyle = (sharedVal: SharedValue<number>, leftPos: number, topPos: number, rotationPattern: number[]) => {
+    return useAnimatedStyle(() => {
+      const translateY = interpolate(sharedVal.value, [0, 1], [0, -800]);
+      const rotateDeg = interpolate(
+        sharedVal.value, 
+        [0, 0.25, 0.5, 0.75, 1], 
+        rotationPattern
+      );
+      const opacity = interpolate(
+        sharedVal.value, 
+        [0, 0.7, 1], 
+        [1, 0.8, 0], 
+        Extrapolation.CLAMP
+      );
+
+      return {
+        position: 'absolute',
+        left: leftPos,
+        top: topPos,
+        transform: [{ translateY }, { rotate: `${rotateDeg}deg` }],
+        opacity,
+      };
+    });
+  };
+
+  const heart1Style = createHeartStyle(
+    heart1, 
+    (svgSize * 10) / 345.89, 
+    (svgSize * 150) / 434.18, 
+    [0, -15, 0, 15, 0]
+  );
+
+  const heart2Style = createHeartStyle(
+    heart2, 
+    (svgSize * 150) / 345.89, 
+    (svgSize * -20) / 434.18, 
+    [0, 15, 0, -15, 0]
+  );
+
+  const heart3Style = createHeartStyle(
+    heart3, 
+    (svgSize * 300) / 345.89, 
+    (svgSize * 60) / 434.18, 
+    [0, -10, 0, 10, 0]
+  );
+
+  // Eye blinking props
+  // Right eye pivot: 230.53, 183.25
+  const rightEyeAnimatedProps = useAnimatedProps(() => ({
+    transform: [
+      { translateX: 230.53 },
+      { translateY: 183.25 },
+      { scaleY: eyeScale.value },
+      { translateX: -230.53 },
+      { translateY: -183.25 },
+    ]
+  }));
+
+  // Left eye pivot approx: 134, 194
+  const leftEyeAnimatedProps = useAnimatedProps(() => ({
+    transform: [
+      { translateX: 134 },
+      { translateY: 194 },
+      { scaleY: eyeScale.value },
+      { translateX: -134 },
+      { translateY: -194 },
+    ]
+  }));
 
   // Color mapping from original SVG classes
   const colors = {
-    cls1: '#ff3b5c',  // Vibrant Rose - improved contrast for outlines and limbs
-    cls2: '#ff2242',  // Bright red - hearts fill
-    cls3: '#ff9796',  // Light pink - body highlight
-    cls4: '#d34059',  // Medium pink - hand detail
-    cls5: '#fff',     // White - eye highlights
-    cls6: '#fe537a',  // Pink - blush cheeks
-    cls7: '#fd7270',  // Coral/salmon - main body, arm
-    cls8: '#5e041c',  // Very dark red - eyes
-    cls9: '#fcbdcf',  // Light pink - body shine spot
+    cls1: '#ff3b5c',  // Vibrant Rose
+    cls2: '#ff2242',  // Bright red
+    cls3: '#ff9796',  // Light pink
+    cls4: '#d34059',  // Medium pink
+    cls5: '#fff',     // White
+    cls6: '#fe537a',  // Pink
+    cls7: '#fd7270',  // Coral/salmon
+    cls8: '#5e041c',  // Very dark red
+    cls9: '#fcbdcf',  // Light pink
   };
 
   return (
@@ -88,7 +176,7 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
           </G>
           {/* Right foot - cls-1 */}
           <G>
-            <Path d="M233.22,424.53c2.96-2.8,6.76-5.16,17.26-3.51,10.25,1.62,11.87,10.36,10.8,11.96-1.06,1.59-24.96,1.6-29.21,0-4.52-1.71-.42-6.97,1.14-8.45Z" fill={colors.cls1}/>
+            <Path d="M233.22,424.53c2.96-2.8,6.76-5.16-17.26-3.51-10.25,1.62,11.87,10.36,10.8,11.96-1.06,1.59-24.96,1.6-29.21,0-4.52-1.71-.42-6.97,1.14-8.45Z" fill={colors.cls1}/>
             <Path d="M236.73,427.04c-.36,0-.73-.09-1.07-.27-1.09-.59-1.5-1.95-.91-3.05,15.59-28.84,9.31-55.64,9.25-55.91-.29-1.2.44-2.42,1.65-2.72,1.2-.29,2.42.45,2.72,1.65.28,1.16,6.74,28.76-9.66,59.11-.41.75-1.18,1.18-1.98,1.18Z" fill={colors.cls1}/>
           </G>
           
@@ -144,18 +232,18 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
           <Path d="M191.8,248.72c-15.68,0-21.79-13.83-21.86-13.99-.49-1.14.04-2.46,1.18-2.95,1.14-.48,2.46.04,2.95,1.18h0c.24.56,6.1,13.59,21.89,10.9,15.7-2.67,16.29-17.32,16.31-17.94.03-1.22,1.03-2.19,2.25-2.19.02,0,.04,0,.06,0,1.24.03,2.22,1.05,2.19,2.29,0,.19-.64,18.97-20.05,22.27-1.73.29-3.37.43-4.92.43Z" fill={colors.cls1}/>
           
           {/* Left eye - cls-8 (very dark) with cls-5 (white) highlights */}
-          <G>
+          <AnimatedG animatedProps={leftEyeAnimatedProps}>
             <Path d="M121.14,194.54c2.41-9.58,12.14-15.4,21.72-12.98,9.58,2.41,15.4,12.14,12.98,21.72s-12.14,15.4-21.72,12.98c-9.58-2.41-15.4-12.14-12.98-21.72Z" fill={colors.cls8}/>
             <Path d="M126.21,196.33c-.44-2.6,1.31-5.06,3.9-5.5s5.06,1.31,5.5,3.9-1.31,5.06-3.91,5.5c-2.6.44-5.06-1.31-5.5-3.9Z" fill={colors.cls5}/>
             <Path d="M147.84,198.92c.9-3.4,2.66-5.88,3.93-5.54s1.58,3.36.68,6.76-2.66,5.88-3.93,5.54c-1.27-.34-1.58-3.36-.68-6.76Z" fill={colors.cls5}/>
-          </G>
+          </AnimatedG>
           
           {/* Right eye - cls-8 (very dark) with cls-5 (white) highlights */}
-          <G>
+          <AnimatedG animatedProps={rightEyeAnimatedProps}>
             <Circle cx="230.53" cy="183.25" r="17.89" fill={colors.cls8}/>
             <Path d="M218.27,180.69c-.44-2.6,1.31-5.06,3.91-5.5s5.06,1.31,5.5,3.91-1.31,5.06-3.9,5.5c-2.6.44-5.06-1.31-5.5-3.9Z" fill={colors.cls5}/>
             <Path d="M239.9,183.28c.9-3.4,2.66-5.88,3.93-5.54s1.58,3.36.68,6.76-2.66,5.88-3.93,5.54c-1.27-.34-1.58-3.36-.68-6.76Z" fill={colors.cls5}/>
-          </G>
+          </AnimatedG>
         </G>
       </Svg>
 
@@ -166,18 +254,7 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
       */}
       
       {/* Heart 1 (bottom left) */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          left: (svgSize * 10) / 345.89, 
-          top: (svgSize * 150) / 434.18, 
-          transform: [
-            { translateY: heart1Anim.interpolate({ inputRange: [0, 1], outputRange: [0, -800] }) },
-            { rotate: heart1Anim.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: ['0deg', '-15deg', '0deg', '15deg', '0deg'] }) },
-          ],
-          opacity: heart1Anim.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.8, 0] }),
-        }}
-      >
+      <Animated.View style={heart1Style}>
         <Svg width={svgSize * 0.12} height={svgSize * 0.12} viewBox="0 155 45 70">
            <Path 
              d="M41.44,181.3c-6.44-9.7-18.34,9.4-18.44,9.55-.14-.11-17.68-14.2-20.56-2.92-2.88,11.27,25.32,32.36,25.59,32.56.19-.28,19.84-29.5,13.4-39.19Z"
@@ -191,18 +268,7 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
       </Animated.View>
 
       {/* Heart 2 (top center) */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          left: (svgSize * 150) / 345.89,
-          top: (svgSize * -20) / 434.18,
-          transform: [
-            { translateY: heart2Anim.interpolate({ inputRange: [0, 1], outputRange: [0, -800] }) },
-            { rotate: heart2Anim.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: ['0deg', '15deg', '0deg', '-15deg', '0deg'] }) },
-          ],
-          opacity: heart2Anim.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.8, 0] }),
-        }}
-      >
+      <Animated.View style={heart2Style}>
         <Svg width={svgSize * 0.14} height={svgSize * 0.14} viewBox="120 -5 45 55">
            <Path 
              d="M160.78,5.77c-4.73-10.64-19.66,6.19-19.78,6.33-.12-.13-15.05-16.97-19.78-6.33-4.72,10.63,19.54,36.14,19.78,36.39.23-.24,24.5-25.76,19.78-36.39Z"
@@ -216,18 +282,7 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
       </Animated.View>
 
       {/* Heart 3 (top right) */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          left: (svgSize * 300) / 345.89,
-          top: (svgSize * 60) / 434.18,
-          transform: [
-            { translateY: heart3Anim.interpolate({ inputRange: [0, 1], outputRange: [0, -800] }) },
-            { rotate: heart3Anim.interpolate({ inputRange: [0, 0.25, 0.5, 0.75, 1], outputRange: ['0deg', '-10deg', '0deg', '10deg', '0deg'] }) },
-          ],
-          opacity: heart3Anim.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.8, 0] }),
-        }}
-      >
+      <Animated.View style={heart3Style}>
         <Svg width={svgSize * 0.12} height={svgSize * 0.12} viewBox="300 60 45 70">
            <Path 
              d="M342.41,83.38c-6.44-9.7-18.34,9.4-18.44,9.55-.14-.11-17.68-14.2-20.56-2.92-2.88,11.27,25.32,32.36,25.59,32.56.19-.28,19.84-29.5,13.4-39.19Z"
