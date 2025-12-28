@@ -1,7 +1,67 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Ellipse, Defs, RadialGradient, Stop, Mask } from 'react-native-svg';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedProps, 
+  withRepeat, 
+  withTiming, 
+  withDelay,
+  Easing 
+} from 'react-native-reanimated';
 import MascotWrapper from './MascotWrapper';
+
+const AnimatedG = Animated.createAnimatedComponent(G);
+
+interface TearDropProps {
+  children: React.ReactNode;
+  direction: 'left' | 'right';
+  delay?: number;
+  animated?: boolean;
+}
+
+const TearDrop = ({ children, direction, delay = 0, animated = true }: TearDropProps) => {
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    if (animated) {
+      progress.value = withDelay(
+        delay,
+        withRepeat(
+          withTiming(1, { 
+            duration: 900, 
+            easing: Easing.linear, 
+          }), 
+          -1, 
+          false
+        )
+      );
+    }
+  }, [animated, delay]);
+
+  const animatedProps = useAnimatedProps(() => {
+    const moveX = direction === 'left' ? -25 : 25; 
+    const moveY = 15; 
+
+    return {
+      opacity: 1 - progress.value,
+      transform: [
+        { translateX: progress.value * moveX },
+        { translateY: progress.value * moveY },
+      ],
+    };
+  });
+
+  if (!animated) {
+      return <G>{children}</G>;
+  }
+
+  return (
+    <AnimatedG animatedProps={animatedProps}>
+      {children}
+    </AnimatedG>
+  );
+};
 
 interface MascotProps {
   size?: number;
@@ -75,26 +135,26 @@ export default function SadCry({ size = 160, style, animated = true }: MascotPro
             {/* Sad mouth */}
             <Path d="M168.15,219.19c-.14,0-.29-.01-.44-.04-1.38-.24-2.3-1.55-2.06-2.93.15-.85,3.79-20.83,17.97-20.83s17.82,19.18,17.97,20c.25,1.37-.66,2.69-2.04,2.94-1.37.25-2.69-.66-2.94-2.04-.03-.15-3.04-15.85-12.99-15.85s-12.96,16.48-12.99,16.64c-.21,1.23-1.28,2.1-2.49,2.1Z" fill="#ff3b5c"/>
             {/* Tears */}
-            <G>
+            <TearDrop direction="left" delay={0} animated={animated}>
               <Path d="M68.34,137.79s-27.69-33.67-37-16.85c-11.84,21.38,37,16.85,37,16.85Z" fill="#6fe4e3"/>
               <Path d="M58.13,140.76c-10.3,0-24.94-1.34-29.62-8.49-2.27-3.48-2.07-7.71.61-12.55,1.98-3.57,4.93-5.63,8.56-5.96,12.81-1.18,30.62,20.01,32.61,22.43.59.72.74,1.72.38,2.58-.36.86-1.17,1.46-2.1,1.55-1.13.11-5.23.45-10.44.45ZM38.8,118.76c-.22,0-.44.01-.65.03-1.96.18-3.41,1.25-4.59,3.37-2.57,4.64-1.24,6.67-.81,7.33,3.51,5.37,18.79,6.57,30.31,6.1-6.29-6.81-17.11-16.84-24.26-16.84Z" fill="#ff3b5c"/>
-            </G>
-            <G>
+            </TearDrop>
+            <TearDrop direction="right" delay={500} animated={animated}>
               <Path d="M306.75,184.6s41.29-13.99,40.32,5.21c-1.23,24.41-40.32-5.21-40.32-5.21Z" fill="#6fe4e3"/>
               <Path d="M338.31,201.96c-12.43,0-30.75-13.57-33.09-15.34-.75-.57-1.12-1.5-.97-2.42s.8-1.69,1.68-1.99c2.97-1,29.28-9.6,39.54-1.84,2.9,2.19,4.33,5.5,4.12,9.58-.28,5.53-2.33,9.23-6.1,10.99-1.54.72-3.3,1.03-5.19,1.03ZM312.39,185.53c9.54,6.47,23.15,13.53,28.97,10.81.72-.34,2.92-1.36,3.18-6.65.12-2.42-.55-4.1-2.12-5.29-5.71-4.32-20.83-1.41-30.03,1.13Z" fill="#ff3b5c"/>
-            </G>
-            <G>
+            </TearDrop>
+            <TearDrop direction="left" delay={800} animated={animated}>
               <Path d="M47.75,194.76s-42.43-9.99-39.64,9.03c3.55,24.18,39.64-9.03,39.64-9.03Z" fill="#6fe4e3"/>
               <Path d="M16.51,215.12c-1.34,0-2.61-.19-3.78-.6-3.92-1.39-6.32-4.87-7.12-10.35-.59-4.04.51-7.47,3.19-9.93,9.47-8.69,36.48-2.65,39.53-1.93.91.22,1.63.92,1.87,1.82.24.91-.04,1.87-.73,2.5-2.24,2.06-20.5,18.5-32.95,18.5ZM26.04,194.65c-5.81,0-11.13.83-13.83,3.3-1.45,1.33-1.96,3.07-1.6,5.47.77,5.25,3.06,6.06,3.81,6.32,6.06,2.14,18.93-6.17,27.8-13.52-4.6-.81-10.62-1.57-16.18-1.57Z" fill="#ff3b5c"/>
-            </G>
-            <G>
+            </TearDrop>
+            <TearDrop direction="left" delay={200} animated={animated}>
               <Path d="M99.79,166.49s-39.49-18.46-40.65.72c-1.47,24.39,40.65-.72,40.65-.72Z" fill="#6fe4e3"/>
               <Path d="M68.66,180.37c-2.73,0-5.2-.5-7.19-1.71-3.55-2.16-5.18-6.06-4.85-11.59.25-4.07,2.03-7.21,5.15-9.07,11.05-6.57,36.25,4.87,39.09,6.2.85.4,1.41,1.23,1.45,2.16s-.43,1.82-1.23,2.30c-2.37,1.41-20.06,11.7-32.43,11.7ZM70.66,161c-2.51,0-4.7.4-6.3,1.35-1.69,1-2.54,2.6-2.69,5.02-.32,5.29,1.75,6.55,2.43,6.97,5.49,3.34,19.79-2.16,29.98-7.54-6.56-2.62-16.3-5.79-23.42-5.79Z" fill="#ff3b5c"/>
-            </G>
-            <G>
+            </TearDrop>
+            <TearDrop direction="right" delay={100} animated={animated}>
               <Path d="M266.17,152.59s31.71-29.92,38.83-12.06c9.05,22.7-38.83,12.06-38.83,12.06Z" fill="#6fe4e3"/>
               <Path d="M287.62,157.62c-9.97,0-20.14-2.15-22-2.57-.91-.2-1.64-.89-1.89-1.80s.02-1.87.7-2.51c2.28-2.15,22.62-20.92,35.17-18.15,3.55.79,6.23,3.2,7.74,6.99,2.05,5.15,1.72,9.36-.97,12.53-3.61,4.25-11.13,5.5-18.75,5.5ZM271.68,151.08c11.37,1.91,26.68,2.65,30.84-2.24.52-.61,2.09-2.45.12-7.38-.90-2.25-2.21-3.5-4.13-3.92-7-1.55-19.52,7.39-26.83,13.54Z" fill="#ff3b5c"/>
-            </G>
+            </TearDrop>
             {/* Mouth with mask */}
             <G mask="url(#sadCryMask)">
               <Ellipse cx="182.95" cy="283.65" rx="51.78" ry="49.86" fill="#fe537a"/>
