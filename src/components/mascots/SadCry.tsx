@@ -9,7 +9,7 @@ interface MascotProps {
   animated?: boolean;
 }
 
-export default function SadCry({ size = 160, style, animated = false }: MascotProps) {
+export default function SadCry({ size = 160, style, animated: _animated = false }: MascotProps) {
   // SVG will render at 85% of the container size for consistent visual appearance
   const svgSize = size * 0.85;
 

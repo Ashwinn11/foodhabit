@@ -20,7 +20,7 @@ import {
 import { 
   saveFoodScan, 
   uploadScanImage,
-  getUserProfile 
+  getUserProfile
 } from '../services/databaseService';
 
 const { width } = Dimensions.get('window');
@@ -32,7 +32,7 @@ export default function ResultScreen({ route, navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [score, setScore] = useState(0);
   const [foods, setFoods] = useState<IdentifiedFood[]>([]);
-  const [breakdown, setBreakdown] = useState({ fiber: 0, plants: 0, triggers: 0, processed: 0 });
+  const [breakdown, setBreakdown] = useState<any>({ fiber: 0, plants: 0, triggers: 0, processed: 0 });
   const [gigiMessage, setGigiMessage] = useState('');
 
   // Modal State
@@ -90,7 +90,7 @@ export default function ResultScreen({ route, navigation }: any) {
       
       setScore(result.score);
       setFoods(identifiedFoods);
-      setBreakdown(result.breakdown);
+      setBreakdown(result); // Store full result with foodImpacts and tips
       setGigiMessage(result.message);
       setLoading(false);
 
@@ -187,11 +187,12 @@ export default function ResultScreen({ route, navigation }: any) {
           </Text>
         </View>
 
-        {/* Identified Foods */}
+        {/* Identified Foods with Gut Health Impact */}
         <View style={styles.foodsContainer}>
           <Text variant="title3" weight="semiBold" style={styles.sectionTitle}>
             What's in this meal?
           </Text>
+          
           {foods
             .filter(f => {
               const name = f.name.toLowerCase();
@@ -206,22 +207,79 @@ export default function ResultScreen({ route, navigation }: any) {
               // Filter "Cuisine" types (e.g., "Indian cuisine")
               if (name.includes('cuisine')) return false;
 
-              // Filter generic "Food" suffix (optional, depends on preference)
-              // if (name.endsWith(' food')) return false;
-
               return true;
             })
             .slice(0, 5) // Limit to top 5 real foods
-            .map((food, index) => (
-            <View key={index} style={styles.foodItem}>
-              <Text variant="body" style={styles.foodText}>
-                • {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
-              </Text>
-            </View>
-          ))}
-          <TouchableOpacity>
-            <Text style={styles.editFoodsText}>Edit foods</Text>
-          </TouchableOpacity>
+            .map((food, index) => {
+              // Find the impact analysis for this food
+              const impact = breakdown.foodImpacts?.find((fi: any) => 
+                fi.food.toLowerCase() === food.name.toLowerCase()
+              );
+              
+              // Determine icon based on impact
+              let icon = '•';
+              let iconColor: string = theme.colors.text.white;
+              if (impact) {
+                if (impact.impact === 'positive') {
+                  icon = '✅';
+                  iconColor = theme.colors.brand.teal;
+                } else if (impact.impact === 'warning') {
+                  icon = '⚠️';
+                  iconColor = theme.colors.brand.coral;
+                }
+              }
+              
+              return (
+                <View key={index} style={styles.foodItemContainer}>
+                  <View style={styles.foodHeader}>
+                    <View style={styles.foodNameRow}>
+                      <Text variant="body" style={[styles.foodIcon, { color: iconColor }]}>
+                        {icon}
+                      </Text>
+                      <Text variant="body" weight="semiBold" style={styles.foodName}>
+                        {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
+                      </Text>
+                      {food.confidence && food.confidence < 0.8 && (
+                        <Text style={styles.confidenceTag}>
+                          {Math.round(food.confidence * 100)}% sure
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                  
+                  {/* Show gut health benefits */}
+                  {impact?.benefits && impact.benefits.length > 0 && (
+                    <View style={styles.impactDetails}>
+                      {impact.benefits.slice(0, 2).map((benefit: string, idx: number) => (
+                        <Text key={idx} variant="caption1" style={styles.benefitText}>
+                          {benefit}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+                  
+                  {/* Show warnings */}
+                  {impact?.warnings && impact.warnings.length > 0 && (
+                    <View style={styles.impactDetails}>
+                      {impact.warnings.slice(0, 1).map((warning: string, idx: number) => (
+                        <Text key={idx} variant="caption1" style={styles.warningText}>
+                          {warning}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+                  
+                  {/* Show personalized warning */}
+                  {impact?.personalizedWarning && (
+                    <View style={styles.personalizedWarningContainer}>
+                      <Text variant="caption1" weight="semiBold" style={styles.personalizedWarningText}>
+                        {impact.personalizedWarning}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
         </View>
 
         {/* Score Breakdown */}
@@ -235,7 +293,7 @@ export default function ResultScreen({ route, navigation }: any) {
               Fiber
             </Text>
             <Text variant="body" weight="semiBold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-              +{breakdown.fiber}
+              +{breakdown.breakdown?.fiber || 0}
             </Text>
           </View>
 
@@ -244,16 +302,38 @@ export default function ResultScreen({ route, navigation }: any) {
               Plant Diversity
             </Text>
             <Text variant="body" weight="semiBold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-              +{breakdown.plants}
+              +{breakdown.breakdown?.plants || 0}
             </Text>
           </View>
+
+          {breakdown.breakdown?.prebiotics !== undefined && breakdown.breakdown.prebiotics > 0 && (
+            <View style={styles.breakdownItem}>
+              <Text variant="body" style={styles.breakdownLabel}>
+                Prebiotics
+              </Text>
+              <Text variant="body" weight="semiBold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
+                +{breakdown.breakdown.prebiotics}
+              </Text>
+            </View>
+          )}
+
+          {breakdown.breakdown?.probiotics !== undefined && breakdown.breakdown.probiotics > 0 && (
+            <View style={styles.breakdownItem}>
+              <Text variant="body" style={styles.breakdownLabel}>
+                Probiotics
+              </Text>
+              <Text variant="body" weight="semiBold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
+                +{breakdown.breakdown.probiotics}
+              </Text>
+            </View>
+          )}
 
           <View style={styles.breakdownItem}>
             <Text variant="body" style={styles.breakdownLabel}>
               Trigger Risk
             </Text>
             <Text variant="body" weight="semiBold" style={[styles.breakdownValue, { color: theme.colors.brand.coral }]}>
-              {breakdown.triggers}
+              {breakdown.breakdown?.triggers || 0}
             </Text>
           </View>
 
@@ -262,7 +342,7 @@ export default function ResultScreen({ route, navigation }: any) {
               Processed
             </Text>
             <Text variant="body" weight="semiBold" style={styles.breakdownValue}>
-              {breakdown.processed}
+              {breakdown.breakdown?.processed || 0}
             </Text>
           </View>
         </View>
@@ -288,6 +368,7 @@ export default function ResultScreen({ route, navigation }: any) {
           onClose={() => setErrorModalVisible(false)}
           variant="error"
       />
+
     </View>
   );
 }
@@ -429,6 +510,111 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   scanAnotherText: {
+    color: theme.colors.brand.black,
+  },
+  // New styles for enhanced food display
+  foodItemContainer: {
+    marginBottom: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  foodHeader: {
+    marginBottom: theme.spacing.xs,
+  },
+  foodNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  foodIcon: {
+    fontSize: 16,
+  },
+  foodName: {
+    color: theme.colors.text.white,
+    flex: 1,
+  },
+  confidenceTag: {
+    fontSize: 11,
+    color: theme.colors.text.white,
+    opacity: 0.5,
+    fontStyle: 'italic',
+  },
+  impactDetails: {
+    marginTop: theme.spacing.xs,
+    paddingLeft: theme.spacing.lg + theme.spacing.sm,
+  },
+  benefitText: {
+    color: theme.colors.brand.teal,
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 2,
+  },
+  warningText: {
+    color: theme.colors.brand.coral,
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 2,
+  },
+  personalizedWarningContainer: {
+    marginTop: theme.spacing.xs,
+    paddingLeft: theme.spacing.lg + theme.spacing.sm,
+    padding: theme.spacing.sm,
+    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    borderRadius: theme.borderRadius.sm,
+    borderLeftWidth: 2,
+    borderLeftColor: theme.colors.brand.coral,
+  },
+  personalizedWarningText: {
+    color: theme.colors.brand.coral,
+    fontSize: 12,
+  },
+  // Edit Foods Modal styles
+  editFoodsContainer: {
+    marginTop: theme.spacing.md,
+  },
+  noFoodsText: {
+    color: theme.colors.text.white,
+    textAlign: 'center',
+    opacity: 0.7,
+    marginVertical: theme.spacing.lg,
+  },
+  editFoodItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  editFoodName: {
+    color: theme.colors.text.white,
+    flex: 1,
+  },
+  removeFoodButton: {
+    padding: theme.spacing.xs,
+  },
+  editModalButtons: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.xl,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  cancelButtonText: {
+    color: theme.colors.text.white,
+  },
+  saveButton: {
+    backgroundColor: theme.colors.brand.teal,
+  },
+  saveButtonText: {
     color: theme.colors.brand.black,
   },
 });

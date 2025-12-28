@@ -325,3 +325,38 @@ export async function deleteImage(imageUrl: string): Promise<{ success: boolean;
         return { success: false, error: 'Failed to delete image' };
     }
 }
+
+/**
+ * Update an existing food scan (when user edits foods)
+ */
+export async function updateFoodScan(
+    scanId: string,
+    identifiedFoods: IdentifiedFood[],
+    score: number,
+    breakdown: ScoreBreakdown,
+    emotion: 'happy' | 'neutral' | 'sad',
+    message: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const { error } = await supabase
+            .from('food_scans')
+            .update({
+                identified_foods: identifiedFoods,
+                gut_health_score: score,
+                score_factors: breakdown,
+                gigi_emotion: emotion,
+                gigi_message: message,
+            })
+            .eq('id', scanId);
+
+        if (error) {
+            console.error('Error updating scan:', error);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating scan:', error);
+        return { success: false, error: 'Failed to update scan' };
+    }
+}

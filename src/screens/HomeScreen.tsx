@@ -97,12 +97,30 @@ export default function HomeScreen({ navigation }: any) {
         {/* Gigi Character */}
         <TouchableOpacity style={styles.gigiContainer} activeOpacity={0.9} onPress={() => {}}>
            <Gigi 
-            emotion={streak > 3 ? 'excited' : streak > 0 ? 'happy' : 'neutral'} 
+            emotion={
+              avgScore >= 90 ? 'crown' :        // 90-100: Crown - Champion level!
+              avgScore >= 80 ? 'balloon' :      // 80-89: Balloon - Celebrating
+              avgScore >= 70 ? 'cute' :         // 70-79: Cute/Love - Very happy
+              avgScore >= 60 ? 'clap' :         // 60-69: Clapping - Good job
+              avgScore >= 50 ? 'shock' :        // 50-59: Shocked - Could be better
+              avgScore >= 40 ? 'frustrate' :    // 40-49: Frustrated - Not ideal
+              avgScore >= 30 ? 'sick' :         // 30-39: Sick - Unhealthy
+              avgScore > 0 ? 'cry' :            // 0-29: Crying - Very unhealthy
+              'clap'                            // No score yet - Neutral/ready
+            } 
             size="lg" 
           />
            <View style={styles.messageBubble}>
             <Text variant="body" weight="medium" style={styles.gigiMessageText}>
-              {streak > 3 ? "You're on fire! 🔥" : streak > 0 ? "Great consistency! 🌟" : "Ready to scan your meal?"}
+              {avgScore >= 90 ? "You're a health champion! 👑" : 
+               avgScore >= 80 ? "Amazing choices today! 🎈" : 
+               avgScore >= 70 ? "Loving your healthy habits! 💕" : 
+               avgScore >= 60 ? "Great work, keep it up! 👏" : 
+               avgScore >= 50 ? "Hmm, could be healthier! 🤔" : 
+               avgScore >= 40 ? "Let's aim higher next time! 😤" : 
+               avgScore >= 30 ? "These choices aren't helping... 🤢" : 
+               avgScore > 0 ? "We need to talk about this... 😢" : 
+               "Ready to scan your meal?"}
             </Text>
           </View>
         </TouchableOpacity>
