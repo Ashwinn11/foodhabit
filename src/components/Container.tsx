@@ -3,6 +3,7 @@ import { View, StyleSheet, ViewStyle, ScrollView } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../theme';
+import { BackgroundBlobs } from './BackgroundBlobs';
 
 export interface ContainerProps {
   children: React.ReactNode;
@@ -54,6 +55,7 @@ export const Container: React.FC<ContainerProps> = ({
       colors={[theme.colors.brand.backgroundGradientStart, theme.colors.brand.backgroundGradientEnd]}
       style={styles.container}
     >
+      <BackgroundBlobs />
       {innerContent}
     </LinearGradient>
   );
