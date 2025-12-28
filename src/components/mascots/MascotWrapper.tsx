@@ -20,6 +20,7 @@ export default function MascotWrapper({ size, style, children }: MascotWrapperPr
           height: size,
           alignItems: 'center',
           justifyContent: 'center',
+          overflow: 'visible', // Allow animated parts to move outside the box
         },
         style,
       ]}

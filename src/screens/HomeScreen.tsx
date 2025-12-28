@@ -108,7 +108,8 @@ export default function HomeScreen({ navigation }: any) {
               avgScore > 0 ? 'cry' :            // 0-29: Crying - Very unhealthy
               'clap'                            // No score yet - Neutral/ready
             } 
-            size="lg" 
+            size="lg"
+            animated={true}
           />
            <View style={styles.messageBubble}>
             <Text variant="body" weight="medium" style={styles.gigiMessageText}>
@@ -190,6 +191,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: theme.spacing.xl,
+    overflow: 'visible', // Allow hearts to float out of this area
   },
   levelContainer: {
     width: '100%',
@@ -224,6 +226,7 @@ const styles = StyleSheet.create({
   gigiContainer: {
     alignItems: 'center',
     marginBottom: theme.spacing['4xl'],
+    overflow: 'visible', // Allow hearts to float out of the container
   },
   messageBubble: {
     marginTop: theme.spacing.lg,
