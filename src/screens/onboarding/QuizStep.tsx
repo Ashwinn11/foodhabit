@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, SelectableCard, Gigi } from '../../components';
+import { HappyBalloon, SadCry } from '../../components/mascots';
 import { theme } from '../../theme';
 import Animated, { FadeInRight, FadeOutLeft } from 'react-native-reanimated';
 
@@ -97,7 +98,13 @@ export const QuizStep: React.FC<QuizStepProps> = ({ onComplete, updateProgress }
         style={styles.content}
       >
         <View style={styles.gigi}>
-          <Gigi emotion="thinking" size="sm" />
+          {currentQuestion.id === 'symptom' ? (
+            <SadCry size={80} />
+          ) : currentQuestion.id === 'goal' ? (
+            <HappyBalloon size={80} />
+          ) : (
+            <Gigi emotion="thinking" size="sm" />
+          )}
         </View>
         
         <Text variant="title2" style={styles.question}>

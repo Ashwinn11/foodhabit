@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, Button, Gigi } from '../../components';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { Text, Button } from '../../components';
+import { SadFrustrate } from '../../components/mascots';
 import { theme } from '../../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -10,17 +11,15 @@ interface PaywallStepProps {
 
 export const PaywallStep: React.FC<PaywallStepProps> = ({ onComplete }) => {
   const handleSubscribe = () => {
-    // Fake purchase logic
-    Alert.alert('Welcome Aboard!', 'Premium features unlocked.', [
-      { text: 'Start Journey', onPress: onComplete }
-    ]);
+    // Bypass payment - go directly to rules
+    onComplete();
   };
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.hero}>
-          <Gigi emotion="excited" size="lg" />
+          <SadFrustrate size={100} />
           <Text variant="title1" style={styles.title}>
             Unlock Full Potential
           </Text>

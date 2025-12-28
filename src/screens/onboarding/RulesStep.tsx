@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, Button, Gigi } from '../../components';
+import { Text, Button } from '../../components';
+import { SadSick } from '../../components/mascots';
 import { theme } from '../../theme';
 interface RulesStepProps {
   onComplete: () => void;
@@ -10,7 +11,9 @@ export const RulesStep: React.FC<RulesStepProps> = ({ onComplete }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Gigi emotion="happy" size="md" />
+        <View style={styles.mascotContainer}>
+          <SadSick size={100} />
+        </View>
         <Text variant="title2" style={styles.title}>House Rules</Text>
         <Text variant="body" style={styles.subtitle}>
           To get the best results, follow these simple habits.
@@ -54,6 +57,12 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: theme.spacing['2xl'],
+  },
+  mascotContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.lg,
+    height: 120,
   },
   title: {
     marginTop: theme.spacing.lg,

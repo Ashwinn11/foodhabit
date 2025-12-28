@@ -13,7 +13,7 @@ const LEGAL_TEXT = {
   privacy: 'Privacy Policy',
 };
 
-// Animated mascot component using Gigi
+// Animated mascot component using AnimatedCrownMascot
 interface AnimatedMascotProps {
   fadeAnim: Animated.Value;
   scaleAnim: Animated.Value;
@@ -33,7 +33,7 @@ const AnimatedMascot: React.FC<AnimatedMascotProps> = ({ fadeAnim, scaleAnim }) 
         },
       ]}
     >
-      <Gigi emotion="happy" size="md" />
+      <Gigi emotion="crown" size="md" />
     </Animated.View>
   );
 };

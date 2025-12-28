@@ -62,7 +62,11 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         break;
       case 'plan':
         setCurrentStep('paywall');
-        setProgress(0.9);
+        setProgress(0.8);
+        break;
+      case 'paywall':
+        setCurrentStep('rules');
+        setProgress(1.0);
         break;
       case 'paywall':
         setCurrentStep('rules');
