@@ -16,6 +16,26 @@ interface FoodLabel {
     combinedScore?: number;
 }
 
+// Gut Health Analysis from Gemini
+interface GutHealthAnalysis {
+    food_name: string;
+    gut_health_verdict: 'good' | 'neutral' | 'bad';
+    gut_score: number; // 0-100
+    fiber_score: number; // 0-10
+    is_processed: boolean;
+    processing_level: 'whole' | 'minimally_processed' | 'processed' | 'ultra_processed';
+    plant_count: number;
+    is_plant: boolean;
+    triggers: string[];
+    prebiotic_score: number; // 0-10
+    probiotic_score: number; // 0-10
+    anti_inflammatory: boolean;
+    fermentable: boolean;
+    gut_benefits: string[];
+    gut_warnings: string[];
+    why_good_or_bad: string; // Simple explanation
+}
+
 interface RecognitionResult {
     success: boolean;
     foods: any[];
@@ -106,6 +126,122 @@ const HIERARCHY: Record<string, string[]> = {
     "soup": ["liquid", "dish"],
 };
 
+/**
+ * Analyze gut health using Gemini 3.0 Pro
+ * Primary goal: Determine if food is healthy for gut or not
+ */
+async function analyzeGutHealthWithGemini(
+    foodNames: string[],
+    base64Image: string,
+    userTriggers: string[] = []
+): Promise<GutHealthAnalysis[]> {
+    const geminiApiKey = Deno.env.get("GOOGLE_API_KEY");
+
+    if (!geminiApiKey) {
+        console.log("⚠️ Google API key not configured (for Gemini), using fallback analysis");
+        return [];
+    }
+
+    const triggersContext = userTriggers.length > 0
+        ? `The user has these personal food triggers/sensitivities: ${userTriggers.join(', ')}. Consider these when analyzing.`
+        : '';
+
+    const prompt = `You are a gut health nutrition expert. Analyze these foods and determine if they are HEALTHY FOR GUT or NOT.
+
+Foods detected in the image: ${foodNames.join(', ')}
+
+${triggersContext}
+
+For EACH food, provide a JSON analysis focused on GUT HEALTH. The primary question is: "Is this food good or bad for gut health?"
+
+Consider these factors:
+1. Fiber content (prebiotics feed good bacteria)
+2. Processing level (ultra-processed foods harm gut microbiome)
+3. Fermented foods (contain probiotics)
+4. Anti-inflammatory properties
+5. Common gut triggers (FODMAP, gluten, dairy, spicy)
+6. Plant diversity (more plants = healthier gut)
+
+Return a JSON array with this exact structure for each food:
+[
+  {
+    "food_name": "string",
+    "gut_health_verdict": "good" | "neutral" | "bad",
+    "gut_score": 0-100,
+    "fiber_score": 0-10,
+    "is_processed": boolean,
+    "processing_level": "whole" | "minimally_processed" | "processed" | "ultra_processed",
+    "plant_count": number,
+    "is_plant": boolean,
+    "triggers": ["array of trigger ingredients like gluten, dairy, fodmap, spicy"],
+    "prebiotic_score": 0-10,
+    "probiotic_score": 0-10,
+    "anti_inflammatory": boolean,
+    "fermentable": boolean,
+    "gut_benefits": ["array of benefits for gut health"],
+    "gut_warnings": ["array of potential gut concerns"],
+    "why_good_or_bad": "One sentence explaining why this is good/neutral/bad for gut"
+  }
+]
+
+Only return valid JSON array, no other text.`;
+
+    try {
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-pro:generateContent?key=${geminiApiKey}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            parts: [
+                                { text: prompt },
+                                {
+                                    inline_data: {
+                                        mime_type: "image/jpeg",
+                                        data: base64Image
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    generationConfig: {
+                        temperature: 0.1,
+                        topK: 1,
+                        topP: 0.95,
+                        maxOutputTokens: 2048,
+                        responseMimeType: "application/json"
+                    }
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Gemini API error:", errorText);
+            return [];
+        }
+
+        const geminiData = await response.json();
+        const textResponse = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!textResponse) {
+            console.error("No text response from Gemini");
+            return [];
+        }
+
+        // Parse JSON response
+        const analysisResults: GutHealthAnalysis[] = JSON.parse(textResponse);
+        console.log("🧠 Gemini gut health analysis:", JSON.stringify(analysisResults, null, 2));
+
+        return analysisResults;
+    } catch (error) {
+        console.error("Gemini analysis error:", error);
+        return [];
+    }
+}
+
 serve(async (req) => {
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
@@ -121,9 +257,9 @@ serve(async (req) => {
             );
         }
 
-        const apiKey = Deno.env.get("GOOGLE_VISION_API_KEY");
+        const apiKey = Deno.env.get("GOOGLE_API_KEY");
         if (!apiKey) {
-            throw new Error("Google Vision API key not configured");
+            throw new Error("Google API key not configured");
         }
 
         // Initialize Supabase client
@@ -344,110 +480,68 @@ serve(async (req) => {
                 continue;
             }
 
-            // Smart categorization for unknown foods based on name
-            const foodNameLower = food.name.toLowerCase();
+            // If no DB match, we add it to the list to be analyzed by Gemini
+            finalFoods.push({ name: food.name, confidence: food.confidence, needsAnalysis: true });
+        }
 
-            // Categorize based on keywords
-            let category = 'unknown';
-            let fiber_score = 3;
-            let is_plant = true;
-            let gut_benefits: string[] = [];
-            let prebiotic_score = 2;
-            let anti_inflammatory = false;
+        // --- GEMINI INTEGRATION START ---
+        // Extract names of foods that need detailed analysis (or all foods to double check)
+        // We will analyze ALL top detected foods to get the specific gut scores
+        const foodNamesToAnalyze = finalFoods.map(f => f.name);
 
-            // Vegetables & Salads
-            if (foodNameLower.includes('vegetable') || foodNameLower.includes('salad') ||
-                foodNameLower.includes('greens') || foodNameLower.includes('lettuce') ||
-                foodNameLower.includes('spinach') || foodNameLower.includes('kale') ||
-                foodNameLower.includes('broccoli') || foodNameLower.includes('carrot')) {
-                category = 'vegetable';
-                fiber_score = 6;
-                gut_benefits = ['Good source of fiber', 'Rich in vitamins and minerals', 'Supports digestive health'];
-                prebiotic_score = 5;
-                anti_inflammatory = true;
-            }
-            // Fruits
-            else if (foodNameLower.includes('fruit') || foodNameLower.includes('berry') ||
-                foodNameLower.includes('apple') || foodNameLower.includes('banana') ||
-                foodNameLower.includes('orange') || foodNameLower.includes('lemon') ||
-                foodNameLower.includes('mango') || foodNameLower.includes('grape')) {
-                category = 'fruit';
-                fiber_score = 5;
-                gut_benefits = ['Natural fiber source', 'Contains antioxidants', 'Supports gut health'];
-                prebiotic_score = 4;
-                anti_inflammatory = true;
-            }
-            // Grains & Rice
-            else if (foodNameLower.includes('rice') || foodNameLower.includes('grain') ||
-                foodNameLower.includes('wheat') || foodNameLower.includes('bread') ||
-                foodNameLower.includes('roti') || foodNameLower.includes('naan') ||
-                foodNameLower.includes('pasta') || foodNameLower.includes('quinoa')) {
-                category = 'grain';
-                fiber_score = 4;
-                gut_benefits = ['Provides energy', 'Contains fiber'];
-                prebiotic_score = 3;
-            }
-            // Protein (meat, fish, eggs)
-            else if (foodNameLower.includes('chicken') || foodNameLower.includes('meat') ||
-                foodNameLower.includes('fish') || foodNameLower.includes('egg') ||
-                foodNameLower.includes('mutton') || foodNameLower.includes('beef') ||
-                foodNameLower.includes('pork') || foodNameLower.includes('seafood')) {
-                category = 'protein';
-                fiber_score = 0;
-                is_plant = false;
-                gut_benefits = ['Protein source', 'Supports gut lining repair'];
-                prebiotic_score = 0;
-            }
-            // Legumes & Beans
-            else if (foodNameLower.includes('bean') || foodNameLower.includes('lentil') ||
-                foodNameLower.includes('dal') || foodNameLower.includes('chickpea') ||
-                foodNameLower.includes('legume')) {
-                category = 'legume';
-                fiber_score = 8;
-                gut_benefits = ['High protein', 'Excellent fiber', 'Prebiotic content'];
-                prebiotic_score = 7;
-            }
-            // Dairy
-            else if (foodNameLower.includes('milk') || foodNameLower.includes('cheese') ||
-                foodNameLower.includes('yogurt') || foodNameLower.includes('paneer') ||
-                foodNameLower.includes('curd') || foodNameLower.includes('dairy')) {
-                category = 'dairy';
-                fiber_score = 0;
-                is_plant = false;
-                gut_benefits = ['Protein source', 'May contain probiotics'];
-                prebiotic_score = 0;
-            }
-            // Processed/Fried Foods
-            else if (foodNameLower.includes('fried') || foodNameLower.includes('fast food') ||
-                foodNameLower.includes('pizza') || foodNameLower.includes('burger') ||
-                foodNameLower.includes('chips') || foodNameLower.includes('fries')) {
-                category = 'processed';
-                fiber_score = 1;
-                is_plant = false;
-                gut_benefits = [];
-                prebiotic_score = 0;
-            }
+        let enhancedFoods = [...finalFoods];
 
-            finalFoods.push({
-                name: food.name,
-                confidence: food.confidence,
-                category: category,
-                fiber_score: fiber_score,
-                trigger_risk: 1,
-                is_plant: is_plant,
-                common_triggers: [],
-                gut_benefits: gut_benefits,
-                gut_warnings: [],
-                prebiotic_score: prebiotic_score,
-                probiotic_score: 0,
-                anti_inflammatory: anti_inflammatory,
-                fermentable: false
+        if (foodNamesToAnalyze.length > 0) {
+            console.log("🧠 Calling Gemini 3.0 Pro for gut health analysis on:", foodNamesToAnalyze);
+
+            // Call Gemini
+            const geminiAnalysis = await analyzeGutHealthWithGemini(foodNamesToAnalyze, base64Image, []);
+
+            // Merge Gemini results back into our food objects
+            enhancedFoods = finalFoods.map(food => {
+                const analysis = geminiAnalysis.find(a =>
+                    a.food_name.toLowerCase().includes(food.name.toLowerCase()) ||
+                    food.name.toLowerCase().includes(a.food_name.toLowerCase())
+                );
+
+                if (analysis) {
+                    return {
+                        ...food,
+                        category: analysis.is_plant ? 'plant' : (analysis.is_processed ? 'processed' : 'protein'), // Simplified fallback
+                        fiber_score: analysis.fiber_score,
+                        trigger_risk: analysis.triggers.length > 0 ? 3 : 1, // Simplified risk
+                        is_plant: analysis.is_plant,
+                        common_triggers: analysis.triggers,
+                        gut_benefits: analysis.gut_benefits,
+                        gut_warnings: analysis.gut_warnings,
+                        prebiotic_score: analysis.prebiotic_score,
+                        probiotic_score: analysis.probiotic_score,
+                        anti_inflammatory: analysis.anti_inflammatory,
+                        fermentable: analysis.fermentable,
+                        processing_level: analysis.processing_level,
+                        gut_health_verdict: analysis.gut_health_verdict,
+                        why_gut_healthy: analysis.why_good_or_bad
+                    };
+                }
+
+                // Fallback for items that Gemini missed (keep existing DB data if available)
+                if (food.fiber_score !== undefined) return food;
+
+                // Absolute fallback default if neither DB nor Gemini worked
+                return {
+                    ...food,
+                    category: 'unknown',
+                    fiber_score: 0,
+                    gut_benefits: [],
+                    gut_warnings: ['Could not analyze detailed nutrition']
+                };
             });
         }
+        // --- GEMINI INTEGRATION END ---
 
         const result: RecognitionResult = {
             success: true,
-            foods: finalFoods,
+            foods: enhancedFoods,
             debug: {
                 allLabels: allLabels.map(l => l.name),
                 imageHash: imageHash,
