@@ -90,7 +90,7 @@ export default function ResultScreen({ route, navigation }: any) {
       
       setScore(result.score);
       setFoods(result.foodImpacts.map((i: any) => ({ name: i.food }))); 
-      setBreakdown(result.breakdown);
+      setBreakdown(result); // Store the entire result, so breakdown.breakdown works
       setGigiMessage(result.message);
       setLoading(false);
 

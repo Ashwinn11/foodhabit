@@ -14,13 +14,13 @@ import {
 import { useAuth } from './src/hooks/useAuth';
 import { registerForPushNotificationsAsync } from './src/services/notificationService';
 import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, PaywallScreen, OnboardingScreen } from './src/screens';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import AuthCallbackScreen from './src/screens/AuthCallbackScreen';
 import { theme } from './src/theme';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from './src/config/supabase';
+import { getUserProfile, setOnboardingComplete } from './src/services/databaseService';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -70,67 +70,47 @@ function MainTabs() {
   );
 }
 
-const ONBOARDING_KEY = '@gutscan_onboarding_complete';
-
 function AppContent() {
   const { session, loading } = useAuth();
   const [hasOnboarded, setHasOnboarded] = React.useState<boolean | null>(null);
+  const [checkingOnboarding, setCheckingOnboarding] = React.useState(false);
 
   React.useEffect(() => {
+    // Reset onboarding state when session changes
+    setHasOnboarded(null);
+  }, [session?.user?.id]);
+
+  React.useEffect(() => {
+    const checkOnboarding = async () => {
+      if (loading) return;
+
+      if (!session) {
+        setHasOnboarded(false);
+        return;
+      }
+
+      // Prevent duplicate checks
+      if (checkingOnboarding) return;
+      setCheckingOnboarding(true);
+
+      try {
+        // Fetch profile from DB and check onboarding flag
+        const profile = await getUserProfile();
+        setHasOnboarded(profile?.onboarding_complete ?? false);
+      } catch (error) {
+        console.error('Error checking onboarding:', error);
+        setHasOnboarded(false);
+      } finally {
+        setCheckingOnboarding(false);
+      }
+    };
+
     checkOnboarding();
   }, [session, loading]);
 
-  const checkOnboarding = async () => {
-    if (loading) return;
-
-    if (!session) {
-      // If not logged in, we don't need to check onboarding yet.
-      // But we set it to false to ensure the loading spinner clears if needed (though AuthScreen takes precedence).
-      setHasOnboarded(false);
-      return;
-    }
-
-    try {
-      // 1. Check Remote (Supabase)
-      const { onboarding_complete } = session.user.user_metadata || {};
-      
-      if (onboarding_complete === true) {
-        setHasOnboarded(true);
-        // Sync to local just in case
-        await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
-        return;
-      }
-
-      // 2. Check Local Storage (Fallback for legacy/offline)
-      const value = await AsyncStorage.getItem(ONBOARDING_KEY);
-      if (value === 'true') {
-        setHasOnboarded(true);
-        // Sync to remote
-        await supabase.auth.updateUser({ data: { onboarding_complete: true } });
-        return;
-      }
-
-      // 3. Not onboarded
-      setHasOnboarded(false);
-    } catch (error) {
-      console.warn('Onboarding check failed:', error);
-      setHasOnboarded(true); // Fallback to skip onboarding on error
-    }
-  };
-
   const completeOnboarding = async () => {
-    try {
-      setHasOnboarded(true);
-      await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
-      
-      if (session) {
-        await supabase.auth.updateUser({ 
-          data: { onboarding_complete: true } 
-        });
-      }
-    } catch (error) {
-      console.error('Failed to save onboarding status:', error);
-    }
+    setHasOnboarded(true);
+    await setOnboardingComplete(true);
   };
 
   // Handle auth callback on web only

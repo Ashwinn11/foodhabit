@@ -32,6 +32,7 @@ export interface UserProfile {
     gigi_level: number;
     total_scans: number;
     known_triggers: string[];
+    onboarding_complete: boolean;
 }
 
 /**
@@ -167,7 +168,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
 
         let { data, error } = await supabase
             .from('user_profiles')
-            .select('id, full_name, email, gigi_level, total_scans, known_triggers')
+            .select('id, full_name, email, gigi_level, total_scans, known_triggers, onboarding_complete')
             .eq('id', user.id)
             .maybeSingle();
 
@@ -185,7 +186,8 @@ export async function getUserProfile(): Promise<UserProfile | null> {
                     email: user.email,
                     gigi_level: 1,
                     total_scans: 0,
-                    known_triggers: []
+                    known_triggers: [],
+                    onboarding_complete: false
                 }])
                 .select()
                 .single();
@@ -202,6 +204,31 @@ export async function getUserProfile(): Promise<UserProfile | null> {
     } catch (error) {
         console.error('Error fetching profile:', error);
         return null;
+    }
+}
+
+/**
+ * Update onboarding complete status
+ */
+export async function setOnboardingComplete(complete: boolean = true): Promise<boolean> {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return false;
+
+        const { error } = await supabase
+            .from('user_profiles')
+            .update({ onboarding_complete: complete })
+            .eq('id', user.id);
+
+        if (error) {
+            console.error('Error updating onboarding status:', error);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error updating onboarding status:', error);
+        return false;
     }
 }
 
