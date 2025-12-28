@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Text, Button, Gigi } from '../../components';
 import { theme } from '../../theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,7 +16,7 @@ export const InsightStep: React.FC<InsightStepProps> = ({ onComplete, type }) =>
       case 'symptoms':
         return (
           <>
-            <Gigi emotion="shock-awe" size="md" />
+            <Gigi emotion="sad-frustrate" size="md" />
             <Text variant="title2" style={styles.title}>
               We noticed you're struggling with bloating.
             </Text>
@@ -32,7 +32,7 @@ export const InsightStep: React.FC<InsightStepProps> = ({ onComplete, type }) =>
       case 'solution':
         return (
           <>
-            <Gigi emotion="happy-cute" size="md" />
+            <Gigi emotion="happy-clap" size="md" />
             <Text variant="title2" style={styles.title}>
               Meet Your New Gut Coach
             </Text>
@@ -45,18 +45,42 @@ export const InsightStep: React.FC<InsightStepProps> = ({ onComplete, type }) =>
                 "That smoothie looks great, but let's add some flax seeds for fiber!"
               </Text>
             </View>
+
+            {/* Social Proof Section */}
+            <View style={styles.socialProofSection}>
+              <View style={styles.divider} />
+              <Text variant="headline" style={styles.socialTitle}>Loved by thousands</Text>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false} 
+                contentContainerStyle={styles.reviewsList}
+                style={styles.reviewsScroll}
+              >
+                {REVIEWS.map((review, i) => (
+                  <ReviewCard key={i} {...review} />
+                ))}
+              </ScrollView>
+            </View>
           </>
         );
       case 'features':
         return (
           <>
-            <Text variant="title2" style={styles.title}>
-              Everything you need
+            <View style={styles.heroIconContainer}>
+              <View style={styles.heroIconBg}>
+                <Ionicons name="layers" size={48} color={theme.colors.brand.coral} />
+              </View>
+            </View>
+            <Text variant="title1" style={styles.title}>
+              All-in-one Gut Health
+            </Text>
+            <Text variant="body" style={styles.subtitle}>
+              Everything you need to track, understand, and improve your digestion.
             </Text>
             <View style={styles.featureList}>
-              <FeatureRow icon="scan" text="Instant Food Scanner" />
-              <FeatureRow icon="list" text="Personalized Plans" />
-              <FeatureRow icon="chatbubbles" text="24/7 AI Support" />
+              <FeatureRow icon="camera" text="Instant Food Scanner" />
+              <FeatureRow icon="restaurant" text="Personalized Plans" />
+              <FeatureRow icon="chatbubble-ellipses" text="24/7 AI Gut Coach" />
             </View>
           </>
         );
@@ -77,6 +101,12 @@ export const InsightStep: React.FC<InsightStepProps> = ({ onComplete, type }) =>
   );
 };
 
+const REVIEWS = [
+  { name: "Sarah M.", stars: 5, text: "I finally understand what foods trigger my bloating. Gigi is a lifesaver!", time: "2 weeks ago" },
+  { name: "James P.", stars: 5, text: "Down 5lbs and sleeping better than ever. The custom plan really works.", time: "1 month ago" },
+  { name: "Emily R.", stars: 5, text: "Simple, easy to use, and actually effective. Highly recommend!", time: "3 days ago" }
+];
+
 const FeatureRow = ({ icon, text }: { icon: any, text: string }) => (
   <View style={styles.featureRow}>
     <View style={styles.iconContainer}>
@@ -86,14 +116,38 @@ const FeatureRow = ({ icon, text }: { icon: any, text: string }) => (
   </View>
 );
 
+const ReviewCard = ({ name, stars, text, time }: any) => (
+  <View style={styles.reviewCard}>
+    <View style={styles.reviewHeader}>
+      <View style={styles.reviewUserInfo}>
+        <View style={styles.reviewAvatar}>
+          <Text style={styles.reviewAvatarText}>{name[0]}</Text>
+        </View>
+        <View>
+          <Text variant="headline" style={styles.reviewName}>{name}</Text>
+          <View style={styles.reviewStars}>
+            {[...Array(stars)].map((_, i) => (
+              <Ionicons key={i} name="star" size={14} color="#FFD700" />
+            ))}
+          </View>
+        </View>
+      </View>
+      <Text variant="caption1" style={styles.reviewTime}>{time}</Text>
+    </View>
+    <Text variant="body" style={styles.reviewBody}>"{text}"</Text>
+  </View>
+);
+
+const { width: screenWidth } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   content: {
     padding: theme.spacing.xl,
+    paddingTop: theme.spacing.xs,
     flexGrow: 1,
-    justifyContent: 'center',
     overflow: 'visible',
   },
   mainContent: {
@@ -123,6 +177,7 @@ const styles = StyleSheet.create({
   statNumber: {
     color: theme.colors.brand.teal,
     fontSize: 32,
+    lineHeight: 40,
     fontWeight: 'bold',
   },
   statLabel: {
@@ -164,8 +219,101 @@ const styles = StyleSheet.create({
   featureText: {
     color: theme.colors.text.white,
   },
+  heroIconContainer: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+    marginTop: theme.spacing.md,
+  },
+  heroIconBg: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 118, 100, 0.2)',
+    boxShadow: '0 0 30px rgba(255, 118, 100, 0.2)',
+  },
+  subtitle: {
+    textAlign: 'center',
+    marginBottom: theme.spacing.xl,
+    color: 'rgba(255, 255, 255, 0.7)',
+    paddingHorizontal: theme.spacing.md,
+  },
   footer: {
     padding: theme.spacing.xl,
     paddingBottom: 40,
+  },
+  socialProofSection: {
+    marginTop: theme.spacing['2xl'],
+    marginLeft: -theme.spacing.xl,
+    width: screenWidth,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: theme.spacing.lg,
+  },
+  socialTitle: {
+    color: theme.colors.text.white,
+    textAlign: 'center',
+    marginBottom: theme.spacing.md,
+    fontSize: 16,
+  },
+  reviewsScroll: {
+    flexGrow: 0,
+  },
+  reviewsList: {
+    paddingLeft: theme.spacing.xl,
+    paddingRight: theme.spacing.xl,
+    gap: theme.spacing.md,
+  },
+  reviewCard: {
+    width: 280,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginRight: theme.spacing.md,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.md,
+  },
+  reviewUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  reviewAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.brand.coral,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.md,
+  },
+  reviewAvatarText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  reviewName: {
+    color: theme.colors.text.white,
+    fontSize: 14,
+  },
+  reviewStars: {
+    flexDirection: 'row',
+    marginTop: 2,
+  },
+  reviewTime: {
+    color: 'rgba(255, 255, 255, 0.4)',
+  },
+  reviewBody: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontStyle: 'italic',
+    lineHeight: 20,
   },
 });

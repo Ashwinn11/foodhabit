@@ -10,7 +10,7 @@ export const PlanStep: React.FC<PlanStepProps> = ({ onComplete }) => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Gigi emotion="happy-cute" size="md" />
+        <Gigi emotion="happy-crown" size="md" />
         <Text variant="title2" style={styles.title}>Your Custom Plan</Text>
         <Text variant="body" style={styles.subtitle}>
           Based on your goal to <Text weight="bold" style={{color: theme.colors.brand.coral}}>Improve Digestion</Text>:
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
   title: {
-    marginTop: theme.spacing.lg,
+    marginTop: theme.spacing.xs,
     marginBottom: theme.spacing.xs,
     color: theme.colors.text.white,
   },

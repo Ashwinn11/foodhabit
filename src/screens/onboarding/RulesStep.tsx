@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button } from '../../components';
-import { HappyClap } from '../../components/mascots';
+import { HappyBalloon } from '../../components/mascots';
 import { theme } from '../../theme';
 interface RulesStepProps {
   onComplete: () => void;
@@ -10,22 +10,24 @@ interface RulesStepProps {
 export const RulesStep: React.FC<RulesStepProps> = ({ onComplete }) => {
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.mascotContainer}>
-          <HappyClap size={100} />
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <View style={styles.mascotContainer}>
+            <HappyBalloon size={200} />
+          </View>
+          <Text variant="title2" style={styles.title}>House Rules</Text>
+          <Text variant="body" style={styles.subtitle}>
+            To get the best results, follow these simple habits.
+          </Text>
         </View>
-        <Text variant="title2" style={styles.title}>House Rules</Text>
-        <Text variant="body" style={styles.subtitle}>
-          To get the best results, follow these simple habits.
-        </Text>
-      </View>
 
-      <View style={styles.rulesList}>
-        <RuleItem idx={1} text="Log every meal before you eat" />
-        <RuleItem idx={2} text="Track symptoms daily" />
-        <RuleItem idx={3} text="Check in with Gigi weekly" />
-      </View>
-
+        <View style={styles.rulesList}>
+          <RuleItem idx={1} text="Log every meal before you eat" />
+          <RuleItem idx={2} text="Track symptoms daily" />
+          <RuleItem idx={3} text="Check in with Gigi weekly" />
+        </View>
+      </ScrollView>
+      
       <View style={styles.footer}>
         <Button 
           title="I'm Ready!" 
@@ -51,8 +53,10 @@ const RuleItem = ({ idx, text }: { idx: number; text: string }) => (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  content: {
     padding: theme.spacing.xl,
-    justifyContent: 'center',
+    flexGrow: 1,
   },
   header: {
     alignItems: 'center',
@@ -105,6 +109,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   footer: {
-    marginTop: theme.spacing['3xl'],
+    padding: theme.spacing.xl,
+    paddingBottom: 40,
   },
 });

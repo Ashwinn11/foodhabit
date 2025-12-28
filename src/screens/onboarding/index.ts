@@ -4,4 +4,3 @@ export * from './InsightStep';
 export * from './PlanStep';
 export * from './PaywallStep';
 export * from './RulesStep';
-export * from './ReviewsStep';

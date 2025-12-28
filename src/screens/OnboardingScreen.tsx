@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../theme';
 import { ProgressBar, Container } from '../components';
 import { 
@@ -7,9 +8,7 @@ import {
   ResultsStep, 
   InsightStep, 
   PlanStep, 
-  PaywallStep,
-  RulesStep,
-  ReviewsStep
+  RulesStep
 } from './onboarding';
 
 interface OnboardingScreenProps {
@@ -21,10 +20,8 @@ type Step =
   | 'results' 
   | 'insight_symptom' 
   | 'insight_solution' 
-  | 'reviews'
   | 'insight_features'
   | 'plan' 
-  | 'paywall' 
   | 'rules';
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
@@ -47,28 +44,16 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         setProgress(0.5);
         break;
       case 'insight_solution':
-        setCurrentStep('reviews');
-        setProgress(0.6);
-        break;
-      case 'reviews':
         setCurrentStep('insight_features');
-        setProgress(0.7);
+        setProgress(0.6);
         break;
       case 'insight_features':
         setCurrentStep('plan');
-        setProgress(0.8);
+        setProgress(0.75);
         break;
       case 'plan':
-        setCurrentStep('paywall');
-        setProgress(0.8);
-        break;
-      case 'paywall':
         setCurrentStep('rules');
-        setProgress(1.0);
-        break;
-      case 'paywall':
-        setCurrentStep('rules');
-        setProgress(1.0);
+        setProgress(0.9);
         break;
       case 'rules':
         onComplete();
@@ -90,25 +75,17 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         setCurrentStep('insight_symptom');
         setProgress(0.4);
         break;
-      case 'reviews':
+      case 'insight_features':
         setCurrentStep('insight_solution');
         setProgress(0.5);
         break;
-      case 'insight_features':
-        setCurrentStep('reviews');
-        setProgress(0.6);
-        break;
       case 'plan':
         setCurrentStep('insight_features');
-        setProgress(0.7);
-        break;
-      case 'paywall':
-        setCurrentStep('plan');
-        setProgress(0.8);
+        setProgress(0.6);
         break;
       case 'rules':
-        setCurrentStep('paywall');
-        setProgress(0.9);
+        setCurrentStep('plan');
+        setProgress(0.75);
         break;
       default:
         // No back action for quiz start
@@ -137,14 +114,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         return <InsightStep type="symptoms" onComplete={nextStep} />;
       case 'insight_solution':
         return <InsightStep type="solution" onComplete={nextStep} />;
-      case 'reviews':
-        return <ReviewsStep onComplete={nextStep} />;
       case 'insight_features':
         return <InsightStep type="features" onComplete={nextStep} />;
       case 'plan':
         return <PlanStep onComplete={nextStep} />;
-      case 'paywall':
-        return <PaywallStep onComplete={nextStep} />;
       case 'rules':
         return <RulesStep onComplete={nextStep} />;
       default:
@@ -152,19 +125,25 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     }
   };
 
+  const showBack = currentStep !== 'quiz' && currentStep !== 'results';
+
   return (
     <Container style={styles.container}>
       {/* Header / Progress */}
       <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          {showBack && (
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color={theme.colors.text.white} />
+            </TouchableOpacity>
+          )}
+        </View>
+        
         <View style={styles.progressBarContainer}>
           <ProgressBar progress={progress} />
         </View>
         
-        {currentStep !== 'quiz' && currentStep !== 'results' && (
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.headerRight} />
       </View>
 
       {/* Main Content Area */}
@@ -180,24 +159,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
     height: 60,
-    justifyContent: 'center',
+  },
+  headerLeft: {
+    width: 40,
+    alignItems: 'flex-start',
+  },
+  headerRight: {
+    width: 40,
   },
   progressBarContainer: {
-    width: '100%',
-    paddingHorizontal: theme.spacing.xl, // Center it visually a bit more
+    flex: 1,
+    paddingHorizontal: theme.spacing.sm,
   },
   backButton: {
-    position: 'absolute',
-    left: theme.spacing.lg,
     padding: theme.spacing.sm,
-  },
-  backIcon: {
-    fontSize: 28,
-    color: theme.colors.text.white,
-    fontWeight: '300',
+    marginLeft: -theme.spacing.sm, // Negate padding to visually align with left edge
   },
   content: {
     flex: 1,

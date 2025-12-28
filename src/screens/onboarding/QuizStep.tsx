@@ -97,13 +97,25 @@ export const QuizStep: React.FC<QuizStepProps> = ({ onComplete, updateProgress }
         exiting={FadeOutLeft}
         style={styles.content}
       >
+        {/* Welcome message - only shown on first question */}
+        {currentQuestionIndex === 0 && (
+          <View style={styles.welcomeHeader}>
+            <Text variant="headline" style={styles.welcomeTitle}>
+              Welcome to GutScan! 👋
+            </Text>
+            <Text variant="body" style={styles.welcomeSubtitle}>
+              Let's personalize your gut health journey with a quick 3-question quiz.
+            </Text>
+          </View>
+        )}
+
         <View style={styles.gigi}>
           {currentQuestion.id === 'symptom' ? (
             <SadCry size={150} />
           ) : currentQuestion.id === 'goal' ? (
             <HappyBalloon size={150} />
           ) : (
-            <Gigi emotion="shock-awe" size="md" />
+            <Gigi emotion="sad-sick" size="md" />
           )}
         </View>
         
@@ -150,6 +162,26 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  welcomeHeader: {
+    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 118, 100, 0.2)',
+  },
+  welcomeTitle: {
+    color: theme.colors.brand.coral,
+    fontWeight: '600',
+    marginBottom: theme.spacing.xs,
+    textAlign: 'center',
+  },
+  welcomeSubtitle: {
+    color: theme.colors.text.white,
+    opacity: 0.8,
+    textAlign: 'center',
+    fontSize: 14,
   },
   gigi: {
     alignSelf: 'center',

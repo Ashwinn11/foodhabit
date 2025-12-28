@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Button, Gigi } from '../../components';
+import { Text, Button } from '../../components';
 import { theme } from '../../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -12,8 +12,10 @@ export const ReviewsStep: React.FC<ReviewsStepProps> = ({ onComplete }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Gigi emotion="happy-clap" size="md" />
-        <Text variant="title2" style={styles.title}>Loved by thousands</Text>
+        <View style={styles.iconContainer}>
+          <Ionicons name="heart" size={40} color={theme.colors.brand.coral} />
+        </View>
+        <Text variant="title1" style={styles.title}>Loved by thousands</Text>
         <Text variant="body" style={styles.subtitle}>
           Join the community healing their gut naturally.
         </Text>
@@ -89,6 +91,18 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xl,
     paddingBottom: 0,
     overflow: 'visible',
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 118, 100, 0.2)',
+    boxShadow: '0 0 20px rgba(255, 118, 100, 0.2)',
   },
   title: {
     marginTop: theme.spacing.lg,

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, Gigi, Modal, Container } from '../components';
+import { Text, Button, Modal, Container, Gigi } from '../components';
 import { theme } from '../theme';
 
 interface PaywallScreenProps {
@@ -137,6 +137,18 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.xl,
     overflow: 'visible',
+  },
+  iconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 230, 200, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    boxShadow: '0 0 30px rgba(255, 215, 0, 0.15)',
   },
   title: {
     textAlign: 'center',
