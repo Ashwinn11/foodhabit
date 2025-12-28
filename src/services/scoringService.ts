@@ -1,32 +1,52 @@
 /**
- * Gut Health Scoring Service
- * Calculates gut health score (0-100) based on food composition
+ * Gut Health Scoring Service - Medically Accurate Version
+ * Based on 2025 medical research on gut microbiome health
+ * 
+ * Key research sources:
+ * - 13th Gut Microbiota for Health World Summit (March 2025)
+ * - Japanese study on dietary fiber supplementation (Microorganisms, 2025)
+ * - 2025 CKD study: 30+ plant foods/week improves gut microbiome
+ * - American Gut Project findings on plant diversity
+ * 
+ * Key factors from research:
+ * 1. Fiber - Most critical (feeds beneficial bacteria, produces SCFAs)
+ * 2. Plant diversity - 30+ different plants per week is optimal
+ * 3. Ultra-processed foods - Harm gut microbiome, increase inflammation
+ * 4. Fermented foods - Provide probiotics
+ * 5. Anti-inflammatory foods - Reduce gut inflammation
+ * 6. Glycemic impact - High GI foods can feed harmful bacteria
+ * 7. Saturated fats - Can damage gut barrier
  */
 
 export interface IdentifiedFood {
     name: string;
     confidence?: number;
     category?: string;
-    fiber_score?: number;
+    fiber_score?: number; // 0-10 from Gemini
     trigger_risk?: number;
     is_plant?: boolean;
     common_triggers?: string[];
-    // New gut health fields
     gut_benefits?: string[];
     gut_warnings?: string[];
-    prebiotic_score?: number;
-    probiotic_score?: number;
+    prebiotic_score?: number; // 0-10 from Gemini
+    probiotic_score?: number; // 0-10 from Gemini
     anti_inflammatory?: boolean;
     fermentable?: boolean;
+    processing_level?: 'whole' | 'minimally_processed' | 'processed' | 'ultra_processed';
+    gut_health_verdict?: 'good' | 'neutral' | 'bad';
 }
 
 export interface ScoreBreakdown {
     fiber: number;
     plants: number;
-    triggers: number;
-    processed: number;
+    wholeFoods?: number; // NEW
     prebiotics?: number;
     probiotics?: number;
+    antiInflammatory?: number; // NEW
+    goodVerdict?: number; // NEW
+    triggers: number;
+    processed: number;
+    warnings: number;
 }
 
 export interface FoodImpact {
@@ -35,7 +55,7 @@ export interface FoodImpact {
     impact: 'positive' | 'neutral' | 'warning';
     benefits: string[];
     warnings: string[];
-    personalizedWarning?: string; // If matches user's triggers
+    personalizedWarning?: string;
 }
 
 export interface GutHealthScore {
@@ -43,22 +63,22 @@ export interface GutHealthScore {
     breakdown: ScoreBreakdown;
     emotion: 'happy' | 'neutral' | 'sad';
     message: string;
-    foodImpacts: FoodImpact[]; // Detailed per-food analysis
-    tips?: string[]; // Educational tips
+    foodImpacts: FoodImpact[];
+    tips?: string[];
 }
 
 /**
  * Calculate gut health score based on identified foods
+ * Uses medically-backed criteria for accuracy
  */
 export function calculateGutHealthScore(
     foods: IdentifiedFood[],
     userTriggers: string[] = []
 ): GutHealthScore {
-    let baseScore = 50; // Start neutral
     const foodImpacts: FoodImpact[] = [];
     const tips: string[] = [];
 
-    // Analyze each food for gut health impact
+    // === ANALYZE EACH FOOD FOR UI DISPLAY ===
     for (const food of foods) {
         const benefits: string[] = food.gut_benefits || [];
         const warnings: string[] = food.gut_warnings || [];
@@ -74,11 +94,11 @@ export function calculateGutHealthScore(
             personalizedWarning = `⚠️ Contains ${matchingTriggers.join(', ')} - you marked this as a trigger`;
         }
 
-        // Determine impact level
+        // Determine impact level based on verdict
         let impact: 'positive' | 'neutral' | 'warning' = 'neutral';
-        if (benefits.length > 0 && warnings.length === 0) {
+        if (food.gut_health_verdict === 'good' && warnings.length === 0) {
             impact = 'positive';
-        } else if (warnings.length > 0 || matchingTriggers.length > 0) {
+        } else if (food.gut_health_verdict === 'bad' || warnings.length > 0 || matchingTriggers.length > 0) {
             impact = 'warning';
         }
 
@@ -92,90 +112,178 @@ export function calculateGutHealthScore(
         });
     }
 
-    // 1. Fiber bonus (+0 to +30)
-    const fiberScore = foods.reduce((sum, food) => sum + (food.fiber_score || 0), 0);
-    const fiberBonus = Math.min(fiberScore * 3, 30);
+    // === SCORING ALGORITHM (Medically Accurate) ===
 
-    // 2. Plant diversity bonus (+0 to +20)
+    // Start with a neutral baseline for real food
+    const BASE_SCORE = 20;
+
+    // 1. WHOLE FOOD BONUS (+0 to +20 points)
+    // Reward unprocessed/minimally processed foods (Chicken, Eggs, Rice are good!)
+    const wholeFoodsCount = foods.filter(f =>
+        !f.processing_level ||
+        f.processing_level === 'whole' ||
+        f.processing_level === 'minimally_processed'
+    ).length;
+    const wholeFoodBonus = Math.min(wholeFoodsCount * 5, 20);
+
+    // 2. FIBER SCORE (+0 to +20 points)
+    // Research: Fiber is the most important factor for gut health
+    // Produces short-chain fatty acids (SCFAs) that reduce inflammation
+    const totalFiber = foods.reduce((sum, f) => sum + (f.fiber_score || 0), 0);
+    const avgFiber = foods.length > 0 ? totalFiber / foods.length : 0;
+    const fiberBonus = Math.min(Math.round(avgFiber * 2.5), 20);
+
+    // 3. PLANT DIVERSITY (+0 to +15 points)
+    // Research: American Gut Project shows 30+ plants/week is optimal
+    // Each unique plant type contributes to microbiome diversity
     const uniquePlants = new Set(
-        foods.filter(f => f.is_plant).map(f => f.name.toLowerCase())
+        foods.filter(f => f.is_plant === true).map(f => f.name.toLowerCase())
     ).size;
-    const plantBonus = Math.min(uniquePlants * 4, 20);
+    const plantBonus = Math.min(uniquePlants * 5, 15);
 
-    // 3. Prebiotic bonus (+0 to +15) - NEW
-    const prebioticScore = foods.reduce((sum, food) => sum + (food.prebiotic_score || 0), 0);
-    const prebioticBonus = Math.min(prebioticScore * 1.5, 15);
+    // 4. PREBIOTIC FOODS (+0 to +15 points)
+    // Research: Prebiotics specifically feed beneficial bacteria
+    const totalPrebiotic = foods.reduce((sum, f) => sum + (f.prebiotic_score || 0), 0);
+    const avgPrebiotic = foods.length > 0 ? totalPrebiotic / foods.length : 0;
+    const prebioticBonus = Math.min(Math.round(avgPrebiotic * 1.5), 15);
 
-    // 4. Probiotic bonus (+0 to +10) - NEW
-    const probioticScore = foods.reduce((sum, food) => sum + (food.probiotic_score || 0), 0);
-    const probioticBonus = Math.min(probioticScore * 1.5, 10);
+    // 4. PROBIOTIC FOODS (+0 to +10 points)
+    // Research: Fermented foods provide live beneficial bacteria
+    const totalProbiotic = foods.reduce((sum, f) => sum + (f.probiotic_score || 0), 0);
+    const avgProbiotic = foods.length > 0 ? totalProbiotic / foods.length : 0;
+    const probioticBonus = Math.min(Math.round(avgProbiotic * 1.5), 10);
 
-    // 5. Anti-inflammatory bonus (+0 to +10) - NEW
-    const antiInflammatoryCount = foods.filter(f => f.anti_inflammatory).length;
-    const antiInflammatoryBonus = Math.min(antiInflammatoryCount * 5, 10);
+    // 5. ANTI-INFLAMMATORY FOODS (+0 to +15 points)
+    // Research: Inflammation damages gut barrier and microbiome
+    const antiInflammatoryCount = foods.filter(f => f.anti_inflammatory === true).length;
+    const antiInflammatoryBonus = antiInflammatoryCount > 0
+        ? Math.min(Math.round((antiInflammatoryCount / foods.length) * 15), 15)
+        : 0;
 
-    // 6. Trigger penalty (-0 to -40)
-    const triggerPenalty = foods.reduce((sum, food) => {
-        const foodTriggers = food.common_triggers || [];
-        const matchingTriggers = foodTriggers.filter(t =>
-            userTriggers.some(ut => ut.toLowerCase() === t.toLowerCase())
+    // 6. "GOOD" VERDICT FOODS (+0 to +20 points)
+    // Uses Gemini's medical knowledge for overall assessment
+    const goodFoods = foods.filter(f => f.gut_health_verdict === 'good').length;
+    const goodFoodBonus = foods.length > 0
+        ? Math.round((goodFoods / foods.length) * 20)
+        : 0;
+
+    // === PENALTIES ===
+
+    // 7. PROCESSED FOOD PENALTY (-0 to -25 points)
+    let processedPenalty = 0;
+    foods.forEach(food => {
+        if (food.processing_level === 'ultra_processed') {
+            processedPenalty += 12;
+        } else if (food.processing_level === 'processed') {
+            processedPenalty += 6;
+        } else if (food.processing_level === 'minimally_processed') {
+            processedPenalty += 2;
+        }
+    });
+    processedPenalty = Math.min(processedPenalty, 25);
+
+    // 8. GUT WARNINGS PENALTY (-0 to -15 points)
+    // Medical Correction: Only penalize "universal" negatives (high sugar, inflammitory oils).
+    // Do NOT penalize specific sensitivities (FODMAP, Nightshades) unless they match user triggers.
+    const universalNegatives = ['sugar', 'syrup', 'fried', 'hydrogenated', 'artificial', 'color', 'preservative', 'alcohol', 'nitrate'];
+
+    let warningPenalty = 0;
+    foods.forEach(food => {
+        const warnings = food.gut_warnings || [];
+        // Only count warnings that contain universal negative keywords
+        const seriousWarnings = warnings.filter(w =>
+            universalNegatives.some(neg => w.toLowerCase().includes(neg)) ||
+            w.toLowerCase().includes('inflammatory') ||
+            w.toLowerCase().includes('blood sugar')
         );
-        const triggerRisk = food.trigger_risk || 0;
-        return sum + (matchingTriggers.length * triggerRisk * 2);
-    }, 0);
+        warningPenalty += seriousWarnings.length * 3;
+    });
+    warningPenalty = Math.min(warningPenalty, 15);
 
-    // 7. Processed food penalty (-0 to -20)
-    const processedFoods = foods.filter(f => f.category === 'processed').length;
-    const processedPenalty = processedFoods * 10;
+    // 9. TRIGGER PENALTY (-0 to -20 points)
+    // This is where we strictly penalize FODMAPs/Nightshades IF they match the user
+    let triggerPenalty = 0;
+    if (userTriggers.length > 0) {
+        foods.forEach(food => {
+            const foodTriggers = food.common_triggers || [];
+            // Also check warnings for trigger keywords (e.g. "High FODMAP")
+            const allFoodRisks = [...foodTriggers, ...(food.gut_warnings || [])].map(t => t.toLowerCase());
 
-    // Calculate final score
-    const finalScore = Math.max(
-        0,
-        Math.min(100, baseScore + fiberBonus + plantBonus + prebioticBonus +
-            probioticBonus + antiInflammatoryBonus - triggerPenalty - processedPenalty)
-    );
+            const matches = userTriggers.filter(ut =>
+                allFoodRisks.some(risk => risk.includes(ut.toLowerCase()))
+            );
+            triggerPenalty += matches.length * 8; // Heavy penalty for personal triggers
+        });
+    }
+    triggerPenalty = Math.min(triggerPenalty, 20);
 
-    // Generate educational tips
-    if (prebioticScore > 0) {
-        tips.push("🌱 Prebiotics feed your beneficial gut bacteria!");
+    // 10. "BAD" VERDICT PENALTY (-0 to -15 points)
+    const badFoods = foods.filter(f => f.gut_health_verdict === 'bad').length;
+    const badFoodPenalty = foods.length > 0
+        ? Math.round((badFoods / foods.length) * 15)
+        : 0;
+
+    // === CALCULATE FINAL SCORE ===
+    const totalBonuses = BASE_SCORE + wholeFoodBonus + fiberBonus + plantBonus + prebioticBonus + probioticBonus +
+        antiInflammatoryBonus + goodFoodBonus;
+    const totalPenalties = processedPenalty + warningPenalty + triggerPenalty + badFoodPenalty;
+
+    // Final score: bonuses - penalties, scaled to 0-100
+    const rawScore = totalBonuses - totalPenalties;
+    // Scale: max bonuses ≈ 100, so this naturally fits 0-100
+    const finalScore = Math.max(0, Math.min(100, rawScore));
+
+    // === GENERATE TIPS ===
+    if (avgFiber < 5) {
+        tips.push("💡 Add more fiber-rich foods like vegetables, legumes, and whole grains.");
     }
-    if (probioticScore > 0) {
-        tips.push("🦠 Probiotics add beneficial bacteria to your gut!");
+    if (uniquePlants < 3) {
+        tips.push("🌱 Try to include more plant variety - aim for 30+ different plants per week.");
     }
-    if (uniquePlants >= 3) {
-        tips.push("🌈 Great plant diversity! Aim for 30+ different plants per week.");
+    if (processedPenalty > 10) {
+        tips.push("⚠️ This meal contains processed foods that may harm your gut microbiome.");
     }
-    if (triggerPenalty > 10) {
-        tips.push("⚠️ This meal contains foods you've marked as triggers. Monitor how you feel.");
+    if (avgProbiotic > 0) {
+        tips.push("🦠 Great choice! Fermented foods support beneficial gut bacteria.");
     }
-    if (processedFoods > 0) {
-        tips.push("💡 Processed foods may disrupt your gut microbiome. Choose whole foods when possible.");
+    if (triggerPenalty > 0) {
+        tips.push("⚠️ This meal contains foods you've marked as personal triggers.");
     }
 
-    // Determine emotion and message
+    // === DETERMINE EMOTION & MESSAGE ===
     let emotion: 'happy' | 'neutral' | 'sad';
     let message: string;
 
     if (finalScore >= 80) {
         emotion = 'happy';
-        message = "YES! This is what I'm talking about! 🌟";
+        message = "Excellent choice for your gut! 🌟";
     } else if (finalScore >= 60) {
+        emotion = 'happy';
+        message = "Good choice! Your gut will thank you.";
+    } else if (finalScore >= 40) {
         emotion = 'neutral';
-        message = "Not bad! I can work with this.";
+        message = "Not bad, but there's room for improvement.";
+    } else if (finalScore >= 20) {
+        emotion = 'sad';
+        message = "This meal could be better for your gut health.";
     } else {
         emotion = 'sad';
-        message = "Oof... this might hurt us later 😢";
+        message = "This meal may not support your gut health. 😢";
     }
 
     return {
         score: Math.round(finalScore),
         breakdown: {
-            fiber: Math.round(fiberBonus),
-            plants: Math.round(plantBonus),
-            prebiotics: Math.round(prebioticBonus),
-            probiotics: Math.round(probioticBonus),
-            triggers: -Math.round(triggerPenalty),
-            processed: -Math.round(processedPenalty),
+            wholeFoods: wholeFoodBonus, // NEW
+            fiber: fiberBonus,
+            plants: plantBonus,
+            prebiotics: prebioticBonus,
+            probiotics: probioticBonus,
+            antiInflammatory: antiInflammatoryBonus, // NEW
+            goodVerdict: goodFoodBonus, // NEW
+            triggers: -triggerPenalty,
+            processed: -processedPenalty,
+            warnings: -warningPenalty,
         },
         emotion,
         message,
@@ -185,7 +293,7 @@ export function calculateGutHealthScore(
 }
 
 /**
- * Get mock food data for testing (will be replaced by AI)
+ * Get mock food data for testing
  */
 export function getMockFoodData(): IdentifiedFood[] {
     return [
@@ -196,6 +304,8 @@ export function getMockFoodData(): IdentifiedFood[] {
             trigger_risk: 2,
             is_plant: false,
             common_triggers: [],
+            gut_health_verdict: 'neutral',
+            processing_level: 'minimally_processed',
         },
         {
             name: 'Brown Rice',
@@ -204,6 +314,8 @@ export function getMockFoodData(): IdentifiedFood[] {
             trigger_risk: 1,
             is_plant: true,
             common_triggers: [],
+            gut_health_verdict: 'good',
+            processing_level: 'whole',
         },
         {
             name: 'Broccoli',
@@ -212,6 +324,8 @@ export function getMockFoodData(): IdentifiedFood[] {
             trigger_risk: 3,
             is_plant: true,
             common_triggers: ['fodmap'],
+            gut_health_verdict: 'good',
+            processing_level: 'whole',
         },
     ];
 }

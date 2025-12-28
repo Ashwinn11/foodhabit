@@ -200,150 +200,152 @@ export default function ResultScreen({ route, navigation }: any) {
                 'food', 'tableware', 'ingredient', 'recipe', 'cuisine', 'dish', 'meal', 
                 'cooking', 'produce', 'vegetable', 'dishware', 'serveware', 'cutlery'
               ];
-              
-              // Filter exact matches
-              if (excluded.includes(name)) return false;
-              
-              // Filter "Cuisine" types (e.g., "Indian cuisine")
-              if (name.includes('cuisine')) return false;
-
+              if (excluded.includes(name) || name.includes('cuisine')) return false;
               return true;
             })
-            .slice(0, 5) // Limit to top 5 real foods
+            // No slice limit - show all recognized foods
             .map((food, index) => {
-              // Find the impact analysis for this food
               const impact = breakdown.foodImpacts?.find((fi: any) => 
                 fi.food.toLowerCase() === food.name.toLowerCase()
               );
               
-              // Determine icon based on impact
-              let icon = '•';
-              let iconColor: string = theme.colors.text.white;
+              let impactIcon = '•';
+              
               if (impact) {
                 if (impact.impact === 'positive') {
-                  icon = '✅';
-                  iconColor = theme.colors.brand.teal;
+                  impactIcon = '✅';
                 } else if (impact.impact === 'warning') {
-                  icon = '⚠️';
-                  iconColor = theme.colors.brand.coral;
+                  impactIcon = '⚠️';
                 }
               }
               
               return (
-                <View key={index} style={styles.foodItemContainer}>
+                <View key={index} style={styles.foodCard}>
                   <View style={styles.foodHeader}>
-                    <View style={styles.foodNameRow}>
-                      <Text variant="body" style={[styles.foodIcon, { color: iconColor }]}>
-                        {icon}
-                      </Text>
-                      <Text variant="body" weight="semiBold" style={styles.foodName}>
-                        {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
-                      </Text>
-                      {food.confidence && food.confidence < 0.8 && (
-                        <Text style={styles.confidenceTag}>
-                          {Math.round(food.confidence * 100)}% sure
-                        </Text>
-                      )}
-                    </View>
+                    <Text style={{fontSize: 16, marginRight: 8}}>{impactIcon}</Text>
+                    <Text variant="body" weight="bold" style={styles.foodName}>
+                      {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
+                    </Text>
                   </View>
                   
-                  {/* Show gut health benefits */}
-                  {impact?.benefits && impact.benefits.length > 0 && (
-                    <View style={styles.impactDetails}>
-                      {impact.benefits.slice(0, 2).map((benefit: string, idx: number) => (
-                        <Text key={idx} variant="caption1" style={styles.benefitText}>
+                  {/* Pills Container */}
+                  <View style={styles.pillsContainer}>
+                    {/* Benefits Pills */}
+                    {impact?.benefits?.map((benefit: string, idx: number) => (
+                      <View key={`b-${idx}`} style={[styles.pill, styles.benefitPill]}>
+                        <Text variant="caption2" style={styles.benefitText}>
                           {benefit}
                         </Text>
-                      ))}
-                    </View>
-                  )}
-                  
-                  {/* Show warnings */}
-                  {impact?.warnings && impact.warnings.length > 0 && (
-                    <View style={styles.impactDetails}>
-                      {impact.warnings.slice(0, 1).map((warning: string, idx: number) => (
-                        <Text key={idx} variant="caption1" style={styles.warningText}>
+                      </View>
+                    ))}
+                    
+                    {/* Warnings Pills */}
+                    {impact?.warnings?.map((warning: string, idx: number) => (
+                      <View key={`w-${idx}`} style={[styles.pill, styles.warningPill]}>
+                         <Text variant="caption2" style={styles.warningText}>
                           {warning}
                         </Text>
-                      ))}
-                    </View>
-                  )}
-                  
-                  {/* Show personalized warning */}
-                  {impact?.personalizedWarning && (
-                    <View style={styles.personalizedWarningContainer}>
-                      <Text variant="caption1" weight="semiBold" style={styles.personalizedWarningText}>
-                        {impact.personalizedWarning}
-                      </Text>
-                    </View>
-                  )}
+                      </View>
+                    ))}
+                    
+                    {/* Personalized Warning Pill */}
+                     {impact?.personalizedWarning && (
+                      <View style={[styles.pill, styles.personalizedPill]}>
+                        <Text variant="caption2" style={styles.personalizedText}>
+                          {impact.personalizedWarning.replace('⚠️ ', '')}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
               );
             })}
         </View>
 
-        {/* Score Breakdown */}
+        {/* Score Breakdown Card */}
         <View style={styles.section}>
           <Text variant="title3" weight="semiBold" style={styles.sectionTitle}>
             Score Breakdown
           </Text>
           
-          <View style={styles.breakdownItem}>
-            <Text variant="body" style={styles.breakdownLabel}>
-              Fiber
-            </Text>
-            <Text variant="body" weight="semiBold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-              +{breakdown.breakdown?.fiber || 0}
-            </Text>
-          </View>
-
-          <View style={styles.breakdownItem}>
-            <Text variant="body" style={styles.breakdownLabel}>
-              Plant Diversity
-            </Text>
-            <Text variant="body" weight="semiBold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-              +{breakdown.breakdown?.plants || 0}
-            </Text>
-          </View>
-
-          {breakdown.breakdown?.prebiotics !== undefined && breakdown.breakdown.prebiotics > 0 && (
+          <View style={styles.breakdownCard}>
             <View style={styles.breakdownItem}>
-              <Text variant="body" style={styles.breakdownLabel}>
-                Prebiotics
-              </Text>
-              <Text variant="body" weight="semiBold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-                +{breakdown.breakdown.prebiotics}
+              <Text variant="body" style={styles.breakdownLabel}>Whole Foods</Text>
+              <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
+                +{breakdown.breakdown?.wholeFoods || 0}
               </Text>
             </View>
-          )}
 
-          {breakdown.breakdown?.probiotics !== undefined && breakdown.breakdown.probiotics > 0 && (
             <View style={styles.breakdownItem}>
-              <Text variant="body" style={styles.breakdownLabel}>
-                Probiotics
-              </Text>
-              <Text variant="body" weight="semiBold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-                +{breakdown.breakdown.probiotics}
+              <Text variant="body" style={styles.breakdownLabel}>Fiber</Text>
+              <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
+                +{breakdown.breakdown?.fiber || 0}
               </Text>
             </View>
-          )}
 
-          <View style={styles.breakdownItem}>
-            <Text variant="body" style={styles.breakdownLabel}>
-              Trigger Risk
-            </Text>
-            <Text variant="body" weight="semiBold" style={[styles.breakdownValue, { color: theme.colors.brand.coral }]}>
-              {breakdown.breakdown?.triggers || 0}
-            </Text>
-          </View>
+            <View style={styles.breakdownItem}>
+              <Text variant="body" style={styles.breakdownLabel}>Plant Diversity</Text>
+              <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
+                +{breakdown.breakdown?.plants || 0}
+              </Text>
+            </View>
 
-          <View style={styles.breakdownItem}>
-            <Text variant="body" style={styles.breakdownLabel}>
-              Processed
-            </Text>
-            <Text variant="body" weight="semiBold" style={styles.breakdownValue}>
-              {breakdown.breakdown?.processed || 0}
-            </Text>
+            {(breakdown.breakdown?.prebiotics || 0) > 0 && (
+              <View style={styles.breakdownItem}>
+                <Text variant="body" style={styles.breakdownLabel}>Prebiotics</Text>
+                <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
+                  +{breakdown.breakdown.prebiotics}
+                </Text>
+              </View>
+            )}
+
+            {(breakdown.breakdown?.antiInflammatory || 0) > 0 && (
+               <View style={styles.breakdownItem}>
+                <Text variant="body" style={styles.breakdownLabel}>Anti-Inflammatory</Text>
+                <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
+                  +{breakdown.breakdown.antiInflammatory}
+                </Text>
+              </View>
+            )}
+
+            {(breakdown.breakdown?.goodVerdict || 0) > 0 && (
+               <View style={styles.breakdownItem}>
+                <Text variant="body" style={styles.breakdownLabel}>Beneficial Foods</Text>
+                <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
+                  +{breakdown.breakdown.goodVerdict}
+                </Text>
+              </View>
+            )}
+
+            {(breakdown.breakdown?.probiotics || 0) > 0 && (
+               <View style={styles.breakdownItem}>
+                <Text variant="body" style={styles.breakdownLabel}>Probiotics</Text>
+                <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
+                  +{breakdown.breakdown.probiotics}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.breakdownItem}>
+              <Text variant="body" style={styles.breakdownLabel}>Trigger Risk</Text>
+              <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: (breakdown.breakdown?.triggers || 0) < 0 ? theme.colors.brand.coral : theme.colors.text.white }]}>
+                {breakdown.breakdown?.triggers || 0}
+              </Text>
+            </View>
+
+            <View style={styles.breakdownItem}>
+              <Text variant="body" style={styles.breakdownLabel}>Processed</Text>
+              <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: (breakdown.breakdown?.processed || 0) < 0 ? theme.colors.brand.coral : theme.colors.text.white }]}>
+                {breakdown.breakdown?.processed || 0}
+              </Text>
+            </View>
+
+             <View style={[styles.breakdownItem, { borderBottomWidth: 0 }]}>
+              <Text variant="body" style={styles.breakdownLabel}>Gut Warnings</Text>
+              <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: (breakdown.breakdown?.warnings || 0) < 0 ? theme.colors.brand.coral : theme.colors.text.white }]}>
+                {breakdown.breakdown?.warnings || 0}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -374,6 +376,14 @@ export default function ResultScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.brand.background,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   loadingText: {
     color: theme.colors.text.white,
     marginTop: theme.spacing.lg,
@@ -465,29 +475,85 @@ const styles = StyleSheet.create({
     color: theme.colors.text.white,
     marginBottom: theme.spacing.md,
   },
-  foodItem: {
-    paddingVertical: theme.spacing.sm,
+  // Improved Food Card Styles
+  foodCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  foodText: {
+  foodHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  foodName: {
     color: theme.colors.text.white,
+    fontSize: 17,
   },
-  editFoodsText: {
-    color: theme.colors.brand.cream,
-    marginTop: theme.spacing.sm,
+  pillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.xs,
+  },
+  pill: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
+  benefitPill: {
+    backgroundColor: 'rgba(165, 225, 166, 0.15)', // Teal with low opacity
+    borderWidth: 1,
+    borderColor: 'rgba(165, 225, 166, 0.3)',
+  },
+  benefitText: {
+    color: theme.colors.brand.teal,
+    fontWeight: '600',
+  },
+  warningPill: {
+    backgroundColor: 'rgba(255, 118, 100, 0.15)', // Coral with low opacity
+    borderWidth: 1,
+    borderColor: 'rgba(255, 118, 100, 0.3)',
+  },
+  warningText: {
+    color: theme.colors.brand.coral,
+    fontWeight: '600',
+  },
+  personalizedPill: {
+    backgroundColor: 'rgba(255, 87, 87, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 87, 87, 0.4)',
+  },
+  personalizedText: {
+    color: '#ff5757',
+    fontWeight: 'bold',
+  },
+  // Breakdown Card
+  breakdownCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   breakdownItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   breakdownLabel: {
     color: theme.colors.text.white,
+    fontSize: 15,
   },
   breakdownValue: {
     color: theme.colors.text.white,
+    fontSize: 15,
   },
   actions: {
     paddingHorizontal: theme.spacing.xl,
@@ -500,66 +566,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: theme.spacing.md,
+    shadowColor: theme.colors.brand.cream,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   scanAnotherText: {
     color: theme.colors.brand.black,
-  },
-  // New styles for enhanced food display
-  foodItemContainer: {
-    marginBottom: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  foodHeader: {
-    marginBottom: theme.spacing.xs,
-  },
-  foodNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  foodIcon: {
     fontSize: 16,
-  },
-  foodName: {
-    color: theme.colors.text.white,
-    flex: 1,
-  },
-  confidenceTag: {
-    fontSize: 11,
-    color: theme.colors.text.white,
-    opacity: 0.5,
-    fontStyle: 'italic',
-  },
-  impactDetails: {
-    marginTop: theme.spacing.xs,
-    paddingLeft: theme.spacing.lg + theme.spacing.sm,
-  },
-  benefitText: {
-    color: theme.colors.brand.teal,
-    fontSize: 12,
-    lineHeight: 16,
-    marginBottom: 2,
-  },
-  warningText: {
-    color: theme.colors.brand.coral,
-    fontSize: 12,
-    lineHeight: 16,
-    marginBottom: 2,
-  },
-  personalizedWarningContainer: {
-    marginTop: theme.spacing.xs,
-    paddingLeft: theme.spacing.lg + theme.spacing.sm,
-    padding: theme.spacing.sm,
-    backgroundColor: 'rgba(255, 118, 100, 0.1)',
-    borderRadius: theme.borderRadius.sm,
-    borderLeftWidth: 2,
-    borderLeftColor: theme.colors.brand.coral,
-  },
-  personalizedWarningText: {
-    color: theme.colors.brand.coral,
-    fontSize: 12,
   },
   // Edit Foods Modal styles
   editFoodsContainer: {

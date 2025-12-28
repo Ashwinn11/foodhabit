@@ -56,6 +56,7 @@ export const Container: React.FC<ContainerProps> = ({
       style={styles.container}
     >
       <BackgroundBlobs />
+     {/* <BackgroundBlobs /> */}
       {innerContent}
     </LinearGradient>
   );
