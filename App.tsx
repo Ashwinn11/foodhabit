@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
+import * as ExpoSplashScreen from 'expo-splash-screen';
 import { BackgroundBlobs } from './src/components';
 import {
   useFonts,
@@ -15,7 +16,7 @@ import {
 } from '@expo-google-fonts/nunito';
 import { useAuth } from './src/hooks/useAuth';
 import { registerForPushNotificationsAsync } from './src/services/notificationService';
-import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, PaywallScreen, OnboardingScreen } from './src/screens';
+import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, PaywallScreen, OnboardingScreen, SplashScreen } from './src/screens';
 
 import AuthCallbackScreen from './src/screens/AuthCallbackScreen';
 import { theme } from './src/theme';
@@ -23,6 +24,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { getUserProfile, setOnboardingComplete } from './src/services/databaseService';
+
+// Keep the native splash screen visible while we fetch resources
+ExpoSplashScreen.preventAutoHideAsync();
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -76,6 +80,7 @@ function AppContent() {
   const { session, loading } = useAuth();
   const [hasOnboarded, setHasOnboarded] = React.useState<boolean | null>(null);
   const [checkingOnboarding, setCheckingOnboarding] = React.useState(false);
+  const [showSplash, setShowSplash] = React.useState(true);
 
   React.useEffect(() => {
     // Reset onboarding state when session changes
@@ -119,6 +124,11 @@ function AppContent() {
   const isWeb = typeof window !== 'undefined' && window.location;
   if (isWeb && window!.location.pathname === '/auth/callback') {
     return <AuthCallbackScreen />;
+  }
+
+  // Show custom splash screen first
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
   }
 
   if (loading || hasOnboarded === null) {
@@ -193,6 +203,13 @@ export default function App() {
   React.useEffect(() => {
     registerForPushNotificationsAsync();
   }, []);
+
+  React.useEffect(() => {
+    // Hide native splash screen once fonts are loaded
+    if (fontsLoaded) {
+      ExpoSplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
 
   if (!fontsLoaded) {
     return (

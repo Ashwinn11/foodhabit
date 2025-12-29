@@ -5,3 +5,4 @@ export { default as CameraScreen } from './CameraScreen';
 export { default as ResultScreen } from './ResultScreen';
 export { default as PaywallScreen } from './PaywallScreen';
 export { default as OnboardingScreen } from './OnboardingScreen';
+export { SplashScreen } from './SplashScreen';
