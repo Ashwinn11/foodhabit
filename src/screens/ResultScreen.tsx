@@ -13,8 +13,7 @@ import { Text, Modal, Container } from '../components';
 import { theme } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 import { 
-  calculateGutHealthScore, 
-  getMockFoodData, 
+  calculateGutHealthScore,
   IdentifiedFood 
 } from '../services/scoringService';
 import { 
@@ -34,6 +33,13 @@ export default function ResultScreen({ route, navigation }: any) {
   const [foods, setFoods] = useState<IdentifiedFood[]>([]);
   const [breakdown, setBreakdown] = useState<any>({ fiber: 0, plants: 0, triggers: 0, processed: 0 });
   const [gigiMessage, setGigiMessage] = useState('');
+  const [nutrition, setNutrition] = useState({
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    fiber: 0
+  });
 
   // Modal State
   const [errorModalVisible, setErrorModalVisible] = useState(false);
@@ -94,10 +100,20 @@ export default function ResultScreen({ route, navigation }: any) {
       // Calculate score
       const result = calculateGutHealthScore(identifiedFoods, userTriggers);
       
+      // Calculate nutrition totals
+      const nutritionTotals = identifiedFoods.reduce((acc, food: any) => ({
+        calories: acc.calories + (food.estimated_calories || 0),
+        protein: acc.protein + (food.protein_grams || 0),
+        carbs: acc.carbs + (food.carbs_grams || 0),
+        fat: acc.fat + (food.fat_grams || 0),
+        fiber: acc.fiber + (food.fiber_grams || 0)
+      }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
+      
       setScore(result.score);
       setFoods(result.foodImpacts.map((i: any) => ({ name: i.food }))); 
       setBreakdown(result); // Store the entire result, so breakdown.breakdown works
       setGigiMessage(result.message);
+      setNutrition(nutritionTotals);
       setLoading(false);
 
       // Save scan to database WITHOUT image URL
@@ -268,88 +284,45 @@ export default function ResultScreen({ route, navigation }: any) {
             })}
         </View>
 
-        {/* Score Breakdown Card */}
+        {/* Nutrition Facts Card */}
         <View style={styles.section}>
           <Text variant="title3" weight="semiBold" style={styles.sectionTitle}>
-            Score Breakdown
+            Nutrition Facts
           </Text>
           
           <View style={styles.breakdownCard}>
             <View style={styles.breakdownItem}>
-              <Text variant="body" style={styles.breakdownLabel}>Whole Foods</Text>
-              <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-                +{breakdown.breakdown?.wholeFoods || 0}
+              <Text variant="body" style={styles.breakdownLabel}>Calories</Text>
+              <Text variant="body" weight="bold" style={styles.breakdownValue}>
+                {Math.round(nutrition.calories)} kcal
               </Text>
             </View>
 
             <View style={styles.breakdownItem}>
+              <Text variant="body" style={styles.breakdownLabel}>Protein</Text>
+              <Text variant="body" weight="bold" style={styles.breakdownValue}>
+                {Math.round(nutrition.protein)}g
+              </Text>
+            </View>
+
+            <View style={styles.breakdownItem}>
+              <Text variant="body" style={styles.breakdownLabel}>Carbs</Text>
+              <Text variant="body" weight="bold" style={styles.breakdownValue}>
+                {Math.round(nutrition.carbs)}g
+              </Text>
+            </View>
+
+            <View style={styles.breakdownItem}>
+              <Text variant="body" style={styles.breakdownLabel}>Fat</Text>
+              <Text variant="body" weight="bold" style={styles.breakdownValue}>
+                {Math.round(nutrition.fat)}g
+              </Text>
+            </View>
+
+            <View style={[styles.breakdownItem, { borderBottomWidth: 0 }]}>
               <Text variant="body" style={styles.breakdownLabel}>Fiber</Text>
-              <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-                +{breakdown.breakdown?.fiber || 0}
-              </Text>
-            </View>
-
-            <View style={styles.breakdownItem}>
-              <Text variant="body" style={styles.breakdownLabel}>Plant Diversity</Text>
-              <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-                +{breakdown.breakdown?.plants || 0}
-              </Text>
-            </View>
-
-            {(breakdown.breakdown?.prebiotics || 0) > 0 && (
-              <View style={styles.breakdownItem}>
-                <Text variant="body" style={styles.breakdownLabel}>Prebiotics</Text>
-                <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-                  +{breakdown.breakdown.prebiotics}
-                </Text>
-              </View>
-            )}
-
-            {(breakdown.breakdown?.antiInflammatory || 0) > 0 && (
-               <View style={styles.breakdownItem}>
-                <Text variant="body" style={styles.breakdownLabel}>Anti-Inflammatory</Text>
-                <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-                  +{breakdown.breakdown.antiInflammatory}
-                </Text>
-              </View>
-            )}
-
-            {(breakdown.breakdown?.goodVerdict || 0) > 0 && (
-               <View style={styles.breakdownItem}>
-                <Text variant="body" style={styles.breakdownLabel}>Beneficial Foods</Text>
-                <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-                  +{breakdown.breakdown.goodVerdict}
-                </Text>
-              </View>
-            )}
-
-            {(breakdown.breakdown?.probiotics || 0) > 0 && (
-               <View style={styles.breakdownItem}>
-                <Text variant="body" style={styles.breakdownLabel}>Probiotics</Text>
-                <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: theme.colors.brand.teal }]}>
-                  +{breakdown.breakdown.probiotics}
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.breakdownItem}>
-              <Text variant="body" style={styles.breakdownLabel}>Trigger Risk</Text>
-              <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: (breakdown.breakdown?.triggers || 0) < 0 ? theme.colors.brand.coral : theme.colors.text.white }]}>
-                {breakdown.breakdown?.triggers || 0}
-              </Text>
-            </View>
-
-            <View style={styles.breakdownItem}>
-              <Text variant="body" style={styles.breakdownLabel}>Processed</Text>
-              <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: (breakdown.breakdown?.processed || 0) < 0 ? theme.colors.brand.coral : theme.colors.text.white }]}>
-                {breakdown.breakdown?.processed || 0}
-              </Text>
-            </View>
-
-             <View style={[styles.breakdownItem, { borderBottomWidth: 0 }]}>
-              <Text variant="body" style={styles.breakdownLabel}>Gut Warnings</Text>
-              <Text variant="body" weight="bold" style={[styles.breakdownValue, { color: (breakdown.breakdown?.warnings || 0) < 0 ? theme.colors.brand.coral : theme.colors.text.white }]}>
-                {breakdown.breakdown?.warnings || 0}
+              <Text variant="body" weight="bold" style={styles.breakdownValue}>
+                {Math.round(nutrition.fiber)}g
               </Text>
             </View>
           </View>

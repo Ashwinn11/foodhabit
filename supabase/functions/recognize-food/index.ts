@@ -26,6 +26,12 @@ interface GutHealthAnalysis {
     gut_benefits: string[];
     gut_warnings: string[];
     why_good_or_bad: string;
+    // Nutrition estimates
+    estimated_calories?: number;
+    protein_grams?: number;
+    carbs_grams?: number;
+    fat_grams?: number;
+    fiber_grams?: number;
 }
 
 interface RecognitionResult {
@@ -97,11 +103,16 @@ Return a JSON array with this structure for EACH food:
     "fermentable": boolean,
     "gut_benefits": ["max 2 short benefits"],
     "gut_warnings": ["max 1 short warning if any"],
-    "why_good_or_bad": "One short sentence"
+    "why_good_or_bad": "One short sentence",
+    "estimated_calories": number (estimated calories for typical serving),
+    "protein_grams": number (grams of protein),
+    "carbs_grams": number (grams of carbohydrates),
+    "fat_grams": number (grams of fat),
+    "fiber_grams": number (grams of dietary fiber)
   }
 ]
 
-IMPORTANT: Identify 3-5 main ingredients. Keep responses concise.
+IMPORTANT: Identify 3-5 main ingredients. Keep responses concise. Estimate nutrition for a typical serving size.
 Return ONLY valid JSON array.`;
 
     const response = await fetch(
