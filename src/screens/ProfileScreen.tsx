@@ -14,8 +14,6 @@ import { getUserProfile } from '../services/databaseService';
 import { theme } from '../theme';
 import { Text, Avatar, Modal, Container } from '../components';
 
-const PRIVACY_POLICY_URL = 'https://gutscan.app/privacy';
-const TERMS_URL = 'https://gutscan.app/terms';
 const SUPPORT_EMAIL = 'support@gutscan.app';
 
 export default function ProfileScreen({ navigation }: any) {
@@ -82,10 +80,6 @@ export default function ProfileScreen({ navigation }: any) {
     } finally {
       setIsDeletingAccount(false);
     }
-  };
-
-  const openURL = (url: string) => {
-    Linking.openURL(url);
   };
 
   const handleSupport = () => {
@@ -177,20 +171,20 @@ export default function ProfileScreen({ navigation }: any) {
             <Ionicons name="chevron-forward" size={18} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.settingRow} onPress={() => openURL(PRIVACY_POLICY_URL)}>
+          <TouchableOpacity style={styles.settingRow} onPress={() => navigation.navigate('PrivacyPolicy')}>
             <View style={styles.settingInfo}>
               <Ionicons name="shield-checkmark" size={22} color={theme.colors.text.white} />
               <Text variant="body" style={styles.settingLabel}>Privacy Policy</Text>
             </View>
-            <Ionicons name="open-outline" size={16} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.settingRow} onPress={() => openURL(TERMS_URL)}>
+          <TouchableOpacity style={styles.settingRow} onPress={() => navigation.navigate('TermsOfService')}>
             <View style={styles.settingInfo}>
               <Ionicons name="document-text" size={22} color={theme.colors.text.white} />
               <Text variant="body" style={styles.settingLabel}>Terms of Service</Text>
             </View>
-            <Ionicons name="open-outline" size={16} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
           </TouchableOpacity>
         </View>
 

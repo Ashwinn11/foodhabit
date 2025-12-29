@@ -38,7 +38,7 @@ const AnimatedMascot: React.FC<AnimatedMascotProps> = ({ fadeAnim, scaleAnim }) 
   );
 };
 
-export default function AuthScreen() {
+export default function AuthScreen({ navigation }: any) {
   const { signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
   const [loadingButton, setLoadingButton] = useState<'apple' | 'google' | null>(null);
@@ -240,13 +240,17 @@ export default function AuthScreen() {
           <View style={styles.legalContainer}>
             <Text variant="caption1" align="center" style={styles.legalText}>
               {LEGAL_TEXT.prefix}{' '}
-              <Text variant="caption1" style={styles.legalLink}>
-                {LEGAL_TEXT.terms}
-              </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('TermsOfService')}>
+                <Text variant="caption1" style={styles.legalLink}>
+                  {LEGAL_TEXT.terms}
+                </Text>
+              </TouchableOpacity>
               {' '}and{' '}
-              <Text variant="caption1" style={styles.legalLink}>
-                {LEGAL_TEXT.privacy}
-              </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
+                <Text variant="caption1" style={styles.legalLink}>
+                  {LEGAL_TEXT.privacy}
+                </Text>
+              </TouchableOpacity>
             </Text>
           </View>
         </Animated.View>

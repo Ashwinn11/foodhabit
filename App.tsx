@@ -16,7 +16,7 @@ import {
 } from '@expo-google-fonts/nunito';
 import { useAuth } from './src/hooks/useAuth';
 import { registerForPushNotificationsAsync } from './src/services/notificationService';
-import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, PaywallScreen, OnboardingScreen, SplashScreen } from './src/screens';
+import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, PaywallScreen, OnboardingScreen, SplashScreen, TermsOfServiceScreen, PrivacyPolicyScreen } from './src/screens';
 
 import AuthCallbackScreen from './src/screens/AuthCallbackScreen';
 import { theme } from './src/theme';
@@ -146,16 +146,7 @@ function AppContent() {
     );
   }
 
-  // Show auth first
-  if (!session) {
-    return <AuthScreen />;
-  }
-
-  // Then show onboarding (if not completed)
-  if (!hasOnboarded) {
-    return <OnboardingScreen onComplete={completeOnboarding} />;
-  }
-
+  // Return the appropriate screen based on auth/onboarding state
   return (
     <Stack.Navigator
       screenOptions={{
@@ -164,29 +155,71 @@ function AppContent() {
         animation: 'slide_from_right', 
       }}
     >
-      <Stack.Screen 
-        name="Main" 
-        component={MainTabs} 
-        options={{ presentation: 'card' }}
-      />
-      <Stack.Screen 
-        name="Camera" 
-        component={CameraScreen} 
-        options={{ presentation: 'card' }}
-      />
-      <Stack.Screen 
-        name="Result" 
-        component={ResultScreen} 
-        options={{ 
-          presentation: 'modal',
-          gestureEnabled: true,
-        }}
-      />
-      <Stack.Screen 
-        name="Paywall" 
-        component={PaywallScreen}
-        options={{ presentation: 'modal', gestureEnabled: true }}
-      />
+      {!session ? (
+        // Auth flow - Terms and Privacy accessible
+        <>
+          <Stack.Screen 
+            name="Auth" 
+            component={AuthScreen}
+            options={{ presentation: 'card' }}
+          />
+          <Stack.Screen 
+            name="TermsOfService" 
+            component={TermsOfServiceScreen}
+            options={{ presentation: 'card', gestureEnabled: true }}
+          />
+          <Stack.Screen 
+            name="PrivacyPolicy" 
+            component={PrivacyPolicyScreen}
+            options={{ presentation: 'card', gestureEnabled: true }}
+          />
+        </>
+      ) : !hasOnboarded ? (
+        // Onboarding flow
+        <Stack.Screen 
+          name="Onboarding" 
+          options={{ presentation: 'card' }}
+        >
+          {(props) => <OnboardingScreen {...props} onComplete={completeOnboarding} />}
+        </Stack.Screen>
+      ) : (
+        // Main app flow
+        <>
+          <Stack.Screen 
+            name="Main" 
+            component={MainTabs} 
+            options={{ presentation: 'card' }}
+          />
+          <Stack.Screen 
+            name="Camera" 
+            component={CameraScreen} 
+            options={{ presentation: 'card' }}
+          />
+          <Stack.Screen 
+            name="Result" 
+            component={ResultScreen} 
+            options={{ 
+              presentation: 'modal',
+              gestureEnabled: true,
+            }}
+          />
+          <Stack.Screen 
+            name="Paywall" 
+            component={PaywallScreen}
+            options={{ presentation: 'modal', gestureEnabled: true }}
+          />
+          <Stack.Screen 
+            name="TermsOfService" 
+            component={TermsOfServiceScreen}
+            options={{ presentation: 'card', gestureEnabled: true }}
+          />
+          <Stack.Screen 
+            name="PrivacyPolicy" 
+            component={PrivacyPolicyScreen}
+            options={{ presentation: 'card', gestureEnabled: true }}
+          />
+        </>
+      )}
     </Stack.Navigator>
   );
 }

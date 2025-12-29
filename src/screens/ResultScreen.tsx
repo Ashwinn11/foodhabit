@@ -62,15 +62,21 @@ export default function ResultScreen({ route, navigation }: any) {
         const { recognizeFood } = await import('../services/foodRecognitionService');
         identifiedFoods = await recognizeFood(imageUpload.url!);
         
-        // If no foods identified, use mock data
-        if (identifiedFoods.length === 0) {
-          console.log('No foods identified, using mock data');
-          identifiedFoods = getMockFoodData();
+        // Check if Gemini failed to identify food
+        if (identifiedFoods.length === 0 || 
+            (identifiedFoods.length === 1 && identifiedFoods[0].name === "Unable to analyze")) {
+          console.log('No foods identified by AI');
+          setLoading(false);
+          setErrorMessage('No food detected in the image. Please retake a clear photo of your meal.');
+          setErrorModalVisible(true);
+          return;
         }
       } catch (error) {
-        console.log('AI recognition failed, using mock data:', error);
-        // Fallback to mock data if AI fails
-        identifiedFoods = getMockFoodData();
+        console.log('AI recognition failed:', error);
+        setLoading(false);
+        setErrorMessage('Failed to analyze the image. Please try again.');
+        setErrorModalVisible(true);
+        return;
       }
 
       // Delete the uploaded image immediately after AI analysis
