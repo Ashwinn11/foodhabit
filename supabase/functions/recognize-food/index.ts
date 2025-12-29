@@ -208,34 +208,11 @@ serve(async (req) => {
             );
         }
 
-        // Initialize Supabase client
-        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        console.log('🔍 Analyzing image with Gemini...');
 
-        // Fetch image and generate hash for caching
+        // Fetch image and convert to base64
         const imageResponse = await fetch(imageUrl);
         const imageBuffer = await imageResponse.arrayBuffer();
-        const imageHash = await hashImageBuffer(imageBuffer);
-
-        // Check cache first
-        const { data: cachedResult } = await supabase
-            .from('vision_cache')
-            .select('result')
-            .eq('image_hash', imageHash)
-            .gt('expires_at', new Date().toISOString())
-            .maybeSingle();
-
-        if (cachedResult) {
-            console.log('✅ Cache hit for hash:', imageHash);
-            return new Response(JSON.stringify(cachedResult.result), {
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-        }
-
-        console.log('🔍 Cache miss - calling Gemini for hash:', imageHash);
-
-        // Convert image to base64
         const base64Image = encode(imageBuffer);
 
         // Call Gemini for food identification + gut health analysis
@@ -290,27 +267,10 @@ serve(async (req) => {
             success: true,
             foods: foods,
             debug: {
-                imageHash: imageHash,
                 foodCount: foods.length,
                 analysisMethod: 'gemini-3-pro-preview'
             }
         };
-
-        // Cache the result
-        try {
-            await supabase
-                .from('vision_cache')
-                .upsert({
-                    image_hash: imageHash,
-                    result: result,
-                    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-                }, {
-                    onConflict: 'image_hash'
-                });
-            console.log('💾 Cached result for hash:', imageHash);
-        } catch (cacheError) {
-            console.error('Cache error:', cacheError);
-        }
 
         return new Response(JSON.stringify(result), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },

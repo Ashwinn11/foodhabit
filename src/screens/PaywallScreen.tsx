@@ -39,6 +39,19 @@ export default function PaywallScreen({
     }
   };
 
+  const handleRestorePurchases = () => {
+    // TODO: Implement restore purchases logic
+    console.log('Restore purchases');
+  };
+
+  const handleTermsPress = () => {
+    navigation?.navigate('TermsOfService');
+  };
+
+  const handlePrivacyPress = () => {
+    navigation?.navigate('PrivacyPolicy');
+  };
+
   return (
     <Container scrollable={true} contentContainerStyle={styles.content}>
       {/* Close Button */}
@@ -91,9 +104,19 @@ export default function PaywallScreen({
           size="large" 
           fullWidth 
         />
-        <TouchableOpacity onPress={handleClose} style={styles.restoreButton}>
-          <Text variant="caption1" style={styles.restoreText}>Restore Purchases</Text>
-        </TouchableOpacity>
+        <View style={styles.footerLinks}>
+          <TouchableOpacity onPress={handleRestorePurchases} style={styles.footerLinkButton}>
+            <Text variant="caption1" style={styles.footerLinkText}>Restore Purchase</Text>
+          </TouchableOpacity>
+          <View style={styles.linkSeparator} />
+          <TouchableOpacity onPress={handleTermsPress} style={styles.footerLinkButton}>
+            <Text variant="caption1" style={styles.footerLinkText}>Terms</Text>
+          </TouchableOpacity>
+          <View style={styles.linkSeparator} />
+          <TouchableOpacity onPress={handlePrivacyPress} style={styles.footerLinkButton}>
+            <Text variant="caption1" style={styles.footerLinkText}>Privacy</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Modal
@@ -216,12 +239,25 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
     paddingTop: theme.spacing.lg,
   },
-  restoreButton: {
+  footerLinks: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
-  restoreText: {
+  footerLinkButton: {
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
+  },
+  linkSeparator: {
+    width: 1,
+    height: 12,
+    backgroundColor: theme.colors.brand.cream,
+    opacity: 0.3,
+  },
+  footerLinkText: {
     color: theme.colors.brand.cream,
-    opacity: 0.5,
+    opacity: 0.6,
   },
 });
