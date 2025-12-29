@@ -174,7 +174,20 @@ Return ONLY valid JSON array.`;
     }
     textResponse = textResponse.trim();
 
-    const analysisResults: GutHealthAnalysis[] = JSON.parse(textResponse);
+    // Extract JSON array - find first [ and last ]
+    const firstBracket = textResponse.indexOf('[');
+    const lastBracket = textResponse.lastIndexOf(']');
+
+    if (firstBracket === -1 || lastBracket === -1) {
+        console.error("No JSON array found in response");
+        console.log("Response:", textResponse.substring(0, 500));
+        throw new Error("Invalid JSON response from Gemini");
+    }
+
+    const jsonOnly = textResponse.substring(firstBracket, lastBracket + 1);
+    console.log("📦 Extracted JSON length:", jsonOnly.length);
+
+    const analysisResults: GutHealthAnalysis[] = JSON.parse(jsonOnly);
     console.log("🧠 Gemini identified", analysisResults.length, "foods");
 
     return analysisResults;
@@ -248,7 +261,13 @@ serve(async (req) => {
                 fermentable: analysis.fermentable,
                 processing_level: analysis.processing_level,
                 gut_health_verdict: analysis.gut_health_verdict,
-                why_gut_healthy: analysis.why_good_or_bad
+                why_gut_healthy: analysis.why_good_or_bad,
+                // Nutrition fields
+                estimated_calories: analysis.estimated_calories,
+                protein_grams: analysis.protein_grams,
+                carbs_grams: analysis.carbs_grams,
+                fat_grams: analysis.fat_grams,
+                fiber_grams: analysis.fiber_grams
             }));
 
             console.log("✅ Successfully analyzed", foods.length, "foods");

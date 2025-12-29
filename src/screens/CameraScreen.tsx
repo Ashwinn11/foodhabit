@@ -87,7 +87,9 @@ export default function CameraScreen({ navigation }: any) {
   if (photo) {
     return (
       <Container safeArea={false} style={styles.fullScreen}>
-        <Image source={{ uri: photo }} style={styles.preview} resizeMode="cover" />
+        <View style={styles.previewContainer}>
+          <Image source={{ uri: photo }} style={styles.preview} resizeMode="contain" />
+        </View>
         
         {/* Top Bar */}
         <View style={[styles.topBar, { paddingTop: insets.top }]}>
@@ -196,8 +198,15 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
+  previewContainer: {
+    flex: 1,
+    padding: theme.spacing.lg,
+    justifyContent: 'center',
+  },
   preview: {
     flex: 1,
+    borderRadius: theme.borderRadius.xl,
+    overflow: 'hidden',
   },
   topBar: {
     position: 'absolute',

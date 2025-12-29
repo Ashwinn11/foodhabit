@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,7 +7,9 @@ import {
   ScrollView,
   Dimensions,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Modal, Container } from '../components';
 import { theme } from '../theme';
@@ -23,6 +25,85 @@ import {
 } from '../services/databaseService';
 
 const { width } = Dimensions.get('window');
+
+// Icon Badge Component
+const IconBadge = ({ name, color, backgroundColor, size = 32 }: any) => (
+  <View style={[styles.iconBadge, { backgroundColor }]}>
+    <Ionicons name={name} size={size} color={color} />
+  </View>
+);
+
+// Score Badge Component
+const ScoreBadge = ({ score }: { score: number }) => {
+  type ConfigType = {
+    icon: any;
+    color: string;
+    backgroundColor: string;
+    label: string;
+    gradientColors: readonly [string, string];
+  };
+
+  let config: ConfigType = {
+    icon: 'checkmark-circle',
+    color: '#4ade80',
+    backgroundColor: 'rgba(74, 222, 128, 0.15)',
+    label: 'Excellent Choice!',
+    gradientColors: ['rgba(74, 222, 128, 0.2)', 'rgba(74, 222, 128, 0.05)'] as const
+  };
+
+  if (score >= 80) {
+    config = {
+      icon: 'checkmark-circle',
+      color: '#4ade80',
+      backgroundColor: 'rgba(74, 222, 128, 0.15)',
+      label: 'Excellent Choice!',
+      gradientColors: ['rgba(74, 222, 128, 0.2)', 'rgba(74, 222, 128, 0.05)'] as const
+    };
+  } else if (score >= 60) {
+    config = {
+      icon: 'checkmark-circle-outline',
+      color: '#a5e1a6',
+      backgroundColor: 'rgba(165, 225, 166, 0.15)',
+      label: 'Good Choice!',
+      gradientColors: ['rgba(165, 225, 166, 0.2)', 'rgba(165, 225, 166, 0.05)'] as const
+    };
+  } else if (score >= 40) {
+    config = {
+      icon: 'alert-circle-outline',
+      color: '#fbbf24',
+      backgroundColor: 'rgba(251, 191, 36, 0.15)',
+      label: 'Moderate',
+      gradientColors: ['rgba(251, 191, 36, 0.2)', 'rgba(251, 191, 36, 0.05)'] as const
+    };
+  } else {
+    config = {
+      icon: 'close-circle',
+      color: '#ff7664',
+      backgroundColor: 'rgba(255, 118, 100, 0.15)',
+      label: 'Consider Alternatives',
+      gradientColors: ['rgba(255, 118, 100, 0.2)', 'rgba(255, 118, 100, 0.05)'] as const
+    };
+  }
+
+  return (
+    <LinearGradient
+      colors={config.gradientColors}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.scoreBadge}
+    >
+      <IconBadge 
+        name={config.icon} 
+        color={config.color} 
+        backgroundColor={config.backgroundColor}
+        size={24}
+      />
+      <Text variant="title3" weight="semiBold" style={[styles.scoreBadgeText, { color: config.color }]}>
+        {config.label}
+      </Text>
+    </LinearGradient>
+  );
+};
 
 export default function ResultScreen({ route, navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -45,9 +126,50 @@ export default function ResultScreen({ route, navigation }: any) {
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Animation values
+  const scanLinePosition = useRef(new Animated.Value(0)).current;
+  const glowOpacity = useRef(new Animated.Value(0.3)).current;
+
   useEffect(() => {
     calculateScore();
   }, []);
+
+  // Start scanning animation when loading
+  useEffect(() => {
+    if (loading) {
+      // Scan line animation - moves up and down
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(scanLinePosition, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scanLinePosition, {
+            toValue: 0,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      // Glow pulse animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowOpacity, {
+            toValue: 0.8,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(glowOpacity, {
+            toValue: 0.3,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+  }, [loading]);
 
   const calculateScore = async () => {
     try {
@@ -155,13 +277,97 @@ export default function ResultScreen({ route, navigation }: any) {
     navigation.goBack();
   };
 
+  // Animated scan line position
+  const scanLineTranslateY = scanLinePosition.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, width * 0.75 - 4], // Height of photo container minus scan line height
+  });
+
   if (loading) {
     return (
-      <Container center>
-        <ActivityIndicator size="large" color={theme.colors.brand.cream} />
-        <Text variant="body" style={styles.loadingText}>
-          Analyzing your meal...
-        </Text>
+      <Container safeArea={true} edges={['top']}>
+        <View style={styles.scanningContainer}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={handleGoHome} style={styles.headerButton}>
+              <Ionicons name="close" size={28} color={theme.colors.brand.cream} />
+            </TouchableOpacity>
+            <View style={styles.headerButton} />
+          </View>
+
+          {/* Food Photo with Scanning Effect */}
+          <View style={styles.scanningPhotoContainer}>
+            <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="contain" />
+            
+            {/* Dark overlay */}
+            <View style={styles.scanningOverlay} />
+            
+            {/* Animated scanning line */}
+            <Animated.View 
+              style={[
+                styles.scanLine,
+                {
+                  transform: [{ translateY: scanLineTranslateY }],
+                  opacity: glowOpacity,
+                }
+              ]}
+            >
+              <LinearGradient
+                colors={['transparent', theme.colors.brand.teal, 'transparent']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={styles.scanLineGradient}
+              />
+            </Animated.View>
+
+            {/* Glow effect */}
+            <Animated.View 
+              style={[
+                styles.scanGlow,
+                { opacity: glowOpacity }
+              ]}
+            >
+              <LinearGradient
+                colors={[
+                  'transparent',
+                  'rgba(165, 225, 166, 0.2)',
+                  'rgba(165, 225, 166, 0.4)',
+                  'rgba(165, 225, 166, 0.2)',
+                  'transparent'
+                ]}
+                style={styles.scanGlowGradient}
+              />
+            </Animated.View>
+          </View>
+
+          {/* Loading Status */}
+          <View style={styles.scanningStatus}>
+            <LinearGradient
+              colors={['rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0.02)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.scanningStatusCard}
+            >
+              <View style={styles.scanningIconContainer}>
+                <Animated.View style={{ opacity: glowOpacity }}>
+                  <Ionicons name="scan" size={32} color={theme.colors.brand.teal} />
+                </Animated.View>
+              </View>
+              
+              <Text variant="title2" weight="bold" style={styles.scanningTitle}>
+                Analyzing your meal...
+              </Text>
+              
+              <Text variant="body" style={styles.scanningSubtitle}>
+                Identifying ingredients and calculating gut health score
+              </Text>
+
+              <View style={styles.scanningDotsContainer}>
+                <ActivityIndicator size="small" color={theme.colors.brand.teal} />
+              </View>
+            </LinearGradient>
+          </View>
+        </View>
       </Container>
     );
   };
@@ -171,49 +377,64 @@ export default function ResultScreen({ route, navigation }: any) {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleGoHome}>
-            <Ionicons name="close" size={32} color={theme.colors.brand.cream} />
+          <TouchableOpacity onPress={handleGoHome} style={styles.headerButton}>
+            <Ionicons name="close" size={28} color={theme.colors.brand.cream} />
           </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons name="share-outline" size={28} color={theme.colors.brand.cream} />
+          <TouchableOpacity style={styles.headerButton}>
+            <Ionicons name="share-outline" size={24} color={theme.colors.brand.cream} />
           </TouchableOpacity>
         </View>
 
-        {/* Food Photo */}
+        {/* Food Photo with Overlay */}
         <View style={styles.photoContainer}>
-          <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="cover" />
+          <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="contain" />
+          <LinearGradient
+            colors={['transparent', 'rgba(18, 18, 18, 0.8)']}
+            style={styles.photoGradient}
+          />
         </View>
 
-        {/* Gigi Reaction */}
-        <View style={styles.gigiContainer}>
-          <Text variant="title1" style={styles.reactionText}>
-            {gigiMessage}
-          </Text>
-        </View>
+        {/* Score Section with Gradient Card */}
+        <View style={styles.scoreSection}>
+          <LinearGradient
+            colors={['rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0.02)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.scoreCard}
+          >
+            <View style={styles.scoreCircle}>
+              <Text weight="bold" style={styles.scoreText}>
+                {Math.round(score)}
+              </Text>
+              <Text variant="caption1" style={styles.scoreMaxText}>
+                /100
+              </Text>
+            </View>
+            <Text variant="body" style={styles.scoreSubtext}>
+              Gut Health Score
+            </Text>
+          </LinearGradient>
 
-        {/* Score */}
-        <View style={styles.scoreContainer}>
-          <Text weight="bold" style={styles.scoreText}>
-            {Math.round(score)}
-            <Text style={styles.scoreLabel}>/100</Text>
-          </Text>
-          <Text variant="body" style={styles.scoreSubtext}>
-            Gut Health Score
-          </Text>
-        </View>
+          {/* Score Badge */}
+          <ScoreBadge score={score} />
 
-        {/* Score Label */}
-        <View style={styles.scoreLabelContainer}>
-          <Text variant="title3" weight="semiBold" style={styles.scoreLabelText}>
-            {score >= 80 ? 'Excellent! ✅' : score >= 60 ? 'Good Choice! ✅' : 'Moderate ⚠️'}
-          </Text>
+          {/* Gigi Message */}
+          <View style={styles.messageCard}>
+            <Ionicons name="chatbubble-ellipses" size={20} color={theme.colors.brand.teal} style={styles.messageIcon} />
+            <Text variant="body" style={styles.messageText}>
+              {gigiMessage}
+            </Text>
+          </View>
         </View>
 
         {/* Identified Foods with Gut Health Impact */}
         <View style={styles.foodsContainer}>
-          <Text variant="title3" weight="semiBold" style={styles.sectionTitle}>
-            What's in this meal?
-          </Text>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="restaurant" size={20} color={theme.colors.brand.teal} />
+            <Text variant="title3" weight="semiBold" style={styles.sectionTitle}>
+              What's in this meal?
+            </Text>
+          </View>
           
           {foods
             .filter(f => {
@@ -225,26 +446,48 @@ export default function ResultScreen({ route, navigation }: any) {
               if (excluded.includes(name) || name.includes('cuisine')) return false;
               return true;
             })
-            // No slice limit - show all recognized foods
             .map((food, index) => {
               const impact = breakdown.foodImpacts?.find((fi: any) => 
                 fi.food.toLowerCase() === food.name.toLowerCase()
               );
               
-              let impactIcon = '•';
+              let impactConfig = {
+                icon: 'ellipse' as any,
+                color: '#9ca3af',
+                backgroundColor: 'rgba(156, 163, 175, 0.15)'
+              };
               
               if (impact) {
                 if (impact.impact === 'positive') {
-                  impactIcon = '✅';
+                  impactConfig = {
+                    icon: 'checkmark-circle',
+                    color: '#4ade80',
+                    backgroundColor: 'rgba(74, 222, 128, 0.15)'
+                  };
                 } else if (impact.impact === 'warning') {
-                  impactIcon = '⚠️';
+                  impactConfig = {
+                    icon: 'alert-circle',
+                    color: '#fbbf24',
+                    backgroundColor: 'rgba(251, 191, 36, 0.15)'
+                  };
                 }
               }
               
               return (
-                <View key={index} style={styles.foodCard}>
+                <LinearGradient
+                  key={index}
+                  colors={['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.02)']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.foodCard}
+                >
                   <View style={styles.foodHeader}>
-                    <Text style={{fontSize: 16, marginRight: 8}}>{impactIcon}</Text>
+                    <IconBadge 
+                      name={impactConfig.icon} 
+                      color={impactConfig.color} 
+                      backgroundColor={impactConfig.backgroundColor}
+                      size={20}
+                    />
                     <Text variant="body" weight="bold" style={styles.foodName}>
                       {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
                     </Text>
@@ -255,6 +498,7 @@ export default function ResultScreen({ route, navigation }: any) {
                     {/* Benefits Pills */}
                     {impact?.benefits?.map((benefit: string, idx: number) => (
                       <View key={`b-${idx}`} style={[styles.pill, styles.benefitPill]}>
+                        <Ionicons name="add-circle" size={12} color={theme.colors.brand.teal} />
                         <Text variant="caption2" style={styles.benefitText}>
                           {benefit}
                         </Text>
@@ -264,68 +508,118 @@ export default function ResultScreen({ route, navigation }: any) {
                     {/* Warnings Pills */}
                     {impact?.warnings?.map((warning: string, idx: number) => (
                       <View key={`w-${idx}`} style={[styles.pill, styles.warningPill]}>
-                         <Text variant="caption2" style={styles.warningText}>
+                        <Ionicons name="warning" size={12} color={theme.colors.brand.coral} />
+                        <Text variant="caption2" style={styles.warningText}>
                           {warning}
                         </Text>
                       </View>
                     ))}
                     
                     {/* Personalized Warning Pill */}
-                     {impact?.personalizedWarning && (
+                    {impact?.personalizedWarning && (
                       <View style={[styles.pill, styles.personalizedPill]}>
+                        <Ionicons name="alert" size={12} color="#ff5757" />
                         <Text variant="caption2" style={styles.personalizedText}>
                           {impact.personalizedWarning.replace('⚠️ ', '')}
                         </Text>
                       </View>
                     )}
                   </View>
-                </View>
+                </LinearGradient>
               );
             })}
         </View>
 
         {/* Nutrition Facts Card */}
         <View style={styles.section}>
-          <Text variant="title3" weight="semiBold" style={styles.sectionTitle}>
-            Nutrition Facts
-          </Text>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="nutrition" size={20} color={theme.colors.brand.teal} />
+            <Text variant="title3" weight="semiBold" style={styles.sectionTitle}>
+              Nutrition Facts
+            </Text>
+          </View>
           
-          <View style={styles.breakdownCard}>
+          <LinearGradient
+            colors={['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.02)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.breakdownCard}
+          >
             <View style={styles.breakdownItem}>
-              <Text variant="body" style={styles.breakdownLabel}>Calories</Text>
+              <View style={styles.breakdownLabelContainer}>
+                <IconBadge 
+                  name="flame" 
+                  color="#ff6b6b" 
+                  backgroundColor="rgba(255, 107, 107, 0.15)"
+                  size={16}
+                />
+                <Text variant="body" style={styles.breakdownLabel}>Calories</Text>
+              </View>
               <Text variant="body" weight="bold" style={styles.breakdownValue}>
                 {Math.round(nutrition.calories)} kcal
               </Text>
             </View>
 
             <View style={styles.breakdownItem}>
-              <Text variant="body" style={styles.breakdownLabel}>Protein</Text>
+              <View style={styles.breakdownLabelContainer}>
+                <IconBadge 
+                  name="fitness" 
+                  color="#60a5fa" 
+                  backgroundColor="rgba(96, 165, 250, 0.15)"
+                  size={16}
+                />
+                <Text variant="body" style={styles.breakdownLabel}>Protein</Text>
+              </View>
               <Text variant="body" weight="bold" style={styles.breakdownValue}>
                 {Math.round(nutrition.protein)}g
               </Text>
             </View>
 
             <View style={styles.breakdownItem}>
-              <Text variant="body" style={styles.breakdownLabel}>Carbs</Text>
+              <View style={styles.breakdownLabelContainer}>
+                <IconBadge 
+                  name="leaf" 
+                  color="#fbbf24" 
+                  backgroundColor="rgba(251, 191, 36, 0.15)"
+                  size={16}
+                />
+                <Text variant="body" style={styles.breakdownLabel}>Carbs</Text>
+              </View>
               <Text variant="body" weight="bold" style={styles.breakdownValue}>
                 {Math.round(nutrition.carbs)}g
               </Text>
             </View>
 
             <View style={styles.breakdownItem}>
-              <Text variant="body" style={styles.breakdownLabel}>Fat</Text>
+              <View style={styles.breakdownLabelContainer}>
+                <IconBadge 
+                  name="water" 
+                  color="#a78bfa" 
+                  backgroundColor="rgba(167, 139, 250, 0.15)"
+                  size={16}
+                />
+                <Text variant="body" style={styles.breakdownLabel}>Fat</Text>
+              </View>
               <Text variant="body" weight="bold" style={styles.breakdownValue}>
                 {Math.round(nutrition.fat)}g
               </Text>
             </View>
 
             <View style={[styles.breakdownItem, { borderBottomWidth: 0 }]}>
-              <Text variant="body" style={styles.breakdownLabel}>Fiber</Text>
+              <View style={styles.breakdownLabelContainer}>
+                <IconBadge 
+                  name="flower" 
+                  color="#4ade80" 
+                  backgroundColor="rgba(74, 222, 128, 0.15)"
+                  size={16}
+                />
+                <Text variant="body" style={styles.breakdownLabel}>Fiber</Text>
+              </View>
               <Text variant="body" weight="bold" style={styles.breakdownValue}>
                 {Math.round(nutrition.fiber)}g
               </Text>
             </View>
-          </View>
+          </LinearGradient>
         </View>
 
         {/* Actions */}
@@ -359,6 +653,76 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.brand.background,
   },
+  // Scanning Animation Styles
+  scanningContainer: {
+    flex: 1,
+  },
+  scanningPhotoContainer: {
+    width: width,
+    height: width * 0.75,
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: theme.borderRadius['2xl'],
+    marginHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.md,
+  },
+  scanningOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  scanLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 4,
+    zIndex: 2,
+  },
+  scanLineGradient: {
+    flex: 1,
+    height: 4,
+  },
+  scanGlow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  scanGlowGradient: {
+    flex: 1,
+  },
+  scanningStatus: {
+    flex: 1,
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing['2xl'],
+    justifyContent: 'flex-start',
+  },
+  scanningStatusCard: {
+    borderRadius: theme.borderRadius['2xl'],
+    padding: theme.spacing.xl,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  scanningIconContainer: {
+    marginBottom: theme.spacing.lg,
+  },
+  scanningTitle: {
+    color: theme.colors.text.white,
+    textAlign: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  scanningSubtitle: {
+    color: theme.colors.text.white,
+    opacity: 0.7,
+    textAlign: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  scanningDotsContainer: {
+    marginTop: theme.spacing.md,
+  },
+  // Original Styles
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -373,74 +737,113 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.spacing.xl,
     paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.xs,
+    paddingBottom: theme.spacing.md,
+  },
+  headerButton: {
+    padding: theme.spacing.xs,
   },
   photoContainer: {
     width: width,
     height: width * 0.75,
-    marginBottom: theme.spacing.xl,
+    marginBottom: -theme.spacing['2xl'],
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: theme.borderRadius['2xl'],
+    marginHorizontal: theme.spacing.lg,
   },
   photo: {
     width: '100%',
     height: '100%',
+    borderRadius: theme.borderRadius['2xl'],
   },
-  gigiContainer: {
+  photoGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+  },
+  // Score Section
+  scoreSection: {
+    paddingHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing['2xl'],
+  },
+  scoreCard: {
+    borderRadius: theme.borderRadius['2xl'],
+    padding: theme.spacing.xl,
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: theme.spacing.lg,
   },
-  gigiCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  scoreCircle: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  gigiEmoji: {
-    fontSize: 40,
-  },
-  gigiMessage: {
-    color: theme.colors.text.white,
-    textAlign: 'center',
-    paddingHorizontal: theme.spacing.xl,
-  },
-  reactionText: {
-    color: theme.colors.text.white,
-    textAlign: 'center',
-    paddingHorizontal: theme.spacing.xl,
-    marginTop: theme.spacing.xs,
-  },
-  scoreContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
   },
   scoreText: {
     color: theme.colors.text.white,
-    textAlign: 'center',
-    marginBottom: theme.spacing.xs,
-    fontSize: 64,
-    lineHeight: 72,
-    includeFontPadding: false,
+    fontSize: 72,
+    lineHeight: 80,
+    fontWeight: 'bold',
   },
-  scoreLabel: {
-    fontSize: 24,
+  scoreMaxText: {
     color: theme.colors.text.white,
-    opacity: 0.7,
-    fontWeight: 'normal',
+    opacity: 0.5,
+    marginTop: -theme.spacing.sm,
   },
   scoreSubtext: {
     color: theme.colors.text.white,
     opacity: 0.7,
     textAlign: 'center',
+  },
+  // Score Badge
+  scoreBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.xl,
+    gap: theme.spacing.sm,
     marginBottom: theme.spacing.lg,
   },
-  scoreLabelContainer: {
-    alignItems: 'center',
-    marginBottom: theme.spacing['2xl'],
+  scoreBadgeText: {
+    fontSize: 16,
   },
-  scoreLabelText: {
-    color: theme.colors.brand.teal,
+  // Icon Badge
+  iconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Message Card
+  messageCard: {
+    backgroundColor: 'rgba(165, 225, 166, 0.08)',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(165, 225, 166, 0.2)',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  messageIcon: {
+    marginRight: theme.spacing.sm,
+    marginTop: 2,
+  },
+  messageText: {
+    color: theme.colors.text.white,
+    flex: 1,
+    lineHeight: 20,
+  },
+  // Section Headers
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
   },
   foodsContainer: {
     paddingHorizontal: theme.spacing.xl,
@@ -452,25 +855,25 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: theme.colors.text.white,
-    marginBottom: theme.spacing.md,
   },
-  // Improved Food Card Styles
+  // Food Card Styles
   foodCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   foodHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: theme.spacing.sm,
+    gap: theme.spacing.sm,
   },
   foodName: {
     color: theme.colors.text.white,
     fontSize: 17,
+    flex: 1,
   },
   pillsContainer: {
     flexDirection: 'row',
@@ -478,13 +881,16 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: 4,
     borderRadius: 12,
     marginBottom: 4,
+    gap: 4,
   },
   benefitPill: {
-    backgroundColor: 'rgba(165, 225, 166, 0.15)', // Teal with low opacity
+    backgroundColor: 'rgba(165, 225, 166, 0.15)',
     borderWidth: 1,
     borderColor: 'rgba(165, 225, 166, 0.3)',
   },
@@ -493,7 +899,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   warningPill: {
-    backgroundColor: 'rgba(255, 118, 100, 0.15)', // Coral with low opacity
+    backgroundColor: 'rgba(255, 118, 100, 0.15)',
     borderWidth: 1,
     borderColor: 'rgba(255, 118, 100, 0.3)',
   },
@@ -512,11 +918,10 @@ const styles = StyleSheet.create({
   },
   // Breakdown Card
   breakdownCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   breakdownItem: {
     flexDirection: 'row',
@@ -525,6 +930,11 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  breakdownLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
   },
   breakdownLabel: {
     color: theme.colors.text.white,
@@ -554,53 +964,5 @@ const styles = StyleSheet.create({
   scanAnotherText: {
     color: theme.colors.brand.black,
     fontSize: 16,
-  },
-  // Edit Foods Modal styles
-  editFoodsContainer: {
-    marginTop: theme.spacing.md,
-  },
-  noFoodsText: {
-    color: theme.colors.text.white,
-    textAlign: 'center',
-    opacity: 0.7,
-    marginVertical: theme.spacing.lg,
-  },
-  editFoodItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  editFoodName: {
-    color: theme.colors.text.white,
-    flex: 1,
-  },
-  removeFoodButton: {
-    padding: theme.spacing.xs,
-  },
-  editModalButtons: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.xl,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  cancelButtonText: {
-    color: theme.colors.text.white,
-  },
-  saveButton: {
-    backgroundColor: theme.colors.brand.teal,
-  },
-  saveButtonText: {
-    color: theme.colors.brand.black,
   },
 });
