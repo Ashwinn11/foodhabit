@@ -18,10 +18,10 @@ export const InsightStep: React.FC<InsightStepProps> = ({ onComplete, type }) =>
           <>
             <Gigi emotion="sad-frustrate" size="md" />
             <Text variant="title2" style={styles.title}>
-              We noticed you're struggling with bloating.
+              Dealing with bloating? You're not alone! 🤗
             </Text>
             <Text variant="body" style={styles.text}>
-              Bloating is often a sign of reduced gut microbiome diversity. But don't worry, we can fix this together!
+              Good news - most people feel way better in just a couple weeks. Let's fix this together!
             </Text>
             <View style={styles.statCard}>
               <Text variant="headline" style={styles.statNumber}>87%</Text>
@@ -34,15 +34,15 @@ export const InsightStep: React.FC<InsightStepProps> = ({ onComplete, type }) =>
           <>
             <Gigi emotion="happy-clap" size="md" />
             <Text variant="title2" style={styles.title}>
-              Meet Your New Gut Coach
+              Meet Gigi - Your Gut BFF! 💕
             </Text>
             <Text variant="body" style={styles.text}>
-              I'm Gigi! I'll analyze every meal and give you instant feedback to heal your gut.
+              I'll check out every meal you scan and give you real-time tips to feel your best!
             </Text>
             {/* Mock Chat Bubble */}
             <View style={styles.chatBubble}>
               <Text variant="body" style={{ color: theme.colors.brand.black }}>
-                "That smoothie looks great, but let's add some flax seeds for fiber!"
+                "Love that smoothie! 🥤 Toss in some flax seeds for extra fiber and you're golden!"
               </Text>
             </View>
 
@@ -72,10 +72,10 @@ export const InsightStep: React.FC<InsightStepProps> = ({ onComplete, type }) =>
               </View>
             </View>
             <Text variant="title1" style={styles.title}>
-              All-in-one Gut Health
+              Everything You Need in One Place ✨
             </Text>
             <Text variant="body" style={styles.subtitle}>
-              Everything you need to track, understand, and improve your digestion.
+              Track your meals, understand what works for YOUR body, and feel amazing!
             </Text>
             <View style={styles.featureList}>
               <FeatureRow icon="camera" text="Instant Food Scanner" />

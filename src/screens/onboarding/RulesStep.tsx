@@ -15,16 +15,16 @@ export const RulesStep: React.FC<RulesStepProps> = ({ onComplete }) => {
           <View style={styles.mascotContainer}>
             <HappyBalloon size={200} />
           </View>
-          <Text variant="title2" style={styles.title}>House Rules</Text>
+          <Text variant="title2" style={styles.title}>Let's Make This Work! 🎯</Text>
           <Text variant="body" style={styles.subtitle}>
-            To get the best results, follow these simple habits.
+            A few easy habits to help you feel your absolute best!
           </Text>
         </View>
 
         <View style={styles.rulesList}>
-          <RuleItem idx={1} text="Log every meal before you eat" />
-          <RuleItem idx={2} text="Track symptoms daily" />
-          <RuleItem idx={3} text="Check in with Gigi weekly" />
+          <RuleItem idx={1} text="Scan your meals to see how they score 📸" />
+          <RuleItem idx={2} text="Notice how different foods make you feel 💭" />
+          <RuleItem idx={3} text="Keep your streak going - you got this! 🔥" />
         </View>
       </ScrollView>
       

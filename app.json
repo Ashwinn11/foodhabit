@@ -10,7 +10,7 @@
     "scheme": "foodhabit",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/icon.png",
+      "image": "./assets/background.png",
       "resizeMode": "contain",
       "backgroundColor": "#2E2345"
     },
@@ -65,6 +65,13 @@
       "eas": {
         "projectId": "a729b1be-9c50-4ae8-a28a-96cbe598b18a"
       }
+    },
+    "android": {
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.foodhabit.app"
     }
   }
 }

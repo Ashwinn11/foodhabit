@@ -11,27 +11,27 @@ export const PlanStep: React.FC<PlanStepProps> = ({ onComplete }) => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Gigi emotion="happy-crown" size="md" />
-        <Text variant="title2" style={styles.title}>Your Custom Plan</Text>
+        <Text variant="title2" style={styles.title}>Your Journey Starts Here! 🚀</Text>
         <Text variant="body" style={styles.subtitle}>
-          Based on your goal to <Text weight="bold" style={{color: theme.colors.brand.coral}}>Improve Digestion</Text>:
+          Here's how we'll help you <Text weight="bold" style={{color: theme.colors.brand.coral}}>feel amazing</Text>:
         </Text>
 
         <View style={styles.timeline}>
           <TimelineItem 
             day="Week 1" 
-            title="Understanding Your Baseline" 
-            desc="Track 5 meals a day to identify triggers." 
+            title="Getting to Know Your Gut 🔍" 
+            desc="Scan your meals and see what works for you!" 
             active
           />
           <TimelineItem 
             day="Week 2" 
-            title="Fiber Optimization" 
-            desc="Gradually increase plant intake." 
+            title="Building Better Habits 🌱" 
+            desc="Add more gut-friendly foods you actually enjoy." 
           />
           <TimelineItem 
             day="Week 4" 
-            title="Gut Mastery" 
-            desc="Enjoy food without fear!" 
+            title="Living Your Best Life! ✨" 
+            desc="Eat what you love and feel great doing it!" 
             isLast
           />
         </View>
