@@ -33,76 +33,37 @@ const IconBadge = ({ name, color, backgroundColor, size = 32 }: any) => (
   </View>
 );
 
-// Score Badge Component
-const ScoreBadge = ({ score }: { score: number }) => {
-  type ConfigType = {
-    icon: any;
-    color: string;
-    backgroundColor: string;
-    label: string;
-    gradientColors: readonly [string, string];
-  };
-
-  let config: ConfigType = {
-    icon: 'checkmark-circle',
-    color: '#4ade80',
-    backgroundColor: 'rgba(74, 222, 128, 0.15)',
-    label: 'Excellent Choice!',
-    gradientColors: ['rgba(74, 222, 128, 0.2)', 'rgba(74, 222, 128, 0.05)'] as const
-  };
-
+// Helper to get score-based configuration
+const getScoreConfig = (score: number) => {
   if (score >= 80) {
-    config = {
-      icon: 'checkmark-circle',
+    return {
+      icon: 'checkmark-circle' as const,
       color: '#4ade80',
-      backgroundColor: 'rgba(74, 222, 128, 0.15)',
-      label: 'Excellent Choice!',
-      gradientColors: ['rgba(74, 222, 128, 0.2)', 'rgba(74, 222, 128, 0.05)'] as const
+      label: "I'm thriving! 😍",
+      bgColor: 'rgba(74, 222, 128, 0.1)'
     };
   } else if (score >= 60) {
-    config = {
-      icon: 'checkmark-circle-outline',
+    return {
+      icon: 'checkmark-circle-outline' as const,
       color: '#a5e1a6',
-      backgroundColor: 'rgba(165, 225, 166, 0.15)',
-      label: 'Good Choice!',
-      gradientColors: ['rgba(165, 225, 166, 0.2)', 'rgba(165, 225, 166, 0.05)'] as const
+      label: "I'm doing good! ✨",
+      bgColor: 'rgba(165, 225, 166, 0.1)'
     };
   } else if (score >= 40) {
-    config = {
-      icon: 'alert-circle-outline',
+    return {
+      icon: 'alert-circle-outline' as const,
       color: '#fbbf24',
-      backgroundColor: 'rgba(251, 191, 36, 0.15)',
-      label: 'Moderate',
-      gradientColors: ['rgba(251, 191, 36, 0.2)', 'rgba(251, 191, 36, 0.05)'] as const
+      label: "I'm okay, but... 😶",
+      bgColor: 'rgba(251, 191, 36, 0.1)'
     };
   } else {
-    config = {
-      icon: 'close-circle',
+    return {
+      icon: 'close-circle' as const,
       color: '#ff7664',
-      backgroundColor: 'rgba(255, 118, 100, 0.15)',
-      label: 'Consider Alternatives',
-      gradientColors: ['rgba(255, 118, 100, 0.2)', 'rgba(255, 118, 100, 0.05)'] as const
+      label: "Ouch! Please no... 😵",
+      bgColor: 'rgba(255, 118, 100, 0.1)'
     };
   }
-
-  return (
-    <LinearGradient
-      colors={config.gradientColors}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.scoreBadge}
-    >
-      <IconBadge 
-        name={config.icon} 
-        color={config.color} 
-        backgroundColor={config.backgroundColor}
-        size={24}
-      />
-      <Text variant="title3" weight="semiBold" style={[styles.scoreBadgeText, { color: config.color }]}>
-        {config.label}
-      </Text>
-    </LinearGradient>
-  );
 };
 
 export default function ResultScreen({ route, navigation }: any) {
@@ -355,11 +316,11 @@ export default function ResultScreen({ route, navigation }: any) {
               </View>
               
               <Text variant="title2" weight="bold" style={styles.scanningTitle}>
-                Analyzing your meal...
+                Seeing what's for me...
               </Text>
               
               <Text variant="body" style={styles.scanningSubtitle}>
-                Identifying ingredients and calculating gut health score
+                Checking ingredients to see how they'll help me feel!
               </Text>
 
               <View style={styles.scanningDotsContainer}>
@@ -394,7 +355,7 @@ export default function ResultScreen({ route, navigation }: any) {
           />
         </View>
 
-        {/* Score Section with Gradient Card */}
+        {/* Score Section with Unified Card */}
         <View style={styles.scoreSection}>
           <LinearGradient
             colors={['rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0.02)']}
@@ -402,29 +363,36 @@ export default function ResultScreen({ route, navigation }: any) {
             end={{ x: 1, y: 1 }}
             style={styles.scoreCard}
           >
-            <View style={styles.scoreCircle}>
-              <Text weight="bold" style={styles.scoreText}>
-                {Math.round(score)}
-              </Text>
-              <Text variant="caption1" style={styles.scoreMaxText}>
-                /100
+            <View style={styles.unifiedScoreHeader}>
+              <View style={styles.scoreCircle}>
+                <Text weight="bold" style={styles.scoreText}>
+                  {Math.round(score)}
+                </Text>
+                <Text variant="caption1" style={styles.scoreMaxText}>
+                  /100
+                </Text>
+              </View>
+
+              <View style={styles.statusInfo}>
+                <Text variant="title2" weight="bold" style={{ color: getScoreConfig(score).color }}>
+                  {getScoreConfig(score).label}
+                </Text>
+              </View>
+            </View>
+
+            {/* Gigi Message inside the card */}
+            <View style={[styles.unifiedMessageCard, { backgroundColor: getScoreConfig(score).bgColor }]}>
+              <Ionicons 
+                name="chatbubble-ellipses" 
+                size={18} 
+                color={getScoreConfig(score).color} 
+                style={styles.messageIcon} 
+              />
+              <Text variant="body" style={styles.messageText}>
+                {gigiMessage}
               </Text>
             </View>
-            <Text variant="body" style={styles.scoreSubtext}>
-              Gut Health Score
-            </Text>
           </LinearGradient>
-
-          {/* Score Badge */}
-          <ScoreBadge score={score} />
-
-          {/* Gigi Message */}
-          <View style={styles.messageCard}>
-            <Ionicons name="chatbubble-ellipses" size={20} color={theme.colors.brand.teal} style={styles.messageIcon} />
-            <Text variant="body" style={styles.messageText}>
-              {gigiMessage}
-            </Text>
-          </View>
         </View>
 
         {/* Identified Foods with Gut Health Impact */}
@@ -432,7 +400,7 @@ export default function ResultScreen({ route, navigation }: any) {
           <View style={styles.sectionHeader}>
             <Ionicons name="restaurant" size={20} color={theme.colors.brand.teal} />
             <Text variant="title3" weight="semiBold" style={styles.sectionTitle}>
-              What's in this meal?
+              What are you feeding me?
             </Text>
           </View>
           
@@ -535,7 +503,7 @@ export default function ResultScreen({ route, navigation }: any) {
           <View style={styles.sectionHeader}>
             <Ionicons name="nutrition" size={20} color={theme.colors.brand.teal} />
             <Text variant="title3" weight="semiBold" style={styles.sectionTitle}>
-              Nutrition Facts
+              What's in it for me?
             </Text>
           </View>
           
@@ -627,7 +595,7 @@ export default function ResultScreen({ route, navigation }: any) {
           <TouchableOpacity style={styles.scanAnotherButton} onPress={handleScanAnother}>
             <Ionicons name="camera" size={24} color={theme.colors.brand.white} />
             <Text variant="body" weight="bold" style={styles.scanAnotherText}>
-              Scan Another Meal
+              Feed me again!
             </Text>
           </TouchableOpacity>
         </View>
@@ -767,50 +735,60 @@ const styles = StyleSheet.create({
   scoreSection: {
     paddingHorizontal: theme.spacing.xl,
     marginBottom: theme.spacing['2xl'],
+    marginTop: -theme.spacing['3xl'], // Overlap with image
   },
   scoreCard: {
     borderRadius: theme.borderRadius['2xl'],
     padding: theme.spacing.xl,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     marginBottom: theme.spacing.lg,
+    backgroundColor: 'rgba(26, 35, 50, 0.95)', // More opaque background
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
   },
   scoreCircle: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.sm,
+  },
+  unifiedScoreHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+    width: '100%',
+  },
+  statusInfo: {
+    flex: 1,
   },
   scoreText: {
     color: theme.colors.text.white,
-    fontSize: 72,
-    lineHeight: 80,
+    fontSize: 64,
+    lineHeight: 70,
     fontWeight: 'bold',
   },
   scoreMaxText: {
     color: theme.colors.text.white,
     opacity: 0.5,
-    marginTop: -theme.spacing.sm,
+    marginTop: -theme.spacing.xs,
   },
   scoreSubtext: {
     color: theme.colors.text.white,
-    opacity: 0.7,
-    textAlign: 'center',
+    opacity: 0.6,
   },
-  // Score Badge
-  scoreBadge: {
+  unifiedMessageCard: {
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.xl,
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.lg,
+    alignItems: 'flex-start',
+    width: '100%',
   },
-  scoreBadgeText: {
-    fontSize: 16,
-  },
+
   // Icon Badge
   iconBadge: {
     width: 32,
@@ -820,15 +798,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   // Message Card
-  messageCard: {
-    backgroundColor: 'rgba(165, 225, 166, 0.08)',
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(165, 225, 166, 0.2)',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
+
   messageIcon: {
     marginRight: theme.spacing.sm,
     marginTop: 2,

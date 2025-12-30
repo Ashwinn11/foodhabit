@@ -235,19 +235,19 @@ export function calculateGutHealthScore(
 
     // === GENERATE TIPS ===
     if (avgFiber < 5) {
-        tips.push("💡 Add more fiber-rich foods like vegetables, legumes, and whole grains.");
+        tips.push("💡 Feed me more fiber! I love veggies, beans, and whole grains.");
     }
     if (uniquePlants < 3) {
-        tips.push("🌱 Try to include more plant variety - aim for 30+ different plants per week.");
+        tips.push("🌱 I love variety! Can we add more different plants to my next meal?");
     }
     if (processedPenalty > 10) {
-        tips.push("⚠️ This meal contains processed foods that may harm your gut microbiome.");
+        tips.push("⚠️ Oof, these processed foods are a bit hard on my tummy.");
     }
     if (avgProbiotic > 0) {
-        tips.push("🦠 Great choice! Fermented foods support beneficial gut bacteria.");
+        tips.push("🦠 Yay! Fermented foods make my good bacteria very happy!");
     }
     if (triggerPenalty > 0) {
-        tips.push("⚠️ This meal contains foods you've marked as personal triggers.");
+        tips.push("⚠️ Ouch! This meal has something that really bothers me.");
     }
 
     // === DETERMINE EMOTION & MESSAGE ===
@@ -256,19 +256,19 @@ export function calculateGutHealthScore(
 
     if (finalScore >= 80) {
         emotion = 'happy';
-        message = "Excellent choice for your gut! 🌟";
+        message = "Yay! This makes me feel amazing! Thank you for the yummy fuel! 🌟";
     } else if (finalScore >= 60) {
         emotion = 'happy';
-        message = "Good choice! Your gut will thank you.";
+        message = "Mmm! This is good stuff. I'm feeling happy and healthy! ✨";
     } else if (finalScore >= 40) {
         emotion = 'neutral';
-        message = "Not bad, but there's room for improvement.";
+        message = "It's okay, but I'd love more plants or fiber to really wiggle! 😶";
     } else if (finalScore >= 20) {
         emotion = 'sad';
-        message = "This meal could be better for your gut health.";
+        message = "Oof, this is a bit tough for me to handle. Can we add something fresh? 🤒";
     } else {
         emotion = 'sad';
-        message = "This meal may not support your gut health. 😢";
+        message = "Ouch! My tummy really doesn't like this. Please be gentle with me! 😢";
     }
 
     return {

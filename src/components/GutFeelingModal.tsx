@@ -114,55 +114,62 @@ export const GutFeelingModal: React.FC<GutFeelingModalProps> = ({
           <View style={styles.gigiPreview}>
             <Gigi 
               emotion={getGigiEmotion(previewFeeling) as any}
-              size="md"
+              size="lg"
               animated={true}
             />
-            <Text variant="caption1" style={styles.previewText}>
-              {previewFeeling ? `Feeling ${previewFeeling}` : 'Select how you feel'}
+            <Text variant="title2" weight="bold" style={styles.feelingLabel}>
+              {previewFeeling ? FEELINGS.find(f => f.id === previewFeeling)?.label : 'How do you feel?'}
+            </Text>
+            <Text variant="caption1" style={styles.feelingDescription}>
+              {previewFeeling ? FEELINGS.find(f => f.id === previewFeeling)?.description : 'Slide to select'}
             </Text>
           </View>
 
-          {/* Feelings List */}
-          <View style={styles.feelingsList}>
-            {FEELINGS.map((feeling) => {
-              const isSelected = currentFeeling === feeling.id;
-              const isPreview = previewFeeling === feeling.id;
-              return (
-                <TouchableOpacity
-                  key={feeling.id}
-                  style={[
-                    styles.feelingItem,
-                    isSelected && { borderColor: feeling.color, borderWidth: 2 },
-                    isPreview && !isSelected && { borderColor: feeling.color, borderWidth: 1, opacity: 0.8 },
-                  ]}
-                  onPress={() => handleSelect(feeling.id)}
-                  onPressIn={() => setPreviewFeeling(feeling.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.feelingLeft}>
-                    <View style={[styles.iconCircle, { backgroundColor: feeling.color + '20' }]}>
-                      <Ionicons name={feeling.icon as any} size={28} color={feeling.color} />
-                    </View>
-                    <View style={styles.feelingText}>
-                      <Text variant="headline" weight="bold" style={styles.feelingLabel}>
-                        {feeling.label}
-                      </Text>
-                      <Text variant="caption1" style={styles.feelingDesc}>
-                        {feeling.description}
-                      </Text>
-                    </View>
-                  </View>
-                  {isSelected && (
-                    <Ionicons name="checkmark-circle" size={24} color={feeling.color} />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+          {/* Slider */}
+          <View style={styles.sliderContainer}>
+            {FEELINGS.map((feeling) => (
+              <TouchableOpacity
+                key={feeling.id}
+                style={[
+                  styles.sliderOption,
+                  previewFeeling === feeling.id && styles.sliderOptionActive,
+                ]}
+                onPress={() => setPreviewFeeling(feeling.id)}
+                activeOpacity={0.7}
+              >
+                <View style={[
+                  styles.sliderIcon,
+                  previewFeeling === feeling.id && { 
+                    borderWidth: 3,
+                    borderColor: feeling.color,
+                    transform: [{ scale: 1.15 }],
+                  }
+                ]}>
+                  <Ionicons 
+                    name={feeling.icon as any} 
+                    size={previewFeeling === feeling.id ? 36 : 28} 
+                    color={feeling.color} 
+                  />
+                </View>
+              </TouchableOpacity>
+            ))}
           </View>
 
-          <Text variant="caption1" style={styles.hint}>
-            Tap Gigi anytime to update how you feel
-          </Text>
+          {/* Confirm Button */}
+          <TouchableOpacity 
+            style={[
+              styles.confirmButton,
+              !previewFeeling && styles.confirmButtonDisabled
+            ]}
+            onPress={() => previewFeeling && handleSelect(previewFeeling)}
+            disabled={!previewFeeling}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="checkmark-circle" size={24} color={theme.colors.brand.white} />
+            <Text variant="body" weight="bold" style={styles.confirmButtonText}>
+              Confirm
+            </Text>
+          </TouchableOpacity>
         </Pressable>
       </Pressable>
     </Modal>
@@ -204,53 +211,51 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
     paddingVertical: theme.spacing.lg,
   },
-  previewText: {
-    color: theme.colors.text.white,
-    opacity: 0.7,
-    marginTop: theme.spacing.sm,
-    textAlign: 'center',
-    textTransform: 'capitalize',
-  },
-  feelingsList: {
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
-  },
-  feelingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  feelingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.md,
-  },
-  feelingText: {
-    flex: 1,
-  },
   feelingLabel: {
     color: theme.colors.text.white,
-    marginBottom: 2,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xs,
   },
-  feelingDesc: {
+  feelingDescription: {
     color: 'rgba(255, 255, 255, 0.6)',
-  },
-  hint: {
     textAlign: 'center',
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontStyle: 'italic',
+  },
+  sliderContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.sm,
+  },
+  sliderOption: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
+  sliderOptionActive: {
+    // Active state handled by icon scale
+  },
+  sliderIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmButton: {
+    backgroundColor: theme.colors.brand.coral,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.xl,
+  },
+  confirmButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    opacity: 0.5,
+  },
+  confirmButtonText: {
+    color: theme.colors.brand.white,
   },
 });
