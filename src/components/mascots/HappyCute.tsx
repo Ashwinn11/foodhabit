@@ -9,7 +9,8 @@ import Animated, {
   withRepeat,
   withDelay,
   interpolate,
-  Extrapolation
+  Extrapolation,
+  SharedValue
 } from 'react-native-reanimated';
 import MascotWrapper from './MascotWrapper';
 
@@ -22,8 +23,11 @@ interface MascotProps {
 }
 
 export default function HappyCute({ size = 160, style, animated = true }: MascotProps) {
-  // SVG will render at 85% of the container size for consistent visual appearance
-  const svgSize = size * 0.85;
+  // This mascot has a large viewBox height (634) to accommodate flying hearts animation (-200 Y).
+  // The body itself is only ~370 units high. To match the visual size of other mascots,
+  // we need to scale it up significantly (approx 1.5x) and shift it up to center the body.
+  const svgSize = size * 1.4;
+  const verticalOffset = -size * 0.56; // Shifts the body up to center it
 
   // Animation values
   const heart1 = useSharedValue(0);
@@ -76,7 +80,7 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
 
   // Animated props for hearts
   // Pivot points approximated from original viewBox centers
-  const createHeartProps = (sharedVal: Animated.SharedValue<number>, cx: number, cy: number, rotationPattern: number[]) => {
+  const createHeartProps = (sharedVal: SharedValue<number>, cx: number, cy: number, rotationPattern: number[]) => {
     return useAnimatedProps(() => {
       const translateY = interpolate(sharedVal.value, [0, 1], [0, -200]); // Reduced distance for SVG units
       const rotateDeg = interpolate(
@@ -152,7 +156,7 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
         viewBox="-50 -200 445.89 634.18" 
         width={svgSize} 
         height={svgSize}
-        style={{ overflow: 'visible' }} 
+        style={{ overflow: 'visible', marginTop: verticalOffset }} 
       >
         <G>
           {/* Left foot - cls-1 */}
@@ -162,7 +166,7 @@ export default function HappyCute({ size = 160, style, animated = true }: Mascot
           </G>
           {/* Right foot - cls-1 */}
           <G>
-            <Path d="M233.22,424.53c2.96-2.8,6.76-5.16-17.26-3.51-10.25,1.62,11.87,10.36,10.8,11.96-1.06,1.59-24.96,1.6-29.21,0-4.52-1.71-.42-6.97,1.14-8.45Z" fill={colors.cls1}/>
+            <Path d="M233.22,424.53c2.96-2.8,6.76-5.16,17.26-3.51,10.25,1.62,11.87,10.36,10.8,11.96-1.06,1.59-24.96,1.6-29.21,0-4.52-1.71-.42-6.97,1.14-8.45Z" fill={colors.cls1}/>
             <Path d="M236.73,427.04c-.36,0-.73-.09-1.07-.27-1.09-.59-1.5-1.95-.91-3.05,15.59-28.84,9.31-55.64,9.25-55.91-.29-1.2.44-2.42,1.65-2.72,1.2-.29,2.42.45,2.72,1.65.28,1.16,6.74,28.76-9.66,59.11-.41.75-1.18,1.18-1.98,1.18Z" fill={colors.cls1}/>
           </G>
           

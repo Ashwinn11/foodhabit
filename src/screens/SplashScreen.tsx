@@ -16,7 +16,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
 
   useEffect(() => {
     // Entrance animation
-    Animated.parallel([
+    const entranceAnimation = Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 800,
@@ -33,7 +33,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
         duration: 1000,
         useNativeDriver: true,
       }),
-    ]).start();
+    ]);
+    
+    entranceAnimation.start();
 
     // Auto-dismiss after animation
     const timer = setTimeout(() => {
@@ -53,7 +55,13 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
       });
     }, 1500); // Show splash for 1 second
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      entranceAnimation.stop();
+      fadeAnim.stopAnimation();
+      scaleAnim.stopAnimation();
+      logoRotate.stopAnimation();
+    };
   }, []);
 
   const rotation = logoRotate.interpolate({

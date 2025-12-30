@@ -90,6 +90,8 @@ export default function ResultScreen({ route, navigation }: any) {
   // Animation values
   const scanLinePosition = useRef(new Animated.Value(0)).current;
   const glowOpacity = useRef(new Animated.Value(0.3)).current;
+  const scanAnimation = useRef<Animated.CompositeAnimation | null>(null);
+  const glowAnimation = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
     calculateScore();
@@ -99,7 +101,7 @@ export default function ResultScreen({ route, navigation }: any) {
   useEffect(() => {
     if (loading) {
       // Scan line animation - moves up and down
-      Animated.loop(
+      scanAnimation.current = Animated.loop(
         Animated.sequence([
           Animated.timing(scanLinePosition, {
             toValue: 1,
@@ -112,10 +114,11 @@ export default function ResultScreen({ route, navigation }: any) {
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      scanAnimation.current.start();
 
       // Glow pulse animation
-      Animated.loop(
+      glowAnimation.current = Animated.loop(
         Animated.sequence([
           Animated.timing(glowOpacity, {
             toValue: 0.8,
@@ -128,8 +131,18 @@ export default function ResultScreen({ route, navigation }: any) {
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      glowAnimation.current.start();
+    } else {
+      // Stop animations when loading is finished
+      scanAnimation.current?.stop();
+      glowAnimation.current?.stop();
     }
+
+    return () => {
+      scanAnimation.current?.stop();
+      glowAnimation.current?.stop();
+    };
   }, [loading]);
 
   const calculateScore = async () => {
@@ -331,7 +344,7 @@ export default function ResultScreen({ route, navigation }: any) {
         </View>
       </Container>
     );
-  };
+  }
 
   return (
     <Container safeArea={true} edges={['top']}>

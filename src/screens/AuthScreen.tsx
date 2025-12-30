@@ -33,7 +33,7 @@ const AnimatedMascot: React.FC<AnimatedMascotProps> = ({ fadeAnim, scaleAnim }) 
         },
       ]}
     >
-      <Gigi emotion="happy-balloon" size="md" />
+      <Gigi emotion="happy-cute" size="md" />
     </Animated.View>
   );
 };
@@ -57,7 +57,7 @@ export default function AuthScreen({ navigation }: any) {
     checkAppleAuth();
 
     // Entrance animations
-    Animated.parallel([
+    const animation = Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 800,
@@ -78,9 +78,17 @@ export default function AuthScreen({ navigation }: any) {
         delay: 200,
         useNativeDriver: true,
       }),
-    ]).start();
+    ]);
+    
+    animation.start();
 
-
+    return () => {
+      animation.stop();
+      fadeAnim.stopAnimation();
+      slideAnim.stopAnimation();
+      scaleAnim.stopAnimation();
+      bounceAnim.stopAnimation();
+    };
   }, []);
 
   const checkAppleAuth = async () => {
@@ -240,17 +248,13 @@ export default function AuthScreen({ navigation }: any) {
           <View style={styles.legalContainer}>
             <Text variant="caption1" align="center" style={styles.legalText}>
               {LEGAL_TEXT.prefix}{' '}
-              <TouchableOpacity onPress={() => navigation.navigate('TermsOfService')}>
-                <Text variant="caption1" style={styles.legalLink}>
-                  {LEGAL_TEXT.terms}
-                </Text>
-              </TouchableOpacity>
+              <Text variant="caption1" style={styles.legalLink} onPress={() => navigation.navigate('TermsOfService')}>
+                {LEGAL_TEXT.terms}
+              </Text>
               {' '}and{' '}
-              <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
-                <Text variant="caption1" style={styles.legalLink}>
-                  {LEGAL_TEXT.privacy}
-                </Text>
-              </TouchableOpacity>
+              <Text variant="caption1" style={styles.legalLink} onPress={() => navigation.navigate('PrivacyPolicy')}>
+                {LEGAL_TEXT.privacy}
+              </Text>
             </Text>
           </View>
         </Animated.View>
@@ -389,7 +393,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   legalContainer: {
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xs,
   },
   legalText: {
     color: theme.colors.text.white,

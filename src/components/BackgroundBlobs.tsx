@@ -3,7 +3,7 @@ import { StyleSheet, View, Dimensions } from 'react-native';
 import Svg, { Path, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { theme } from '../theme';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 // Top Left Blob (Teal-ish)
 const Blob1 = () => (

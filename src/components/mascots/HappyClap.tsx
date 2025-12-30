@@ -9,7 +9,7 @@ interface MascotProps {
   animated?: boolean;
 }
 
-export default function HappyClap({ size = 160, style, animated = true }: MascotProps) {
+export default function HappyClap({ size = 160, style }: MascotProps) {
   // SVG will render at 85% of the container size for consistent visual appearance
   const svgSize = size * 0.85;
 
