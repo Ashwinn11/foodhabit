@@ -16,6 +16,7 @@
     },
     "ios": {
       "supportsTablet": false,
+      "requireFullScreen": true,
       "bundleIdentifier": "com.foodhabit.app",
       "usesAppleSignIn": true,
       "associatedDomains": [
