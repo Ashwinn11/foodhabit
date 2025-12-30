@@ -5,7 +5,8 @@ import Animated, {
   useSharedValue, 
   useAnimatedProps, 
   withSequence, 
-  withTiming 
+  withTiming,
+  withRepeat
 } from 'react-native-reanimated';
 import MascotWrapper from './MascotWrapper';
 
@@ -21,6 +22,7 @@ export default function SadSick({ size = 160, style, animated = true }: MascotPr
   // SVG will render at 85% of the container size for consistent visual appearance
   const svgSize = size * 0.85;
   const eyeScale = useSharedValue(1);
+  const spikeProgress = useSharedValue(0);
 
   useEffect(() => {
     if (!animated) return;
@@ -36,6 +38,13 @@ export default function SadSick({ size = 160, style, animated = true }: MascotPr
       const nextBlink = Math.random() * 3000 + 2000;
       timeout = setTimeout(blink, nextBlink);
     };
+
+    // Spike pulsing animation
+    spikeProgress.value = withRepeat(
+      withTiming(1, { duration: 1000 }),
+      -1,
+      true
+    );
 
     // Initial delay
     timeout = setTimeout(blink, 2000);
@@ -63,9 +72,55 @@ export default function SadSick({ size = 160, style, animated = true }: MascotPr
     ]
   }));
 
+  // Spike animations
+  // Left Top: (-46, -35) -> move (-12, -10)
+  const spike1Props = useAnimatedProps(() => ({
+    transform: [
+      { translateX: -12 * spikeProgress.value },
+      { translateY: -10 * spikeProgress.value }
+    ]
+  }));
+
+  // Left Middle: (-22, -31) -> move (-6, -9)
+  const spike2Props = useAnimatedProps(() => ({
+    transform: [
+      { translateX: -6 * spikeProgress.value },
+      { translateY: -9 * spikeProgress.value }
+    ]
+  }));
+
+  // Left Bottom: (-38, -12) -> move (-10, -4)
+  const spike3Props = useAnimatedProps(() => ({
+    transform: [
+      { translateX: -10 * spikeProgress.value },
+      { translateY: -4 * spikeProgress.value }
+    ]
+  }));
+
+  // Right Top: (33, -14) -> move (9, -4)
+  const spike4Props = useAnimatedProps(() => ({
+    transform: [
+      { translateX: 9 * spikeProgress.value },
+      { translateY: -4 * spikeProgress.value }
+    ]
+  }));
+
+  // Right Bottom: (55, -8) -> move (14, -3)
+  const spike5Props = useAnimatedProps(() => ({
+    transform: [
+      { translateX: 14 * spikeProgress.value },
+      { translateY: -3 * spikeProgress.value }
+    ]
+  }));
+
   return (
     <MascotWrapper size={size} style={style}>
-      <Svg viewBox="0 0 383.62 412.16" width={svgSize} height={svgSize}>
+      <Svg 
+        viewBox="-30 -30 443.62 472.16" 
+        width={svgSize * 1.15} 
+        height={svgSize * 1.15}
+        style={{ overflow: 'visible' }}
+      >
         <G>
           {/* Right Leg */}
           <G>
@@ -180,34 +235,44 @@ export default function SadSick({ size = 160, style, animated = true }: MascotPr
           />
           
           {/* Decorative Element - Left Top */}
-          <Path 
-            d="M60.09,69.66c-.51,0-1.02-.16-1.45-.50L14.13,34.28c-1.02-.80-1.20-2.28-.40-3.30.80-1.02,2.28-1.20,3.30-.40l44.51,34.88c1.02.80,1.20,2.28.40,3.30-.46.59-1.16.90-1.85.90Z" 
-            fill="#d34059"
-          />
+          <AnimatedG animatedProps={spike1Props}>
+            <Path 
+              d="M60.09,69.66c-.51,0-1.02-.16-1.45-.50L14.13,34.28c-1.02-.80-1.20-2.28-.40-3.30.80-1.02,2.28-1.20,3.30-.40l44.51,34.88c1.02.80,1.20,2.28.40,3.30-.46.59-1.16.90-1.85.90Z" 
+              fill="#d34059"
+            />
+          </AnimatedG>
           
           {/* Decorative Element - Left Middle */}
-          <Path 
-            d="M86.56,34.78c-.75,0-1.49-.36-1.95-1.03L64.16,3.68c-.73-1.07-.45-2.54.62-3.27,1.08-.73,2.54-.45,3.27.62l20.45,30.07c.73,1.07.45,2.54-.62,3.27-.41.27-.87.41-1.32.41Z" 
-            fill="#d34059"
-          />
+          <AnimatedG animatedProps={spike2Props}>
+            <Path 
+              d="M86.56,34.78c-.75,0-1.49-.36-1.95-1.03L64.16,3.68c-.73-1.07-.45-2.54.62-3.27,1.08-.73,2.54-.45,3.27.62l20.45,30.07c.73,1.07.45,2.54-.62,3.27-.41.27-.87.41-1.32.41Z" 
+              fill="#d34059"
+            />
+          </AnimatedG>
           
           {/* Decorative Element - Left Bottom */}
-          <Path 
-            d="M39.64,104.55c-.24,0-.48-.04-.72-.11L1.63,92.41c-1.24-.40-1.92-1.73-1.52-2.96.40-1.24,1.72-1.92,2.96-1.52l37.29,12.03c1.24.40,1.92,1.73,1.52,2.96-.32,1-1.25,1.63-2.24,1.63Z" 
-            fill="#d34059"
-          />
+          <AnimatedG animatedProps={spike3Props}>
+            <Path 
+              d="M39.64,104.55c-.24,0-.48-.04-.72-.11L1.63,92.41c-1.24-.40-1.92-1.73-1.52-2.96.40-1.24,1.72-1.92,2.96-1.52l37.29,12.03c1.24.40,1.92,1.73,1.52,2.96-.32,1-1.25,1.63-2.24,1.63Z" 
+              fill="#d34059"
+            />
+          </AnimatedG>
           
           {/* Decorative Element - Right Top */}
-          <Path 
-            d="M317.52,103.35c-.91,0-1.78-.53-2.16-1.43-.51-1.19.04-2.58,1.24-3.09l33.68-14.44c1.19-.51,2.58.04,3.09,1.24.51,1.20-.04,2.58-1.23,3.09l-33.68,14.44c-.30.13-.62.19-.93.19Z" 
-            fill="#d34059"
-          />
+          <AnimatedG animatedProps={spike4Props}>
+            <Path 
+              d="M317.52,103.35c-.91,0-1.78-.53-2.16-1.43-.51-1.19.04-2.58,1.24-3.09l33.68-14.44c1.19-.51,2.58.04,3.09,1.24.51,1.20-.04,2.58-1.23,3.09l-33.68,14.44c-.30.13-.62.19-.93.19Z" 
+              fill="#d34059"
+            />
+          </AnimatedG>
           
           {/* Decorative Element - Right Bottom */}
-          <Path 
-            d="M325.93,139.43c-1.14,0-2.15-.83-2.32-2-.19-1.29.69-2.49,1.97-2.68l55.33-8.42c1.28-.19,2.48.69,2.68,1.97.19,1.28-.69,2.49-1.97,2.68l-55.33,8.42c-.12.02-.24.03-.36.03Z" 
-            fill="#d34059"
-          />
+          <AnimatedG animatedProps={spike5Props}>
+            <Path 
+              d="M325.93,139.43c-1.14,0-2.15-.83-2.32-2-.19-1.29.69-2.49,1.97-2.68l55.33-8.42c1.28-.19,2.48.69,2.68,1.97.19,1.28-.69,2.49-1.97,2.68l-55.33,8.42c-.12.02-.24.03-.36.03Z" 
+              fill="#d34059"
+            />
+          </AnimatedG>
           
           {/* Left Eye Detail */}
           <AnimatedG animatedProps={leftEyeAnimatedProps}>

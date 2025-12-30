@@ -104,7 +104,12 @@ export default function HappyClap({ size = 160, style, animated = true }: Mascot
 
   return (
     <MascotWrapper size={size} style={style}>
-      <Svg viewBox="0 0 335.36 433.7" width={svgSize} height={svgSize}>
+      <Svg 
+        viewBox="-40 -30 415.36 493.7" 
+        width={svgSize * 1.15} 
+        height={svgSize * 1.15}
+        style={{ overflow: 'visible' }}
+      >
         <AnimatedG animatedProps={bodyAnimatedProps}>
           <G>
             <Path d="M146.75,422.88c-3.32-3.14-7.58-5.79-19.36-3.93-11.49,1.82-13.31,11.62-12.12,13.41,1.19,1.79,28,1.8,32.76,0,5.07-1.91.47-7.82-1.28-9.48Z" fill="#ff3b5c"/>

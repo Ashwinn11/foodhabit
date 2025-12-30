@@ -7,7 +7,6 @@ import Animated, {
   withSequence, 
   withTiming, 
   withRepeat,
-  withDelay,
   interpolate,
   Easing,
 } from 'react-native-reanimated';
@@ -118,7 +117,12 @@ export default function HappyCrown({ size = 160, style, animated = true }: Masco
 
   return (
     <MascotWrapper size={size} style={style}>
-      <Svg viewBox="0 0 349.95 435.2" width={svgSize} height={svgSize}>
+      <Svg 
+        viewBox="-40 -40 429.95 515.2" 
+        width={svgSize * 1.15} 
+        height={svgSize * 1.15}
+        style={{ overflow: 'visible' }}
+      >
         <AnimatedG animatedProps={bodyAnimatedProps}>
           <G>
             <Path d="M3.22,329.97s-2.8,15.59,1.76,21.09,14.83-1.08,13.74-6.5-12.85-16.09-12.85-16.09l-2.64,1.5Z" fill="#ff3b5c"/>

@@ -105,8 +105,12 @@ export const GutFeelingModal: React.FC<GutFeelingModalProps> = ({
             <Text variant="title3" weight="bold" style={styles.title}>
               How does your gut feel?
             </Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={theme.colors.text.white} />
+            <TouchableOpacity 
+              onPress={onClose} 
+              style={styles.closeButton}
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+            >
+              <Ionicons name="close" size={28} color={theme.colors.brand.white} />
             </TouchableOpacity>
           </View>
 
@@ -205,6 +209,10 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: theme.spacing.xs,
+    position: 'absolute',
+    right: 0,
+    top: -5,
+    zIndex: 10,
   },
   gigiPreview: {
     alignItems: 'center',

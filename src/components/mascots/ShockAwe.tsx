@@ -65,7 +65,12 @@ export default function ShockAwe({ size = 160, style, animated = true }: MascotP
 
   return (
     <MascotWrapper size={size} style={style}>
-      <Svg viewBox="0 0 435.2 418.23" width={svgSize} height={svgSize}>
+      <Svg 
+        viewBox="-40 -30 515.2 478.23" 
+        width={svgSize * 1.15} 
+        height={svgSize * 1.15}
+        style={{ overflow: 'visible' }}
+      >
         <G>
           {/* Feet */}
           <G>

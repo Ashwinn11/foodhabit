@@ -19,7 +19,7 @@ interface MascotProps {
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 
-export default function SadFrustrate({ size = 160, style, animated = false }: MascotProps) {
+export default function SadFrustrate({ size = 160, style, animated = true }: MascotProps) {
   // SVG will render at 85% of the container size for consistent visual appearance
   const svgSize = size * 0.85;
 
@@ -64,7 +64,12 @@ export default function SadFrustrate({ size = 160, style, animated = false }: Ma
 
   return (
     <MascotWrapper size={size} style={style}>
-      <Svg viewBox="0 0 413.48 435.2" width={svgSize} height={svgSize}>
+      <Svg 
+        viewBox="-30 -30 473.48 495.2" 
+        width={svgSize * 1.15} 
+        height={svgSize * 1.15}
+        style={{ overflow: 'visible' }}
+      >
         <G>
           <G>
             {/* Left Leg */}

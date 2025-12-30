@@ -99,7 +99,12 @@ export default function HappyBalloon({ size = 160, style, animated = true }: Mas
 
   return (
     <MascotWrapper size={size} style={style}>
-      <Svg viewBox="0 -30 435.05 447.79" width={svgSize} height={svgSize}>
+      <Svg 
+        viewBox="-40 -60 515.05 507.79" 
+        width={svgSize * 1.15} 
+        height={svgSize * 1.15}
+        style={{ overflow: 'visible' }}
+      >
         <G>
           {/* Stars decorations */}
           <G>
