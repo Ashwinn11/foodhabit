@@ -625,7 +625,7 @@ export default function ResultScreen({ route, navigation }: any) {
         {/* Actions */}
         <View style={[styles.actions, { paddingBottom: insets.bottom + theme.spacing.xl }]}>
           <TouchableOpacity style={styles.scanAnotherButton} onPress={handleScanAnother}>
-            <Ionicons name="camera" size={24} color={theme.colors.brand.black} />
+            <Ionicons name="camera" size={24} color={theme.colors.brand.white} />
             <Text variant="body" weight="bold" style={styles.scanAnotherText}>
               Scan Another Meal
             </Text>
@@ -948,21 +948,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
   },
   scanAnotherButton: {
-    backgroundColor: theme.colors.brand.cream,
+    backgroundColor: theme.colors.brand.coral,
     paddingVertical: theme.spacing.lg,
     borderRadius: theme.borderRadius.xl,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: theme.spacing.md,
-    shadowColor: theme.colors.brand.cream,
+    shadowColor: theme.colors.brand.coral,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   scanAnotherText: {
-    color: theme.colors.brand.black,
+    color: theme.colors.brand.white,
     fontSize: 16,
   },
 });

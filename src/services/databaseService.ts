@@ -5,6 +5,7 @@
 
 import { supabase } from '../config/supabase';
 import { IdentifiedFood, ScoreBreakdown } from './scoringService';
+import type { GutFeeling } from '../components/GutFeelingModal';
 
 export interface FoodScan {
     id: string;
@@ -34,6 +35,15 @@ export interface UserProfile {
     known_triggers: string[];
     onboarding_complete: boolean;
 }
+
+export interface GutFeelingEntry {
+    id: string;
+    user_id: string;
+    feeling: GutFeeling;
+    logged_at: string;
+    created_at: string;
+}
+
 
 /**
  * Save a food scan to the database
@@ -385,5 +395,93 @@ export async function updateFoodScan(
     } catch (error) {
         console.error('Error updating scan:', error);
         return { success: false, error: 'Failed to update scan' };
+    }
+}
+
+/**
+ * Save a gut feeling entry
+ */
+export async function saveGutFeeling(feeling: GutFeeling): Promise<{ success: boolean; error?: string }> {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return { success: false, error: 'Not authenticated' };
+        }
+
+        const { error } = await supabase
+            .from('gut_feelings')
+            .insert({
+                user_id: user.id,
+                feeling: feeling,
+                logged_at: new Date().toISOString(),
+            });
+
+        if (error) {
+            console.error('Error saving gut feeling:', error);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error saving gut feeling:', error);
+        return { success: false, error: 'Failed to save gut feeling' };
+    }
+}
+
+/**
+ * Get the most recent gut feeling
+ */
+export async function getCurrentGutFeeling(): Promise<GutFeelingEntry | null> {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return null;
+
+        const { data, error } = await supabase
+            .from('gut_feelings')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('logged_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (error) {
+            console.error('Error fetching gut feeling:', error);
+            return null;
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error fetching gut feeling:', error);
+        return null;
+    }
+}
+
+/**
+ * Get gut feeling history
+ */
+export async function getGutFeelingHistory(limit: number = 10): Promise<GutFeelingEntry[]> {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return [];
+
+        const { data, error } = await supabase
+            .from('gut_feelings')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('logged_at', { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            console.error('Error fetching gut feeling history:', error);
+            return [];
+        }
+
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching gut feeling history:', error);
+        return [];
     }
 }

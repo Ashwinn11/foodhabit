@@ -4,14 +4,16 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { Text, Gigi, Container } from '../components';
+import { Text, Gigi, Container, GutFeelingModal, type GutFeeling } from '../components';
 import { theme } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 import { 
   getUserStreak, 
   getTodayScans, 
   getTodayAverageScore,
-  getUserProfile
+  getUserProfile,
+  getCurrentGutFeeling,
+  saveGutFeeling,
 } from '../services/databaseService';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -23,6 +25,8 @@ export default function HomeScreen({ navigation }: any) {
   const [streak, setStreak] = useState(0);
   const [totalScans, setTotalScans] = useState(0);
   const [level, setLevel] = useState(1);
+  const [currentGutFeeling, setCurrentGutFeeling] = useState<GutFeeling | undefined>(undefined);
+  const [showGutFeelingModal, setShowGutFeelingModal] = useState(false);
 
   // Fetch data when screen comes into focus
   useFocusEffect(
@@ -34,11 +38,12 @@ export default function HomeScreen({ navigation }: any) {
   const fetchData = async () => {
     try {
       // Fetch all data in parallel
-      const [streakData, scans, avgScoreData, profile] = await Promise.all([
+      const [streakData, scans, avgScoreData, profile, gutFeeling] = await Promise.all([
         getUserStreak(),
         getTodayScans(),
         getTodayAverageScore(),
         getUserProfile(),
+        getCurrentGutFeeling(),
       ]);
 
       setStreak(streakData?.current_streak || 0);
@@ -46,6 +51,7 @@ export default function HomeScreen({ navigation }: any) {
       setAvgScore(avgScoreData);
       setTotalScans(profile?.total_scans || 0);
       setLevel(profile?.gigi_level || 1);
+      setCurrentGutFeeling(gutFeeling?.feeling);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -57,6 +63,61 @@ export default function HomeScreen({ navigation }: any) {
 
   const handlePremium = () => {
     navigation.navigate('Paywall');
+  };
+
+  const handleGigiTap = () => {
+    setShowGutFeelingModal(true);
+  };
+
+  const handleGutFeelingSelect = async (feeling: GutFeeling) => {
+    setCurrentGutFeeling(feeling);
+    await saveGutFeeling(feeling);
+  };
+
+  // Determine Gigi's emotion based on gut feeling or avg score
+  const getGigiEmotion = () => {
+    if (currentGutFeeling) {
+      switch (currentGutFeeling) {
+        case 'great': return 'happy-crown';
+        case 'okay': return 'happy-clap';
+        case 'bloated': return 'sad-frustrate';
+        case 'pain': return 'sad-sick';
+        case 'nauseous': return 'sad-cry';
+      }
+    }
+    // Fallback to score-based emotion
+    if (avgScore >= 90) return 'happy-crown';
+    if (avgScore >= 80) return 'happy-balloon';
+    if (avgScore >= 70) return 'happy-cute';
+    if (avgScore >= 60) return 'happy-clap';
+    if (avgScore >= 50) return 'shock-awe';
+    if (avgScore >= 40) return 'sad-frustrate';
+    if (avgScore >= 30) return 'sad-sick';
+    if (avgScore > 0) return 'sad-cry';
+    return 'happy-clap';
+  };
+
+  // Get message based on gut feeling or avg score
+  const getGigiMessage = () => {
+    if (currentGutFeeling) {
+      switch (currentGutFeeling) {
+        case 'great': return "Your gut is feeling amazing! Let's keep it that way!";
+        case 'okay': return "Not bad! Let's make your next meal count!";
+        case 'bloated': return "Feeling bloated? I'll help you choose gut-friendly foods!";
+        case 'pain': return "Ouch! Let's be extra careful with what we eat today.";
+        case 'nauseous': return "Not feeling well? Stick to gentle, easy-to-digest foods.";
+      }
+    }
+    // Fallback to score-based messages
+    if (avgScore >= 90) return "You're a health champion!";
+    if (avgScore >= 80) return "Amazing choices today!";
+    if (avgScore >= 70) return "Loving your healthy habits!";
+    if (avgScore >= 60) return "Great work, keep it up!";
+    if (avgScore >= 50) return "Hmm, could be healthier!";
+    if (avgScore >= 40) return "Let's aim higher next time!";
+    if (avgScore >= 30) return "These choices aren't helping...";
+    if (avgScore > 0) return "We need to talk about this...";
+    return "Tap me to tell me how your gut feels!";
   };
 
   // Calculate progress to next level
@@ -90,37 +151,32 @@ export default function HomeScreen({ navigation }: any) {
       {/* Main Content */}
       <View style={styles.content}>
         
-        {/* Gigi Character */}
-        <TouchableOpacity style={styles.gigiContainer} activeOpacity={0.9} onPress={() => {}}>
-           <Gigi 
-            emotion={
-              avgScore >= 90 ? 'happy-crown' :        // 90-100: Crown - Champion level!
-              avgScore >= 80 ? 'happy-balloon' :      // 80-89: Balloon - Celebrating
-              avgScore >= 70 ? 'happy-cute' :         // 70-79: Cute/Love - Very happy
-              avgScore >= 60 ? 'happy-clap' :         // 60-69: Clapping - Good job
-              avgScore >= 50 ? 'shock-awe' :          // 50-59: Shocked - Could be better
-              avgScore >= 40 ? 'sad-frustrate' :      // 40-49: Frustrated - Not ideal
-              avgScore >= 30 ? 'sad-sick' :           // 30-39: Sick - Unhealthy
-              avgScore > 0 ? 'sad-cry' :              // 0-29: Crying - Very unhealthy
-              'happy-clap'                            // No score yet - Neutral/ready
-            } 
-            size="lg"
-            animated={true}
-          />
-           <View style={styles.messageBubble}>
+        {/* Gigi Character Container */}
+        <View style={styles.gigiContainer}>
+          {/* Tappable Gigi with Indicator */}
+          <TouchableOpacity style={styles.gigiTappable} activeOpacity={0.9} onPress={handleGigiTap}>
+            {/* Tap Indicator */}
+            <View style={styles.tapIndicator}>
+              <Ionicons name="hand-left" size={16} color={theme.colors.brand.coral} />
+              <Text variant="caption1" weight="bold" style={styles.tapText}>
+                How's your gut?
+              </Text>
+            </View>
+            
+            <Gigi 
+              emotion={getGigiEmotion()} 
+              size="lg"
+              animated={true}
+            />
+          </TouchableOpacity>
+
+          {/* Message Bubble (not tappable) */}
+          <View style={styles.messageBubble}>
             <Text variant="body" weight="medium" style={styles.gigiMessageText}>
-              {avgScore >= 90 ? "You're a health champion! 👑" : 
-               avgScore >= 80 ? "Amazing choices today! 🎈" : 
-               avgScore >= 70 ? "Loving your healthy habits! 💕" : 
-               avgScore >= 60 ? "Great work, keep it up! 👏" : 
-               avgScore >= 50 ? "Hmm, could be healthier! 🤔" : 
-               avgScore >= 40 ? "Let's aim higher next time! 😤" : 
-               avgScore >= 30 ? "These choices aren't helping... 🤢" : 
-               avgScore > 0 ? "We need to talk about this... 😢" : 
-               "Ready to scan your meal?"}
+              {getGigiMessage()}
             </Text>
           </View>
-        </TouchableOpacity>
+        </View>
 
         {/* Scan Button */}
         <TouchableOpacity 
@@ -128,7 +184,7 @@ export default function HomeScreen({ navigation }: any) {
           onPress={handleScanMeal}
           activeOpacity={0.8}
         >
-          <Ionicons name="camera" size={28} color={theme.colors.brand.black} />
+          <Ionicons name="camera" size={28} color={theme.colors.brand.white} />
           <Text variant="title3" weight="bold" style={styles.scanButtonText}>
             Scan Meal
           </Text>
@@ -154,6 +210,14 @@ export default function HomeScreen({ navigation }: any) {
             </View>
         </View>
       </View>
+
+      {/* Gut Feeling Modal */}
+      <GutFeelingModal
+        visible={showGutFeelingModal}
+        onClose={() => setShowGutFeelingModal(false)}
+        onSelect={handleGutFeelingSelect}
+        currentFeeling={currentGutFeeling}
+      />
     </Container>
   );
 }
@@ -223,21 +287,43 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing['4xl'],
     overflow: 'visible', // Allow hearts to float out of the container
   },
+  gigiTappable: {
+    alignItems: 'center',
+  },
+  tapIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    backgroundColor: theme.colors.brand.cream,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.pill,
+    marginBottom: theme.spacing.sm,
+    borderWidth: 2,
+    borderColor: theme.colors.brand.coral,
+  },
+  tapText: {
+    color: theme.colors.brand.coral,
+    fontSize: 12,
+  },
   messageBubble: {
     marginTop: theme.spacing.lg,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: theme.colors.brand.cream,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.lg,
+    borderBottomLeftRadius: 0,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.2)',
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
   },
   gigiMessageText: {
-    color: theme.colors.text.white,
+    color: theme.colors.brand.black,
     textAlign: 'center',
   },
   scanButton: {
-    backgroundColor: theme.colors.brand.cream,
+    backgroundColor: theme.colors.brand.coral,
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing['4xl'],
     borderRadius: theme.borderRadius.xl,
@@ -249,7 +335,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   scanButtonText: {
-    color: theme.colors.brand.black,
+    color: theme.colors.brand.white,
   },
   statsRow: {
     flexDirection: 'row',

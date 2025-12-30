@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, Animated } from 'react-native';
+import { StyleSheet, Animated, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Text, Gigi } from '../components';
+import { Text } from '../components';
 import { theme } from '../theme';
 import { BackgroundBlobs } from '../components/BackgroundBlobs';
 
@@ -87,7 +87,11 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
             },
           ]}
         >
-          <Gigi emotion="happy-crown" size="md" animated={false} />
+          <Image 
+            source={require('../../assets/background.png')} 
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </Animated.View>
 
         {/* App Name */}
@@ -115,7 +119,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logoContainer: {
-    marginBottom: theme.spacing['4xl'],
+    marginBottom: theme.spacing['xs'],
+  },
+  logoImage: {
+    width: 250,
+    height: 250,
   },
   appName: {
     color: theme.colors.brand.cream,
