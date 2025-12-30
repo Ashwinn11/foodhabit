@@ -1,6 +1,6 @@
 module.exports = {
   expo: {
-    name: "Food Habit",
+    name: "Gut Scan",
     slug: "foodhabit",
     owner: "foodhabit",
     version: "1.0.0",
@@ -15,7 +15,7 @@ module.exports = {
       backgroundColor: "#2E2345"
     },
     ios: {
-      supportsTablet: true,
+      supportsTablet: false,
       bundleIdentifier: "com.foodhabit.app",
       usesAppleSignIn: true,
       associatedDomains: [
