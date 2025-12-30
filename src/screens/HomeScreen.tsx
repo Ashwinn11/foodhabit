@@ -27,6 +27,7 @@ export default function HomeScreen({ navigation }: any) {
   const [level, setLevel] = useState(1);
   const [currentGutFeeling, setCurrentGutFeeling] = useState<GutFeeling | undefined>(undefined);
   const [showGutFeelingModal, setShowGutFeelingModal] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // Fetch data when screen comes into focus
   useFocusEffect(
@@ -34,6 +35,23 @@ export default function HomeScreen({ navigation }: any) {
       fetchData();
     }, [])
   );
+
+  // Auto-prompt for gut feeling check-in if not logged today
+  React.useEffect(() => {
+    // Only auto-prompt if:
+    // 1. Data has been fetched (isDataLoaded is true)
+    // 2. No gut feeling logged today (currentGutFeeling is undefined)
+    // 3. Modal is not already showing
+    if (isDataLoaded && currentGutFeeling === undefined && !showGutFeelingModal) {
+      // Small delay to let the screen render first
+      const timer = setTimeout(() => {
+        setShowGutFeelingModal(true);
+      }, 800); // 800ms delay for smooth UX
+
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [isDataLoaded, currentGutFeeling, showGutFeelingModal]);
 
   const fetchData = async () => {
     try {
@@ -51,9 +69,29 @@ export default function HomeScreen({ navigation }: any) {
       setAvgScore(avgScoreData);
       setTotalScans(profile?.total_scans || 0);
       setLevel(profile?.gigi_level || 1);
-      setCurrentGutFeeling(gutFeeling?.feeling);
+      
+      // Only use gut feeling if it's from TODAY
+      if (gutFeeling) {
+        const feelingDate = new Date(gutFeeling.logged_at);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // Check if feeling was logged today
+        if (feelingDate >= today) {
+          setCurrentGutFeeling(gutFeeling.feeling);
+        } else {
+          // Reset for new day - user needs to check in again
+          setCurrentGutFeeling(undefined);
+        }
+      } else {
+        setCurrentGutFeeling(undefined);
+      }
+      
+      // Mark data as loaded
+      setIsDataLoaded(true);
     } catch (error) {
       console.error('Error fetching data:', error);
+      setIsDataLoaded(true); // Set to true even on error to prevent infinite loading
     }
   };
 
@@ -78,46 +116,108 @@ export default function HomeScreen({ navigation }: any) {
   const getGigiEmotion = () => {
     if (currentGutFeeling) {
       switch (currentGutFeeling) {
-        case 'great': return 'happy-crown';
-        case 'okay': return 'happy-clap';
-        case 'bloated': return 'sad-frustrate';
-        case 'pain': return 'sad-sick';
-        case 'nauseous': return 'sad-cry';
+        case 'great': return 'happy-cute'; // Love/hearts - feeling amazing
+        case 'okay': return 'happy-clap'; // Clapping - doing okay
+        case 'bloated': return 'sad-frustrate'; // Frustrated - bloated and uncomfortable
+        case 'pain': return 'sad-cry'; // Crying - in pain
+        case 'nauseous': return 'sad-sick'; // Sick face - feeling nauseous
       }
     }
     // Fallback to score-based emotion
-    if (avgScore >= 90) return 'happy-crown';
-    if (avgScore >= 80) return 'happy-balloon';
-    if (avgScore >= 70) return 'happy-cute';
-    if (avgScore >= 60) return 'happy-clap';
-    if (avgScore >= 50) return 'shock-awe';
-    if (avgScore >= 40) return 'sad-frustrate';
-    if (avgScore >= 30) return 'sad-sick';
-    if (avgScore > 0) return 'sad-cry';
-    return 'happy-clap';
+    if (avgScore >= 90) return 'happy-crown'; // Champion - excellent score
+    if (avgScore >= 80) return 'happy-balloon'; // Celebrating - great score
+    if (avgScore >= 70) return 'happy-cute'; // Love - very good score
+    if (avgScore >= 60) return 'happy-clap'; // Clapping - good score
+    if (avgScore >= 50) return 'shock-awe'; // Shocked - could be better
+    if (avgScore >= 40) return 'sad-frustrate'; // Frustrated - not good
+    if (avgScore >= 30) return 'sad-sick'; // Sick - unhealthy
+    if (avgScore > 0) return 'sad-cry'; // Crying - very bad
+    return 'happy-clap'; // Default - neutral/ready
+  };
+
+  // Get tap indicator text based on Gigi's current emotion
+  const getTapIndicatorText = () => {
+    const emotion = getGigiEmotion();
+    
+    // Map emotions to descriptive text
+    switch (emotion) {
+      case 'happy-cute': return "Gigi's happy!";
+      case 'happy-crown': return "Gigi's thriving!";
+      case 'happy-balloon': return "Gigi's celebrating!";
+      case 'happy-clap': return "How's your gut?";
+      case 'sad-frustrate': return "Gigi's frustrated";
+      case 'sad-cry': return "Gigi's crying";
+      case 'sad-sick': return "Gigi's sick";
+      case 'shock-awe': return "Gigi's shocked";
+      default: return "How's your gut?";
+    }
   };
 
   // Get message based on gut feeling or avg score
   const getGigiMessage = () => {
+    const hour = new Date().getHours();
+    const timeOfDay = 
+      hour < 12 ? 'morning' : 
+      hour < 17 ? 'afternoon' : 
+      hour < 21 ? 'evening' : 'night';
+
+    // If user has logged gut feeling today
     if (currentGutFeeling) {
       switch (currentGutFeeling) {
-        case 'great': return "Your gut is feeling amazing! Let's keep it that way!";
-        case 'okay': return "Not bad! Let's make your next meal count!";
-        case 'bloated': return "Feeling bloated? I'll help you choose gut-friendly foods!";
-        case 'pain': return "Ouch! Let's be extra careful with what we eat today.";
-        case 'nauseous': return "Not feeling well? Stick to gentle, easy-to-digest foods.";
+        case 'great':
+          if (timeOfDay === 'morning') return "Yay! I'm feeling super happy this morning! Let's have an amazing day together!";
+          if (timeOfDay === 'afternoon') return "I'm so happy! You're taking such good care of me!";
+          if (timeOfDay === 'evening') return "Still feeling wonderful! Best day ever! You're the best!";
+          return "I'm feeling so good! Thanks for being so nice to me!";
+        
+        case 'okay':
+          if (timeOfDay === 'morning') return "Morning! I'm okay... but I know we can make today even better!";
+          if (timeOfDay === 'afternoon') return "I'm hanging in there... Some yummy healthy food would make me so happy!";
+          return "I'm okay! Let's finish the day strong together!";
+        
+        case 'bloated':
+          if (timeOfDay === 'morning') return "Oof... I'm feeling bloated and puffy... Please be gentle with me today!";
+          if (timeOfDay === 'afternoon') return "Still feeling bloated... Light foods would help me feel better!";
+          return "I'm so bloated... Can we have something gentle tonight?";
+        
+        case 'pain':
+          if (timeOfDay === 'morning') return "Owww! I'm hurting... Please feed me only soft, gentle foods today!";
+          if (timeOfDay === 'afternoon') return "I'm in pain... I need soothing foods to feel better!";
+          return "Still hurting... Please be extra gentle with me tonight!";
+        
+        case 'nauseous':
+          if (timeOfDay === 'morning') return "I don't feel good... Only bland, simple foods please!";
+          if (timeOfDay === 'afternoon') return "Feeling icky... Gentle foods only, pretty please!";
+          return "Still feeling yucky... Keep it super simple for me!";
       }
     }
-    // Fallback to score-based messages
-    if (avgScore >= 90) return "You're a health champion!";
-    if (avgScore >= 80) return "Amazing choices today!";
-    if (avgScore >= 70) return "Loving your healthy habits!";
-    if (avgScore >= 60) return "Great work, keep it up!";
-    if (avgScore >= 50) return "Hmm, could be healthier!";
-    if (avgScore >= 40) return "Let's aim higher next time!";
-    if (avgScore >= 30) return "These choices aren't helping...";
-    if (avgScore > 0) return "We need to talk about this...";
-    return "Tap me to tell me how your gut feels!";
+
+    // If user has scanned meals today (has avg score)
+    if (avgScore > 0) {
+      if (avgScore >= 90) {
+        if (timeOfDay === 'morning') return "Good morning! Yesterday was pawsome! Let's do it again!";
+        return "I'm so happy! You're feeding me the best food!";
+      }
+      if (avgScore >= 80) return "Yay! I love what you're giving me! You're amazing!";
+      if (avgScore >= 70) return "I'm happy! You're doing great! Keep it up!";
+      if (avgScore >= 60) return "Not bad! I'm doing okay!";
+      if (avgScore >= 50) return "Hmm... I could use yummier, healthier food...";
+      if (avgScore >= 40) return "I'm struggling a little... Can we do better?";
+      if (avgScore >= 30) return "I'm not feeling great about this food...";
+      return "I really need better food... Help me feel better!";
+    }
+
+    // Default: Fresh start, no gut feeling, no scans yet
+    if (timeOfDay === 'morning') {
+      return "Good morning! How am I feeling today? Tap me and let me know!";
+    }
+    if (timeOfDay === 'afternoon') {
+      return "Hey there! How am I doing? Tap me to check in!";
+    }
+    if (timeOfDay === 'evening') {
+      return "Good evening! How's your gut feeling? Tap me!";
+    }
+    return "Hiii! How am I feeling? Tap me to tell me!";
   };
 
   // Calculate progress to next level
@@ -159,7 +259,7 @@ export default function HomeScreen({ navigation }: any) {
             <View style={styles.tapIndicator}>
               <Ionicons name="hand-left" size={16} color={theme.colors.brand.coral} />
               <Text variant="caption1" weight="bold" style={styles.tapText}>
-                How's your gut?
+                {getTapIndicatorText()}
               </Text>
             </View>
             
@@ -193,20 +293,29 @@ export default function HomeScreen({ navigation }: any) {
         {/* Stats */}
         <View style={styles.statsRow}>
             <View style={styles.statItem}>
+                <View style={styles.statIconContainer}>
+                  <Ionicons name="restaurant-outline" size={20} color={theme.colors.brand.teal} />
+                </View>
                 <Text variant="title3" weight="bold" style={styles.statValue}>{todayScans}</Text>
-                <Text variant="caption1" style={styles.statLabel}>Today</Text>
+                <Text variant="caption1" style={styles.statLabel}>Scans Today</Text>
             </View>
              <View style={styles.statDivider} />
             <View style={styles.statItem}>
+                <View style={styles.statIconContainer}>
+                  <Ionicons name="flame-outline" size={20} color="#FFB84D" />
+                </View>
                 <Text variant="title3" weight="bold" style={styles.statValue}>{streak}</Text>
-                <Text variant="caption1" style={styles.statLabel}>Streak</Text>
+                <Text variant="caption1" style={styles.statLabel}>Day Streak</Text>
             </View>
              <View style={styles.statDivider} />
             <View style={styles.statItem}>
+                <View style={styles.statIconContainer}>
+                  <Ionicons name="analytics-outline" size={20} color={theme.colors.brand.coral} />
+                </View>
                 <Text variant="title3" weight="bold" style={styles.statValue}>
                   {avgScore !== null && avgScore !== undefined ? avgScore : '-'}
                 </Text>
-                <Text variant="caption1" style={styles.statLabel}>Today's Avg</Text>
+                <Text variant="caption1" style={styles.statLabel}>Avg Score</Text>
             </View>
         </View>
       </View>
@@ -342,25 +451,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: theme.borderRadius.xl,
     padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   statItem: {
     alignItems: 'center',
     flex: 1,
+    gap: theme.spacing.xs,
+  },
+  statIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.xs,
   },
   statValue: {
     color: theme.colors.text.white,
-    marginBottom: 2,
   },
   statLabel: {
     color: theme.colors.text.white,
     opacity: 0.6,
+    fontSize: 11,
   },
   statDivider: {
     width: 1,
-    height: 24,
+    height: 50,
     backgroundColor: 'rgba(255,255,255,0.1)',
   },
 });

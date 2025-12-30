@@ -3,6 +3,7 @@ import { View, StyleSheet, Modal, TouchableOpacity, Pressable } from 'react-nati
 import { Text } from './Text';
 import { theme } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
+import Gigi from './Gigi';
 
 export type GutFeeling = 'great' | 'okay' | 'bloated' | 'pain' | 'nauseous';
 
@@ -63,9 +64,31 @@ export const GutFeelingModal: React.FC<GutFeelingModalProps> = ({
   onSelect,
   currentFeeling,
 }) => {
+  const [previewFeeling, setPreviewFeeling] = React.useState<GutFeeling | undefined>(currentFeeling);
+
+  // Update preview when modal opens
+  React.useEffect(() => {
+    if (visible) {
+      setPreviewFeeling(currentFeeling);
+    }
+  }, [visible, currentFeeling]);
+
   const handleSelect = (feeling: GutFeeling) => {
     onSelect(feeling);
     onClose();
+  };
+
+  // Map feeling to Gigi emotion
+  const getGigiEmotion = (feeling?: GutFeeling) => {
+    if (!feeling) return 'happy-clap';
+    switch (feeling) {
+      case 'great': return 'happy-cute';
+      case 'okay': return 'happy-clap';
+      case 'bloated': return 'sad-frustrate';
+      case 'pain': return 'sad-cry';
+      case 'nauseous': return 'sad-sick';
+      default: return 'happy-clap';
+    }
   };
 
   return (
@@ -87,18 +110,33 @@ export const GutFeelingModal: React.FC<GutFeelingModalProps> = ({
             </TouchableOpacity>
           </View>
 
+          {/* Gigi Preview */}
+          <View style={styles.gigiPreview}>
+            <Gigi 
+              emotion={getGigiEmotion(previewFeeling) as any}
+              size="md"
+              animated={true}
+            />
+            <Text variant="caption1" style={styles.previewText}>
+              {previewFeeling ? `Feeling ${previewFeeling}` : 'Select how you feel'}
+            </Text>
+          </View>
+
           {/* Feelings List */}
           <View style={styles.feelingsList}>
             {FEELINGS.map((feeling) => {
               const isSelected = currentFeeling === feeling.id;
+              const isPreview = previewFeeling === feeling.id;
               return (
                 <TouchableOpacity
                   key={feeling.id}
                   style={[
                     styles.feelingItem,
                     isSelected && { borderColor: feeling.color, borderWidth: 2 },
+                    isPreview && !isSelected && { borderColor: feeling.color, borderWidth: 1, opacity: 0.8 },
                   ]}
                   onPress={() => handleSelect(feeling.id)}
+                  onPressIn={() => setPreviewFeeling(feeling.id)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.feelingLeft}>
@@ -160,6 +198,18 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: theme.spacing.xs,
+  },
+  gigiPreview: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
+  },
+  previewText: {
+    color: theme.colors.text.white,
+    opacity: 0.7,
+    marginTop: theme.spacing.sm,
+    textAlign: 'center',
+    textTransform: 'capitalize',
   },
   feelingsList: {
     gap: theme.spacing.md,
