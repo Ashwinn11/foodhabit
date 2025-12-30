@@ -25,8 +25,7 @@ module.exports = {
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         NSCameraUsageDescription: "GutScan needs camera access to scan your meals and analyze their gut health impact.",
-        NSPhotoLibraryUsageDescription: "GutScan needs photo library access to select meal images for analysis.",
-        NSUserTrackingUsageDescription: "This allows us to provide you with personalized health insights and improve our service."
+        NSPhotoLibraryUsageDescription: "GutScan needs photo library access to select meal images for analysis."
       },
       config: {
         usesNonExemptEncryption: false

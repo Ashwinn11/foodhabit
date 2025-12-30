@@ -26,6 +26,13 @@ export const RulesStep: React.FC<RulesStepProps> = ({ onComplete }) => {
           <RuleItem idx={2} text="Notice how different foods make you feel 💭" />
           <RuleItem idx={3} text="Keep your streak going - you got this! 🔥" />
         </View>
+
+        {/* Medical Disclaimer - Required by Apple Guidelines 1.4.1 */}
+        <View style={styles.disclaimerContainer}>
+          <Text variant="caption2" style={styles.disclaimerText}>
+            ⚕️ Medical Disclaimer: GutScan provides educational insights only and is not a medical device. Always consult with a qualified healthcare provider before making dietary changes or if you have health concerns.
+          </Text>
+        </View>
       </ScrollView>
       
       <View style={styles.footer}>
@@ -107,6 +114,19 @@ const styles = StyleSheet.create({
   ruleText: {
     color: theme.colors.text.white,
     flex: 1,
+  },
+  disclaimerContainer: {
+    marginTop: theme.spacing.xl,
+    padding: theme.spacing.md,
+    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 118, 100, 0.3)',
+  },
+  disclaimerText: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    lineHeight: 18,
   },
   footer: {
     padding: theme.spacing.xl,

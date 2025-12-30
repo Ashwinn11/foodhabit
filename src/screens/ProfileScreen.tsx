@@ -83,8 +83,12 @@ export default function ProfileScreen({ navigation }: any) {
     }
   };
 
-  const handleSupport = () => {
+  const handleContact = () => {
     Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=GutScan Support`);
+  };
+
+  const handleSupport = () => {
+    navigation.navigate('Support');
   };
 
   const handlePremium = async () => {
@@ -93,6 +97,15 @@ export default function ProfileScreen({ navigation }: any) {
       navigation.navigate('Paywall');
     }
     // If already subscribed, do nothing - user is already premium
+  };
+
+  const handleManageSubscription = () => {
+    // Open iOS subscription management settings
+    // This is required by Apple App Store guidelines for subscription apps
+    const url = 'https://apps.apple.com/account/subscriptions';
+    Linking.openURL(url).catch(err => {
+      console.error('Failed to open subscription management:', err);
+    });
   };
 
   const getDisplayName = () => {
@@ -163,15 +176,39 @@ export default function ProfileScreen({ navigation }: any) {
               thumbColor={Platform.OS === 'ios' ? '#fff' : notificationsEnabled ? theme.colors.brand.teal : '#fff'}
             />
           </View>
+          
+          <TouchableOpacity style={styles.settingRow} onPress={handleManageSubscription}>
+            <View style={styles.settingInfo}>
+              <Ionicons name="card" size={22} color={theme.colors.text.white} />
+              <Text variant="body" style={styles.settingLabel}>Manage Subscription</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
           <Text variant="caption1" weight="semiBold" style={styles.sectionTitle}>SUPPORT</Text>
           
-          <TouchableOpacity style={styles.settingRow} onPress={handleSupport}>
+           <TouchableOpacity style={styles.settingRow} onPress={handleContact}>
+             <View style={styles.settingInfo}>
+               <Ionicons name="help-circle" size={22} color={theme.colors.text.white} />
+               <Text variant="body" style={styles.settingLabel}>Help & Support</Text>
+             </View>
+             <Ionicons name="chevron-forward" size={18} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
+           </TouchableOpacity>
+           
+           <TouchableOpacity style={styles.settingRow} onPress={handleSupport}>
+             <View style={styles.settingInfo}>
+               <Ionicons name="information-circle" size={22} color={theme.colors.text.white} />
+               <Text variant="body" style={styles.settingLabel}>Support</Text>
+             </View>
+             <Ionicons name="chevron-forward" size={18} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
+           </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.settingRow} onPress={() => navigation.navigate('HowItWorks')}>
             <View style={styles.settingInfo}>
-              <Ionicons name="help-circle" size={22} color={theme.colors.text.white} />
-              <Text variant="body" style={styles.settingLabel}>Help & Support</Text>
+              <Ionicons name="bulb" size={22} color={theme.colors.text.white} />
+              <Text variant="body" style={styles.settingLabel}>How It Works</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
           </TouchableOpacity>

@@ -8,6 +8,8 @@ export { default as OnboardingScreen } from './OnboardingScreen';
 export { SplashScreen } from './SplashScreen';
 export { default as TermsOfServiceScreen } from './TermsOfServiceScreen';
 export { default as PrivacyPolicyScreen } from './PrivacyPolicyScreen';
+export { default as SupportScreen } from './SupportScreen';
 export { default as MealsHistoryScreen } from './MealsHistoryScreen';
 export { default as MealDetailScreen } from './MealDetailScreen';
+export { default as HowItWorksScreen } from './HowItWorksScreen';
 

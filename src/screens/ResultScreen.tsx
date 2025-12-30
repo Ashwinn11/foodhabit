@@ -657,6 +657,26 @@ export default function ResultScreen({ route, navigation }: any) {
           </LinearGradient>
         </View>
 
+        {/* Medical Disclaimer - Required by Apple Guidelines 1.4.1 */}
+        <View style={styles.disclaimerSection}>
+          <LinearGradient
+            colors={['rgba(255, 118, 100, 0.08)', 'rgba(255, 118, 100, 0.02)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.disclaimerCard}
+          >
+            <View style={styles.disclaimerHeader}>
+              <Ionicons name="medical" size={18} color={theme.colors.brand.coral} />
+              <Text variant="caption1" weight="semiBold" style={styles.disclaimerTitle}>
+                Medical Disclaimer
+              </Text>
+            </View>
+            <Text variant="caption2" style={styles.disclaimerText}>
+              GutScan provides educational insights only and is not a medical device. This analysis is not a substitute for professional medical advice, diagnosis, or treatment. Always consult with a qualified healthcare provider before making dietary changes or if you have health concerns.
+            </Text>
+          </LinearGradient>
+        </View>
+
         {/* Actions */}
         <View style={[styles.actions, { paddingBottom: insets.bottom + theme.spacing.xl }]}>
           <TouchableOpacity style={styles.scanAnotherButton} onPress={handleScanAnother}>
@@ -988,6 +1008,30 @@ const styles = StyleSheet.create({
   breakdownValue: {
     color: theme.colors.text.white,
     fontSize: 15,
+  },
+  disclaimerSection: {
+    paddingHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+  },
+  disclaimerCard: {
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 118, 100, 0.2)',
+  },
+  disclaimerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
+  },
+  disclaimerTitle: {
+    color: theme.colors.brand.coral,
+  },
+  disclaimerText: {
+    color: theme.colors.text.white,
+    opacity: 0.8,
+    lineHeight: 18,
   },
   actions: {
     paddingHorizontal: theme.spacing.xl,

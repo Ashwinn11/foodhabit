@@ -34,7 +34,7 @@ export default function PrivacyPolicyScreen({ navigation }: any) {
       >
         <View style={styles.lastUpdated}>
           <Text variant="caption1" style={styles.lastUpdatedText}>
-            Last Updated: December 29, 2025
+            Last Updated: December 30, 2025
           </Text>
         </View>
 
