@@ -1,6 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Ellipse } from 'react-native-svg';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedProps, 
+  withRepeat, 
+  withSequence, 
+  withTiming,
+  Easing
+} from 'react-native-reanimated';
 import MascotWrapper from './MascotWrapper';
 
 interface MascotProps {
@@ -9,9 +17,50 @@ interface MascotProps {
   animated?: boolean;
 }
 
-export default function SadFrustrate({ size = 160, style }: MascotProps) {
+const AnimatedG = Animated.createAnimatedComponent(G);
+
+export default function SadFrustrate({ size = 160, style, animated = false }: MascotProps) {
   // SVG will render at 85% of the container size for consistent visual appearance
   const svgSize = size * 0.85;
+
+  const shake = useSharedValue(0);
+
+  useEffect(() => {
+    if (animated) {
+      shake.value = withRepeat(
+        withSequence(
+          withTiming(-3, { duration: 50, easing: Easing.linear }),
+          withTiming(3, { duration: 50, easing: Easing.linear }),
+          withTiming(-3, { duration: 50, easing: Easing.linear }),
+          withTiming(3, { duration: 50, easing: Easing.linear }),
+          withTiming(0, { duration: 50, easing: Easing.linear }),
+          withTiming(0, { duration: 1000 }) // Pause between shakes
+        ),
+        -1,
+        true
+      );
+    } else {
+      shake.value = 0;
+    }
+  }, [animated]);
+
+  const leftDecorProps = useAnimatedProps(() => {
+    return {
+      transform: [
+        { translateX: shake.value },
+        { translateY: shake.value * 0.5 }
+      ]
+    } as any;
+  });
+
+  const rightDecorProps = useAnimatedProps(() => {
+    return {
+      transform: [
+        { translateX: -shake.value },
+        { translateY: shake.value * 0.5 }
+      ]
+    } as any;
+  });
 
   return (
     <MascotWrapper size={size} style={style}>
@@ -127,26 +176,32 @@ export default function SadFrustrate({ size = 160, style }: MascotProps) {
               d="M270.29,188.07c-.14,0-.28-.01-.42-.03l-34.44-5.62c-1.02-.16-1.84-.92-2.09-1.92-.25-1,.12-2.05.94-2.68l27.87-21.27c1.14-.87,2.75-.65,3.62.49.86,1.14.65,2.76-.49,3.62l-23.1,17.63,28.52,4.65c1.41.23,2.36,1.56,2.14,2.97-.21,1.27-1.3,2.17-2.55,2.17Z" 
               fill="#ff3b5c"
             />
-            {/* Decorative Element - Top Left */}
-            <Path 
-              d="M48.93,107.02c-.78,0-1.56-.36-2.07-1.03l-11.6-15.47-12.25,10.37c-.62.52-1.45.73-2.24.55-.79-.18-1.45-.71-1.79-1.45l-11.03-24.28c-.59-1.3-.02-2.83,1.28-3.42,1.3-.59,2.83-.02,3.42,1.28l9.62,21.17,11.74-9.93c.54-.46,1.25-.68,1.96-.6.71.08,1.35.45,1.78,1.02l13.24,17.66c.86,1.14.62,2.76-.52,3.62-.46.35-1.01.52-1.55.52Z" 
-              fill="#fe537a"
-            />
-            {/* Decorative Element - Left */}
-            <Path 
-              d="M2.58,158.88c-1.37,0-2.51-1.07-2.58-2.45-.07-1.42,1.03-2.64,2.45-2.71l18.74-.94-4.52-14.47c-.23-.74-.12-1.55.31-2.2.43-.65,1.12-1.07,1.9-1.15l22.07-2.21c1.41-.15,2.68.89,2.83,2.31.14,1.42-.89,2.69-2.31,2.83l-18.92,1.89,4.57,14.63c.24.76.11,1.59-.35,2.25-.46.66-1.19,1.06-1.99,1.1l-22.07,1.1s-.09,0-.13,0Z" 
-              fill="#fe537a"
-            />
-            {/* Decorative Element - Top Right */}
-            <Path 
-              d="M387.72,168.82c-.44,0-.89-.12-1.29-.34-.7-.4-1.18-1.11-1.28-1.92l-1.81-14.47-15.73,5.55c-1.35.48-2.82-.23-3.30-1.58-.48-1.35.23-2.82,1.58-3.30l18.76-6.62c.74-.26,1.55-.17,2.22.24.66.41,1.11,1.10,1.20,1.88l1.78,14.25,20.02-8.58c1.31-.57,2.83.05,3.39,1.36.56,1.31-.05,2.83-1.36,3.39l-23.17,9.93c-.33.14-.67.21-1.02.21Z" 
-              fill="#fe537a"
-            />
-            {/* Decorative Element - Right */}
-            <Path 
-              d="M385.51,119.16s-.07,0-.11,0l-26.49-1.1c-1.43-.06-2.53-1.26-2.47-2.69.06-1.43,1.26-2.52,2.69-2.47l23.24.97-2.71-14.46c-.13-.68.03-1.39.43-1.97.40-.57,1.02-.95,1.71-1.06l20.97-3.31c1.42-.22,2.73.74,2.95,2.15.22,1.41-.74,2.73-2.15,2.95l-18.34,2.89,2.82,15.04c.14.77-.07,1.57-.59,2.17-.49.57-1.21.89-1.95.89Z" 
-              fill="#fe537a"
-            />
+            {/* Decorative Elements - Animated */}
+            <AnimatedG animatedProps={leftDecorProps}>
+              {/* Decorative Element - Top Left */}
+              <Path 
+                d="M48.93,107.02c-.78,0-1.56-.36-2.07-1.03l-11.6-15.47-12.25,10.37c-.62.52-1.45.73-2.24.55-.79-.18-1.45-.71-1.79-1.45l-11.03-24.28c-.59-1.3-.02-2.83,1.28-3.42,1.3-.59,2.83-.02,3.42,1.28l9.62,21.17,11.74-9.93c.54-.46,1.25-.68,1.96-.6.71.08,1.35.45,1.78,1.02l13.24,17.66c.86,1.14.62,2.76-.52,3.62-.46.35-1.01.52-1.55.52Z" 
+                fill="#fe537a"
+              />
+              {/* Decorative Element - Left */}
+              <Path 
+                d="M2.58,158.88c-1.37,0-2.51-1.07-2.58-2.45-.07-1.42,1.03-2.64,2.45-2.71l18.74-.94-4.52-14.47c-.23-.74-.12-1.55.31-2.2.43-.65,1.12-1.07,1.9-1.15l22.07-2.21c1.41-.15,2.68.89,2.83,2.31.14,1.42-.89,2.69-2.31,2.83l-18.92,1.89,4.57,14.63c.24.76.11,1.59-.35,2.25-.46.66-1.19,1.06-1.99,1.1l-22.07,1.1s-.09,0-.13,0Z" 
+                fill="#fe537a"
+              />
+            </AnimatedG>
+            
+            <AnimatedG animatedProps={rightDecorProps}>
+              {/* Decorative Element - Top Right */}
+              <Path 
+                d="M387.72,168.82c-.44,0-.89-.12-1.29-.34-.7-.4-1.18-1.11-1.28-1.92l-1.81-14.47-15.73,5.55c-1.35.48-2.82-.23-3.30-1.58-.48-1.35.23-2.82,1.58-3.30l18.76-6.62c.74-.26,1.55-.17,2.22.24.66.41,1.11,1.10,1.20,1.88l1.78,14.25,20.02-8.58c1.31-.57,2.83.05,3.39,1.36.56,1.31-.05,2.83-1.36,3.39l-23.17,9.93c-.33.14-.67.21-1.02.21Z" 
+                fill="#fe537a"
+              />
+              {/* Decorative Element - Right */}
+              <Path 
+                d="M385.51,119.16s-.07,0-.11,0l-26.49-1.1c-1.43-.06-2.53-1.26-2.47-2.69.06-1.43,1.26-2.52,2.69-2.47l23.24.97-2.71-14.46c-.13-.68.03-1.39.43-1.97.40-.57,1.02-.95,1.71-1.06l20.97-3.31c1.42-.22,2.73.74,2.95,2.15.22,1.41-.74,2.73-2.15,2.95l-18.34,2.89,2.82,15.04c.14.77-.07,1.57-.59,2.17-.49.57-1.21.89-1.95.89Z" 
+                fill="#fe537a"
+              />
+            </AnimatedG>
           </G>
         </G>
       </Svg>
