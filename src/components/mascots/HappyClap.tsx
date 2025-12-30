@@ -1,7 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ViewStyle } from 'react-native';
 import Svg, { Path, G, Ellipse } from 'react-native-svg';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedProps, 
+  withSequence, 
+  withTiming, 
+  withRepeat,
+  withDelay,
+  interpolate,
+} from 'react-native-reanimated';
 import MascotWrapper from './MascotWrapper';
+
+const AnimatedG = Animated.createAnimatedComponent(G);
 
 interface MascotProps {
   size?: number;
@@ -9,14 +20,92 @@ interface MascotProps {
   animated?: boolean;
 }
 
-export default function HappyClap({ size = 160, style }: MascotProps) {
+export default function HappyClap({ size = 160, style, animated = true }: MascotProps) {
   // SVG will render at 85% of the container size for consistent visual appearance
   const svgSize = size * 0.85;
+
+  const clapAnim = useSharedValue(0);
+  const eyeScale = useSharedValue(1);
+  const bounce = useSharedValue(0);
+
+  useEffect(() => {
+    if (!animated) {
+      clapAnim.value = 0;
+      eyeScale.value = 1;
+      bounce.value = 0;
+      return;
+    }
+
+    // Clapping animation: fast double clap then pause
+    clapAnim.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 150 }),
+        withTiming(0, { duration: 150 }),
+        withTiming(1, { duration: 150 }),
+        withTiming(0, { duration: 150 }),
+        withDelay(800, withTiming(0, { duration: 0 }))
+      ),
+      -1,
+      false
+    );
+
+    // Subtle body bounce
+    bounce.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 400 }),
+        withTiming(0, { duration: 400 }),
+      ),
+      -1,
+      true
+    );
+
+    // Eye blinking
+    let timeout: NodeJS.Timeout;
+    const blink = () => {
+      eyeScale.value = withSequence(
+        withTiming(0.1, { duration: 100 }),
+        withTiming(1, { duration: 100 })
+      );
+      const nextBlink = Math.random() * 3000 + 2000;
+      timeout = setTimeout(blink, nextBlink);
+    };
+    timeout = setTimeout(blink, 2000);
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [animated]);
+
+  const leftHandProps = useAnimatedProps(() => ({
+    transform: [
+      { translateX: interpolate(clapAnim.value, [0, 1], [0, 12]) },
+    ]
+  }));
+
+  const rightHandProps = useAnimatedProps(() => ({
+    transform: [
+      { translateX: interpolate(clapAnim.value, [0, 1], [0, -12]) },
+    ]
+  }));
+
+  const eyeAnimatedProps = useAnimatedProps(() => ({
+    transform: [
+      { translateY: 175 },
+      { scaleY: eyeScale.value },
+      { translateY: -175 },
+    ]
+  }));
+
+  const bodyAnimatedProps = useAnimatedProps(() => ({
+    transform: [
+      { translateY: interpolate(bounce.value, [0, 1], [0, -5]) }
+    ]
+  }));
 
   return (
     <MascotWrapper size={size} style={style}>
       <Svg viewBox="0 0 335.36 433.7" width={svgSize} height={svgSize}>
-        <G>
+        <AnimatedG animatedProps={bodyAnimatedProps}>
           <G>
             <Path d="M146.75,422.88c-3.32-3.14-7.58-5.79-19.36-3.93-11.49,1.82-13.31,11.62-12.12,13.41,1.19,1.79,28,1.8,32.76,0,5.07-1.91.47-7.82-1.28-9.48Z" fill="#ff3b5c"/>
             <Path d="M142.82,425.7c-.9,0-1.76-.48-2.22-1.32-18.7-34.6,3.6-65.03,3.83-65.33.84-1.11,2.42-1.34,3.53-.5,1.11.83,1.34,2.41.51,3.53h0c-.85,1.14-20.57,28.21-3.43,59.91.66,1.23.21,2.75-1.02,3.42-.38.2-.79.3-1.2.3Z" fill="#ff3b5c"/>
@@ -41,20 +130,25 @@ export default function HappyClap({ size = 160, style }: MascotProps) {
           <Path d="M122.72,43.59c-14.33-9.8-63.32,54.13-46.98,70.47,16.34,16.34,66.38-57.19,46.98-70.47Z" fill="#fcbdcf"/>
           <Ellipse cx="123.74" cy="227.42" rx="17.87" ry="15.83" fill="#fe537a"/>
           <Ellipse cx="245.03" cy="227.42" rx="17.87" ry="15.83" fill="#fe537a"/>
-          <G>
+          <AnimatedG animatedProps={eyeAnimatedProps}>
             <Path d="M149.9,184.78c-1.24,0-2.32-.91-2.49-2.17-.09-.61-2.32-15.11-14.44-15.11s-16.91,14.02-16.95,14.17c-.4,1.33-1.81,2.09-3.14,1.68-1.33-.4-2.08-1.81-1.68-3.14,1.86-6.14,8.81-17.74,21.77-17.74s18.49,12.73,19.44,19.46c.19,1.38-.77,2.65-2.15,2.85-.12.02-.24.02-.35.02Z" fill="#ff3b5c"/>
             <Path d="M222.51,184.78c-.12,0-.23,0-.35-.02-1.38-.19-2.34-1.47-2.15-2.85.94-6.73,6.22-19.46,19.44-19.46s19.91,11.61,21.77,17.74c.4,1.33-.35,2.74-1.68,3.14-1.33.4-2.74-.35-3.14-1.68-.18-.6-4.52-14.17-16.95-14.17s-14.42,14.96-14.44,15.11c-.18,1.26-1.26,2.17-2.49,2.17Z" fill="#ff3b5c"/>
-          </G>
-          <Path d="M250.17,307.27c-28.88,0-53.58-30.76-54.7-32.16-.86-1.09-.68-2.68.41-3.54,1.09-.86,2.68-.68,3.54.41.27.35,27.77,34.56,56.39,29.79,18.22-3.03,33.33-21.1,44.91-53.72.47-1.31,1.91-2,3.22-1.53,1.31.47,2,1.91,1.53,3.22-12.24,34.48-28.67,53.67-48.85,57.01-2.17.36-4.33.53-6.46.53Z" fill="#ff3b5c"/>
-          <Path d="M122.6,307.27c-2.13,0-4.29-.17-6.46-.53-20.18-3.35-36.61-22.53-48.85-57.01-.47-1.31.22-2.75,1.53-3.22,1.31-.47,2.75.22,3.22,1.53,11.58,32.62,26.69,50.7,44.92,53.72,28.66,4.76,56.1-29.45,56.38-29.79.86-1.09,2.45-1.28,3.54-.41,1.09.86,1.28,2.45.41,3.54-1.11,1.4-25.82,32.16-54.7,32.16Z" fill="#ff3b5c"/>
-          <Path d="M174.69,277.14s9.45-6.75,11.7-17.55c1.96-9.42-4.9-13.46-9.45-10.8-5.4,3.15-6.75,26.56-6.75,26.56l4.5,1.8Z" fill="#ff3b5c"/>
-          <Path d="M197.63,277.14s-9.45-6.75-11.7-17.55c-1.96-9.42,4.9-13.46,9.45-10.8,5.4,3.15,6.75,26.56,6.75,26.56l-4.5,1.8Z" fill="#ff3b5c"/>
+          </AnimatedG>
+          <AnimatedG animatedProps={rightHandProps}>
+            <Path d="M250.17,307.27c-28.88,0-53.58-30.76-54.7-32.16-.86-1.09-.68-2.68.41-3.54,1.09-.86,2.68-.68,3.54.41.27.35,27.77,34.56,56.39,29.79,18.22-3.03,33.33-21.1,44.91-53.72.47-1.31,1.91-2,3.22-1.53,1.31.47,2,1.91,1.53,3.22-12.24,34.48-28.67,53.67-48.85,57.01-2.17.36-4.33.53-6.46.53Z" fill="#ff3b5c"/>
+            <Path d="M197.63,277.14s-9.45-6.75-11.7-17.55c-1.96-9.42,4.9-13.46,9.45-10.8,5.4,3.15,6.75,26.56,6.75,26.56l-4.5,1.8Z" fill="#ff3b5c"/>
+          </AnimatedG>
+          <AnimatedG animatedProps={leftHandProps}>
+            <Path d="M122.6,307.27c-2.13,0-4.29-.17-6.46-.53-20.18-3.35-36.61-22.53-48.85-57.01-.47-1.31.22-2.75,1.53-3.22,1.31-.47,2.75.22,3.22,1.53,11.58,32.62,26.69,50.7,44.92,53.72,28.66,4.76,56.1-29.45,56.38-29.79.86-1.09,2.45-1.28,3.54-.41,1.09.86,1.28,2.45.41,3.54-1.11,1.4-25.82,32.16-54.7,32.16Z" fill="#ff3b5c"/>
+            <Path d="M174.69,277.14s9.45-6.75,11.7-17.55c1.96-9.42-4.9-13.46-9.45-10.8-5.4,3.15-6.75,26.56-6.75,26.56l4.5,1.8Z" fill="#ff3b5c"/>
+          </AnimatedG>
           <G>
             <Path d="M155.92,205.29c-7.17,7.17,16.78,26.01,31.04,26.01s31.82-18.43,29.36-24.33c-4.19-10.07-53.69-8.39-60.4-1.68Z" fill="#5e041c"/>
             <Path d="M171.86,215.36c-4.63,4.63,6.71,10.91,13.42,10.91s18.46-5.87,16.78-10.07c-1.68-4.19-26.85-4.19-30.2-.84Z" fill="#ff0d36"/>
           </G>
-        </G>
+        </AnimatedG>
       </Svg>
     </MascotWrapper>
   );
 }
+
