@@ -27,9 +27,7 @@ module.exports = {
         NSCameraUsageDescription: "GutScan needs camera access to scan your meals and analyze their gut health impact.",
         NSPhotoLibraryUsageDescription: "GutScan needs photo library access to select meal images for analysis."
       },
-      config: {
-        usesNonExemptEncryption: false
-      }
+
     },
     plugins: [
       "expo-apple-authentication",
