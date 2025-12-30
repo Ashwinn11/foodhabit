@@ -6,11 +6,6 @@ interface PaywallStepProps {
 }
 
 export const PaywallStep: React.FC<PaywallStepProps> = ({ onComplete }) => {
-  return (
-    <RevenueCatPaywall 
-      onSubscribe={onComplete}
-      showCloseButton={false}
-    />
-  );
+  return <RevenueCatPaywall onSubscribe={onComplete} />;
 };
 

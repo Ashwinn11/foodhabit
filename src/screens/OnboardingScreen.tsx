@@ -3,26 +3,28 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../theme';
 import { ProgressBar, Container } from '../components';
-import { 
-  QuizStep, 
-  ResultsStep, 
-  InsightStep, 
-  PlanStep, 
-  RulesStep
+import {
+  QuizStep,
+  ResultsStep,
+  InsightStep,
+  PlanStep,
+  RulesStep,
+  PaywallStep
 } from './onboarding';
 
 interface OnboardingScreenProps {
   onComplete: () => void;
 }
 
-type Step = 
-  | 'quiz' 
-  | 'results' 
-  | 'insight_symptom' 
-  | 'insight_solution' 
+type Step =
+  | 'quiz'
+  | 'results'
+  | 'insight_symptom'
+  | 'insight_solution'
   | 'insight_features'
-  | 'plan' 
-  | 'rules';
+  | 'plan'
+  | 'rules'
+  | 'paywall';
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [currentStep, setCurrentStep] = useState<Step>('quiz');
@@ -55,9 +57,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         setCurrentStep('rules');
         setProgress(0.9);
         break;
-      case 'rules':
-        onComplete();
-        break;
+       case 'rules':
+         setCurrentStep('paywall');
+         setProgress(1.0);
+         break;
     }
   };
 
@@ -83,13 +86,17 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         setCurrentStep('insight_features');
         setProgress(0.6);
         break;
-      case 'rules':
-        setCurrentStep('plan');
-        setProgress(0.75);
-        break;
-      default:
-        // No back action for quiz start
-        break;
+       case 'rules':
+         setCurrentStep('plan');
+         setProgress(0.75);
+         break;
+       case 'paywall':
+         setCurrentStep('rules');
+         setProgress(0.9);
+         break;
+       default:
+         // No back action for quiz start
+         break;
     }
   };
 
@@ -118,33 +125,37 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         return <InsightStep type="features" onComplete={nextStep} />;
       case 'plan':
         return <PlanStep onComplete={nextStep} />;
-      case 'rules':
-        return <RulesStep onComplete={nextStep} />;
-      default:
-        return null; // Should not happen
-    }
+       case 'rules':
+         return <RulesStep onComplete={nextStep} />;
+       case 'paywall':
+         return <PaywallStep onComplete={onComplete} />;
+       default:
+         return null; // Should not happen
+     }
   };
 
-  const showBack = currentStep !== 'quiz' && currentStep !== 'results';
+  const showBack = currentStep !== 'quiz' && currentStep !== 'results' && currentStep !== 'paywall';
 
   return (
-    <Container style={styles.container}>
+    <Container style={styles.container} safeArea={currentStep !== 'paywall'}>
       {/* Header / Progress */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          {showBack && (
-            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color={theme.colors.text.white} />
-            </TouchableOpacity>
-          )}
+      {currentStep !== 'paywall' && (
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            {showBack && (
+              <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                <Ionicons name="arrow-back" size={24} color={theme.colors.text.white} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.progressBarContainer}>
+            <ProgressBar progress={progress} />
+          </View>
+
+          <View style={styles.headerRight} />
         </View>
-        
-        <View style={styles.progressBarContainer}>
-          <ProgressBar progress={progress} />
-        </View>
-        
-        <View style={styles.headerRight} />
-      </View>
+      )}
 
       {/* Main Content Area */}
       <View style={styles.content}>
