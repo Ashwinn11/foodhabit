@@ -286,7 +286,7 @@ export default function HomeScreen({ navigation }: any) {
         >
           <Ionicons name="camera" size={28} color={theme.colors.brand.white} />
           <Text variant="title3" weight="bold" style={styles.scanButtonText}>
-            Scan Meal
+            Feed me!
           </Text>
         </TouchableOpacity>
 

@@ -16,7 +16,7 @@ import {
 } from '@expo-google-fonts/nunito';
 import { useAuth } from './src/hooks/useAuth';
 import { registerForPushNotificationsAsync } from './src/services/notificationService';
-import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, PaywallScreen, OnboardingScreen, SplashScreen, TermsOfServiceScreen, PrivacyPolicyScreen } from './src/screens';
+import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, PaywallScreen, OnboardingScreen, SplashScreen, TermsOfServiceScreen, PrivacyPolicyScreen, MealsHistoryScreen, MealDetailScreen } from './src/screens';
 
 import AuthCallbackScreen from './src/screens/AuthCallbackScreen';
 import { theme } from './src/theme';
@@ -42,13 +42,14 @@ function MainTabs() {
           borderTopWidth: 1,
           paddingBottom: 8,
           paddingTop: 8,
-          height: 60,
+          height: 65,
         },
         tabBarActiveTintColor: theme.colors.brand.coral,
         tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
         tabBarLabelStyle: {
           fontSize: 12,
           fontFamily: theme.fontFamily.semiBold,
+          marginTop: -4,
         },
       }}
     >
@@ -59,6 +60,16 @@ function MainTabs() {
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="MealsTab" 
+        component={MealsHistoryScreen}
+        options={{
+          tabBarLabel: 'Meals',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="restaurant" size={size} color={color} />
           ),
         }}
       />
@@ -207,6 +218,11 @@ function AppContent() {
             name="Paywall" 
             component={PaywallScreen}
             options={{ presentation: 'modal', gestureEnabled: true }}
+          />
+          <Stack.Screen 
+            name="MealDetail" 
+            component={MealDetailScreen}
+            options={{ presentation: 'card', gestureEnabled: true }}
           />
           <Stack.Screen 
             name="TermsOfService" 
