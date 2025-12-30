@@ -46,6 +46,8 @@ const Modal: React.FC<ModalProps> = ({
     }
   };
 
+  const backdropOpacity = variant === 'error' ? 1.0 : 0.5;
+
   return (
     <RNModal
       visible={visible}
@@ -54,7 +56,7 @@ const Modal: React.FC<ModalProps> = ({
       onRequestClose={onClose}
     >
       <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
+        <View style={[styles.overlay, { backgroundColor: `rgba(0, 0, 0, ${backdropOpacity})` }]}>
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.keyboardView}

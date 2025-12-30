@@ -159,20 +159,74 @@ export default function ResultScreen({ route, navigation }: any) {
 
       let identifiedFoods: IdentifiedFood[];
       
-      try {
-        // Try AI food recognition with uploaded URL
-        const { recognizeFood } = await import('../services/foodRecognitionService');
-        identifiedFoods = await recognizeFood(imageUpload.url!);
-        
-        // Check if Gemini failed to identify food
-        if (identifiedFoods.length === 0 || 
-            (identifiedFoods.length === 1 && identifiedFoods[0].name === "Unable to analyze")) {
-          console.log('No foods identified by AI');
-          setLoading(false);
-          setErrorMessage('No food detected in the image. Please retake a clear photo of your meal.');
-          setErrorModalVisible(true);
-          return;
-        }
+       try {
+         // Try AI food recognition with uploaded URL
+         const { recognizeFood } = await import('../services/foodRecognitionService');
+         identifiedFoods = await recognizeFood(imageUpload.url!);
+
+         console.log('AI identified foods:', identifiedFoods.map(f => f.name));
+
+         // Check if Gemini failed to identify food
+         if (identifiedFoods.length === 0 ||
+             (identifiedFoods.length === 1 && identifiedFoods[0].name === "Unable to analyze")) {
+           console.log('No foods identified by AI');
+           setLoading(false);
+           setErrorMessage('No food detected in the image. Please retake a clear photo of your meal.');
+           setErrorModalVisible(true);
+           return;
+         }
+
+         // Filter out generic/non-food items before proceeding
+         const filteredFoods = identifiedFoods.filter(f => {
+           const name = f.name.toLowerCase();
+           const excluded = [
+             'food', 'tableware', 'ingredient', 'recipe', 'cuisine', 'dish', 'meal',
+             'cooking', 'produce', 'vegetable', 'dishware', 'serveware', 'cutlery',
+             'plate', 'bowl', 'glass', 'cup', 'fork', 'knife', 'spoon', 'utensil',
+             'table', 'chair', 'background', 'wall', 'floor', 'ceiling', 'surface',
+             'container', 'packaging', 'wrapper', 'bag', 'box', 'bottle', 'can',
+             'napkin', 'towel', 'cloth', 'fabric', 'wood', 'metal', 'plastic',
+             'empty', 'blank', 'nothing', 'no food', 'no item', 'no food detected',
+             'unable to analyze', 'unable to detect', 'no foods found', 'no meal detected'
+           ];
+
+           // Exclude if in the list or contains generic terms
+           if (excluded.includes(name) ||
+               name.includes('cuisine') ||
+               name.includes('dishware') ||
+               name.includes('serveware') ||
+               name.includes('utensil') ||
+               name.includes('container') ||
+               name.includes('packaging') ||
+               name.includes('empty') ||
+               name.includes('blank') ||
+               name.includes('nothing')) return false;
+
+           // Also exclude foods that seem like false positives:
+           // - No gut health verdict or verdict is 'neutral' with no benefits/warnings
+           const hasGutData = f.gut_health_verdict &&
+                             f.gut_health_verdict !== 'neutral' &&
+                             ((f.gut_benefits && f.gut_benefits.length > 0) ||
+                              (f.gut_warnings && f.gut_warnings.length > 0));
+
+           if (!hasGutData) return false;
+
+           return true;
+         });
+
+         console.log('Filtered foods:', filteredFoods.map(f => f.name));
+
+         // If no meaningful foods remain after filtering, treat as no food detected
+         if (filteredFoods.length === 0) {
+           console.log('No meaningful foods identified after filtering out generic terms');
+           setLoading(false);
+           setErrorMessage('No food detected in the image. Please retake a clear photo of your meal.');
+           setErrorModalVisible(true);
+           return;
+         }
+
+         // Use filtered foods for scoring
+         identifiedFoods = filteredFoods;
       } catch (error) {
         console.log('AI recognition failed:', error);
         setLoading(false);
@@ -614,16 +668,24 @@ export default function ResultScreen({ route, navigation }: any) {
         </View>
       </ScrollView>
 
-      {/* Error Modal */}
-      <Modal
-          visible={errorModalVisible}
-          title="Error"
-          message={errorMessage}
-          primaryButtonText="OK"
-          onPrimaryPress={() => setErrorModalVisible(false)}
-          onClose={() => setErrorModalVisible(false)}
-          variant="error"
-      />
+       {/* Error Modal */}
+       <Modal
+           visible={errorModalVisible}
+           title="Error"
+           message={errorMessage}
+           primaryButtonText="Try Again"
+           onPrimaryPress={() => {
+             navigation.goBack();
+             // Keep modal visible briefly during navigation to prevent flash
+             setTimeout(() => setErrorModalVisible(false), 200);
+           }}
+           onClose={() => {
+             navigation.goBack();
+             // Keep modal visible briefly during navigation to prevent flash
+             setTimeout(() => setErrorModalVisible(false), 200);
+           }}
+           variant="error"
+       />
 
     </Container>
   );
