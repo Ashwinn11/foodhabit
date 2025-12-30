@@ -16,9 +16,9 @@ import {
 } from '@expo-google-fonts/nunito';
 import { useAuth } from './src/hooks/useAuth';
 import { registerForPushNotificationsAsync } from './src/services/notificationService';
-import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, PaywallScreen, OnboardingScreen, SplashScreen, TermsOfServiceScreen, PrivacyPolicyScreen, MealsHistoryScreen, MealDetailScreen } from './src/screens';
+import { initializeRevenueCat, loginUser } from './src/services/revenueCatService';
+import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, RevenueCatPaywall, OnboardingScreen, SplashScreen, TermsOfServiceScreen, PrivacyPolicyScreen, MealsHistoryScreen, MealDetailScreen } from './src/screens';
 
-import AuthCallbackScreen from './src/screens/AuthCallbackScreen';
 import { theme } from './src/theme';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -126,16 +126,26 @@ function AppContent() {
     checkOnboarding();
   }, [session, loading]);
 
+  // Initialize RevenueCat when user is authenticated
+  React.useEffect(() => {
+    const setupRevenueCat = async () => {
+      if (session?.user?.id) {
+        try {
+          await initializeRevenueCat(session.user.id);
+          await loginUser(session.user.id);
+        } catch (error) {
+          console.error('Failed to initialize RevenueCat:', error);
+        }
+      }
+    };
+
+    setupRevenueCat();
+  }, [session?.user?.id]);
+
   const completeOnboarding = async () => {
     setHasOnboarded(true);
     await setOnboardingComplete(true);
   };
-
-  // Handle auth callback on web only
-  const isWeb = typeof window !== 'undefined' && window.location;
-  if (isWeb && window!.location.pathname === '/auth/callback') {
-    return <AuthCallbackScreen />;
-  }
 
   // Show custom splash screen first
   if (showSplash) {
@@ -216,7 +226,7 @@ function AppContent() {
           />
           <Stack.Screen 
             name="Paywall" 
-            component={PaywallScreen}
+            component={RevenueCatPaywall}
             options={{ presentation: 'modal', gestureEnabled: true }}
           />
           <Stack.Screen 

@@ -1,5 +1,4 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -14,20 +13,6 @@ Notifications.setNotificationHandler({
 
 export async function registerForPushNotificationsAsync() {
     let token;
-
-    if (Platform.OS === 'web') {
-        console.log('Push notifications are not supported on web');
-        return;
-    }
-
-    if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('daut-reminders', {
-            name: 'Daily Reminders',
-            importance: Notifications.AndroidImportance.MAX,
-            vibrationPattern: [0, 250, 250, 250],
-            lightColor: '#FF231F7C',
-        });
-    }
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
@@ -51,11 +36,6 @@ export async function registerForPushNotificationsAsync() {
 }
 
 export async function scheduleDailyReminder() {
-    if (Platform.OS === 'web') {
-        console.log('Scheduled notifications are not supported on web');
-        return;
-    }
-
     // Cancel existing notifications to avoid duplicates
     await Notifications.cancelAllScheduledNotificationsAsync();
 

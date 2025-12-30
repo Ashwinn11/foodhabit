@@ -4,7 +4,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Platform,
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -111,32 +110,6 @@ export default function CameraScreen({ navigation }: any) {
             </Text>
           </TouchableOpacity>
         </View>
-      </Container>
-    );
-  }
-
-  // Web-specific UI - Camera doesn't work on web, so show image picker
-  if (Platform.OS === 'web') {
-    return (
-      <Container center>
-        <Ionicons name="image-outline" size={80} color={theme.colors.brand.cream} />
-        <Text variant="title2" weight="semiBold" style={styles.webTitle}>
-          Select a Photo
-        </Text>
-        <Text variant="body" style={styles.webSubtext}>
-          Camera is not available on web. Please select an image from your device.
-        </Text>
-        <TouchableOpacity style={styles.webPickButton} onPress={pickImage}>
-          <Ionicons name="images" size={24} color={theme.colors.brand.black} />
-          <Text variant="body" weight="semiBold" style={styles.webPickButtonText}>
-            Choose from Gallery
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.webCloseButton} onPress={() => navigation.goBack()}>
-          <Text variant="body" style={styles.webCloseButtonText}>
-            Cancel
-          </Text>
-        </TouchableOpacity>
       </Container>
     );
   }
@@ -334,40 +307,5 @@ const styles = StyleSheet.create({
   },
   permissionButtonText: {
     color: theme.colors.brand.black,
-  },
-  webTitle: {
-    color: theme.colors.text.white,
-    marginTop: theme.spacing.xl,
-    textAlign: 'center',
-  },
-  webSubtext: {
-    color: theme.colors.text.white,
-    opacity: 0.7,
-    marginTop: theme.spacing.md,
-    textAlign: 'center',
-    maxWidth: 400,
-    paddingHorizontal: theme.spacing['3xl'],
-  },
-  webPickButton: {
-    marginTop: theme.spacing['2xl'],
-    paddingVertical: theme.spacing.lg,
-    paddingHorizontal: theme.spacing['3xl'],
-    borderRadius: theme.borderRadius.xl,
-    backgroundColor: theme.colors.brand.cream,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  webPickButtonText: {
-    color: theme.colors.brand.black,
-  },
-  webCloseButton: {
-    marginTop: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xl,
-  },
-  webCloseButtonText: {
-    color: theme.colors.text.white,
-    opacity: 0.7,
   },
 });

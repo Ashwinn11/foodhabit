@@ -1,5 +1,5 @@
 import React from 'react';
-import PaywallScreen from '../PaywallScreen';
+import RevenueCatPaywall from '../RevenueCatPaywall';
 
 interface PaywallStepProps {
   onComplete: () => void;
@@ -7,9 +7,10 @@ interface PaywallStepProps {
 
 export const PaywallStep: React.FC<PaywallStepProps> = ({ onComplete }) => {
   return (
-    <PaywallScreen 
+    <RevenueCatPaywall 
       onSubscribe={onComplete}
       showCloseButton={false}
     />
   );
 };
+
