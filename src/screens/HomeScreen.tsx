@@ -28,6 +28,7 @@ export default function HomeScreen({ navigation }: any) {
   const [currentGutFeeling, setCurrentGutFeeling] = useState<GutFeeling | undefined>(undefined);
   const [showGutFeelingModal, setShowGutFeelingModal] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [gutFeelingModalDismissed, setGutFeelingModalDismissed] = useState(false);
 
   // Fetch data when screen comes into focus
   useFocusEffect(
@@ -42,7 +43,8 @@ export default function HomeScreen({ navigation }: any) {
     // 1. Data has been fetched (isDataLoaded is true)
     // 2. No gut feeling logged today (currentGutFeeling is undefined)
     // 3. Modal is not already showing
-    if (isDataLoaded && currentGutFeeling === undefined && !showGutFeelingModal) {
+    // 4. User hasn't dismissed the modal today
+    if (isDataLoaded && currentGutFeeling === undefined && !showGutFeelingModal && !gutFeelingModalDismissed) {
       // Small delay to let the screen render first
       const timer = setTimeout(() => {
         setShowGutFeelingModal(true);
@@ -51,7 +53,7 @@ export default function HomeScreen({ navigation }: any) {
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [isDataLoaded, currentGutFeeling, showGutFeelingModal]);
+  }, [isDataLoaded, currentGutFeeling, showGutFeelingModal, gutFeelingModalDismissed]);
 
   const fetchData = async () => {
     try {
@@ -83,9 +85,10 @@ export default function HomeScreen({ navigation }: any) {
           // Reset for new day - user needs to check in again
           setCurrentGutFeeling(undefined);
         }
-      } else {
-        setCurrentGutFeeling(undefined);
-      }
+       } else {
+         setCurrentGutFeeling(undefined);
+         setGutFeelingModalDismissed(false); // Reset dismissal for new day
+       }
       
       // Mark data as loaded
       setIsDataLoaded(true);
@@ -110,6 +113,14 @@ export default function HomeScreen({ navigation }: any) {
   const handleGutFeelingSelect = async (feeling: GutFeeling) => {
     setCurrentGutFeeling(feeling);
     await saveGutFeeling(feeling);
+  };
+
+  const handleGutFeelingModalClose = () => {
+    setShowGutFeelingModal(false);
+    // If closing without selecting a feeling, mark as dismissed
+    if (currentGutFeeling === undefined) {
+      setGutFeelingModalDismissed(true);
+    }
   };
 
   // Determine Gigi's emotion based on gut feeling or avg score
@@ -323,7 +334,7 @@ export default function HomeScreen({ navigation }: any) {
       {/* Gut Feeling Modal */}
       <GutFeelingModal
         visible={showGutFeelingModal}
-        onClose={() => setShowGutFeelingModal(false)}
+        onClose={handleGutFeelingModalClose}
         onSelect={handleGutFeelingSelect}
         currentFeeling={currentGutFeeling}
       />

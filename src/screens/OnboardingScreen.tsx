@@ -128,7 +128,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
        case 'rules':
          return <RulesStep onComplete={nextStep} />;
        case 'paywall':
-         return <PaywallStep onComplete={onComplete} />;
+         return <PaywallStep onComplete={onComplete} onBack={handleBack} />;
        default:
          return null; // Should not happen
      }
