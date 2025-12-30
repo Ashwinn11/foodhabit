@@ -69,21 +69,26 @@ async function analyzeWithGemini(
         ? `The user has these personal food triggers/sensitivities: ${userTriggers.join(', ')}. Flag these specifically in warnings.`
         : '';
 
-    const prompt = `You are a gut health nutrition expert. Analyze this food image.
+    const prompt = `You are a critical gut health nutritionist. Analyze this food image with strict scrutiny.
 
 TASK:
-1. IDENTIFY all specific food items/ingredients visible (be specific - "Spinach" not "Salad", "Chickpeas" not "Legumes")
-2. ANALYZE each for gut health
+1. IDENTIFY specific food items (be precise: "Sourdough Bread" not "Bread").
+2. ANALYZE each for gut health impact using the scoring rubric below.
 
 ${triggersContext}
 
-For EACH food item, provide gut health analysis considering:
-- Fiber content (prebiotics feed good bacteria)
-- Processing level (ultra-processed harms gut microbiome)
-- Fermented foods (probiotics)
-- Anti-inflammatory properties
-- Common gut triggers (FODMAP, gluten, dairy, spicy, nightshades)
-- Plant diversity (aim for 30+ different plants per week)
+SCORING RUBRIC (0-100):
+- 90-100 (Exceptional): Fermented foods (kimchi, kefir), high-fiber prebiotics (legumes, artichokes), or diverse raw plants.
+- 70-89 (Good): Whole fruits, vegetables, clean proteins, whole grains.
+- 50-69 (Neutral): White rice, conventional dairy, simple home-cooked meals, minimal fiber.
+- 30-49 (Caution): Added sugars, fried foods, refined flour, common inflammatory oils (seed oils).
+- 0-29 (Bad): Ultra-processed foods, high fructose syrup, artificial additives, alcohol.
+
+CRITICAL INSTRUCTIONS:
+- Do NOT give 100 unless it is a perfect gut-microbiome superfood.
+- Be harsh on processed items, fried foods, and added sugars.
+- If a dish has mixed ingredients (e.g. "Pizza"), identify the main components separately if possible, or score the composite dish based on the worst ingredients (e.g. processed crust/cheese lowers the score).
+- Estimate nutrition carefully.
 
 Return a JSON array with this structure for EACH food:
 [
@@ -103,20 +108,19 @@ Return a JSON array with this structure for EACH food:
     "fermentable": boolean,
     "gut_benefits": ["max 2 short benefits"],
     "gut_warnings": ["max 1 short warning if any"],
-    "why_good_or_bad": "One short sentence",
-    "estimated_calories": number (estimated calories for typical serving),
-    "protein_grams": number (grams of protein),
-    "carbs_grams": number (grams of carbohydrates),
-    "fat_grams": number (grams of fat),
-    "fiber_grams": number (grams of dietary fiber)
+    "why_good_or_bad": "One short sentence explaining the score",
+    "estimated_calories": number,
+    "protein_grams": number,
+    "carbs_grams": number,
+    "fat_grams": number,
+    "fiber_grams": number
   }
 ]
 
-IMPORTANT: Identify 3-5 main ingredients. Keep responses concise. Estimate nutrition for a typical serving size.
-Return ONLY valid JSON array.`;
+IMPORTANT: Identify 3-5 main ingredients. Return ONLY valid JSON array.`;
 
     const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -135,7 +139,7 @@ Return ONLY valid JSON array.`;
                     }
                 ],
                 generationConfig: {
-                    temperature: 0.1,
+                    temperature: 0.2, // Lower temperature for more consistent/strict scoring
                     topK: 1,
                     topP: 0.95,
                     maxOutputTokens: 8192,
@@ -199,27 +203,39 @@ serve(async (req) => {
     }
 
     try {
-        const { imageUrl } = await req.json();
+        const { imageUrl, base64Image } = await req.json();
 
-        if (!imageUrl) {
+        if (!imageUrl && !base64Image) {
             return new Response(
-                JSON.stringify({ success: false, error: "Image URL required" }),
+                JSON.stringify({ success: false, error: "Image URL or base64 required" }),
                 { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
             );
         }
 
         console.log('🔍 Analyzing image with Gemini...');
 
-        // Fetch image and convert to base64
-        const imageResponse = await fetch(imageUrl);
-        const imageBuffer = await imageResponse.arrayBuffer();
-        const base64Image = encode(imageBuffer);
+        let base64Data: string;
+        let imageSize = 0;
+
+        // If base64 is provided directly, use it (faster path)
+        if (base64Image) {
+            console.log('✅ Using direct base64 image (optimized path)');
+            base64Data = base64Image;
+            imageSize = base64Image.length;
+        } else {
+            // Legacy path: fetch from URL and convert
+            console.log('⚠️ Fetching image from URL (slower path)');
+            const imageResponse = await fetch(imageUrl);
+            const imageBuffer = await imageResponse.arrayBuffer();
+            base64Data = encode(imageBuffer);
+            imageSize = base64Data.length;
+        }
 
         // Call Gemini for food identification + gut health analysis
         let foods: any[] = [];
 
         try {
-            const geminiAnalysis = await analyzeWithGemini(base64Image, []);
+            const geminiAnalysis = await analyzeWithGemini(base64Data, []);
 
             // Transform Gemini results to our food format
             foods = geminiAnalysis.map(analysis => ({
@@ -268,7 +284,9 @@ serve(async (req) => {
             foods: foods,
             debug: {
                 foodCount: foods.length,
-                analysisMethod: 'gemini-3-pro-preview'
+                analysisMethod: 'gemini-2.0-flash',
+                imageSize: imageSize,
+                base64Header: base64Data.substring(0, 30) + '...'
             }
         };
 

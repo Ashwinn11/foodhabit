@@ -46,7 +46,7 @@ const Modal: React.FC<ModalProps> = ({
     }
   };
 
-  const backdropOpacity = variant === 'error' ? 1.0 : 0.5;
+  const backdropOpacity = variant === 'error' ? 0.75 : 0.5;
 
   return (
     <RNModal

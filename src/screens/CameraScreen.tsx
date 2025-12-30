@@ -50,7 +50,7 @@ export default function CameraScreen({ navigation }: any) {
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
+          quality: 0.5, // Reduced for faster processing - sufficient for AI
         });
         setPhoto(photo.uri);
       } catch (error) {
@@ -66,7 +66,7 @@ export default function CameraScreen({ navigation }: any) {
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.8,
+      quality: 0.5, // Match camera quality for consistency
     });
 
     if (!result.canceled) {

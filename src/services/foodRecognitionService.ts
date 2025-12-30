@@ -14,12 +14,22 @@ export interface RecognitionResult {
 
 /**
  * Recognize foods from an image using Google Vision API
+ * @param imageUrlOrBase64 - Either a URL to an image or base64 encoded image data
+ * @param isBase64 - Set to true if passing base64 data directly (faster)
  */
-export async function recognizeFood(imageUrl: string): Promise<IdentifiedFood[]> {
+export async function recognizeFood(
+    imageUrlOrBase64: string,
+    isBase64: boolean = false
+): Promise<IdentifiedFood[]> {
     try {
-        console.log('Sending image to AI:', imageUrl);
+        const payload = isBase64
+            ? { base64Image: imageUrlOrBase64 }
+            : { imageUrl: imageUrlOrBase64 };
+
+        console.log('Sending image to AI:', isBase64 ? '(base64 data)' : imageUrlOrBase64);
+
         const { data, error } = await supabase.functions.invoke('recognize-food', {
-            body: { imageUrl },
+            body: payload,
         });
 
         if (error) {
@@ -47,7 +57,7 @@ export async function recognizeFood(imageUrl: string): Promise<IdentifiedFood[]>
         }
 
         return data.foods || [];
-        } catch {
+    } catch {
         console.error('Food recognition not available');
         return [];
     }

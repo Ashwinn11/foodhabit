@@ -1,22 +1,31 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Container, Text } from '../components';
 import { theme } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
-export default function HowItWorksScreen() {
+export default function HowItWorksScreen({ navigation }: any) {
   return (
     <Container safeArea={true} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text variant="title1" weight="bold" style={styles.headerTitle}>
-            How It Works
-          </Text>
-          <Text variant="body" style={styles.headerSubtitle}>
-            Understanding your gut health scores
-          </Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text.white} />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text variant="title1" weight="bold" style={styles.headerTitle}>
+              How It Works
+            </Text>
+            <Text variant="body" style={styles.headerSubtitle}>
+              Understanding your gut health scores
+            </Text>
+          </View>
+          <View style={styles.placeholder} />
         </View>
 
         {/* AI Analysis Section */}
@@ -162,16 +171,36 @@ const FactorItem = ({ icon, color, title, description }: any) => (
 
 const styles = StyleSheet.create({
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerContent: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  placeholder: {
+    width: 40,
   },
   headerTitle: {
     color: theme.colors.text.white,
     marginBottom: theme.spacing.xs,
+    textAlign: 'center',
   },
   headerSubtitle: {
     color: theme.colors.text.white,
     opacity: 0.7,
+    textAlign: 'center',
   },
   section: {
     paddingHorizontal: theme.spacing.xl,

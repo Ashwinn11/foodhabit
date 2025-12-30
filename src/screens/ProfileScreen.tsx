@@ -188,14 +188,6 @@ export default function ProfileScreen({ navigation }: any) {
 
         <View style={styles.section}>
           <Text variant="caption1" weight="semiBold" style={styles.sectionTitle}>SUPPORT</Text>
-          
-           <TouchableOpacity style={styles.settingRow} onPress={handleContact}>
-             <View style={styles.settingInfo}>
-               <Ionicons name="help-circle" size={22} color={theme.colors.text.white} />
-               <Text variant="body" style={styles.settingLabel}>Help & Support</Text>
-             </View>
-             <Ionicons name="chevron-forward" size={18} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
-           </TouchableOpacity>
            
            <TouchableOpacity style={styles.settingRow} onPress={handleSupport}>
              <View style={styles.settingInfo}>

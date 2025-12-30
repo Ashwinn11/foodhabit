@@ -17,7 +17,7 @@ import {
 import { useAuth } from './src/hooks/useAuth';
 import { registerForPushNotificationsAsync } from './src/services/notificationService';
 import { initializeRevenueCat, loginUser } from './src/services/revenueCatService';
-import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, RevenueCatPaywall, OnboardingScreen, SplashScreen, TermsOfServiceScreen, PrivacyPolicyScreen, MealsHistoryScreen, MealDetailScreen, HowItWorksScreen } from './src/screens';
+import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, RevenueCatPaywall, OnboardingScreen, SplashScreen, TermsOfServiceScreen, PrivacyPolicyScreen, SupportScreen, MealsHistoryScreen, MealDetailScreen, HowItWorksScreen } from './src/screens';
 
 import { theme } from './src/theme';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -244,11 +244,16 @@ function AppContent() {
             component={PrivacyPolicyScreen}
             options={{ presentation: 'card', gestureEnabled: true }}
           />
-          <Stack.Screen 
-            name="HowItWorks" 
-            component={HowItWorksScreen}
-            options={{ presentation: 'card', gestureEnabled: true }}
-          />
+           <Stack.Screen
+             name="HowItWorks"
+             component={HowItWorksScreen}
+             options={{ presentation: 'card', gestureEnabled: true }}
+           />
+           <Stack.Screen
+             name="Support"
+             component={SupportScreen}
+             options={{ presentation: 'card', gestureEnabled: true }}
+           />
         </>
       )}
     </Stack.Navigator>

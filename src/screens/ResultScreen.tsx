@@ -20,7 +20,6 @@ import {
 } from '../services/scoringService';
 import { 
   saveFoodScan, 
-  uploadScanImage,
   getUserProfile
 } from '../services/databaseService';
 
@@ -151,18 +150,22 @@ export default function ResultScreen({ route, navigation }: any) {
       const profile = await getUserProfile();
       const userTriggers = profile?.known_triggers || [];
 
-      // Upload image temporarily for AI recognition
-      const imageUpload = await uploadScanImage(photoUri);
-      if (!imageUpload.success) {
-        throw new Error('Failed to upload image');
-      }
+      console.log('🚀 Starting optimized meal analysis...');
+      const overallStartTime = Date.now();
+
+      // OPTIMIZATION 1: Compress and resize image first
+      const { optimizeImageForAI, imageToBase64 } = await import('../utils/imageProcessing');
+      const optimizedUri = await optimizeImageForAI(photoUri);
+
+      // OPTIMIZATION 2: Convert directly to base64 (skip storage upload/download)
+      const base64Image = await imageToBase64(optimizedUri);
 
       let identifiedFoods: IdentifiedFood[];
       
        try {
-         // Try AI food recognition with uploaded URL
+         // OPTIMIZATION 3: Send base64 directly to AI (no storage round-trip)
          const { recognizeFood } = await import('../services/foodRecognitionService');
-         identifiedFoods = await recognizeFood(imageUpload.url!);
+         identifiedFoods = await recognizeFood(base64Image, true); // true = isBase64
 
          console.log('AI identified foods:', identifiedFoods.map(f => f.name));
 
@@ -170,7 +173,7 @@ export default function ResultScreen({ route, navigation }: any) {
          if (identifiedFoods.length === 0 ||
              (identifiedFoods.length === 1 && identifiedFoods[0].name === "Unable to analyze")) {
            console.log('No foods identified by AI');
-           setLoading(false);
+           // Keep loading state on error
            setErrorMessage('No food detected in the image. Please retake a clear photo of your meal.');
            setErrorModalVisible(true);
            return;
@@ -219,7 +222,7 @@ export default function ResultScreen({ route, navigation }: any) {
          // If no meaningful foods remain after filtering, treat as no food detected
          if (filteredFoods.length === 0) {
            console.log('No meaningful foods identified after filtering out generic terms');
-           setLoading(false);
+           // Keep loading state on error
            setErrorMessage('No food detected in the image. Please retake a clear photo of your meal.');
            setErrorModalVisible(true);
            return;
@@ -229,22 +232,10 @@ export default function ResultScreen({ route, navigation }: any) {
          identifiedFoods = filteredFoods;
       } catch (error) {
         console.log('AI recognition failed:', error);
-        setLoading(false);
+        // Keep loading state on error
         setErrorMessage('Failed to analyze the image. Please try again.');
         setErrorModalVisible(true);
         return;
-      }
-
-      // Delete the uploaded image immediately after AI analysis
-      if (imageUpload.url) {
-        try {
-          const { deleteImage } = await import('../services/databaseService');
-          await deleteImage(imageUpload.url);
-          console.log('Temporary image deleted from storage');
-        } catch (deleteError) {
-          console.error('Failed to delete temporary image:', deleteError);
-          // Continue anyway - not critical
-        }
       }
       
       // Calculate score
@@ -266,11 +257,16 @@ export default function ResultScreen({ route, navigation }: any) {
       setNutrition(nutritionTotals);
       setLoading(false);
 
-      // Save scan to database WITHOUT image URL
-      await saveToDatabase(null, identifiedFoods, result);
+      const overallEndTime = Date.now();
+      console.log(`✅ Total analysis time: ${overallEndTime - overallStartTime}ms`);
+
+      // OPTIMIZATION 4: Save to database in background (don't wait)
+      saveToDatabase(null, identifiedFoods, result).catch(err => 
+        console.error('Background save failed:', err)
+      );
     } catch (error) {
       console.error('Error calculating score:', error);
-      setLoading(false);
+// Keep loading state on error
       setErrorMessage('Failed to analyze meal. Please try again.');
       setErrorModalVisible(true);
     }
@@ -311,9 +307,9 @@ export default function ResultScreen({ route, navigation }: any) {
     outputRange: [0, width * 0.75 - 4], // Height of photo container minus scan line height
   });
 
-  if (loading) {
-    return (
-      <Container safeArea={true} edges={['top']}>
+  return (
+    <Container safeArea={true} edges={['top']}>
+      {loading ? (
         <View style={styles.scanningContainer}>
           {/* Header */}
           <View style={styles.header}>
@@ -396,12 +392,7 @@ export default function ResultScreen({ route, navigation }: any) {
             </LinearGradient>
           </View>
         </View>
-      </Container>
-    );
-  }
-
-  return (
-    <Container safeArea={true} edges={['top']}>
+      ) : (
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -686,7 +677,7 @@ export default function ResultScreen({ route, navigation }: any) {
             </Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </ScrollView>)}
 
        {/* Error Modal */}
        <Modal

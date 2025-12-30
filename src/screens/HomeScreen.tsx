@@ -331,7 +331,7 @@ export default function HomeScreen({ navigation }: any) {
                 <Text variant="title3" weight="bold" style={styles.statValue}>
                   {avgScore !== null && avgScore !== undefined ? avgScore : '-'}
                 </Text>
-                <Text variant="caption1" style={styles.statLabel}>Avg Score</Text>
+                <Text variant="caption1" style={styles.statLabel}>Gut Score</Text>
             </View>
         </View>
       </View>
