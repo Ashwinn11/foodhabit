@@ -96,9 +96,6 @@ export const getOfferings = async (): Promise<PurchasesOffering | null> => {
  * Check if user has active subscription
  */
 export const checkSubscriptionStatus = async (): Promise<boolean> => {
-    // TEMPORARY BYPASS FOR TESTING - REMOVE BEFORE PRODUCTION
-    return true;
-
     if (Platform.OS !== 'ios') {
         return false;
     }

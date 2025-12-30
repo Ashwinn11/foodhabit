@@ -8,21 +8,29 @@ import { theme } from '../theme';
 interface RevenueCatPaywallProps {
   onSubscribe?: () => void;
   onBack?: () => void;
+  navigation?: any; // For closing modal when already subscribed
 }
 
-export default function RevenueCatPaywall({ onSubscribe, onBack }: RevenueCatPaywallProps) {
+export default function RevenueCatPaywall({ onSubscribe, onBack, navigation }: RevenueCatPaywallProps) {
   const [hasSubscription, setHasSubscription] = React.useState<boolean | null>(null);
 
   React.useEffect(() => {
     const checkSub = async () => {
       const sub = await checkSubscriptionStatus();
       setHasSubscription(sub);
-      if (sub && onSubscribe) {
-        onSubscribe();
+      if (sub) {
+        // User is already subscribed, call onSubscribe callback and close modal
+        if (onSubscribe) {
+          onSubscribe();
+        }
+        // Close the modal since user is already subscribed
+        if (navigation) {
+          navigation.goBack();
+        }
       }
     };
     checkSub();
-  }, [onSubscribe]);
+  }, [onSubscribe, navigation]);
 
   const handlePurchaseCompleted = async () => {
     const sub = await checkSubscriptionStatus();

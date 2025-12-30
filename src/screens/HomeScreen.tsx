@@ -7,14 +7,15 @@ import {
 import { Text, Gigi, Container, GutFeelingModal, type GutFeeling } from '../components';
 import { theme } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
-import { 
-  getUserStreak, 
-  getTodayScans, 
+import {
+  getUserStreak,
+  getTodayScans,
   getTodayAverageScore,
   getUserProfile,
   getCurrentGutFeeling,
   saveGutFeeling,
 } from '../services/databaseService';
+import { checkSubscriptionStatus } from '../services/revenueCatService';
 import { useFocusEffect } from '@react-navigation/native';
 
 const LEVELS = [50, 100, 500, 1000];
@@ -102,8 +103,12 @@ export default function HomeScreen({ navigation }: any) {
     navigation.navigate('Camera');
   };
 
-  const handlePremium = () => {
-    navigation.navigate('Paywall');
+  const handlePremium = async () => {
+    const hasSubscription = await checkSubscriptionStatus();
+    if (!hasSubscription) {
+      navigation.navigate('Paywall');
+    }
+    // If already subscribed, do nothing - user is already premium
   };
 
   const handleGigiTap = () => {

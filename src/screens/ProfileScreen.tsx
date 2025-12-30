@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { deleteAccount } from '../services/accountService';
 import { getUserProfile } from '../services/databaseService';
+import { checkSubscriptionStatus } from '../services/revenueCatService';
 import { theme } from '../theme';
 import { Text, Avatar, Modal, Container } from '../components';
 
@@ -86,8 +87,12 @@ export default function ProfileScreen({ navigation }: any) {
     Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=GutScan Support`);
   };
 
-  const handlePremium = () => {
-    navigation.navigate('Paywall');
+  const handlePremium = async () => {
+    const hasSubscription = await checkSubscriptionStatus();
+    if (!hasSubscription) {
+      navigation.navigate('Paywall');
+    }
+    // If already subscribed, do nothing - user is already premium
   };
 
   const getDisplayName = () => {
