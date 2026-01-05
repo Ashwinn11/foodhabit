@@ -1,75 +1,82 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { checkSubscriptionStatus } from '../services/revenueCatService';
-import RevenueCatUI from 'react-native-purchases-ui';
-import { theme } from '../theme';
+import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 
 interface RevenueCatPaywallProps {
   onSubscribe?: () => void;
-  onBack?: () => void;
-  navigation?: any; // For closing modal when already subscribed
 }
 
-export default function RevenueCatPaywall({ onSubscribe, onBack, navigation }: RevenueCatPaywallProps) {
-  const [hasSubscription, setHasSubscription] = React.useState<boolean | null>(null);
+export default function RevenueCatPaywall({ onSubscribe }: RevenueCatPaywallProps) {
+  const [hasPresented, setHasPresented] = React.useState(false);
 
   React.useEffect(() => {
-    const checkSub = async () => {
-      const sub = await checkSubscriptionStatus();
-      setHasSubscription(sub);
-      if (sub) {
-        // User is already subscribed, call onSubscribe callback and close modal
-        if (onSubscribe) {
-          onSubscribe();
+    const presentPaywall = async (): Promise<void> => {
+      if (hasPresented) return;
+      
+      setHasPresented(true);
+      
+      try {
+        // Present paywall for current offering
+        const paywallResult: PAYWALL_RESULT = await RevenueCatUI.presentPaywall();
+        
+        console.log('Paywall result:', paywallResult);
+        
+        // HARD PAYWALL: Only proceed if user purchased or restored
+        switch (paywallResult) {
+          case PAYWALL_RESULT.PURCHASED:
+            // User successfully purchased - proceed to app
+            console.log('✅ User purchased subscription');
+            if (onSubscribe) {
+              onSubscribe();
+            }
+            break;
+            
+          case PAYWALL_RESULT.RESTORED:
+            // User restored previous purchase - proceed to app
+            console.log('✅ User restored subscription');
+            if (onSubscribe) {
+              onSubscribe();
+            }
+            break;
+            
+          case PAYWALL_RESULT.CANCELLED:
+            // User cancelled - stay on paywall, allow retry
+            console.log('❌ User cancelled paywall - staying on onboarding');
+            // Reset so they can try again
+            setHasPresented(false);
+            break;
+            
+          case PAYWALL_RESULT.NOT_PRESENTED:
+            // Paywall was not presented - retry
+            console.log('⚠️ Paywall not presented - retrying');
+            setHasPresented(false);
+            // Retry after a short delay
+            setTimeout(() => {
+              setHasPresented(false);
+            }, 1000);
+            break;
+            
+          case PAYWALL_RESULT.ERROR:
+            // Error occurred - allow retry
+            console.error('❌ Paywall error occurred - user can retry');
+            setHasPresented(false);
+            break;
+            
+          default:
+            // Unknown result - allow retry
+            console.log('⚠️ Unknown paywall result:', paywallResult);
+            setHasPresented(false);
+            break;
         }
-        // Close the modal since user is already subscribed
-        if (navigation) {
-          navigation.goBack();
-        }
+      } catch (error) {
+        console.error('Error presenting paywall:', error);
+        // On error, allow user to retry
+        setHasPresented(false);
       }
     };
-    checkSub();
-  }, [onSubscribe, navigation]);
 
-  const handlePurchaseCompleted = async () => {
-    const sub = await checkSubscriptionStatus();
-    if (sub && onSubscribe) {
-      onSubscribe();
-    }
-  };
+    presentPaywall();
+  }, [hasPresented, onSubscribe]);
 
-  if (hasSubscription === null) {
-    return null; // Loading
-  }
-
-  if (hasSubscription) {
-    return null; // Already subscribed, don't show paywall
-  }
-
-  return (
-    <View style={styles.container}>
-      {onBack && (
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text.white} />
-        </TouchableOpacity>
-      )}
-      <RevenueCatUI.Paywall onPurchaseCompleted={handlePurchaseCompleted} />
-    </View>
-  );
+  // Return null - the paywall is presented as a modal by RevenueCat
+  return null;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 10,
-    padding: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 20,
-  },
-});

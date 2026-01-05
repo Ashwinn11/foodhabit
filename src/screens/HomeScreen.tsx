@@ -104,11 +104,27 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   const handlePremium = async () => {
-    const hasSubscription = await checkSubscriptionStatus();
-    if (!hasSubscription) {
-      navigation.navigate('Paywall');
+    try {
+      const hasSubscription = await checkSubscriptionStatus();
+      if (hasSubscription) {
+        // User already has subscription, do nothing
+        return;
+      }
+      
+      // Import at the top if not already: import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
+      const { default: RevenueCatUI, PAYWALL_RESULT } = await import('react-native-purchases-ui');
+      
+      // Present paywall directly
+      const result = await RevenueCatUI.presentPaywall();
+      
+      // Handle result
+      if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
+        console.log('User subscribed!');
+        // Optionally refresh UI or show success message
+      }
+    } catch (error) {
+      console.error('Error presenting paywall:', error);
     }
-    // If already subscribed, do nothing - user is already premium
   };
 
   const handleGigiTap = () => {

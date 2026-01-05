@@ -6,7 +6,7 @@ interface PaywallStepProps {
   onBack?: () => void;
 }
 
-export const PaywallStep: React.FC<PaywallStepProps> = ({ onComplete, onBack }) => {
-  return <RevenueCatPaywall onSubscribe={onComplete} onBack={onBack} />;
+export const PaywallStep: React.FC<PaywallStepProps> = ({ onComplete }) => {
+  return <RevenueCatPaywall onSubscribe={onComplete} />;
 };
 
