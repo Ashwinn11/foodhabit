@@ -123,8 +123,12 @@ export default function AuthScreen({ navigation }: any) {
   };
 
   return (
-      <Container style={styles.contentContainer} edges={['top', 'left', 'right', 'bottom']}>
-        
+      <Container 
+        scrollable={true} 
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer} 
+        edges={['top', 'left', 'right', 'bottom']}
+      >
         {/* Top Section: App Icon */}
         <View style={styles.topSection}>
            <AnimatedMascot
@@ -273,17 +277,24 @@ export default function AuthScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  contentContainer: {
+  container: {
     flex: 1,
+  },
+  contentContainer: {
+    flexGrow: 1, // Allow content to grow and enable centering
+    justifyContent: 'center', // Center content vertically
     paddingHorizontal: theme.spacing['2xl'],
-    paddingVertical: theme.spacing['2xl'],
-    justifyContent: 'space-between', // Distribute space between Top and Bottom sections
+    paddingTop: theme.spacing['2xl'],
+    paddingBottom: theme.spacing['3xl'], // Extra bottom padding for safe area
+    maxWidth: 600, // Constrain width on larger screens like iPad
+    alignSelf: 'center', // Center the content
+    width: '100%', // Take full width up to maxWidth
   },
   topSection: {
     alignItems: 'center',
     width: '100%',
     paddingTop: theme.spacing.md,
-    overflow: 'visible',
+    marginBottom: theme.spacing['2xl'], // Reduced from overflow visible
   },
   // Mascot styles
   mascotContainer: {
@@ -320,9 +331,9 @@ const styles = StyleSheet.create({
     color: theme.colors.text.white,
   },
   valuePropsContainer: {
-    gap: theme.spacing.xl,
-    marginTop: theme.spacing.xs,
-    marginBottom: theme.spacing.md,
+    gap: theme.spacing.lg, // Reduced from xl for tighter spacing
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing['3xl'], // Good spacing before footer
     width: '100%',
   },
   valuePropRow: {
@@ -354,7 +365,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     width: '100%',
-    paddingBottom: theme.spacing.xs,
+    paddingTop: theme.spacing.lg, // Added top padding for better separation
+    paddingBottom: theme.spacing.lg, // Increased padding to prevent cropping
   },
   authButtons: {
     width: '100%',
@@ -394,6 +406,7 @@ const styles = StyleSheet.create({
   },
   legalContainer: {
     paddingHorizontal: theme.spacing.xs,
+    paddingVertical: theme.spacing.md, // Added vertical padding for better spacing
   },
   legalText: {
     color: theme.colors.text.white,
