@@ -39,7 +39,7 @@ export default function CameraScreen({ navigation }: any) {
         </Text>
         <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
           <Text variant="body" weight="semiBold" style={styles.permissionButtonText}>
-            Grant Permission
+            Continue
           </Text>
         </TouchableOpacity>
       </Container>

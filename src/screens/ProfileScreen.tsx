@@ -15,8 +15,6 @@ import { checkSubscriptionStatus } from '../services/revenueCatService';
 import { theme } from '../theme';
 import { Text, Avatar, Modal, Container } from '../components';
 
-const SUPPORT_EMAIL = 'support@gutscan.app';
-
 export default function ProfileScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -81,10 +79,6 @@ export default function ProfileScreen({ navigation }: any) {
     } finally {
       setIsDeletingAccount(false);
     }
-  };
-
-  const handleContact = () => {
-    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=GutScan Support`);
   };
 
   const handleSupport = () => {
@@ -212,11 +206,19 @@ export default function ProfileScreen({ navigation }: any) {
              </View>
              <Ionicons name="chevron-forward" size={18} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
            </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.settingRow} onPress={() => navigation.navigate('HowItWorks')}>
             <View style={styles.settingInfo}>
               <Ionicons name="bulb" size={22} color={theme.colors.text.white} />
               <Text variant="body" style={styles.settingLabel}>How It Works</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.settingRow} onPress={() => navigation.navigate('References')}>
+            <View style={styles.settingInfo}>
+              <Ionicons name="book" size={22} color={theme.colors.text.white} />
+              <Text variant="body" style={styles.settingLabel}>Scientific References</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={theme.colors.text.white} style={{ opacity: 0.5 }} />
           </TouchableOpacity>

@@ -49,7 +49,6 @@ export interface GutFeelingEntry {
  * Save a food scan to the database
  */
 export async function saveFoodScan(
-    imageUrl: string | null,
     identifiedFoods: IdentifiedFood[],
     score: number,
     breakdown: ScoreBreakdown,
@@ -67,7 +66,6 @@ export async function saveFoodScan(
             .from('food_scans')
             .insert({
                 user_id: user.id,
-                image_url: imageUrl,
                 identified_foods: identifiedFoods,
                 gut_health_score: score,
                 score_factors: breakdown,
@@ -271,134 +269,6 @@ export async function getRecentScans(limit: number = 10): Promise<FoodScan[]> {
 }
 
 /**
- * Upload image to Supabase Storage
- */
-export async function uploadScanImage(uri: string): Promise<{ success: boolean; url?: string; error?: string }> {
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            return { success: false, error: 'Not authenticated' };
-        }
-
-        // Convert URI to ArrayBuffer (more reliable than Blob on web)
-        const response = await fetch(uri);
-        const arrayBuffer = await response.arrayBuffer();
-
-        console.log('Original URI:', uri);
-        console.log('Buffer size:', arrayBuffer.byteLength);
-
-        if (arrayBuffer.byteLength === 0) {
-            console.error('Empty buffer detected');
-            return { success: false, error: 'Could not process image file' };
-        }
-
-        // Detect file type
-        let fileExtension = 'jpg';
-        let contentType = 'image/jpeg';
-
-        if (uri.includes('webp') || uri.startsWith('data:image/webp')) {
-            fileExtension = 'webp';
-            contentType = 'image/webp';
-        } else if (uri.includes('png') || uri.startsWith('data:image/png')) {
-            fileExtension = 'png';
-            contentType = 'image/png';
-        }
-
-        const filename = `${user.id}/${Date.now()}.${fileExtension}`;
-
-        // Upload to Supabase Storage
-        const { error } = await supabase.storage
-            .from('scan-images')
-            .upload(filename, arrayBuffer, {
-                contentType: contentType,
-                upsert: false,
-            });
-
-        if (error) {
-            console.error('Error uploading image:', error);
-            return { success: false, error: error.message };
-        }
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-            .from('scan-images')
-            .getPublicUrl(filename);
-
-        console.log('✅ Uploaded to:', publicUrl);
-        return { success: true, url: publicUrl };
-    } catch (error) {
-        console.error('Error uploading image:', error);
-        return { success: false, error: 'Failed to upload image' };
-    }
-}
-
-/**
- * Delete image from Supabase Storage
- */
-export async function deleteImage(imageUrl: string): Promise<{ success: boolean; error?: string }> {
-    try {
-        // Extract the file path from the public URL
-        // URL format: https://<project>.supabase.co/storage/v1/object/public/scan-images/<filepath>
-        const urlParts = imageUrl.split('/scan-images/');
-        if (urlParts.length < 2) {
-            return { success: false, error: 'Invalid image URL format' };
-        }
-
-        const filePath = urlParts[1];
-
-        const { error } = await supabase.storage
-            .from('scan-images')
-            .remove([filePath]);
-
-        if (error) {
-            console.error('Error deleting image:', error);
-            return { success: false, error: error.message };
-        }
-
-        return { success: true };
-    } catch (error) {
-        console.error('Error deleting image:', error);
-        return { success: false, error: 'Failed to delete image' };
-    }
-}
-
-/**
- * Update an existing food scan (when user edits foods)
- */
-export async function updateFoodScan(
-    scanId: string,
-    identifiedFoods: IdentifiedFood[],
-    score: number,
-    breakdown: ScoreBreakdown,
-    emotion: 'happy' | 'neutral' | 'sad',
-    message: string
-): Promise<{ success: boolean; error?: string }> {
-    try {
-        const { error } = await supabase
-            .from('food_scans')
-            .update({
-                identified_foods: identifiedFoods,
-                gut_health_score: score,
-                score_factors: breakdown,
-                gigi_emotion: emotion,
-                gigi_message: message,
-            })
-            .eq('id', scanId);
-
-        if (error) {
-            console.error('Error updating scan:', error);
-            return { success: false, error: error.message };
-        }
-
-        return { success: true };
-    } catch (error) {
-        console.error('Error updating scan:', error);
-        return { success: false, error: 'Failed to update scan' };
-    }
-}
-
-/**
  * Save a gut feeling entry
  */
 export async function saveGutFeeling(feeling: GutFeeling): Promise<{ success: boolean; error?: string }> {
@@ -458,30 +328,3 @@ export async function getCurrentGutFeeling(): Promise<GutFeelingEntry | null> {
     }
 }
 
-/**
- * Get gut feeling history
- */
-export async function getGutFeelingHistory(limit: number = 10): Promise<GutFeelingEntry[]> {
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) return [];
-
-        const { data, error } = await supabase
-            .from('gut_feelings')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('logged_at', { ascending: false })
-            .limit(limit);
-
-        if (error) {
-            console.error('Error fetching gut feeling history:', error);
-            return [];
-        }
-
-        return data || [];
-    } catch (error) {
-        console.error('Error fetching gut feeling history:', error);
-        return [];
-    }
-}

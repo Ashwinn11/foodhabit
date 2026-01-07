@@ -14,14 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Modal, Container } from '../components';
 import { theme } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
-import { 
-  calculateGutHealthScore,
-  IdentifiedFood 
-} from '../services/scoringService';
-import { 
-  saveFoodScan, 
-  getUserProfile
-} from '../services/databaseService';
+import { IdentifiedFood } from '../services/scoringService';
+import { saveFoodScan } from '../services/databaseService';
 
 const { width } = Dimensions.get('window');
 
@@ -72,7 +66,6 @@ export default function ResultScreen({ route, navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [score, setScore] = useState(0);
   const [foods, setFoods] = useState<IdentifiedFood[]>([]);
-  const [breakdown, setBreakdown] = useState<any>({ fiber: 0, plants: 0, triggers: 0, processed: 0 });
   const [gigiMessage, setGigiMessage] = useState('');
   const [nutrition, setNutrition] = useState({
     calories: 0,
@@ -146,101 +139,83 @@ export default function ResultScreen({ route, navigation }: any) {
 
   const calculateScore = async () => {
     try {
-      // Get user profile for triggers
-      const profile = await getUserProfile();
-      const userTriggers = profile?.known_triggers || [];
-
       console.log('🚀 Starting optimized meal analysis...');
       const overallStartTime = Date.now();
 
-      // OPTIMIZATION 1: Compress and resize image first
+      // Optimize image
       const { optimizeImageForAI, imageToBase64 } = await import('../utils/imageProcessing');
       const optimizedUri = await optimizeImageForAI(photoUri);
-
-      // OPTIMIZATION 2: Convert directly to base64 (skip storage upload/download)
       const base64Image = await imageToBase64(optimizedUri);
 
       let identifiedFoods: IdentifiedFood[];
-      
-       try {
-         // OPTIMIZATION 3: Send base64 directly to AI (no storage round-trip)
-         const { recognizeFood } = await import('../services/foodRecognitionService');
-         identifiedFoods = await recognizeFood(base64Image, true); // true = isBase64
 
-         console.log('AI identified foods:', identifiedFoods.map(f => f.name));
+      try {
+        // Get AI analysis
+        const { recognizeFood } = await import('../services/foodRecognitionService');
+        identifiedFoods = await recognizeFood(base64Image, true);
 
-         // Check if Gemini failed to identify food
-         if (identifiedFoods.length === 0 ||
-             (identifiedFoods.length === 1 && identifiedFoods[0].name === "Unable to analyze")) {
-           console.log('No foods identified by AI');
-           // Keep loading state on error
-           setErrorMessage('No food detected in the image. Please retake a clear photo of your meal.');
-           setErrorModalVisible(true);
-           return;
-         }
+        console.log('AI identified foods:', identifiedFoods.map(f => f.name));
 
-         // Filter out generic/non-food items before proceeding
-         const filteredFoods = identifiedFoods.filter(f => {
-           const name = f.name.toLowerCase();
-           const excluded = [
-             'food', 'tableware', 'ingredient', 'recipe', 'cuisine', 'dish', 'meal',
-             'cooking', 'produce', 'vegetable', 'dishware', 'serveware', 'cutlery',
-             'plate', 'bowl', 'glass', 'cup', 'fork', 'knife', 'spoon', 'utensil',
-             'table', 'chair', 'background', 'wall', 'floor', 'ceiling', 'surface',
-             'container', 'packaging', 'wrapper', 'bag', 'box', 'bottle', 'can',
-             'napkin', 'towel', 'cloth', 'fabric', 'wood', 'metal', 'plastic',
-             'empty', 'blank', 'nothing', 'no food', 'no item', 'no food detected',
-             'unable to analyze', 'unable to detect', 'no foods found', 'no meal detected'
-           ];
+        // Check for errors
+        if (identifiedFoods.length === 0 ||
+            (identifiedFoods.length === 1 && identifiedFoods[0].name === "Unable to analyze")) {
+          setErrorMessage('No food detected in the image. Please retake a clear photo of your meal.');
+          setErrorModalVisible(true);
+          return;
+        }
 
-           // Exclude if in the list or contains generic terms
-           if (excluded.includes(name) ||
-               name.includes('cuisine') ||
-               name.includes('dishware') ||
-               name.includes('serveware') ||
-               name.includes('utensil') ||
-               name.includes('container') ||
-               name.includes('packaging') ||
-               name.includes('empty') ||
-               name.includes('blank') ||
-               name.includes('nothing')) return false;
+        // Filter out generic/non-food items
+        const filteredFoods = identifiedFoods.filter(f => {
+          const name = f.name.toLowerCase();
+          const excluded = [
+            'food', 'tableware', 'ingredient', 'recipe', 'cuisine', 'dish', 'meal',
+            'cooking', 'produce', 'vegetable', 'dishware', 'serveware', 'cutlery',
+            'plate', 'bowl', 'glass', 'cup', 'fork', 'knife', 'spoon', 'utensil',
+            'table', 'chair', 'background', 'wall', 'floor', 'ceiling', 'surface',
+            'container', 'packaging', 'wrapper', 'bag', 'box', 'bottle', 'can',
+            'napkin', 'towel', 'cloth', 'fabric', 'wood', 'metal', 'plastic',
+            'empty', 'blank', 'nothing', 'no food', 'no item', 'no food detected',
+            'unable to analyze', 'unable to detect', 'no foods found', 'no meal detected'
+          ];
 
-           // Also exclude foods that seem like false positives:
-           // - No gut health verdict or verdict is 'neutral' with no benefits/warnings
-           const hasGutData = f.gut_health_verdict &&
-                             f.gut_health_verdict !== 'neutral' &&
-                             ((f.gut_benefits && f.gut_benefits.length > 0) ||
-                              (f.gut_warnings && f.gut_warnings.length > 0));
+          if (excluded.includes(name) ||
+              name.includes('cuisine') ||
+              name.includes('dishware') ||
+              name.includes('serveware') ||
+              name.includes('utensil') ||
+              name.includes('container') ||
+              name.includes('packaging') ||
+              name.includes('empty') ||
+              name.includes('blank') ||
+              name.includes('nothing')) return false;
 
-           if (!hasGutData) return false;
+          // Check if food has valid data from AI
+          const hasValidScore = (f as any).gut_score !== undefined && (f as any).gut_score > 0;
+          return hasValidScore;
+        });
 
-           return true;
-         });
+        console.log('Filtered foods:', filteredFoods.map(f => f.name));
 
-         console.log('Filtered foods:', filteredFoods.map(f => f.name));
+        if (filteredFoods.length === 0) {
+          setErrorMessage('No food detected in the image. Please retake a clear photo of your meal.');
+          setErrorModalVisible(true);
+          return;
+        }
 
-         // If no meaningful foods remain after filtering, treat as no food detected
-         if (filteredFoods.length === 0) {
-           console.log('No meaningful foods identified after filtering out generic terms');
-           // Keep loading state on error
-           setErrorMessage('No food detected in the image. Please retake a clear photo of your meal.');
-           setErrorModalVisible(true);
-           return;
-         }
-
-         // Use filtered foods for scoring
-         identifiedFoods = filteredFoods;
+        identifiedFoods = filteredFoods;
       } catch (error) {
         console.log('AI recognition failed:', error);
-        // Keep loading state on error
         setErrorMessage('Failed to analyze the image. Please try again.');
         setErrorModalVisible(true);
         return;
       }
-      
-      // Calculate score
-      const result = calculateGutHealthScore(identifiedFoods, userTriggers);
-      
+
+      // Use AI's calculated scores directly
+      const scores = identifiedFoods.map((f: any) => (f as any).gut_score || 0);
+      const averageScore = scores.length > 0
+        ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
+        : 0;
+
       // Calculate nutrition totals
       const nutritionTotals = identifiedFoods.reduce((acc, food: any) => ({
         calories: acc.calories + (food.estimated_calories || 0),
@@ -249,39 +224,46 @@ export default function ResultScreen({ route, navigation }: any) {
         fat: acc.fat + (food.fat_grams || 0),
         fiber: acc.fiber + (food.fiber_grams || 0)
       }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
-      
-      setScore(result.score);
-      setFoods(result.foodImpacts.map((i: any) => ({ name: i.food }))); 
-      setBreakdown(result); // Store the entire result, so breakdown.breakdown works
-      setGigiMessage(result.message);
+
+      // Generate Gigi message based on score
+      const getGigiMessage = (score: number) => {
+        if (score >= 90) return "This is amazing! You're feeding me so well! 🎉";
+        if (score >= 70) return "Yummy! This makes my tummy happy! 😊";
+        if (score >= 50) return "Thanks for the food... it's okay I guess! 😐";
+        if (score >= 30) return "Oof... this is a bit tough on my gut... 😕";
+        return "Oh no... this doesn't make me feel good at all... 😵";
+      };
+
+      setScore(averageScore);
+      setFoods(identifiedFoods);
+      setGigiMessage(getGigiMessage(averageScore));
       setNutrition(nutritionTotals);
       setLoading(false);
 
       const overallEndTime = Date.now();
       console.log(`✅ Total analysis time: ${overallEndTime - overallStartTime}ms`);
+      console.log(`📊 Final gut score: ${averageScore} (from ${scores.length} foods)`);
 
-      // OPTIMIZATION 4: Save to database in background (don't wait)
-      saveToDatabase(null, identifiedFoods, result).catch(err => 
+      // Save to database in background
+      saveToDatabase(identifiedFoods, averageScore, getGigiMessage(averageScore)).catch(err =>
         console.error('Background save failed:', err)
       );
     } catch (error) {
       console.error('Error calculating score:', error);
-// Keep loading state on error
       setErrorMessage('Failed to analyze meal. Please try again.');
       setErrorModalVisible(true);
     }
   };
 
-  const saveToDatabase = async (imageUrl: string | null, identifiedFoods: IdentifiedFood[], result: any) => {
+  const saveToDatabase = async (identifiedFoods: IdentifiedFood[], score: number, message: string) => {
     try {
-      // Save scan metadata only (no image URL)
+      // Save scan with AI-calculated score
       await saveFoodScan(
-        imageUrl, // Will be null
         identifiedFoods,
-        result.score,
-        result.breakdown,
-        result.emotion,
-        result.message
+        score,
+        { fiber: 0, plants: 0, triggers: 0, processed: 0, warnings: 0 }, // simplified breakdown
+        score >= 70 ? 'happy' : score >= 40 ? 'neutral' : 'sad',
+        message
       );
     } catch (error) {
       console.error('Error saving scan:', error);
@@ -473,32 +455,32 @@ export default function ResultScreen({ route, navigation }: any) {
               return true;
             })
             .map((food, index) => {
-              const impact = breakdown.foodImpacts?.find((fi: any) => 
-                fi.food.toLowerCase() === food.name.toLowerCase()
-              );
-              
+              const foodWithScore = food as any;
+              const gutScore = foodWithScore.gut_score || 50;
+              const benefits = foodWithScore.gut_benefits || [];
+              const warnings = foodWithScore.gut_warnings || [];
+
+              // Determine impact based on AI's score
               let impactConfig = {
                 icon: 'ellipse' as any,
                 color: '#9ca3af',
                 backgroundColor: 'rgba(156, 163, 175, 0.15)'
               };
-              
-              if (impact) {
-                if (impact.impact === 'positive') {
-                  impactConfig = {
-                    icon: 'checkmark-circle',
-                    color: '#4ade80',
-                    backgroundColor: 'rgba(74, 222, 128, 0.15)'
-                  };
-                } else if (impact.impact === 'warning') {
-                  impactConfig = {
-                    icon: 'alert-circle',
-                    color: '#fbbf24',
-                    backgroundColor: 'rgba(251, 191, 36, 0.15)'
-                  };
-                }
+
+              if (gutScore >= 70) {
+                impactConfig = {
+                  icon: 'checkmark-circle',
+                  color: '#4ade80',
+                  backgroundColor: 'rgba(74, 222, 128, 0.15)'
+                };
+              } else if (gutScore < 40) {
+                impactConfig = {
+                  icon: 'alert-circle',
+                  color: '#fbbf24',
+                  backgroundColor: 'rgba(251, 191, 36, 0.15)'
+                };
               }
-              
+
               return (
                 <LinearGradient
                   key={index}
@@ -508,9 +490,9 @@ export default function ResultScreen({ route, navigation }: any) {
                   style={styles.foodCard}
                 >
                   <View style={styles.foodHeader}>
-                    <IconBadge 
-                      name={impactConfig.icon} 
-                      color={impactConfig.color} 
+                    <IconBadge
+                      name={impactConfig.icon}
+                      color={impactConfig.color}
                       backgroundColor={impactConfig.backgroundColor}
                       size={20}
                     />
@@ -518,11 +500,11 @@ export default function ResultScreen({ route, navigation }: any) {
                       {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
                     </Text>
                   </View>
-                  
+
                   {/* Pills Container */}
                   <View style={styles.pillsContainer}>
                     {/* Benefits Pills */}
-                    {impact?.benefits?.map((benefit: string, idx: number) => (
+                    {benefits.map((benefit: string, idx: number) => (
                       <View key={`b-${idx}`} style={[styles.pill, styles.benefitPill]}>
                         <Ionicons name="add-circle" size={12} color={theme.colors.brand.teal} />
                         <Text variant="caption2" style={styles.benefitText}>
@@ -530,9 +512,9 @@ export default function ResultScreen({ route, navigation }: any) {
                         </Text>
                       </View>
                     ))}
-                    
+
                     {/* Warnings Pills */}
-                    {impact?.warnings?.map((warning: string, idx: number) => (
+                    {warnings.map((warning: string, idx: number) => (
                       <View key={`w-${idx}`} style={[styles.pill, styles.warningPill]}>
                         <Ionicons name="warning" size={12} color={theme.colors.brand.coral} />
                         <Text variant="caption2" style={styles.warningText}>
@@ -540,16 +522,6 @@ export default function ResultScreen({ route, navigation }: any) {
                         </Text>
                       </View>
                     ))}
-                    
-                    {/* Personalized Warning Pill */}
-                    {impact?.personalizedWarning && (
-                      <View style={[styles.pill, styles.personalizedPill]}>
-                        <Ionicons name="alert" size={12} color="#ff5757" />
-                        <Text variant="caption2" style={styles.personalizedText}>
-                          {impact.personalizedWarning.replace('⚠️ ', '')}
-                        </Text>
-                      </View>
-                    )}
                   </View>
                 </LinearGradient>
               );

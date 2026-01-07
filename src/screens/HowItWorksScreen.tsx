@@ -106,6 +106,18 @@ export default function HowItWorksScreen({ navigation }: any) {
             <Text variant="body" style={styles.cardText}>
               Our scoring methodology is based on peer-reviewed nutritional science and gut microbiome research. We analyze foods using established nutritional databases and current scientific understanding of digestive health.
             </Text>
+
+            <TouchableOpacity
+              style={styles.referencesButton}
+              onPress={() => navigation.navigate('References')}
+            >
+              <Ionicons name="book" size={18} color={theme.colors.brand.teal} />
+              <Text variant="body" weight="semiBold" style={styles.referencesButtonText}>
+                View Scientific References
+              </Text>
+              <Ionicons name="arrow-forward" size={18} color={theme.colors.brand.teal} />
+            </TouchableOpacity>
+
             <Text variant="caption1" style={styles.noteText}>
               Note: Nutritional values and gut health impacts are estimates based on typical serving sizes and food composition data.
             </Text>
@@ -225,6 +237,22 @@ const styles = StyleSheet.create({
     color: theme.colors.text.white,
     opacity: 0.8,
     lineHeight: 22,
+  },
+  referencesButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    backgroundColor: 'rgba(165, 225, 166, 0.15)',
+    borderRadius: theme.borderRadius.lg,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(165, 225, 166, 0.3)',
+  },
+  referencesButtonText: {
+    color: theme.colors.brand.teal,
   },
   noteText: {
     color: theme.colors.text.white,

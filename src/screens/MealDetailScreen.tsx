@@ -137,30 +137,6 @@ export default function MealDetailScreen({ route, navigation }: any) {
           </LinearGradient>
         </Animated.View>
 
-        {/* Identified Foods */}
-        <Animated.View entering={FadeInDown.delay(200)} style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="list" size={20} color={theme.colors.brand.teal} />
-            <Text variant="title3" weight="semiBold" style={styles.sectionTitle}>
-              Food Items
-            </Text>
-          </View>
-          
-          {scan.identified_foods.map((food, index) => (
-            <LinearGradient
-              key={index}
-              colors={['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.02)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.foodItem}
-            >
-              <Ionicons name="checkmark-circle" size={20} color={theme.colors.brand.teal} />
-              <Text variant="body" weight="medium" style={styles.foodName}>
-                {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
-              </Text>
-            </LinearGradient>
-          ))}
-        </Animated.View>
 
         {/* Nutrition Facts */}
         <Animated.View entering={FadeInDown.delay(300)} style={styles.section}>

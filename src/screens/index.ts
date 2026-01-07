@@ -12,4 +12,5 @@ export { default as SupportScreen } from './SupportScreen';
 export { default as MealsHistoryScreen } from './MealsHistoryScreen';
 export { default as MealDetailScreen } from './MealDetailScreen';
 export { default as HowItWorksScreen } from './HowItWorksScreen';
+export { default as ReferencesScreen } from './ReferencesScreen';
 

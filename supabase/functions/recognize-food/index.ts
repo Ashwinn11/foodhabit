@@ -8,30 +8,17 @@ const corsHeaders = {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Gut Health Analysis from Gemini
+// Simplified Gut Health Analysis from Gemini
 interface GutHealthAnalysis {
     food_name: string;
-    gut_health_verdict: 'good' | 'neutral' | 'bad';
-    gut_score: number;
-    fiber_score: number;
-    is_processed: boolean;
-    processing_level: 'whole' | 'minimally_processed' | 'processed' | 'ultra_processed';
-    plant_count: number;
-    is_plant: boolean;
-    triggers: string[];
-    prebiotic_score: number;
-    probiotic_score: number;
-    anti_inflammatory: boolean;
-    fermentable: boolean;
-    gut_benefits: string[];
-    gut_warnings: string[];
-    why_good_or_bad: string;
-    // Nutrition estimates
-    estimated_calories?: number;
-    protein_grams?: number;
-    carbs_grams?: number;
-    fat_grams?: number;
-    fiber_grams?: number;
+    gut_score: number; // 0-100 calculated by AI
+    gut_benefits: string[]; // max 2 short benefits
+    gut_warnings: string[]; // max 1 short warning
+    estimated_calories: number;
+    protein_grams: number;
+    carbs_grams: number;
+    fat_grams: number;
+    fiber_grams: number;
 }
 
 interface RecognitionResult {
@@ -51,8 +38,8 @@ async function hashImageBuffer(buffer: ArrayBuffer): Promise<string> {
 }
 
 /**
- * Analyze food image using Gemini 3 Pro
- * Does BOTH identification AND gut health analysis in one call
+ * Analyze food image using Gemini - AI calculates gut score
+ * Fast and reliable - AI does the heavy lifting
  */
 async function analyzeWithGemini(
     base64Image: string,
@@ -66,49 +53,29 @@ async function analyzeWithGemini(
     }
 
     const triggersContext = userTriggers.length > 0
-        ? `The user has these personal food triggers/sensitivities: ${userTriggers.join(', ')}. Flag these specifically in warnings.`
+        ? `The user has these personal food triggers/sensitivities: ${userTriggers.join(', ')}. Mention these in warnings.`
         : '';
 
-    const prompt = `You are a critical gut health nutritionist. Analyze this food image with strict scrutiny.
+    const prompt = `You are a gut health nutritionist analyzing this food image.
 
-TASK:
-1. IDENTIFY specific food items (be precise: "Sourdough Bread" not "Bread").
-2. ANALYZE each for gut health impact using the scoring rubric below.
+TASK: Identify 3-5 main food items and analyze their gut health impact.
+
+SCORING GUIDELINES (0-100):
+- 90-100: Exceptional for gut health (fermented foods, high-fiber prebiotics, diverse plants)
+- 70-89: Good (whole foods, vegetables, clean proteins, whole grains)
+- 50-69: Neutral (white rice, dairy, simple meals with minimal fiber)
+- 30-49: Caution (added sugars, fried foods, refined flour, inflammatory oils)
+- 0-29: Harmful (ultra-processed, high fructose syrup, artificial additives)
 
 ${triggersContext}
-
-SCORING RUBRIC (0-100):
-- 90-100 (Exceptional): Fermented foods (kimchi, kefir), high-fiber prebiotics (legumes, artichokes), or diverse raw plants.
-- 70-89 (Good): Whole fruits, vegetables, clean proteins, whole grains.
-- 50-69 (Neutral): White rice, conventional dairy, simple home-cooked meals, minimal fiber.
-- 30-49 (Caution): Added sugars, fried foods, refined flour, common inflammatory oils (seed oils).
-- 0-29 (Bad): Ultra-processed foods, high fructose syrup, artificial additives, alcohol.
-
-CRITICAL INSTRUCTIONS:
-- Do NOT give 100 unless it is a perfect gut-microbiome superfood.
-- Be harsh on processed items, fried foods, and added sugars.
-- If a dish has mixed ingredients (e.g. "Pizza"), identify the main components separately if possible, or score the composite dish based on the worst ingredients (e.g. processed crust/cheese lowers the score).
-- Estimate nutrition carefully.
 
 Return a JSON array with this structure for EACH food:
 [
   {
     "food_name": "specific ingredient name",
-    "gut_health_verdict": "good" | "neutral" | "bad",
     "gut_score": 0-100,
-    "fiber_score": 0-10,
-    "is_processed": boolean,
-    "processing_level": "whole" | "minimally_processed" | "processed" | "ultra_processed",
-    "plant_count": 1,
-    "is_plant": boolean,
-    "triggers": ["array of triggers like gluten, dairy, fodmap"],
-    "prebiotic_score": 0-10,
-    "probiotic_score": 0-10,
-    "anti_inflammatory": boolean,
-    "fermentable": boolean,
-    "gut_benefits": ["max 2 short benefits"],
-    "gut_warnings": ["max 1 short warning if any"],
-    "why_good_or_bad": "One short sentence explaining the score",
+    "gut_benefits": ["max 2 short gut health benefits"],
+    "gut_warnings": ["max 1 short warning if applicable"],
     "estimated_calories": number,
     "protein_grams": number,
     "carbs_grams": number,
@@ -117,7 +84,11 @@ Return a JSON array with this structure for EACH food:
   }
 ]
 
-IMPORTANT: Identify 3-5 main ingredients. Return ONLY valid JSON array.`;
+IMPORTANT:
+- Be precise with food names (e.g., "Sourdough Bread" not "Bread")
+- Score honestly based on gut health impact
+- Estimate nutrition for typical serving size
+- Return ONLY valid JSON array`;
 
     const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -237,24 +208,14 @@ serve(async (req) => {
         try {
             const geminiAnalysis = await analyzeWithGemini(base64Data, []);
 
-            // Transform Gemini results to our food format
+            // Transform Gemini results to our simplified food format
             foods = geminiAnalysis.map(analysis => ({
                 name: analysis.food_name,
                 confidence: 0.95,
-                category: analysis.is_plant ? 'plant' : (analysis.is_processed ? 'processed' : 'protein'),
-                fiber_score: analysis.fiber_score,
-                trigger_risk: analysis.triggers.length > 0 ? 3 : 1,
-                is_plant: analysis.is_plant,
-                common_triggers: analysis.triggers,
+                category: 'unknown', // not needed anymore
+                gut_score: analysis.gut_score, // AI's calculated score
                 gut_benefits: analysis.gut_benefits,
                 gut_warnings: analysis.gut_warnings,
-                prebiotic_score: analysis.prebiotic_score,
-                probiotic_score: analysis.probiotic_score,
-                anti_inflammatory: analysis.anti_inflammatory,
-                fermentable: analysis.fermentable,
-                processing_level: analysis.processing_level,
-                gut_health_verdict: analysis.gut_health_verdict,
-                why_gut_healthy: analysis.why_good_or_bad,
                 // Nutrition fields
                 estimated_calories: analysis.estimated_calories,
                 protein_grams: analysis.protein_grams,
@@ -263,7 +224,7 @@ serve(async (req) => {
                 fiber_grams: analysis.fiber_grams
             }));
 
-            console.log("✅ Successfully analyzed", foods.length, "foods");
+            console.log("✅ Successfully analyzed", foods.length, "foods with AI-calculated scores");
 
         } catch (geminiError) {
             console.error("Gemini analysis failed:", geminiError);
@@ -272,10 +233,14 @@ serve(async (req) => {
                 name: "Unable to analyze",
                 confidence: 0,
                 category: 'unknown',
-                fiber_score: 0,
-                is_plant: false,
+                gut_score: 0,
                 gut_benefits: [],
-                gut_warnings: ['Food analysis temporarily unavailable']
+                gut_warnings: ['Food analysis temporarily unavailable'],
+                estimated_calories: 0,
+                protein_grams: 0,
+                carbs_grams: 0,
+                fat_grams: 0,
+                fiber_grams: 0
             }];
         }
 

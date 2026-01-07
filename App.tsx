@@ -16,8 +16,8 @@ import {
 } from '@expo-google-fonts/nunito';
 import { useAuth } from './src/hooks/useAuth';
 import { registerForPushNotificationsAsync } from './src/services/notificationService';
-import { initializeRevenueCat, loginUser } from './src/services/revenueCatService';
-import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, RevenueCatPaywall, OnboardingScreen, SplashScreen, TermsOfServiceScreen, PrivacyPolicyScreen, SupportScreen, MealsHistoryScreen, MealDetailScreen, HowItWorksScreen } from './src/screens';
+import { initializeRevenueCat } from './src/services/revenueCatService';
+import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, RevenueCatPaywall, OnboardingScreen, SplashScreen, TermsOfServiceScreen, PrivacyPolicyScreen, SupportScreen, MealsHistoryScreen, MealDetailScreen, HowItWorksScreen, ReferencesScreen } from './src/screens';
 
 import { theme } from './src/theme';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -131,8 +131,8 @@ function AppContent() {
     const setupRevenueCat = async () => {
       if (session?.user?.id) {
         try {
+          // initializeRevenueCat already logs in the user if userId is provided
           await initializeRevenueCat(session.user.id);
-          await loginUser(session.user.id);
         } catch (error) {
           console.error('Failed to initialize RevenueCat:', error);
         }
@@ -252,6 +252,11 @@ function AppContent() {
            <Stack.Screen
              name="Support"
              component={SupportScreen}
+             options={{ presentation: 'card', gestureEnabled: true }}
+           />
+           <Stack.Screen
+             name="References"
+             component={ReferencesScreen}
              options={{ presentation: 'card', gestureEnabled: true }}
            />
         </>
