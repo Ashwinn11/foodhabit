@@ -637,6 +637,17 @@ export default function ResultScreen({ route, navigation }: any) {
             <Text variant="caption2" style={styles.disclaimerText}>
               GutScan provides educational insights only and is not a medical device. This analysis is not a substitute for professional medical advice, diagnosis, or treatment. Always consult with a qualified healthcare provider before making dietary changes or if you have health concerns.
             </Text>
+
+            <TouchableOpacity
+              style={styles.referencesLinkButton}
+              onPress={() => navigation.navigate('References')}
+            >
+              <Ionicons name="book-outline" size={16} color={theme.colors.brand.coral} />
+              <Text variant="caption1" weight="semiBold" style={styles.referencesLinkText}>
+                View Scientific References
+              </Text>
+              <Ionicons name="open-outline" size={16} color={theme.colors.brand.coral} />
+            </TouchableOpacity>
           </LinearGradient>
         </View>
 
@@ -995,6 +1006,22 @@ const styles = StyleSheet.create({
     color: theme.colors.text.white,
     opacity: 0.8,
     lineHeight: 18,
+  },
+  referencesLinkButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    backgroundColor: 'rgba(255, 118, 100, 0.15)',
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    marginTop: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 118, 100, 0.3)',
+  },
+  referencesLinkText: {
+    color: theme.colors.brand.coral,
   },
   actions: {
     paddingHorizontal: theme.spacing.xl,
