@@ -57,17 +57,6 @@ export const useAuth = (): UseAuthReturn => {
   };
 
   const handleSignOut = async () => {
-    // CRITICAL: Log out from RevenueCat BEFORE signing out from Supabase
-    // This prevents subscription data from mixing between users
-    try {
-      const { logoutUser } = await import('../services/revenueCatService');
-      await logoutUser();
-    } catch (error) {
-      console.error('Error logging out from RevenueCat:', error);
-      // Continue with sign out even if RevenueCat fails
-    }
-
-    // Then sign out from Supabase
     await supabase.auth.signOut();
   };
 

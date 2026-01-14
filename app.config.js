@@ -23,28 +23,12 @@ module.exports = {
         "applinks:foodhabit.com"
       ],
       infoPlist: {
-        ITSAppUsesNonExemptEncryption: false,
-        NSCameraUsageDescription: "GutScan needs camera access to scan your meals and analyze their gut health impact.",
-        NSPhotoLibraryUsageDescription: "GutScan needs photo library access to select meal images for analysis."
+        ITSAppUsesNonExemptEncryption: false
       },
-
     },
     plugins: [
       "expo-apple-authentication",
-      "expo-web-browser",
-      "expo-font",
-      [
-        "expo-camera",
-        {
-          cameraPermission: "Allow GutScan to access your camera to scan meals"
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          photosPermission: "Allow GutScan to access your photos to select meal images"
-        }
-      ]
+      "expo-web-browser"
     ],
     extra: {
       eas: {

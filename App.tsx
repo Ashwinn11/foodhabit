@@ -1,353 +1,99 @@
 import React from 'react';
-import { StyleSheet, ActivityIndicator, Text as RNText } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, ActivityIndicator, Text as RNText, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import * as ExpoSplashScreen from 'expo-splash-screen';
-import { BackgroundBlobs } from './src/components';
-import {
-  useFonts,
-  Nunito_300Light,
-  Nunito_400Regular,
-  Nunito_500Medium,
-  Nunito_600SemiBold,
-  Nunito_700Bold,
-} from '@expo-google-fonts/nunito';
 import { useAuth } from './src/hooks/useAuth';
-import { registerForPushNotificationsAsync } from './src/services/notificationService';
-import { initializeRevenueCat } from './src/services/revenueCatService';
-import { AuthScreen, ProfileScreen, HomeScreen, CameraScreen, ResultScreen, RevenueCatPaywall, OnboardingScreen, SplashScreen, TermsOfServiceScreen, PrivacyPolicyScreen, SupportScreen, MealsHistoryScreen, MealDetailScreen, HowItWorksScreen, ReferencesScreen } from './src/screens';
-
-import { theme } from './src/theme';
+import { AuthScreen, ProfileScreen } from './src/screens';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { getUserProfile, setOnboardingComplete } from './src/services/databaseService';
 
 // Keep the native splash screen visible while we fetch resources
 ExpoSplashScreen.preventAutoHideAsync();
 
 const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
-
-function MainTabs() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: theme.colors.brand.backgroundGradientEnd,
-          borderTopColor: 'rgba(255, 255, 255, 0.1)',
-          borderTopWidth: 1,
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 65,
-        },
-        tabBarActiveTintColor: theme.colors.brand.coral,
-        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontFamily: theme.fontFamily.semiBold,
-          marginTop: -4,
-        },
-      }}
-    >
-      <Tab.Screen 
-        name="HomeTab" 
-        component={HomeScreen}
-        options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen 
-        name="MealsTab" 
-        component={MealsHistoryScreen}
-        options={{
-          tabBarLabel: 'Meals',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="restaurant" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen 
-        name="ProfileTab" 
-        component={ProfileScreen}
-        options={{
-          tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tab.Navigator>
-  );
-}
 
 function AppContent() {
   const { session, loading } = useAuth();
-  const [hasOnboarded, setHasOnboarded] = React.useState<boolean | null>(null);
-  const [checkingOnboarding, setCheckingOnboarding] = React.useState(false);
-  const [showSplash, setShowSplash] = React.useState(true);
 
-  React.useEffect(() => {
-    // Reset onboarding state when session changes
-    setHasOnboarded(null);
-  }, [session?.user?.id]);
-
-  React.useEffect(() => {
-    const checkOnboarding = async () => {
-      if (loading) return;
-
-      if (!session) {
-        setHasOnboarded(false);
-        return;
-      }
-
-      // Prevent duplicate checks
-      if (checkingOnboarding) return;
-      setCheckingOnboarding(true);
-
-      try {
-        // Fetch profile from DB and check onboarding flag
-        const profile = await getUserProfile();
-        setHasOnboarded(profile?.onboarding_complete ?? false);
-      } catch (error) {
-        console.error('Error checking onboarding:', error);
-        setHasOnboarded(false);
-      } finally {
-        setCheckingOnboarding(false);
-      }
-    };
-
-    checkOnboarding();
-  }, [session, loading]);
-
-  // Initialize RevenueCat when user is authenticated
-  React.useEffect(() => {
-    const setupRevenueCat = async () => {
-      if (session?.user?.id) {
-        try {
-          // initializeRevenueCat already logs in the user if userId is provided
-          await initializeRevenueCat(session.user.id);
-        } catch (error) {
-          console.error('Failed to initialize RevenueCat:', error);
-        }
-      }
-    };
-
-    setupRevenueCat();
-  }, [session?.user?.id]);
-
-  const completeOnboarding = async () => {
-    setHasOnboarded(true);
-    await setOnboardingComplete(true);
-  };
-
-  // Show custom splash screen first
-  if (showSplash) {
-    return <SplashScreen onFinish={() => setShowSplash(false)} />;
-  }
-
-  if (loading || hasOnboarded === null) {
+  if (loading) {
     return (
-      <LinearGradient
-        colors={[theme.colors.brand.backgroundGradientStart, theme.colors.brand.backgroundGradientEnd]}
-        style={styles.loadingContainer}
-      >
-        <BackgroundBlobs />
-        <ActivityIndicator size="large" color={theme.colors.brand.coral} />
-        <RNText style={{ marginTop: theme.spacing.md, color: theme.colors.text.white }}>
+      <View style={[styles.loadingContainer, { backgroundColor: '#1a1a1a' }]}>
+        <ActivityIndicator size="large" color="#FF7664" />
+        <RNText style={{ marginTop: 16, color: '#fff' }}>
           Loading...
         </RNText>
-      </LinearGradient>
+      </View>
     );
   }
 
-  // Return the appropriate screen based on auth/onboarding state
+  // Return the appropriate screen based on auth state
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: 'transparent' },
-        animation: 'slide_from_right', 
+        animation: 'slide_from_right',
       }}
     >
       {!session ? (
-        // Auth flow - Terms and Privacy accessible
-        <>
-          <Stack.Screen 
-            name="Auth" 
-            component={AuthScreen}
-            options={{ presentation: 'card' }}
-          />
-          <Stack.Screen 
-            name="TermsOfService" 
-            component={TermsOfServiceScreen}
-            options={{ presentation: 'card', gestureEnabled: true }}
-          />
-          <Stack.Screen 
-            name="PrivacyPolicy" 
-            component={PrivacyPolicyScreen}
-            options={{ presentation: 'card', gestureEnabled: true }}
-          />
-        </>
-      ) : !hasOnboarded ? (
-        // Onboarding flow
-        <Stack.Screen 
-          name="Onboarding" 
+        // Auth flow
+        <Stack.Screen
+          name="Auth"
+          component={AuthScreen}
           options={{ presentation: 'card' }}
-        >
-          {(props) => <OnboardingScreen {...props} onComplete={completeOnboarding} />}
-        </Stack.Screen>
+        />
       ) : (
-        // Main app flow
-        <>
-          <Stack.Screen 
-            name="Main" 
-            component={MainTabs} 
-            options={{ presentation: 'card' }}
-          />
-          <Stack.Screen 
-            name="Camera" 
-            component={CameraScreen} 
-            options={{ presentation: 'card' }}
-          />
-          <Stack.Screen 
-            name="Result" 
-            component={ResultScreen} 
-            options={{ 
-              presentation: 'modal',
-              gestureEnabled: true,
-            }}
-          />
-          <Stack.Screen 
-            name="Paywall" 
-            component={RevenueCatPaywall}
-            options={{ presentation: 'modal', gestureEnabled: true }}
-          />
-          <Stack.Screen 
-            name="MealDetail" 
-            component={MealDetailScreen}
-            options={{ presentation: 'card', gestureEnabled: true }}
-          />
-          <Stack.Screen 
-            name="TermsOfService" 
-            component={TermsOfServiceScreen}
-            options={{ presentation: 'card', gestureEnabled: true }}
-          />
-          <Stack.Screen 
-            name="PrivacyPolicy" 
-            component={PrivacyPolicyScreen}
-            options={{ presentation: 'card', gestureEnabled: true }}
-          />
-           <Stack.Screen
-             name="HowItWorks"
-             component={HowItWorksScreen}
-             options={{ presentation: 'card', gestureEnabled: true }}
-           />
-           <Stack.Screen
-             name="Support"
-             component={SupportScreen}
-             options={{ presentation: 'card', gestureEnabled: true }}
-           />
-           <Stack.Screen
-             name="References"
-             component={ReferencesScreen}
-             options={{ presentation: 'card', gestureEnabled: true }}
-           />
-        </>
+        // Main app flow - Profile screen
+        <Stack.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{ presentation: 'card' }}
+        />
       )}
     </Stack.Navigator>
   );
 }
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
-    Nunito_300Light,
-    Nunito_400Regular,
-    Nunito_500Medium,
-    Nunito_600SemiBold,
-    Nunito_700Bold,
-  });
-
   React.useEffect(() => {
-    registerForPushNotificationsAsync();
+    // Hide native splash screen immediately as we're not loading fonts anymore
+    ExpoSplashScreen.hideAsync();
   }, []);
-
-  React.useEffect(() => {
-    // Hide native splash screen once fonts are loaded
-    if (fontsLoaded) {
-      ExpoSplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded) {
-    return (
-      <LinearGradient
-        colors={[theme.colors.brand.backgroundGradientStart, theme.colors.brand.backgroundGradientEnd]}
-        style={styles.loadingContainer}
-      >
-        <BackgroundBlobs />
-        <ActivityIndicator size="large" color={theme.colors.brand.coral} />
-      </LinearGradient>
-    );
-  }
 
   const NavigationTheme = {
     dark: true,
     colors: {
-      primary: theme.colors.brand.coral,
-      background: theme.colors.brand.backgroundGradientStart,
-      card: theme.colors.brand.backgroundGradientEnd,
-      text: theme.colors.text.white,
+      primary: '#FF7664',
+      background: '#1a1a1a',
+      card: '#2a2a2a',
+      text: '#fff',
       border: 'rgba(255, 255, 255, 0.1)',
-      notification: theme.colors.brand.coral,
+      notification: '#FF7664',
     },
     fonts: {
-      regular: { fontFamily: theme.fontFamily.regular, fontWeight: '400' as const },
-      bold: { fontFamily: theme.fontFamily.bold, fontWeight: '700' as const },
-      heavy: { fontFamily: theme.fontFamily.bold, fontWeight: '700' as const },
-      medium: { fontFamily: theme.fontFamily.medium, fontWeight: '500' as const },
-      thin: { fontFamily: theme.fontFamily.light, fontWeight: '300' as const },
+      regular: { fontFamily: 'System', fontWeight: '400' as const },
+      bold: { fontFamily: 'System', fontWeight: '700' as const },
+      heavy: { fontFamily: 'System', fontWeight: '700' as const },
+      medium: { fontFamily: 'System', fontWeight: '500' as const },
+      thin: { fontFamily: 'System', fontWeight: '300' as const },
     },
   };
 
-    return (
+  return (
+    <SafeAreaProvider>
+      <NavigationContainer theme={NavigationTheme}>
+        <AppContent />
+        <StatusBar style="light" backgroundColor="#1a1a1a" />
+      </NavigationContainer>
+    </SafeAreaProvider>
+  );
+}
 
-      <SafeAreaProvider>
-
-        <NavigationContainer theme={NavigationTheme}>
-
-          <AppContent />
-
-          <StatusBar style="light" backgroundColor={theme.colors.brand.backgroundGradientStart} />
-
-        </NavigationContainer>
-
-      </SafeAreaProvider>
-
-    );
-
-  }
-
-  
-
-  const styles = StyleSheet.create({
-
-    loadingContainer: {
-
-      flex: 1,
-
-      alignItems: 'center',
-
-      justifyContent: 'center',
-
-    },
-
-  });
-
-  
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

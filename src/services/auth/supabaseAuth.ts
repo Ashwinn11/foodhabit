@@ -85,6 +85,9 @@ export const signInWithGoogle = async (): Promise<void> => {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          prompt: 'select_account',
+        },
       },
     });
 
@@ -104,6 +107,9 @@ export const signInWithGoogle = async (): Promise<void> => {
     provider: 'google',
     options: {
       redirectTo: redirectUrl,
+      queryParams: {
+        prompt: 'select_account',
+      },
     },
   });
 

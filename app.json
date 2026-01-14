@@ -23,11 +23,6 @@
         "applinks:foodhabit.com",
         "applinks:foodhabit.com"
       ],
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "GutScan needs camera access to scan your meals and analyze their gut health impact.",
-        "NSPhotoLibraryUsageDescription": "GutScan needs photo library access to select meal images for analysis."
-      },
       "config": {
         "usesNonExemptEncryption": false
       }
@@ -37,28 +32,11 @@
       "bundler": "metro",
       "output": "single",
       "build": {
-        "babel": {
-          "include": [
-            "@expo/vector-icons"
-          ]
-        }
+        "babel": {}
       }
     },
     "plugins": [
-      "expo-apple-authentication",
-      "expo-font",
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Allow GutScan to access your camera to scan meals"
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Allow GutScan to access your photos to select meal images"
-        }
-      ]
+      "expo-apple-authentication"
     ],
     "extra": {
       "eas": {
@@ -66,10 +44,6 @@
       }
     },
     "android": {
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ],
       "package": "com.foodhabit.app"
     }
   }
