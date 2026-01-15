@@ -5,6 +5,7 @@ import {
   ScrollView,
   Pressable,
   TextInput,
+  Alert,
 } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -12,10 +13,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme/theme';
-import { useGutStore, MoodType, BristolType, MealType } from '../store';
+import { useGutStore, BristolType, MealType } from '../store';
 import {
   PhotoPlaceholder,
-  MoodPicker,
   BristolPicker,
   SymptomToggle,
   ScreenWrapper,
@@ -48,7 +48,6 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
   const [mode, setMode] = useState<EntryMode>('poop');
   
   // Poop state
-  const [mood, setMood] = useState<MoodType | undefined>(undefined);
   const [bristolType, setBristolType] = useState<BristolType | undefined>(undefined);
   const [notes, setNotes] = useState('');
   const [symptoms, setSymptoms] = useState({
@@ -57,6 +56,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
     cramping: false,
     nausea: false,
   });
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   
   // Meal state
   const [mealType, setMealType] = useState<MealType>('breakfast');
@@ -77,23 +77,26 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
   
   const handleSubmit = () => {
     if (mode === 'poop') {
-      if (!mood) return;
-      
+      // Poop mode
       addGutMoment({
         timestamp: new Date(),
-        mood,
         bristolType,
         notes: notes || undefined,
         symptoms,
+        tags: selectedTags as any,
       });
     } else {
-      // Meal mode
+      // Meal mode - require at least one food item
+      if (foods.length === 0) {
+        Alert.alert('Missing Food Items', 'Please add at least one food item to track triggers properly');
+        return;
+      }
+      
       addMeal({
         timestamp: new Date(),
         mealType,
         name: mealName || `${mealType.charAt(0).toUpperCase() + mealType.slice(1)}`,
-        foods: foods.length > 0 ? foods : ['General meal'],
-        mood: mood,
+        foods: foods,
         photoUri,
       });
     }
@@ -103,6 +106,12 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
   
   const toggleSymptom = (symptom: keyof typeof symptoms) => {
     setSymptoms(prev => ({ ...prev, [symptom]: !prev[symptom] }));
+  };
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
   };
   
   const addFood = () => {
@@ -116,7 +125,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
     setFoods(prev => prev.filter((_, i) => i !== index));
   };
   
-  const isValid = mode === 'poop' ? mood !== undefined : true;
+  const isValid = mode === 'poop' ? bristolType !== undefined : true;
   
   return (
     <ScreenWrapper style={styles.container} edges={['top']}>
@@ -198,22 +207,17 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
       >
         {mode === 'poop' ? (
           <>
-            {/* Mood Picker */}
-            <Animated.View entering={FadeInDown.delay(200).springify()}>
-              <MoodPicker selected={mood} onSelect={setMood} />
-            </Animated.View>
-            
             {/* Bristol Type Picker */}
-            <Animated.View entering={FadeInDown.delay(300).springify()}>
+            <Animated.View entering={FadeInDown.delay(200).springify()}>
               <BristolPicker selected={bristolType} onSelect={setBristolType} />
             </Animated.View>
             
-            {/* Symptoms */}
+            {/* Symptoms - Expanded Medical Section */}
             <Animated.View 
-              entering={FadeInDown.delay(500).springify()}
+              entering={FadeInDown.delay(300).springify()}
               style={styles.symptomsSection}
             >
-              <SectionHeader title="Any symptoms?" />
+              <SectionHeader title="Symptoms & Details" icon="medical" iconColor={colors.pink} />
               <View style={styles.symptomsGrid}>
                 <SymptomToggle
                   label="Bloating"
@@ -243,6 +247,32 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                   onToggle={() => toggleSymptom('nausea')}
                   color={colors.yellow}
                 />
+              </View>
+
+              {/* Medical Tags */}
+              <Typography variant="bodyXS" color={colors.black + '66'} style={{ marginTop: spacing.md, marginBottom: spacing.xs }}>
+                Additional indicators:
+              </Typography>
+              <View style={styles.foodTags}>
+                {['strain', 'urgency', 'blood', 'mucus'].map((tag) => {
+                   const isActive = selectedTags.includes(tag);
+                   return (
+                     <Pressable
+                       key={tag}
+                       style={[
+                         styles.foodTag, 
+                         { 
+                           backgroundColor: isActive ? colors.pink : colors.pink + '05', 
+                           borderColor: colors.pink + '20', 
+                           borderWidth: 1 
+                         }
+                       ]}
+                       onPress={() => toggleTag(tag)}
+                     >
+                       <Typography variant="bodyXS" color={isActive ? colors.white : colors.pink}>{tag}</Typography>
+                     </Pressable>
+                   );
+                })}
               </View>
             </Animated.View>
             
@@ -311,12 +341,13 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                       <IconContainer
                         name={meal.icon as any}
                         size={48}
-                        color={meal.color}
+                        color={meal.color === colors.yellow ? colors.black : meal.color}
+                        backgroundColor={meal.color === colors.yellow ? colors.yellow : colors.white}
                         borderColor={meal.color}
                         shape="circle"
                         style={{ marginBottom: spacing.sm }}
                       />
-                      <Typography variant="bodyBold" color={mealType === meal.type ? meal.color : colors.black}>
+                      <Typography variant="bodyBold" color={mealType === meal.type ? (meal.color === colors.yellow ? colors.black : meal.color) : colors.black}>
                         {meal.label}
                       </Typography>
                     </Card>
@@ -409,11 +440,11 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                 Quick add:
               </Typography>
               <View style={styles.quickFoods}>
-                {['Coffee', 'Bread', 'Eggs', 'Salad', 'Rice', 'Pasta', 'Fruit', 'Dairy'].map((food) => (
+                {['Coffee', 'Bread', 'Eggs', 'Salad', 'Rice', 'Pasta', 'Fruit', 'Dairy', 'Pizza', 'Broccoli', 'Oats', 'Milk'].map((food) => (
                   <Pressable
                     key={food}
                     style={styles.quickFoodButton}
-                    onPress={() => setFoods(prev => [...prev, food])}
+                    onPress={() => setFoods(prev => Array.from(new Set([...prev, food])))}
                   >
                     <Typography variant="bodySmall">{food}</Typography>
                   </Pressable>

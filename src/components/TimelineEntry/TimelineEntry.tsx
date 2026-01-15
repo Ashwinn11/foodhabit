@@ -3,16 +3,19 @@ import { View, StyleSheet, ViewStyle } from 'react-native';
 import { IconContainer } from '../IconContainer/IconContainer';
 import { Typography } from '../Typography';
 import { Card } from '../Card';
-import { colors, spacing } from '../../theme/theme';
-import { moodIcons, foodCategories } from '../../theme/theme';
-import { MealEntry } from '../../store';
+import { colors, spacing, moodIcons, foodCategories, bristolColors } from '../../theme/theme';
+import { MealEntry, GutMoment } from '../../store';
 
 interface TimelineEntryProps {
-  entry: MealEntry;
+  item: MealEntry | GutMoment;
   style?: ViewStyle;
 }
 
-export const TimelineEntry: React.FC<TimelineEntryProps> = ({ entry, style }) => {
+export const TimelineEntry: React.FC<TimelineEntryProps> = ({ item, style }) => {
+  const isMeal = (entry: MealEntry | GutMoment): entry is MealEntry => {
+    return 'mealType' in entry;
+  };
+
   const formatTime = (date: Date) => {
     return new Date(date).toLocaleTimeString('en-US', {
       hour: 'numeric',
@@ -20,60 +23,105 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ entry, style }) =>
       hour12: true,
     }).toUpperCase();
   };
-  
-  const getMealConfig = (type: string) => {
-    const config = foodCategories[type as keyof typeof foodCategories] || foodCategories.snack;
+
+  if (isMeal(item)) {
+    const config = foodCategories[item.mealType as keyof typeof foodCategories] || foodCategories.snack;
     
-    // Map meal types to core colors
     let saturatedColor: string = colors.pink;
-    switch (type) {
+    switch (item.mealType) {
       case 'breakfast': saturatedColor = colors.blue; break;
-      case 'lunch': saturatedColor = colors.yellow; break; // Using yellow for lunch
+      case 'lunch': saturatedColor = colors.yellow; break;
       case 'dinner': saturatedColor = colors.pink; break;
       case 'snack': saturatedColor = colors.pink; break;
       case 'drink': saturatedColor = colors.blue; break;
     }
-    
-    return { ...config, saturatedColor };
-  };
 
-  const config = getMealConfig(entry.mealType);
-  
-  const iconName = entry.mood ? moodIcons[entry.mood] : config.icon;
-  
+    const iconName = item.mood ? moodIcons[item.mood] : config.icon;
+
+    return (
+      <View style={[styles.container, style]}>
+        <View style={styles.timelineColumn}>
+          <View style={styles.line} />
+          <IconContainer 
+            name={iconName as any} 
+            size={44} 
+            color={saturatedColor === colors.yellow ? colors.black : colors.white} 
+            backgroundColor={saturatedColor}
+            borderColor={saturatedColor}
+            shape="circle"
+          />
+        </View>
+        
+        <Card variant="white" style={styles.contentCard} padding="lg">
+          <View style={styles.header}>
+            <Typography variant="h3" style={{ flex: 1 }}>{item.name}</Typography>
+            <Typography variant="bodyXS" color={saturatedColor === colors.yellow ? colors.black : saturatedColor} style={{ fontFamily: 'Chewy' }}>
+              {formatTime(item.timestamp)}
+            </Typography>
+          </View>
+          
+          <Typography variant="bodyXS" color={colors.black + '66'} style={{ marginTop: spacing.xs }}>
+            {item.foods.join(' • ')}
+          </Typography>
+        </Card>
+      </View>
+    );
+  }
+
+  // Poop Log (GutMoment)
+  const bristolColor = item.bristolType 
+    ? (bristolColors[`type${item.bristolType}` as keyof typeof bristolColors] || colors.pink)
+    : colors.pink;
+    
+  const activeSymptoms = Object.entries(item.symptoms)
+    .filter(([_, active]) => active)
+    .map(([name]) => name.charAt(0).toUpperCase() + name.slice(1));
+
   return (
     <View style={[styles.container, style]}>
-      {/* Timeline dot using IconContainer */}
       <View style={styles.timelineColumn}>
         <View style={styles.line} />
         <IconContainer 
-          name={iconName as any} 
+          name="happy-outline" 
           size={44} 
-          color={config.saturatedColor} 
-          borderColor={config.saturatedColor}
+          color={colors.white} 
+          backgroundColor={colors.pink}
+          borderColor={colors.pink}
           shape="circle"
         />
       </View>
       
-      {/* Content card */}
-      <Card variant="white" style={styles.contentCard} padding="lg">
+      <Card variant="colored" color={colors.pink} style={styles.contentCard} padding="lg">
         <View style={styles.header}>
-          <Typography variant="h3" style={{ flex: 1 }}>{entry.name}</Typography>
-          <Typography variant="bodyXS" color={config.saturatedColor} style={{ fontFamily: 'Chewy' }}>
-            {formatTime(entry.timestamp)}
+          <Typography variant="h3" style={{ flex: 1 }}>Bowel Movement</Typography>
+          <Typography variant="bodyXS" color={colors.pink} style={{ fontFamily: 'Chewy' }}>
+            {formatTime(item.timestamp)}
           </Typography>
         </View>
         
-        {entry.description && (
-          <Typography variant="bodySmall" color={colors.black + '99'} style={{ marginTop: spacing.xs }}>
-            {entry.description}
+        <View style={styles.detailsRow}>
+          {item.bristolType && (
+            <View style={[styles.bristolBadge, { backgroundColor: bristolColor }]}>
+              <Typography variant="bodyXS" color={colors.white}>Type {item.bristolType}</Typography>
+            </View>
+          )}
+          <Typography variant="bodyXS" color={colors.black + '66'}>• {item.mood}</Typography>
+        </View>
+
+        {activeSymptoms.length > 0 && (
+          <Typography variant="bodyXS" color={colors.pink} style={{ marginTop: spacing.xs }}>
+             Symptoms: {activeSymptoms.join(', ')}
           </Typography>
         )}
-        
-        {entry.foods.length > 0 && (
-          <Typography variant="bodyXS" color={colors.black + '66'} style={{ marginTop: spacing.xs }}>
-            {entry.foods.join(' • ')}
-          </Typography>
+
+        {item.tags && item.tags.length > 0 && (
+          <View style={styles.tagsContainer}>
+            {item.tags.map(tag => (
+              <View key={tag} style={styles.tagBadge}>
+                <Typography variant="bodyXS" color={colors.pink}>{tag}</Typography>
+              </View>
+            ))}
+          </View>
         )}
       </Card>
     </View>
@@ -107,9 +155,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xs,
   },
-  moodBadge: {
-    position: 'absolute',
-    bottom: spacing.sm,
-    right: spacing.sm,
+  detailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  bristolBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  tagBadge: {
+    backgroundColor: colors.pink + '15',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: colors.pink + '30',
   },
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -29,8 +29,21 @@ type GutProfileScreenProps = {
 };
 
 export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }) => {
-  const { user, meals, getStats } = useGutStore();
+  const { gutMoments, meals, getStats, getGutHealthScore } = useGutStore();
   const stats = getStats();
+  const healthScore = getGutHealthScore();
+  
+  // Combine and sort meals + gut moments for the "Memory Bank" job
+  const combinedHistory = useMemo(() => {
+    const combined = [
+      ...meals.map(m => ({ ...m, type: 'meal' as const })),
+      ...gutMoments.map(g => ({ ...g, type: 'poop' as const }))
+    ];
+    
+    return combined.sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  }, [meals, gutMoments]);
   
   // Get last poop time formatted
   const getLastPoopTime = () => {
@@ -46,25 +59,17 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
   
   return (
     <ScreenWrapper edges={['top']} style={styles.container}>
-      {/* Header */}
       <Animated.View 
         entering={FadeIn.delay(100)}
         style={styles.header}
       >
-        <BoxButton 
-          icon="arrow-back" 
-          onPress={() => navigation.goBack()}
-          size={44}
-        />
-        
-        <Typography variant="bodyBold" style={{ letterSpacing: 2 }}>GUT PROFILE</Typography>
+        <Typography variant="h2">History Book</Typography>
         
         <BoxButton 
-          icon="pencil" 
-          onPress={() => console.log('Edit Profile')}
+          icon="add-circle" 
+          onPress={() => navigation.navigate('AddEntry')}
           size={44}
-          color={colors.black}
-          style={{ backgroundColor: colors.yellow }} // Yellow edit button from reference
+          color={colors.pink}
         />
       </Animated.View>
       
@@ -73,50 +78,38 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Main Avatar */}
+        {/* Main Avatar Section - The "Mascot Job" */}
         <Animated.View 
           entering={FadeInDown.delay(200).springify()}
           style={styles.avatarSection}
         >
           <View style={styles.mainAvatarContainer}>
             <GutAvatar 
-              mood={user.avatarMood} 
-              size={140}
+              mood={healthScore.mood} 
+              size={120}
               showBadge
-              badgeText="Happy"
+              badgeText={stats.totalPoops > 0 ? `${stats.totalPoops} Logs` : 'Newbie'}
               ringColor={colors.pink}
             />
           </View>
           
-          <Typography variant="h2">Gut Buddy</Typography>
-          <View style={styles.subtitleRow}>
-            <IconContainer 
-              name="star" 
-              size={20} 
-              iconSize={14} 
-              color={colors.yellow} 
-              backgroundColor="transparent"
-              borderWidth={0}
-              shadow={false}
-              style={styles.starIcon} 
-            />
-            <Typography variant="body" color={colors.black + '99'}>
-              Your Digestive Friend
-            </Typography>
-          </View>
+          <Typography variant="h2">Your Gut Journey</Typography>
+          <Typography variant="body" color={colors.black + '66'}>
+            The full story of your gut
+          </Typography>
         </Animated.View>
         
-        {/* Stats */}
+        {/* Quick Review Stats */}
         <Animated.View 
           entering={FadeInDown.delay(300).springify()}
           style={styles.statsSection}
         >
           <View style={styles.statsRow}>
             <StatCard
-              label="AVG/DAY"
-              value={stats.avgFrequency}
-              unit="x"
-              color={colors.yellow}
+              label="TOTAL"
+              value={stats.totalPoops}
+              unit="logs"
+              color={colors.blue}
               style={[styles.statCard, { transform: [{ rotate: '-1.5deg' }] }]}
             />
             <StatCard
@@ -124,58 +117,58 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
               value={stats.longestStreak}
               unit="days"
               color={colors.pink}
-              style={[styles.statCard, { transform: [{ rotate: '2deg' }], marginTop: 2 }]}
+              style={[styles.statCard, { transform: [{ rotate: '1deg' }] }]}
             />
             <StatCard
-              label="LAST"
+              label="LAST POOP"
               value={getLastPoopTime()}
-              color={colors.blue}
+              color={colors.yellow}
               icon="time"
-              style={[styles.statCard, { transform: [{ rotate: '-1deg' }] }]}
+              style={[styles.statCard, { transform: [{ rotate: '-1deg' }], marginTop: 2 }]}
             />
           </View>
         </Animated.View>
         
-        {/* Yummy Timeline */}
+        {/* The Memory Bank - Combined Timeline */}
         <Animated.View 
           entering={FadeInDown.delay(400).springify()}
           style={styles.timelineSection}
         >
           <SectionHeader 
-            title="Yummy Timeline" 
-            icon="restaurant" 
+            title="Gut Timeline" 
+            icon="book" 
             iconColor={colors.blue}
-            onActionPress={() => console.log('Edit')}
-            actionLabel="Edit"
+            onActionPress={() => navigation.navigate('AddEntry')}
+            actionLabel="+ Log"
           />
           
           <View style={styles.timelineContainer}>
-            {meals.length > 0 ? (
-              meals.slice(0, 5).map((meal, index) => (
+            {combinedHistory.length > 0 ? (
+              combinedHistory.map((item, index) => (
                 <Animated.View
-                  key={meal.id}
-                  entering={FadeInDown.delay(500 + index * 100).springify()}
+                  key={item.id}
+                  entering={FadeInDown.delay(500 + index * 50).springify()}
                 >
-                  <TimelineEntry entry={meal} />
+                  <TimelineEntry item={item} />
                 </Animated.View>
               ))
             ) : (
               <Card variant="white" style={styles.emptyTimeline}>
                 <IconContainer
-                  name="fast-food-outline"
+                  name="calendar-outline"
                   size={72}
                   iconSize={48}
-                  color={colors.black + '40'}
+                  color={colors.black + '15'}
                   backgroundColor="transparent"
                   borderWidth={0}
                   shadow={false}
                   style={styles.emptyIcon}
                 />
-                <Typography variant="body" color={colors.black + '66'} style={{ marginBottom: spacing.lg }}>
-                  No meals logged yet!
+                <Typography variant="body" color={colors.black + '66'} align="center" style={{ marginBottom: spacing.lg }}>
+                  Your history book is empty!{"\n"}Log a meal or a moment to start.
                 </Typography>
                 <Button 
-                  title="+ Add Meal"
+                  title="Start Logging"
                   variant="primary"
                   color={colors.pink}
                   onPress={() => navigation.navigate('AddEntry')}
@@ -201,7 +194,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
   scrollView: {
     flex: 1,
@@ -211,17 +205,10 @@ const styles = StyleSheet.create({
   },
   avatarSection: {
     alignItems: 'center',
-    paddingVertical: spacing['2xl'],
+    paddingVertical: spacing.xl,
   },
   mainAvatarContainer: {
-    marginBottom: spacing.lg,
-  },
-  subtitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  starIcon: {
-    marginRight: spacing.xs,
+    marginBottom: spacing.md,
   },
   statsSection: {
     marginBottom: spacing['2xl'],
@@ -237,7 +224,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing['2xl'],
   },
   timelineContainer: {
-    // Timeline entries
+    paddingTop: spacing.md,
   },
   emptyTimeline: {
     alignItems: 'center',
@@ -247,6 +234,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   bottomPadding: {
-    height: spacing['4xl'],
+    height: 120, // Enough room for tab bar
   },
 });

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, fontSizes, radii, shadows, fonts } from '../theme/theme';
 import { GutAvatar, ScreenWrapper, IconContainer, Typography, Card } from '../components';
-import { useGutStore } from '../store';
+import { useGutStore, useUIStore } from '../store';
 import { useAuth } from '../hooks/useAuth';
 import { deleteAccount } from '../services/accountService';
 
@@ -22,8 +22,8 @@ const SettingsItem: React.FC<{
         name={icon}
         size={40}
         iconSize={20}
-        color={color}
-        backgroundColor={color + '15'}
+        color={color === colors.yellow ? colors.black : color}
+        backgroundColor={color === colors.yellow ? colors.yellow : color + '15'}
         borderColor={color}
         borderWidth={1.5}
         shadow={false}
@@ -52,6 +52,7 @@ const SettingsItem: React.FC<{
 export const ProfileScreen: React.FC = () => {
   const { user: gutUser } = useGutStore();
   const { user, signOut } = useAuth();
+  const { showAlert, showConfirm } = useUIStore();
   const [isDeleting, setIsDeleting] = useState(false);
   
   const getDisplayName = () => {
@@ -64,63 +65,45 @@ export const ProfileScreen: React.FC = () => {
   };
   
   const handleSignOut = () => {
-    Alert.alert(
+    showConfirm(
       'Sign Out',
       'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            await signOut();
-          },
-        },
-      ]
+      async () => {
+        await signOut();
+      },
+      'Sign Out'
     );
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
+    showConfirm(
       'Delete Account',
       'This will permanently delete:\n\n• Your profile and preferences\n• All gut logs and history\n\nThis action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => confirmDelete(),
-        },
-      ]
+      () => confirmDelete(),
+      'Delete'
     );
   };
 
   const confirmDelete = () => {
-    Alert.alert(
+    showConfirm(
       'Are you absolutely sure?',
       'This action is irreversible. Are you sure you want to delete your account?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Yes, Delete My Account',
-          style: 'destructive',
-          onPress: async () => {
-            setIsDeleting(true);
-            try {
-              const result = await deleteAccount();
-              if (result.success) {
-                Alert.alert('Success', 'Your account has been deleted.');
-              } else {
-                Alert.alert('Error', result.error || 'Failed to delete account');
-              }
-            } catch (_error) {
-              Alert.alert('Error', 'An unexpected error occurred. Please contact support.');
-            } finally {
-              setIsDeleting(false);
-            }
-          },
-        },
-      ]
+      async () => {
+        setIsDeleting(true);
+        try {
+          const result = await deleteAccount();
+          if (result.success) {
+            showAlert('Success', 'Your account has been deleted.', 'success');
+          } else {
+            showAlert('Error', result.error || 'Failed to delete account', 'error');
+          }
+        } catch (_error) {
+          showAlert('Error', 'An unexpected error occurred. Please contact support.', 'error');
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+      'Yes, Delete My Account'
     );
   };
   

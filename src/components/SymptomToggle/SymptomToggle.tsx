@@ -73,8 +73,8 @@ export const SymptomToggle: React.FC<SymptomToggleProps> = ({
           name={iconName}
           size={32}
           iconSize={18}
-          color={active ? colors.black : color}
-          backgroundColor="transparent"
+          color={active ? colors.black : (color === colors.yellow ? colors.black + '66' : color)}
+          backgroundColor={!active && color === colors.yellow ? colors.yellow + '30' : 'transparent'}
           borderWidth={0}
           shadow={false}
           style={styles.icon}
@@ -86,7 +86,7 @@ export const SymptomToggle: React.FC<SymptomToggleProps> = ({
           {label}
         </Typography>
         {active && (
-          <View style={styles.activeDot} />
+          <View style={[styles.activeDot, { backgroundColor: color === colors.yellow ? colors.black : colors.white }]} />
         )}
       </Animated.View>
     </Pressable>

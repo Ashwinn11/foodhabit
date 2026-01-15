@@ -9,14 +9,17 @@ import {
   IconContainer,
   Typography,
   Card,
-  SectionHeader
+  SectionHeader,
+  Button
 } from '../components';
 import { useGutStore } from '../store';
 
 export const InsightsScreen: React.FC = () => {
-  const { gutMoments, meals, getStats, getTodayWater } = useGutStore();
+  const { gutMoments, meals, getPotentialTriggers, getPoopHistoryData, exportData, getTodayWater, getGutHealthScore, getStats } = useGutStore();
   const stats = getStats();
   const todayWater = getTodayWater();
+  const triggers = getPotentialTriggers();
+  const historyData = getPoopHistoryData();
   
   const getMostCommonBristol = () => {
     if (gutMoments.length === 0) return '-';
@@ -43,27 +46,7 @@ export const InsightsScreen: React.FC = () => {
   };
   
   const symptomStats = getSymptomStats();
-  
-  const getMoodStats = () => {
-    if (gutMoments.length === 0) return {};
-    const counts: { [key: string]: number } = {};
-    gutMoments.forEach(m => {
-      counts[m.mood] = (counts[m.mood] || 0) + 1;
-    });
-    return counts;
-  };
-  
-  const moodStats = getMoodStats();
-  const totalMoods = Object.values(moodStats).reduce((a, b) => a + b, 0);
-  
-  const getAvatarMood = () => {
-    if (gutMoments.length === 0) return 'okay';
-    const recent = gutMoments.slice(0, 5);
-    const happyCount = recent.filter(m => m.mood === 'happy' || m.mood === 'amazing').length;
-    if (happyCount >= 3) return 'happy';
-    if (happyCount >= 1) return 'okay';
-    return 'bloated';
-  };
+  const healthScore = getGutHealthScore();
 
   return (
     <ScreenWrapper style={styles.container} edges={['top']}>
@@ -96,7 +79,7 @@ export const InsightsScreen: React.FC = () => {
             style={styles.overviewCard}
             padding="xl"
           >
-            <GutAvatar mood={getAvatarMood()} size={80} />
+            <GutAvatar mood={healthScore.mood} size={80} />
             <View style={styles.overviewStats}>
               <View style={styles.overviewStat}>
                 <Typography variant="h3">{stats.totalPoops}</Typography>
@@ -147,33 +130,51 @@ export const InsightsScreen: React.FC = () => {
                 style={styles.statCard}
               />
             </View>
+
+            {/* Poop Frequency Chart */}
+            <Card variant="white" style={{ marginTop: spacing.md }} padding="md">
+              <Typography variant="bodyBold" style={{ marginBottom: spacing.sm }}>7-Day Frequency</Typography>
+              <View style={styles.chartContainer}>
+                {historyData.map((d, i) => {
+                   const maxVal = Math.max(...historyData.map(id => id.count), 1);
+                   const height = (d.count / maxVal) * 60;
+                   return (
+                     <View key={i} style={styles.chartColumn}>
+                        <View style={[styles.chartBar, { height: Math.max(height, 4), backgroundColor: d.count > 0 ? colors.blue : colors.border + '33' }]} />
+                        <Typography variant="bodyXS" color={colors.black + '66'} style={{ fontSize: 8 }}>{d.date}</Typography>
+                     </View>
+                   );
+                })}
+              </View>
+            </Card>
           </Animated.View>
-          
-          {totalMoods > 0 && (
+
+          {/* Potential Triggers */}
+          {triggers.length > 0 && (
             <Animated.View 
-              entering={FadeInDown.delay(400).springify()}
+              entering={FadeInDown.delay(350).springify()}
               style={styles.section}
             >
               <SectionHeader 
-                title="Mood Breakdown" 
-                icon="happy" 
+                title="Potential Triggers" 
+                icon="alert-circle" 
                 iconColor={colors.pink}
               />
-              <Card variant="white" style={styles.moodBreakdown}>
-                {Object.entries(moodStats).map(([mood, count]) => (
-                  <View key={mood} style={styles.moodBar}>
-                    <Typography variant="bodySmall" style={styles.moodLabel}>{mood}</Typography>
-                    <View style={styles.moodBarTrack}>
-                      <View 
-                        style={[
-                          styles.moodBarFill, 
-                          { width: `${(count / totalMoods) * 100}%`, backgroundColor: colors.pink }
-                        ]} 
-                      />
+              <Card variant="colored" color={colors.pink} padding="md">
+                <Typography variant="bodySmall" color={colors.pink} style={{ marginBottom: spacing.sm }}>
+                  These foods appear often before you feel symptoms:
+                </Typography>
+                {triggers.map((t, i) => (
+                  <View key={i} style={styles.triggerItem}>
+                    <View style={styles.triggerDetails}>
+                      <Typography variant="bodyBold" color={colors.black}>{t.food}</Typography>
+                      <Typography variant="bodyXS" color={colors.black + '66'}>
+                        Linked to: {t.symptoms.join(', ')}
+                      </Typography>
                     </View>
-                    <Typography variant="bodySmall" align="right" color={colors.black + '66'} style={{ width: 30 }}>
-                      {count}
-                    </Typography>
+                    <View style={styles.triggerBadge}>
+                      <Typography variant="bodySmall" color={colors.white}>{t.count}x</Typography>
+                    </View>
                   </View>
                 ))}
               </Card>
@@ -234,8 +235,8 @@ export const InsightsScreen: React.FC = () => {
                   name="medkit-outline"
                   size={44}
                   iconSize={28}
-                  color={colors.yellow}
-                  backgroundColor="transparent"
+                  color={colors.black}
+                  backgroundColor={colors.yellow}
                   borderWidth={0}
                   shadow={false}
                 />
@@ -245,13 +246,41 @@ export const InsightsScreen: React.FC = () => {
             </View>
           </Animated.View>
           
+          {/* Export section */}
+          <Animated.View 
+            entering={FadeInDown.delay(550).springify()}
+            style={styles.exportSection}
+          >
+            <Card variant="white" padding="lg" style={styles.exportCard}>
+              <IconContainer 
+                name="document-text" 
+                size={48} 
+                iconSize={24} 
+                color={colors.blue} 
+                backgroundColor={colors.blue + '15'}
+                borderWidth={0}
+                shadow={false}
+              />
+              <View style={{ flex: 1, marginHorizontal: spacing.md }}>
+                <Typography variant="bodyBold">Doctor's Report</Typography>
+                <Typography variant="bodyXS" color={colors.black + '66'}>Export your gut history as a PDF</Typography>
+              </View>
+              <Button 
+                title="Export" 
+                variant="outline" 
+                size="sm" 
+                onPress={exportData}
+              />
+            </Card>
+          </Animated.View>
+          
           {stats.totalPoops === 0 && (
             <Animated.View entering={FadeInDown.delay(300).springify()}>
               <Card 
                 variant="white"
                 style={styles.emptyCard}
               >
-                <GutAvatar mood="okay" size={100} />
+                <GutAvatar mood="normal" size={100} />
                 <Typography variant="h3" style={{ marginTop: spacing.lg, marginBottom: spacing.sm }}>
                   Start Tracking!
                 </Typography>
@@ -353,6 +382,46 @@ const styles = StyleSheet.create({
     padding: spacing['2xl'],
     alignItems: 'center',
     marginBottom: spacing['2xl'],
+  },
+  chartContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 80,
+    paddingTop: spacing.sm,
+  },
+  chartColumn: {
+    alignItems: 'center',
+    width: '12%',
+  },
+  chartBar: {
+    width: 12,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  triggerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    padding: spacing.sm,
+    borderRadius: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  triggerDetails: {
+    flex: 1,
+  },
+  triggerBadge: {
+    backgroundColor: colors.pink,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  exportSection: {
+    marginVertical: spacing.md,
+  },
+  exportCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   bottomPadding: {
     height: 100,

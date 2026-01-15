@@ -72,7 +72,7 @@ export const FoodBlobCard: React.FC<FoodBlobCardProps> = ({
                   name="checkmark"
                   size={24}
                   iconSize={12}
-                  color={colors.white}
+                  color={config.accent === colors.yellow ? colors.black : colors.white}
                   backgroundColor={config.accent}
                   borderWidth={0}
                   shadow={false}
@@ -85,7 +85,7 @@ export const FoodBlobCard: React.FC<FoodBlobCardProps> = ({
             name={config.icon}
             size={70}
             iconSize={32}
-            color={config.accent}
+            color={config.accent === colors.yellow ? colors.black : config.accent}
             borderColor={config.accent}
             shape="circle"
             style={{ marginTop: spacing.md }}
@@ -93,14 +93,14 @@ export const FoodBlobCard: React.FC<FoodBlobCardProps> = ({
           
           {/* Bottom Info */}
           <View style={styles.infoContainer}>
-              <Typography variant="bodyBold" color={config.accent} align="center">
+              <Typography variant="bodyBold" color={config.accent === colors.yellow ? colors.black : config.accent} align="center">
                 {name}
               </Typography>
               
               <View style={styles.timeRow}>
-                  <Typography variant="h2" color={config.accent}>{time}</Typography>
+                  <Typography variant="h2" color={config.accent === colors.yellow ? colors.black : config.accent}>{time}</Typography>
                   <View style={[styles.periodBadge, { backgroundColor: config.accent }]}>
-                      <Typography variant="bodyXS" color={colors.white} style={{ fontSize: 10 }}>
+                      <Typography variant="bodyXS" color={config.accent === colors.yellow ? colors.black : colors.white} style={{ fontSize: 10 }}>
                         {config.period}
                       </Typography>
                   </View>

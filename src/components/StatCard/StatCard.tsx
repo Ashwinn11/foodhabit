@@ -33,8 +33,8 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, unit, color, i
           name={icon as any}
           size={32}
           iconSize={18}
-          color={accentColor}
-          backgroundColor="transparent"
+          color={accentColor === colors.yellow ? colors.black : accentColor}
+          backgroundColor={accentColor === colors.yellow ? colors.yellow : 'transparent'}
           borderWidth={0}
           shadow={false}
           style={styles.icon}

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
-  Alert,
   Platform,
 } from 'react-native';
 import Animated, {
@@ -15,10 +14,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useAuth } from '../hooks/useAuth';
 import { colors, spacing } from '../theme';
+import { useUIStore } from '../store/useUIStore';
 import { GutAvatar, ScreenWrapper, IconContainer, Typography, Card, Button } from '../components';
 
 export default function AuthScreen() {
   const { signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
+  const { showAlert } = useUIStore();
   const [loading, setLoading] = useState<'apple' | 'google' | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
   
@@ -47,7 +48,7 @@ export default function AuthScreen() {
     try {
       await signInWithApple();
     } catch (error: any) {
-      Alert.alert('Oops!', error.message || 'Failed to sign in with Apple');
+      showAlert('Oops!', error.message || 'Failed to sign in with Apple', 'error');
     } finally {
       setLoading(null);
     }
@@ -58,7 +59,7 @@ export default function AuthScreen() {
     try {
       await signInWithGoogle();
     } catch (error: any) {
-      Alert.alert('Oops!', error.message || 'Failed to sign in with Google');
+      showAlert('Oops!', error.message || 'Failed to sign in with Google', 'error');
     } finally {
       setLoading(null);
     }
@@ -77,7 +78,7 @@ export default function AuthScreen() {
           style={styles.header}
         >
           <Animated.View style={avatarStyle}>
-            <GutAvatar mood="happy" size={120} showBadge badgeIcon="hand-right" />
+            <GutAvatar mood="easy" size={120} showBadge badgeIcon="hand-right" />
           </Animated.View>
           
           <Typography variant="h1" style={{ marginTop: spacing.xl }}>Gut Buddy</Typography>
@@ -97,8 +98,8 @@ export default function AuthScreen() {
               name="sparkles"
               size={48}
               iconSize={32}
-              color={colors.yellow}
-              backgroundColor="transparent"
+              color={colors.black}
+              backgroundColor={colors.yellow}
               borderWidth={0}
               shadow={false}
               style={styles.welcomeIcon}
@@ -149,7 +150,7 @@ export default function AuthScreen() {
           </Typography>
           <View style={styles.footerIcons}>
             <IconContainer name="heart" size={28} iconSize={20} color={colors.pink} backgroundColor="transparent" borderWidth={0} shadow={false} />
-            <IconContainer name="happy" size={28} iconSize={20} color={colors.yellow} backgroundColor="transparent" borderWidth={0} shadow={false} />
+            <IconContainer name="happy" size={28} iconSize={20} color={colors.black} backgroundColor={colors.yellow} borderWidth={0} shadow={false} />
             <IconContainer name="leaf" size={28} iconSize={20} color={colors.blue} backgroundColor="transparent" borderWidth={0} shadow={false} />
           </View>
         </Animated.View>

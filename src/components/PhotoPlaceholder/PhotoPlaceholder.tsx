@@ -8,8 +8,7 @@ import Animated, {
   withTiming, 
   Easing 
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, radii, shadows } from '../../theme/theme';
+import { colors, spacing, shadows } from '../../theme/theme';
 import { IconContainer } from '../IconContainer/IconContainer';
 import { Typography } from '../Typography';
 

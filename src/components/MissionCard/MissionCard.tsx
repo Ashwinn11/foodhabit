@@ -6,7 +6,6 @@ import Animated, {
   withSpring,
   ZoomIn
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../../theme/theme';
 import { IconContainer } from '../IconContainer/IconContainer';
 import { Typography } from '../Typography';
@@ -17,7 +16,7 @@ interface MissionCardProps {
   subtitle: string;
   completed: boolean;
   onToggle: () => void;
-  type: 'poop' | 'meal' | 'symptom' | 'water';
+  type: 'poop' | 'meal' | 'symptom' | 'water' | 'fiber' | 'probiotic' | 'exercise';
   style?: ViewStyle;
 }
 

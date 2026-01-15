@@ -3,19 +3,14 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Pressable,
 } from 'react-native';
 import Animated, {
   FadeInDown,
-  FadeInRight,
 } from 'react-native-reanimated';
-import { colors, spacing, radii } from '../theme/theme';
+import { colors, spacing, radii } from '../theme';
 import { useGutStore } from '../store';
 import {
-  GutAvatar,
   MissionCard,
-  FoodBlobCard,
-  AddButton,
   ScreenWrapper,
   BoxButton,
   IconContainer,
@@ -23,6 +18,7 @@ import {
   Card,
   Button,
   SectionHeader,
+  GutAvatar,
 } from '../components';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -31,59 +27,33 @@ type HomeScreenProps = {
 };
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const { user, gutMoments, quickLogPoop, meals, getStats, getDynamicTasks, addWater, getTodayWater } = useGutStore();
+  const { user, getStats, getDynamicTasks, addWater, addFiber, addProbiotic, addExercise, getGutHealthScore } = useGutStore();
   
   const dynamicTasks = getDynamicTasks();
   const incompleteTasks = dynamicTasks.filter(t => !t.completed).length;
   const stats = getStats();
-  const todayWater = getTodayWater();
-  
-  const getLastPoopInfo = () => {
-    if (!stats.lastPoopTime) {
-      return { text: 'No logs yet', color: colors.pink, urgency: 'none' };
-    }
+  const healthScore = getGutHealthScore();
+
+  const lastPoopInfo = (() => {
+    const lastTime = stats.lastPoopTime;
+    if (!lastTime) return { time: 'Never', message: 'Log your first poop!', color: colors.pink, urgency: 'high' };
     
     const now = new Date();
-    const lastPoop = new Date(stats.lastPoopTime);
-    const diffMs = now.getTime() - lastPoop.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const last = new Date(lastTime);
+    const diffHours = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60));
+    
+    if (diffHours < 1) return { time: 'Just now', message: 'Fresh!', color: colors.blue, urgency: 'low' };
+    if (diffHours < 24) return { time: `${diffHours}h ago`, message: 'All good', color: colors.blue, urgency: 'low' };
+    if (diffHours < 48) return { time: '1 day ago', message: 'Time soon?', color: colors.yellow, urgency: 'medium' };
+    
     const diffDays = Math.floor(diffHours / 24);
-    const remainingHours = diffHours % 24;
-    
-    let text = '';
-    let color: string = colors.blue;
-    let urgency = 'good';
-    
-    if (diffHours < 1) {
-      text = 'Just now! 🎉';
-      color = colors.blue;
-      urgency = 'great';
-    } else if (diffHours < 24) {
-      text = `${diffHours}h ago`;
-      color = colors.blue;
-      urgency = 'good';
-    } else if (diffDays === 1) {
-      text = `1 day ${remainingHours}h`;
-      color = colors.yellow;
-      urgency = 'warning';
-    } else if (diffDays < 3) {
-      text = `${diffDays} days ${remainingHours}h`;
-      color = colors.yellow;
-      urgency = 'warning';
-    } else {
-      text = `${diffDays} days! 😬`;
-      color = colors.pink;
-      urgency = 'urgent';
-    }
-    
-    return { text, color, urgency };
-  };
-  
-  const lastPoopInfo = getLastPoopInfo();
-  
-  const handleQuickPoop = () => {
-    quickLogPoop(4);
-  };
+    return { 
+      time: `${diffDays}d ago`, 
+      message: diffDays > 3 ? 'Stalled! 😬' : 'Check in!', 
+      color: diffDays > 3 ? colors.pink : colors.yellow, 
+      urgency: diffDays > 3 ? 'urgent' : 'warning' 
+    };
+  })();
   
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -99,7 +69,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
+        {/* Header - Greeting */}
         <Animated.View 
           entering={FadeInDown.delay(100).springify()}
           style={styles.header}
@@ -110,8 +80,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 name="hand-right"
                 size={28}
                 iconSize={18}
-                color={colors.yellow}
-                backgroundColor="transparent"
+                color={colors.black}
+                backgroundColor={colors.yellow}
                 borderWidth={0}
                 shadow={false}
                 style={styles.waveIcon}
@@ -134,117 +104,54 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           />
         </Animated.View>
         
-        {/* THE VIRAL WIDGET: Last Poop Counter */}
+        {/* Consolidated: Gut Health Score + Last Poop */}
         <Animated.View 
-          entering={FadeInDown.delay(250).springify()}
+          entering={FadeInDown.delay(200).springify()}
           style={styles.section}
         >
-          <Card
-            variant="white"
-            color={lastPoopInfo.color}
-            style={styles.lastPoopCard}
-            padding="lg"
-          >
-            <Pressable 
-              style={styles.lastPoopPressable}
-              onPress={() => navigation.navigate('AddEntry')}
-            >
-              <View style={styles.lastPoopLeft}>
-                <IconContainer
-                  name="time"
-                  size={48}
-                  iconSize={24}
-                  color={lastPoopInfo.color}
-                  borderColor={lastPoopInfo.color}
-                  shape="circle"
+          <Card variant="colored" color={colors.blue} padding="xl">
+            <View style={styles.healthCard}>
+              {/* Left: Avatar + Score */}
+              <View style={styles.healthLeft}>
+                <GutAvatar 
+                  mood={healthScore.mood} 
+                  size={80} 
                 />
-                <View>
-                  <Typography variant="bodySmall" color={colors.black + '66'}>Last Poop</Typography>
-                  <Typography variant="h3" color={lastPoopInfo.color}>
-                    {lastPoopInfo.text}
+                <View style={styles.scoreInfo}>
+                  <Typography variant="h1" color={colors.black} style={{ fontSize: 36 }}>
+                    {healthScore.score}
+                  </Typography>
+                  <Typography variant="bodySmall" color={colors.black + 'CC'}>
+                    {healthScore.grade}
                   </Typography>
                 </View>
               </View>
-              <IconContainer 
-                name="chevron-forward" 
-                size={24} 
-                iconSize={20}
-                color={lastPoopInfo.color}
-                backgroundColor="transparent"
-                borderWidth={0}
-                shadow={false}
-              />
-            </Pressable>
+              
+              {/* Right: Last Poop Info */}
+              <View style={styles.healthRight}>
+                <Typography variant="caption" color={colors.black + '99'}>
+                  LAST POOP
+                </Typography>
+                <Typography variant="h3" color={colors.black}>
+                  {lastPoopInfo.time}
+                </Typography>
+                <Typography variant="bodySmall" color={colors.black + 'CC'}>
+                  {lastPoopInfo.message}
+                </Typography>
+              </View>
+            </View>
           </Card>
           
           <Button
             title="I just pooped!"
-            onPress={handleQuickPoop}
+            onPress={() => navigation.navigate('AddEntry')}
             color={colors.pink}
             icon="happy"
             size="lg"
-            style={styles.quickPoopButton}
+            style={{ marginTop: spacing.md }}
           />
         </Animated.View>
-        
-        {/* Gut Feelings (My Besties) */}
-        <Animated.View 
-          entering={FadeInDown.delay(300).springify()}
-          style={styles.section}
-        >
-          <SectionHeader 
-            title="Gut Feelings" 
-            icon="happy" 
-            iconColor={colors.blue}
-            onActionPress={() => navigation.navigate('GutProfile')}
-          />
-          
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.avatarsRow}
-          >
-            {gutMoments.length === 0 && (
-              <Animated.View entering={FadeInRight.delay(350).springify()} style={styles.emptyGutState}>
-                <GutAvatar mood="okay" size={64} />
-                <Typography variant="bodyXS" color={colors.black + '66'} style={{ marginTop: spacing.xs }}>
-                  No logs yet
-                </Typography>
-              </Animated.View>
-            )}
-            
-            {gutMoments.slice(0, 3).map((moment, index) => (
-              <Animated.View key={moment.id} entering={FadeInRight.delay(350 + index * 50).springify()}>
-                <Pressable
-                  style={styles.avatarWrapper}
-                  onPress={() => navigation.navigate('GutProfile')}
-                >
-                  <View style={styles.avatarContainer}>
-                    <GutAvatar 
-                        mood={moment.mood} 
-                        size={64} 
-                        ringColor={index === 0 ? colors.pink : colors.border}
-                    />
-                    <View style={[styles.activeLabel, index === 0 && { backgroundColor: colors.pink }]}>
-                        <Typography variant="bodySmall" color={colors.white} style={{ fontSize: 10 }}>
-                          {index === 0 ? 'Latest' : moment.mood}
-                        </Typography>
-                    </View>
-                  </View>
-                </Pressable>
-              </Animated.View>
-            ))}
 
-            <Animated.View entering={FadeInRight.delay(500).springify()}>
-              <AddButton
-                size={64}
-                onPress={() => navigation.navigate('AddEntry')}
-                style={styles.addButtonMargin}
-                dotted
-              />
-            </Animated.View>
-          </ScrollView>
-        </Animated.View>
         
         {/* Today's Missions */}
         <Animated.View 
@@ -269,11 +176,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   subtitle={task.subtitle}
                   completed={task.completed}
                   onToggle={() => {
-                    if (task.type === 'poop') {
-                      handleQuickPoop();
-                    } else if (task.type === 'water') {
+                    if (task.type === 'water') {
                       addWater();
-                    } else if (task.type === 'meal') {
+                    } else if (task.type === 'fiber') {
+                      addFiber(5); // Add 5g per tap
+                    } else if (task.type === 'probiotic') {
+                      addProbiotic(); // Add 1 serving
+                    } else if (task.type === 'exercise') {
+                      addExercise(10); // Add 10 minutes per tap
+                    } else {
+                      // Poop and meal tasks navigate to Add screen
                       navigation.navigate('AddEntry');
                     }
                   }}
@@ -283,118 +195,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             ))}
           </View>
         </Animated.View>
-        
-        {/* Yummy Time */}
-        <Animated.View 
-          entering={FadeInDown.delay(500).springify()}
-          style={styles.section}
-        >
-          <SectionHeader 
-            title="Yummy Time" 
-            icon="restaurant" 
-            iconColor={colors.blue}
-            onActionPress={() => navigation.navigate('AddEntry')}
-          />
-          
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.mealsRow}
-          >
-            {meals.length > 0 ? (
-              meals.slice(0, 4).map((meal, index) => (
-                <Animated.View key={meal.id} entering={FadeInRight.delay(600 + index * 100).springify()}>
-                  <FoodBlobCard
-                    mealType={meal.mealType}
-                    name={meal.name}
-                    time={new Date(meal.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    completed={true}
-                    style={styles.mealCardMargin}
-                    onPress={() => {}}
-                  />
-                </Animated.View>
-              ))
-            ) : (
-              <Animated.View entering={FadeInRight.delay(600).springify()}>
-                <Pressable 
-                  style={styles.addMealPrompt}
-                  onPress={() => navigation.navigate('AddEntry')}
-                >
-                  <IconContainer
-                    name="add-circle-outline"
-                    size={40}
-                    iconSize={32}
-                    color={colors.blue}
-                    backgroundColor="transparent"
-                    borderWidth={0}
-                    shadow={false}
-                  />
-                  <Typography variant="bodySmall" color={colors.blue} align="center">
-                    Log your first meal!
-                  </Typography>
-                </Pressable>
-              </Animated.View>
-            )}
-          </ScrollView>
-        </Animated.View>
-        
-        {/* Daily Stats */}
-        <Animated.View 
-          entering={FadeInDown.delay(600).springify()}
-          style={styles.section}
-        >
-          <SectionHeader 
-            title="Daily Stats" 
-            icon="stats-chart" 
-            iconColor={colors.yellow}
-          />
-          
-          <View style={styles.quickStats}>
-            <Card variant="colored" color={colors.pink} style={styles.quickStatCard} padding="md">
-              <IconContainer
-                name="happy-outline"
-                size={36}
-                iconSize={24}
-                color={colors.pink}
-                backgroundColor="transparent"
-                borderWidth={0}
-                shadow={false}
-                style={{ marginBottom: spacing.sm }}
-              />
-              <Typography variant="h3">{stats.totalPoops}</Typography>
-              <Typography variant="bodyXS" color={colors.black + '66'}>Poops</Typography>
-            </Card>
-            <Card variant="colored" color={colors.blue} style={styles.quickStatCard} padding="md">
-              <IconContainer
-                name="flame-outline"
-                size={36}
-                iconSize={24}
-                color={colors.blue}
-                backgroundColor="transparent"
-                borderWidth={0}
-                shadow={false}
-                style={{ marginBottom: spacing.sm }}
-              />
-              <Typography variant="h3">{stats.longestStreak}</Typography>
-              <Typography variant="bodyXS" color={colors.black + '66'}>Streak</Typography>
-            </Card>
-             <Card variant="colored" color={colors.yellow} style={styles.quickStatCard} padding="md">
-              <IconContainer
-                name="water-outline"
-                size={36}
-                iconSize={24}
-                color={colors.yellow}
-                backgroundColor="transparent"
-                borderWidth={0}
-                shadow={false}
-                style={{ marginBottom: spacing.sm }}
-              />
-              <Typography variant="h3">{todayWater}</Typography>
-              <Typography variant="bodyXS" color={colors.black + '66'}>Water</Typography>
-            </Card>
-          </View>
-        </Animated.View>
-        
         <View style={styles.bottomPadding} />
       </ScrollView>
     </ScreenWrapper>
@@ -427,7 +227,54 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
   },
   section: {
-    marginBottom: spacing['2xl'],
+    marginBottom: spacing.lg,
+  },
+  bristolScroll: {
+    marginHorizontal: -spacing.lg,
+    paddingHorizontal: spacing.lg,
+  },
+  bristolScrollContent: {
+    paddingRight: spacing.xl,
+    paddingBottom: spacing.sm,
+  },
+  bristolItem: {
+    alignItems: 'center',
+    marginRight: spacing.md,
+    width: 70,
+  },
+  bristolCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  healthCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  healthLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  scoreInfo: {
+    alignItems: 'flex-start',
+  },
+  healthRight: {
+    alignItems: 'flex-end',
+  },
+  scoreCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+  },
+  scoreDetails: {
+    flex: 1,
+    alignItems: 'flex-start',
   },
   avatarsRow: {
     flexDirection: 'row',

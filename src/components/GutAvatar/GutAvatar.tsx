@@ -37,7 +37,8 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
   
-  const moodColor = moodColors[mood];
+  // Fallback to 'normal' if mood doesn't exist in new system
+  const moodColor = moodColors[mood] || moodColors.normal;
   
   // Wiggle animation on mount
   React.useEffect(() => {
@@ -231,7 +232,7 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
             <View
               style={[
                 styles.mouth,
-                mood === 'happy' || mood === 'amazing'
+                mood === 'easy' || mood === 'normal'
                   ? {
                       width: mouthWidth,
                       height: mouthWidth * 0.5,
@@ -239,7 +240,7 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
                       borderBottomRightRadius: mouthWidth,
                       borderTopWidth: 0,
                     }
-                  : mood === 'okay'
+                  : mood === 'strained'
                   ? {
                       width: mouthWidth * 0.6,
                       height: 3,
@@ -255,7 +256,7 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
           </View>
           
           {/* Little arms/wiggles for happy moods */}
-          {(mood === 'happy' || mood === 'amazing') && (
+          {(mood === 'easy' || mood === 'normal') && (
             <>
               <View
                 style={[

@@ -65,7 +65,7 @@ const TabIcon: React.FC<TabIconProps> = ({ iconName, label, focused }) => {
   );
 };
 
-// Center floating add button (Paw Print)
+// Center floating add button
 const CenterAddButton: React.FC<{ onPress: () => void }> = ({ onPress }) => {
   const scale = useSharedValue(1);
   
@@ -90,7 +90,7 @@ const CenterAddButton: React.FC<{ onPress: () => void }> = ({ onPress }) => {
     >
       <Animated.View style={[styles.centerButton, animatedStyle]}>
         <IconContainer
-          name="paw"
+          name="pizza"
           size={55}
           iconSize={28}
           color={colors.black}
@@ -123,11 +123,11 @@ const TabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="PlanTab"
+        name="HistoryTab"
         component={GutProfileScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon iconName="calendar" label="Plan" focused={focused} />
+            <TabIcon iconName="book" label="History" focused={focused} />
           ),
         }}
       />
@@ -145,7 +145,7 @@ const TabNavigator = () => {
         component={InsightsScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon iconName="pulse" label="Health" focused={focused} />
+            <TabIcon iconName="analytics" label="Health" focused={focused} />
           ),
         }}
       />
@@ -154,7 +154,7 @@ const TabNavigator = () => {
         component={ProfileScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon iconName="person" label="Profile" focused={focused} />
+            <TabIcon iconName="person" label="Me" focused={focused} />
           ),
         }}
       />
@@ -203,31 +203,29 @@ export const AppNavigator = () => {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: colors.white,
-    borderTopWidth: 0,
-    height: 60, // Taller
-    paddingTop:10, // Adjust centering
-    paddingBottom: 25, // Adjust for Home Indicator area
-    position: 'absolute',
-    bottom: 25, // Float above bottom
-    left: 20,
-    right: 20,
-    borderRadius: 35, // Rounded corners for floating pill
-    ...shadows.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    height: 70,
+    paddingTop: 8,
+    paddingBottom: 8,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   tabIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 60,
   },
   tabLabel: {
-    fontSize: 10,
+    fontSize: 12,
   },
   centerButtonWrapper: {
-    top: -25, // Lift above bar
+    top: -15,
     justifyContent: 'center',
     alignItems: 'center',
   },
   centerButton: {
-    width: 65, // Slightly larger
+    width: 65,
     height: 65,
     borderRadius: 32.5,
     backgroundColor: colors.yellow,
@@ -236,7 +234,7 @@ const styles = StyleSheet.create({
     ...shadows.md,
     shadowColor: colors.black,
     shadowOpacity: 0.15,
-    borderWidth: 5,
-    borderColor: colors.white, // Match tab bar for cutout effect
+    borderWidth: 4,
+    borderColor: colors.white,
   },
 });

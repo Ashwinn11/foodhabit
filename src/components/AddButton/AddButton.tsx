@@ -63,9 +63,9 @@ export const AddButton: React.FC<AddButtonProps> = ({
           name="add"
           size={size}
           iconSize={size * 0.4}
-          color={color}
-          backgroundColor={dotted ? "transparent" : colors.white}
-          borderColor={dotted ? colors.yellow : colors.border}
+          color={color === colors.yellow ? colors.black : color}
+          backgroundColor={dotted ? (color === colors.yellow ? colors.yellow : "transparent") : colors.white}
+          borderColor={color === colors.yellow ? colors.yellow : (dotted ? colors.yellow : colors.border)}
           borderWidth={dotted ? 2 : 1}
           shadow={!dotted}
           shape="circle"
