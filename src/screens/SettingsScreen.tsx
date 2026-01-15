@@ -4,7 +4,7 @@ import { ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, fontSizes, radii, shadows, fonts } from '../theme';
-import { GutAvatar, ScreenWrapper } from '../components';
+import { GutAvatar, ScreenWrapper, IconContainer } from '../components';
 import { useGutStore } from '../store';
 import { useAuth } from '../hooks/useAuth';
 import { deleteAccount } from '../services/accountService';
@@ -17,14 +17,30 @@ const SettingsItem: React.FC<{
   color?: string;
 }> = ({ icon, title, value, onPress, color = colors.blue }) => (
   <Pressable style={styles.settingsItem} onPress={onPress}>
-    <View style={[styles.settingsIconContainer, { backgroundColor: color + '15', borderColor: color }]}>
-      <Ionicons name={icon} size={20} color={color} />
-    </View>
+    <IconContainer
+      name={icon}
+      size={40}
+      iconSize={20}
+      color={color}
+      backgroundColor={color + '15'}
+      borderColor={color}
+      borderWidth={1.5}
+      shadow={false}
+      style={{ marginRight: spacing.md }}
+    />
     <Text style={styles.settingsTitle}>{title}</Text>
     {value ? (
       <Text style={styles.settingsValue}>{value}</Text>
     ) : (
-      <Ionicons name="chevron-forward" size={18} color={color} />
+      <IconContainer
+        name="chevron-forward"
+        size={24}
+        iconSize={18}
+        color={color}
+        backgroundColor="transparent"
+        borderWidth={0}
+        shadow={false}
+      />
     )}
   </Pressable>
 );
@@ -151,7 +167,15 @@ export const SettingsScreen: React.FC = () => {
             </>
           )}
           <Pressable style={styles.editButton}>
-            <Ionicons name="pencil" size={20} color={colors.pink} />
+            <IconContainer
+              name="pencil"
+              size={32}
+              iconSize={20}
+              color={colors.pink}
+              backgroundColor="transparent"
+              borderWidth={0}
+              shadow={false}
+            />
           </Pressable>
         </Animated.View>
         
@@ -202,9 +226,17 @@ export const SettingsScreen: React.FC = () => {
           >
             <Text style={styles.sectionTitle}>ACCOUNT</Text>
             <Pressable style={styles.signOutButton} onPress={handleSignOut}>
-              <View style={[styles.settingsIconContainer, { backgroundColor: colors.blue + '15', borderColor: colors.blue }]}>
-                <Ionicons name="log-out-outline" size={20} color={colors.blue} />
-              </View>
+              <IconContainer
+                name="log-out-outline"
+                size={40}
+                iconSize={20}
+                color={colors.blue}
+                backgroundColor={colors.blue + '15'}
+                borderColor={colors.blue}
+                borderWidth={1.5}
+                shadow={false}
+                style={{ marginRight: spacing.md }}
+              />
               <Text style={styles.signOutText}>Sign Out</Text>
             </Pressable>
             
@@ -220,9 +252,17 @@ export const SettingsScreen: React.FC = () => {
                 <ActivityIndicator color={colors.pink} />
               ) : (
                 <>
-                  <View style={[styles.settingsIconContainer, { backgroundColor: colors.pink + '15', borderColor: colors.pink }]}>
-                    <Ionicons name="trash-outline" size={20} color={colors.pink} />
-                  </View>
+                  <IconContainer
+                    name="trash-outline"
+                    size={40}
+                    iconSize={20}
+                    color={colors.pink}
+                    backgroundColor={colors.pink + '15'}
+                    borderColor={colors.pink}
+                    borderWidth={1.5}
+                    shadow={false}
+                    style={{ marginRight: spacing.md }}
+                  />
                   <Text style={styles.deleteText}>Delete Account</Text>
                 </>
               )}

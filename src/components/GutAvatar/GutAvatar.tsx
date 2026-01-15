@@ -7,8 +7,8 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, shadows, radii, fonts, avatarMoodColors } from '../../theme';
+import { IconContainer } from '../IconContainer/IconContainer';
 import { MoodType } from '../../store';
 
 interface GutAvatarProps {
@@ -300,7 +300,16 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
              {/* If we have an icon, use it. Otherwise text */}
             <View style={styles.badgeContent}>
                 {badgeIcon ? (
-                    <Ionicons name={badgeIcon as any} size={12} color={colors.white} style={{marginRight: 4}} />
+                    <IconContainer
+                      name={badgeIcon as any}
+                      size={16}
+                      iconSize={12}
+                      color={colors.white}
+                      backgroundColor="transparent"
+                      borderWidth={0}
+                      shadow={false}
+                      style={{ marginRight: 4 }}
+                    />
                 ) : (
                     <View style={[styles.statusDot, { backgroundColor: colors.white }]} />
                 )}

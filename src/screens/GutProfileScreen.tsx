@@ -10,15 +10,15 @@ import Animated, {
   FadeInDown,
   FadeIn,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme';
 import { useGutStore } from '../store';
 import {
   GutAvatar,
   StatCard,
-  TimelineEntry,
+TimelineEntry,
   ScreenWrapper,
   BoxButton,
+  IconContainer,
 } from '../components';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -27,23 +27,20 @@ type GutProfileScreenProps = {
 };
 
 export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }) => {
-  const { user, gutMoments, meals } = useGutStore();
+  const { user, meals, getStats } = useGutStore();
+  const stats = getStats();
   
-  // Get stats
+  // Get last poop time formatted
   const getLastPoopTime = () => {
-    if (gutMoments.length === 0) return 'No logs yet';
-    const last = new Date(gutMoments[0].timestamp);
+    if (!stats.lastPoopTime) return 'No logs';
+    const last = new Date(stats.lastPoopTime);
     const now = new Date();
     const diffHours = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60));
-    if (diffHours < 1) return 'Just now';
+    if (diffHours < 1) return 'Now!';
     if (diffHours < 24) return `${diffHours}h ago`;
     const diffDays = Math.floor(diffHours / 24);
     return `${diffDays}d ago`;
   };
-  
-  const avgFrequency = gutMoments.length > 0 
-    ? Math.round((gutMoments.length / 7) * 10) / 10 
-    : 0;
   
   return (
     <ScreenWrapper edges={['top']} style={styles.container}>
@@ -91,7 +88,16 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
           
           <Text style={styles.profileName}>Gut Buddy</Text>
           <View style={styles.subtitleRow}>
-            <Ionicons name="star" size={14} color={colors.yellow} style={styles.starIcon} />
+            <IconContainer 
+              name="star" 
+              size={20} 
+              iconSize={14} 
+              color={colors.yellow} 
+              backgroundColor="transparent"
+              borderWidth={0}
+              shadow={false}
+              style={styles.starIcon} 
+            />
             <Text style={styles.profileSubtitle}>Your Digestive Friend</Text>
           </View>
         </Animated.View>
@@ -104,14 +110,14 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
           <View style={styles.statsRow}>
             <StatCard
               label="AVG/DAY"
-              value={avgFrequency}
+              value={stats.avgFrequency}
               unit="x"
               color={colors.yellow}
               style={[styles.statCard, { transform: [{ rotate: '-1.5deg' }] }]}
             />
             <StatCard
               label="STREAK"
-              value={user.streak}
+              value={stats.longestStreak}
               unit="days"
               color={colors.pink}
               style={[styles.statCard, { transform: [{ rotate: '2deg' }], marginTop: 2 }]}
@@ -132,9 +138,15 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
           style={styles.timelineSection}
         >
           <View style={styles.sectionHeader}>
-            <View style={[styles.sectionIconContainer, { backgroundColor: colors.blue + '15', borderColor: colors.blue }]}>
-              <Ionicons name="restaurant" size={16} color={colors.blue} />
-            </View>
+            <IconContainer 
+              name="restaurant" 
+              size={32} 
+              iconSize={18}
+              color={colors.blue}
+              borderColor={colors.blue}
+              shape="circle"
+              style={{ marginRight: spacing.sm }}
+            />
             <Text style={styles.sectionTitle}>Yummy Timeline</Text>
             <Pressable>
               <Text style={styles.editLink}>Edit</Text>
@@ -153,7 +165,16 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
               ))
             ) : (
               <View style={styles.emptyTimeline}>
-                <Ionicons name="fast-food-outline" size={48} color={colors.black + '40'} style={styles.emptyIcon} />
+                <IconContainer
+                  name="fast-food-outline"
+                  size={72}
+                  iconSize={48}
+                  color={colors.black + '40'}
+                  backgroundColor="transparent"
+                  borderWidth={0}
+                  shadow={false}
+                  style={styles.emptyIcon}
+                />
                 <Text style={styles.emptyText}>No meals logged yet!</Text>
                 <Pressable 
                   style={styles.addMealButton}

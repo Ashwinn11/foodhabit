@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, Pressable, ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Pressable, ViewStyle } from 'react-native';
+import { IconContainer } from '../IconContainer/IconContainer';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,7 +8,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { colors, shadows } from '../../theme';
+import { colors } from '../../theme';
 
 interface AddButtonProps {
   size?: number;
@@ -55,35 +55,23 @@ export const AddButton: React.FC<AddButtonProps> = ({
     >
       <Animated.View
         style={[
-          styles.container,
-          {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            borderStyle: dotted ? 'dashed' : 'solid',
-            borderColor: dotted ? colors.yellow : colors.border,
-            borderWidth: dotted ? 2 : 1,
-            backgroundColor: dotted ? 'transparent' : colors.white,
-          },
-          !dotted && shadows.sm,
           style,
           animatedStyle,
         ]}
       >
-        <Ionicons name="add" size={size * 0.4} color={color} />
+        <IconContainer
+          name="add"
+          size={size}
+          iconSize={size * 0.4}
+          color={color}
+          backgroundColor={dotted ? "transparent" : colors.white}
+          borderColor={dotted ? colors.yellow : colors.border}
+          borderWidth={dotted ? 2 : 1}
+          shadow={!dotted}
+          shape="circle"
+          style={dotted ? { borderStyle: 'dashed' } : undefined}
+        />
       </Animated.View>
     </Pressable>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  plus: {
-    fontWeight: '300',
-    color: colors.black + '99',
-    marginTop: -2,
-  },
-});

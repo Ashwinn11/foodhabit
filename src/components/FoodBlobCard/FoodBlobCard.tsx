@@ -8,6 +8,7 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, shadows, fonts, fontSizes } from '../../theme';
 import { MealType } from '../../store';
+import { IconContainer } from '../IconContainer/IconContainer';
 
 interface FoodBlobCardProps {
   mealType: MealType;
@@ -67,14 +68,30 @@ export const FoodBlobCard: React.FC<FoodBlobCardProps> = ({
         ]}
       >
         {/* Top Right Check Status */}
-        <View style={[styles.statusBadge, completed ? { backgroundColor: config.accent } : { borderColor: config.accent, borderWidth: 2 }]}>
-            {completed && <Ionicons name="checkmark" size={12} color={colors.white} />}
+        <View style={styles.statusBadge}>
+            {completed && (
+              <IconContainer
+                name="checkmark"
+                size={24}
+                iconSize={12}
+                color={colors.white}
+                backgroundColor={config.accent}
+                borderWidth={0}
+                shadow={false}
+              />
+            )}
         </View>
 
-        {/* Center Top Icon */}
-        <View style={[styles.iconContainer, { borderColor: config.accent }]}>
-            <Ionicons name={config.icon} size={32} color={config.accent} />
-        </View>
+        {/* Center Top Icon using IconContainer */}
+        <IconContainer
+          name={config.icon}
+          size={70}
+          iconSize={32}
+          color={config.accent}
+          borderColor={config.accent}
+          shape="circle"
+          style={{ marginTop: spacing.md }}
+        />
         
         {/* Bottom Info */}
         <View style={styles.infoContainer}>

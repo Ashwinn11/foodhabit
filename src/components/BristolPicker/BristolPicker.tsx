@@ -5,9 +5,9 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, shadows, fontSizes, fonts, bristolColors } from '../../theme';
 import { BristolType } from '../../store';
+import { IconContainer } from '../IconContainer/IconContainer';
 
 interface BristolPickerProps {
   selected: BristolType | undefined;
@@ -59,9 +59,16 @@ const BristolOption: React.FC<{
         <Text style={styles.typeNumber}>Type {item.type}</Text>
         <Text style={styles.typeLabel}>{item.label}</Text>
         {isSelected && (
-          <View style={[styles.selectedBadge, { backgroundColor: item.color }]}>
-            <Ionicons name="checkmark" size={14} color={colors.white} />
-          </View>
+          <IconContainer
+            name="checkmark"
+            size={22}
+            iconSize={14}
+            color={colors.white}
+            backgroundColor={item.color}
+            borderWidth={0}
+            shadow={false}
+            style={styles.selectedBadge}
+          />
         )}
       </Animated.View>
     </Pressable>

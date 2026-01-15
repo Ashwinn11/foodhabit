@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ViewStyle, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,20 +8,21 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, fontSizes, fonts, shadows } from '../../theme';
+import { IconContainer } from '../IconContainer/IconContainer';
 
 interface PhotoPlaceholderProps {
   size?: number;
   onPress: () => void;
   style?: ViewStyle;
-  imageUri?: string;
+  photoUri?: string;
 }
 
 export const PhotoPlaceholder: React.FC<PhotoPlaceholderProps> = ({
   size = 140,
   onPress,
   style,
+  photoUri,
 }) => {
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
@@ -52,6 +53,33 @@ export const PhotoPlaceholder: React.FC<PhotoPlaceholderProps> = ({
     onPress();
   };
   
+  // If we have a photo, show it
+  if (photoUri) {
+    return (
+      <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
+        <Animated.View style={[styles.container, { width: size, height: size }, style, animatedStyle]}>
+          <Image 
+            source={{ uri: photoUri }} 
+            style={[styles.capturedImage, { width: size, height: size, borderRadius: size / 2 }]} 
+          />
+          <View style={styles.retakeOverlay}>
+            <IconContainer
+              name="camera"
+              size={40}
+              iconSize={20}
+              color={colors.white}
+              backgroundColor="rgba(0,0,0,0.5)"
+              borderWidth={0}
+              shadow={false}
+              style={{ marginBottom: spacing.xs }}
+            />
+            <Text style={styles.retakeText}>Tap to retake</Text>
+          </View>
+        </Animated.View>
+      </Pressable>
+    );
+  }
+  
   return (
     <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
       <Animated.View style={[styles.container, { width: size, height: size }, style, animatedStyle]}>
@@ -80,12 +108,27 @@ export const PhotoPlaceholder: React.FC<PhotoPlaceholderProps> = ({
         
         {/* Inner content */}
         <View style={styles.innerContent}>
-          {/* Camera/add icon badge */}
-          <View style={styles.iconBadge}>
-            <Ionicons name="camera" size={24} color={colors.blue} />
-            <View style={styles.plusBadge}>
-              <Ionicons name="add" size={14} color={colors.white} />
-            </View>
+          {/* Camera/add icon using IconContainer */}
+          <View>
+            <IconContainer
+              name="camera"
+              size={50}
+              iconSize={24}
+              color={colors.blue}
+              borderColor={colors.blue}
+              shape="circle"
+              style={{ marginBottom: spacing.sm }}
+            />
+            <IconContainer
+              name="add"
+              size={20}
+              iconSize={14}
+              color={colors.white}
+              backgroundColor={colors.blue}
+              borderWidth={0}
+              shadow={false}
+              style={styles.plusBadge}
+            />
           </View>
           
           <Text style={styles.addText}>ADD PHOTO</Text>
@@ -153,5 +196,31 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     fontFamily: fonts.body,
     fontStyle: 'italic',
+  },
+  capturedImage: {
+    resizeMode: 'cover',
+  },
+  retakeOverlay: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  retakeIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  retakeText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.body,
+    color: colors.white,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: 8,
   },
 });

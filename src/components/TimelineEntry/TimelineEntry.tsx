@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { IconContainer } from '../IconContainer/IconContainer';
 import { colors, spacing, radii, shadows, fontSizes, fonts, moodIcons, foodCategories } from '../../theme';
 import { MealEntry } from '../../store';
 
@@ -40,12 +40,16 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ entry, style }) =>
   
   return (
     <View style={[styles.container, style]}>
-      {/* Timeline dot */}
+      {/* Timeline dot using IconContainer */}
       <View style={styles.timelineColumn}>
         <View style={styles.line} />
-        <View style={[styles.dot, { borderColor: config.saturatedColor }]}>
-          <Ionicons name={iconName as any} size={22} color={config.saturatedColor} />
-        </View>
+        <IconContainer 
+          name={iconName as any} 
+          size={44} 
+          color={config.saturatedColor} 
+          borderColor={config.saturatedColor}
+          shape="circle"
+        />
       </View>
       
       {/* Content card */}

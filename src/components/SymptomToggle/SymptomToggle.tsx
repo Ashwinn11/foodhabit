@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { IconContainer } from '../IconContainer/IconContainer';
 import { colors, spacing, radii, shadows, fontSizes, fonts } from '../../theme';
 
 interface SymptomToggleProps {
@@ -67,7 +68,16 @@ export const SymptomToggle: React.FC<SymptomToggleProps> = ({
           animatedStyle,
         ]}
       >
-        <Ionicons name={iconName} size={20} color={active ? colors.black : color} style={styles.icon} />
+        <IconContainer
+          name={iconName}
+          size={32}
+          iconSize={18}
+          color={active ? colors.black : color}
+          backgroundColor="transparent"
+          borderWidth={0}
+          shadow={false}
+          style={styles.icon}
+        />
         <Text style={[styles.label, active && styles.labelActive]}>{label}</Text>
         {active && (
           <View style={styles.activeDot} />

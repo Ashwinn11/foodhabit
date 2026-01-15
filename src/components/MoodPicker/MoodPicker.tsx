@@ -6,6 +6,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { IconContainer } from '../IconContainer/IconContainer';
 import { colors, spacing, radii, shadows, fontSizes, fonts, moodIcons } from '../../theme';
 import { MoodType } from '../../store';
 
@@ -55,7 +56,14 @@ const MoodOption: React.FC<{
           animatedStyle,
         ]}
       >
-        <Ionicons name={item.icon} size={32} color={item.color} />
+        <IconContainer
+          name={item.icon}
+          size={50}
+          iconSize={32}
+          color={item.color}
+          borderColor={item.color}
+          shape="circle"
+        />
         <Text style={[styles.label, isSelected && styles.labelSelected]}>
           {item.label}
         </Text>

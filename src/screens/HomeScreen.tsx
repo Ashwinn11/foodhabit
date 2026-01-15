@@ -10,7 +10,6 @@ import Animated, {
   FadeInDown,
   FadeInRight,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme';
 import { useGutStore } from '../store';
 import {
@@ -20,6 +19,7 @@ import {
   AddButton,
   ScreenWrapper,
   BoxButton,
+  IconContainer,
 } from '../components';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -28,9 +28,62 @@ type HomeScreenProps = {
 };
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const { user, gutMoments, dailyTasks, toggleTask } = useGutStore();
+  const { user, gutMoments, quickLogPoop, meals, getStats, getDynamicTasks, addWater, getTodayWater } = useGutStore();
   
-  const incompleteTasks = dailyTasks.filter(t => !t.completed).length;
+  // Get dynamic tasks based on current state
+  const dynamicTasks = getDynamicTasks();
+  const incompleteTasks = dynamicTasks.filter(t => !t.completed).length;
+  const stats = getStats();
+  const todayWater = getTodayWater();
+  
+  // Calculate time since last poop
+  const getLastPoopInfo = () => {
+    if (!stats.lastPoopTime) {
+      return { text: 'No logs yet', color: colors.pink, urgency: 'none' };
+    }
+    
+    const now = new Date();
+    const lastPoop = new Date(stats.lastPoopTime);
+    const diffMs = now.getTime() - lastPoop.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    const remainingHours = diffHours % 24;
+    
+    let text = '';
+    let color: string = colors.blue; // Green = good
+    let urgency = 'good';
+    
+    if (diffHours < 1) {
+      text = 'Just now! 🎉';
+      color = colors.blue;
+      urgency = 'great';
+    } else if (diffHours < 24) {
+      text = `${diffHours}h ago`;
+      color = colors.blue; // Today = green/blue
+      urgency = 'good';
+    } else if (diffDays === 1) {
+      text = `1 day ${remainingHours}h`;
+      color = colors.yellow; // 1-2 days = yellow
+      urgency = 'warning';
+    } else if (diffDays < 3) {
+      text = `${diffDays} days ${remainingHours}h`;
+      color = colors.yellow;
+      urgency = 'warning';
+    } else {
+      text = `${diffDays} days! 😬`;
+      color = colors.pink; // 3+ days = red/pink
+      urgency = 'urgent';
+    }
+    
+    return { text, color, urgency };
+  };
+  
+  const lastPoopInfo = getLastPoopInfo();
+  
+  // Quick log poop (the <5 second habit loop)
+  const handleQuickPoop = () => {
+    quickLogPoop(4); // Default to healthy Bristol type 4
+  };
   
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -53,7 +106,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         >
           <View>
             <View style={styles.greetingRow}>
-              <Ionicons name="hand-right" size={18} color={colors.yellow} style={styles.waveIcon} />
+              <IconContainer
+                name="hand-right"
+                size={28}
+                iconSize={18}
+                color={colors.yellow}
+                backgroundColor="transparent"
+                borderWidth={0}
+                shadow={false}
+                style={styles.waveIcon}
+              />
               <Text style={styles.greeting}>{getGreeting()}</Text>
             </View>
             <Text style={styles.userName}>
@@ -71,15 +133,76 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           />
         </Animated.View>
         
+        {/* THE VIRAL WIDGET: Last Poop Counter */}
+        <Animated.View 
+          entering={FadeInDown.delay(250).springify()}
+          style={styles.section}
+        >
+          <Pressable 
+            style={[styles.lastPoopWidget, { borderColor: lastPoopInfo.color }]}
+            onPress={() => navigation.navigate('AddEntry')}
+          >
+            <View style={styles.lastPoopLeft}>
+              <IconContainer
+                name="time"
+                size={48}
+                iconSize={24}
+                color={lastPoopInfo.color}
+                borderColor={lastPoopInfo.color}
+                shape="circle"
+                style={{ marginRight: spacing.md }}
+              />
+              <View>
+                <Text style={styles.lastPoopLabel}>Last Poop</Text>
+                <Text style={[styles.lastPoopValue, { color: lastPoopInfo.color }]}>
+                  {lastPoopInfo.text}
+                </Text>
+              </View>
+            </View>
+            <IconContainer 
+              name="chevron-forward" 
+              size={24} 
+              iconSize={20}
+              color={lastPoopInfo.color}
+              backgroundColor="transparent"
+              borderWidth={0}
+              shadow={false}
+            />
+          </Pressable>
+          
+          {/* Quick Log Button - THE CORE HABIT LOOP */}
+          <Pressable 
+            style={styles.quickPoopButton}
+            onPress={handleQuickPoop}
+          >
+            <IconContainer 
+              name="happy" 
+              size={36} 
+              iconSize={28}
+              color={colors.white}
+              backgroundColor="transparent"
+              borderWidth={0}
+              shadow={false}
+            />
+            <Text style={styles.quickPoopText}>I just pooped!</Text>
+          </Pressable>
+        </Animated.View>
+        
         {/* Gut Feelings (My Besties) */}
         <Animated.View 
-          entering={FadeInDown.delay(200).springify()}
+          entering={FadeInDown.delay(300).springify()}
           style={styles.section}
         >
           <View style={styles.sectionHeader}>
-            <View style={[styles.sectionIconContainer, { backgroundColor: colors.blue + '15', borderColor: colors.blue }]}>
-              <Ionicons name="paw" size={16} color={colors.blue} />
-            </View>
+            <IconContainer 
+              name="happy" 
+              size={32} 
+              iconSize={18}
+              color={colors.blue}
+              borderColor={colors.blue}
+              shape="circle"
+              style={{ marginRight: spacing.sm }}
+            />
             <Text style={styles.sectionTitle}>Gut Feelings</Text>
           </View>
           
@@ -88,27 +211,39 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.avatarsRow}
           >
-            {/* Show current gut mood as "Active Pet" */}
-             <Animated.View entering={FadeInRight.delay(300).springify()}>
+            {/* Show empty state if no moments */}
+            {gutMoments.length === 0 && (
+              <Animated.View entering={FadeInRight.delay(350).springify()} style={styles.emptyGutState}>
+                <GutAvatar mood="okay" size={64} />
+                <Text style={styles.emptyGutText}>No logs yet</Text>
+              </Animated.View>
+            )}
+            
+            {/* Show recent gut moments */}
+            {gutMoments.slice(0, 3).map((moment, index) => (
+              <Animated.View key={moment.id} entering={FadeInRight.delay(350 + index * 50).springify()}>
                 <Pressable
                   style={styles.avatarWrapper}
                   onPress={() => navigation.navigate('GutProfile')}
                 >
                   <View style={styles.avatarContainer}>
                     <GutAvatar 
-                        mood={user.avatarMood} 
+                        mood={moment.mood} 
                         size={64} 
-                        ringColor={colors.pink} // Active ring
+                        ringColor={index === 0 ? colors.pink : colors.border}
                     />
-                    <View style={styles.activeLabel}>
-                        <Text style={styles.activeLabelText}>{user.avatarMood}</Text>
+                    <View style={[styles.activeLabel, index === 0 && { backgroundColor: colors.pink }]}>
+                        <Text style={styles.activeLabelText}>
+                          {index === 0 ? 'Latest' : moment.mood}
+                        </Text>
                     </View>
                   </View>
                 </Pressable>
               </Animated.View>
+            ))}
 
              {/* Add Button for new moment */}
-            <Animated.View entering={FadeInRight.delay(400).springify()}>
+            <Animated.View entering={FadeInRight.delay(500).springify()}>
               <AddButton
                 size={64}
                 onPress={() => navigation.navigate('AddEntry')}
@@ -125,9 +260,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           style={styles.section}
         >
           <View style={styles.sectionHeader}>
-            <View style={[styles.sectionIconContainer, { backgroundColor: colors.pink + '15', borderColor: colors.pink }]}>
-              <Ionicons name="list" size={16} color={colors.pink} />
-            </View>
+            <IconContainer 
+              name="list" 
+              size={32} 
+              iconSize={18}
+              color={colors.pink}
+              borderColor={colors.pink}
+              shape="circle"
+              style={{ marginRight: spacing.sm }}
+            />
             <Text style={styles.sectionTitle}>Today's Missions</Text>
             <View style={styles.countBadge}>
               <Text style={styles.countText}>{incompleteTasks} Left</Text>
@@ -135,7 +276,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </View>
           
           <View style={styles.missionsContainer}>
-            {dailyTasks.map((task, index) => (
+            {dynamicTasks.map((task, index) => (
               <Animated.View
                 key={task.id}
                 entering={FadeInDown.delay(400 + index * 100).springify()}
@@ -144,7 +285,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   title={task.title}
                   subtitle={task.subtitle}
                   completed={task.completed}
-                  onToggle={() => toggleTask(task.id)}
+                  onToggle={() => {
+                    if (task.type === 'poop') {
+                      quickLogPoop();
+                    } else if (task.type === 'water') {
+                      addWater();
+                    } else if (task.type === 'meal') {
+                      navigation.navigate('AddEntry');
+                    }
+                  }}
                   type={task.type}
                 />
               </Animated.View>
@@ -158,9 +307,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           style={styles.section}
         >
           <View style={styles.sectionHeader}>
-            <View style={[styles.sectionIconContainer, { backgroundColor: colors.blue + '15', borderColor: colors.blue }]}>
-              <Ionicons name="restaurant" size={16} color={colors.blue} />
-            </View>
+            <IconContainer 
+              name="restaurant" 
+              size={32} 
+              iconSize={18}
+              color={colors.blue}
+              borderColor={colors.blue}
+              shape="circle"
+              style={{ marginRight: spacing.sm }}
+            />
             <Text style={styles.sectionTitle}>Yummy Time</Text>
           </View>
           
@@ -169,26 +324,38 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.mealsRow}
           >
-              {/* Force Breakfast and Dinner cards to match reference layout always */}
-               <Animated.View entering={FadeInRight.delay(600).springify()}>
+            {meals.length > 0 ? (
+              meals.slice(0, 4).map((meal, index) => (
+                <Animated.View key={meal.id} entering={FadeInRight.delay(600 + index * 100).springify()}>
                   <FoodBlobCard
-                    mealType="breakfast"
-                    name="Breakfast"
-                    time="8:00"
-                    completed={true} // Example state
+                    mealType={meal.mealType}
+                    name={meal.name}
+                    time={new Date(meal.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    completed={true}
                     style={styles.mealCardMargin}
                     onPress={() => {}}
                   />
-               </Animated.View>
-               <Animated.View entering={FadeInRight.delay(700).springify()}>
-                  <FoodBlobCard
-                    mealType="dinner"
-                    name="Dinner"
-                    time="6:30"
-                    style={styles.mealCardMargin}
-                    onPress={() => {}}
+                </Animated.View>
+              ))
+            ) : (
+              <Animated.View entering={FadeInRight.delay(600).springify()}>
+                <Pressable 
+                  style={styles.addMealPrompt}
+                  onPress={() => navigation.navigate('AddEntry')}
+                >
+                  <IconContainer
+                    name="add-circle-outline"
+                    size={40}
+                    iconSize={32}
+                    color={colors.blue}
+                    backgroundColor="transparent"
+                    borderWidth={0}
+                    shadow={false}
                   />
-               </Animated.View>
+                  <Text style={styles.addMealPromptText}>Log your first meal!</Text>
+                </Pressable>
+              </Animated.View>
+            )}
           </ScrollView>
         </Animated.View>
         
@@ -198,26 +365,59 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           style={styles.section}
         >
           <View style={styles.sectionHeader}>
-            <View style={[styles.sectionIconContainer, { backgroundColor: colors.yellow + '20', borderColor: colors.yellow }]}>
-              <Ionicons name="stats-chart" size={16} color={colors.yellow} />
-            </View>
+            <IconContainer 
+              name="stats-chart" 
+              size={32} 
+              iconSize={18}
+              color={colors.yellow}
+              borderColor={colors.yellow}
+              shape="circle"
+              style={{ marginRight: spacing.sm }}
+            />
             <Text style={styles.sectionTitle}>Daily Stats</Text>
           </View>
           
           <View style={styles.quickStats}>
             <View style={[styles.quickStatCard, { backgroundColor: colors.pink + '15' }]}>
-              <Ionicons name="happy-outline" size={24} color={colors.pink} style={{marginBottom: 8}} />
-              <Text style={styles.quickStatValue}>{gutMoments.length}</Text>
+              <IconContainer
+                name="happy-outline"
+                size={36}
+                iconSize={24}
+                color={colors.pink}
+                backgroundColor="transparent"
+                borderWidth={0}
+                shadow={false}
+                style={{ marginBottom: 8 }}
+              />
+              <Text style={styles.quickStatValue}>{stats.totalPoops}</Text>
               <Text style={styles.quickStatLabel}>Poops</Text>
             </View>
             <View style={[styles.quickStatCard, { backgroundColor: colors.blue + '15' }]}>
-              <Ionicons name="flame-outline" size={24} color={colors.blue} style={{marginBottom: 8}} />
-              <Text style={styles.quickStatValue}>{user.streak}</Text>
+              <IconContainer
+                name="flame-outline"
+                size={36}
+                iconSize={24}
+                color={colors.blue}
+                backgroundColor="transparent"
+                borderWidth={0}
+                shadow={false}
+                style={{ marginBottom: 8 }}
+              />
+              <Text style={styles.quickStatValue}>{stats.longestStreak}</Text>
               <Text style={styles.quickStatLabel}>Streak</Text>
             </View>
              <View style={[styles.quickStatCard, { backgroundColor: colors.yellow + '15' }]}>
-              <Ionicons name="water-outline" size={24} color={colors.yellow} style={{marginBottom: 8}} />
-              <Text style={styles.quickStatValue}>4</Text>
+              <IconContainer
+                name="water-outline"
+                size={36}
+                iconSize={24}
+                color={colors.yellow}
+                backgroundColor="transparent"
+                borderWidth={0}
+                shadow={false}
+                style={{ marginBottom: 8 }}
+              />
+              <Text style={styles.quickStatValue}>{todayWater}</Text>
               <Text style={styles.quickStatLabel}>Water</Text>
             </View>
           </View>
@@ -371,5 +571,83 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 100, // Space for floating tab bar
+  },
+  // Last Poop Widget Styles
+  lastPoopWidget: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.white,
+    borderRadius: radii['2xl'],
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 2,
+    ...shadows.sm,
+  },
+  lastPoopLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  lastPoopIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  lastPoopLabel: {
+    fontSize: fontSizes.sm,
+    fontFamily: fonts.body,
+    color: colors.black + '66',
+  },
+  lastPoopValue: {
+    fontSize: fontSizes.xl,
+    fontFamily: fonts.heading,
+  },
+  // Quick Poop Button Styles
+  quickPoopButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.pink,
+    borderRadius: radii['2xl'],
+    padding: spacing.lg,
+    gap: spacing.sm,
+    ...shadows.md,
+  },
+  quickPoopText: {
+    fontSize: fontSizes.lg,
+    fontFamily: fonts.bodyBold,
+    color: colors.white,
+  },
+  addMealPrompt: {
+    backgroundColor: colors.white,
+    borderRadius: radii['2xl'],
+    padding: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.blue,
+    borderStyle: 'dashed',
+    minWidth: 140,
+    minHeight: 160,
+    gap: spacing.sm,
+  },
+  addMealPromptText: {
+    fontSize: fontSizes.sm,
+    fontFamily: fonts.bodyBold,
+    color: colors.blue,
+    textAlign: 'center',
+  },
+  emptyGutState: {
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  emptyGutText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.body,
+    color: colors.black + '66',
+    marginTop: spacing.xs,
   },
 });

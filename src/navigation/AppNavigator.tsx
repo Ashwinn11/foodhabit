@@ -9,12 +9,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, shadows, fonts } from '../theme';
+import { IconContainer } from '../components';
 import {
   HomeScreen,
   GutProfileScreen,
   AddEntryScreen,
   InsightsScreen,
   SettingsScreen,
+  CameraScreen,
 } from '../screens';
 
 const Tab = createBottomTabNavigator();
@@ -41,7 +43,15 @@ const TabIcon: React.FC<TabIconProps> = ({ iconName, label, focused }) => {
   
   return (
     <Animated.View style={[styles.tabIconContainer, animatedStyle]}>
-      <Ionicons name={iconName} size={24} color={color} />
+      <IconContainer
+        name={iconName}
+        size={32}
+        iconSize={24}
+        color={color}
+        backgroundColor="transparent"
+        borderWidth={0}
+        shadow={false}
+      />
       <Text style={[
         styles.tabLabel,
         { color: color }
@@ -76,7 +86,15 @@ const CenterAddButton: React.FC<{ onPress: () => void }> = ({ onPress }) => {
       style={styles.centerButtonWrapper}
     >
       <Animated.View style={[styles.centerButton, animatedStyle]}>
-        <Ionicons name="paw" size={28} color={colors.black} />
+        <IconContainer
+          name="paw"
+          size={55}
+          iconSize={28}
+          color={colors.black}
+          backgroundColor="transparent"
+          borderWidth={0}
+          shadow={false}
+        />
       </Animated.View>
     </Pressable>
   );
@@ -165,6 +183,14 @@ export const AppNavigator = () => {
         options={{
           presentation: 'card',
           animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="Camera"
+        component={CameraScreen}
+        options={{
+          presentation: 'fullScreenModal',
+          animation: 'fade',
         }}
       />
     </Stack.Navigator>

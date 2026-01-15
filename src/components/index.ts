@@ -10,5 +10,6 @@ export { BristolPicker } from './BristolPicker';
 export { SymptomToggle } from './SymptomToggle';
 export { MoodPicker } from './MoodPicker';
 export { PhotoPlaceholder } from './PhotoPlaceholder';
+export { IconContainer } from './IconContainer/IconContainer';
 export * from './BoxButton/BoxButton';
 export * from './ScreenWrapper';

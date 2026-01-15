@@ -2,7 +2,8 @@ import React from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, shadows, fonts } from '../../theme';
+import { IconContainer } from '../IconContainer/IconContainer';
+import { colors, fonts } from '../../theme';
 
 interface BoxButtonProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -42,18 +43,18 @@ export const BoxButton: React.FC<BoxButtonProps> = ({
     <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
       <Animated.View
         style={[
-          styles.container,
-          {
-            width: size,
-            height: size,
-            borderRadius: size / 2, // Perfectly circular
-            borderColor: borderColor || color, // Use custom border OR icon color
-          },
           style,
           animatedStyle,
         ]}
       >
-        <Ionicons name={icon} size={size * 0.5} color={color} />
+        <IconContainer
+          name={icon}
+          size={size}
+          iconSize={size * 0.5}
+          color={color}
+          borderColor={borderColor || color}
+          shape="circle"
+        />
         {badgeCount !== undefined && badgeCount > 0 && (
           <Animated.View style={styles.badge}>
             <Animated.Text style={styles.badgeText}>
@@ -67,14 +68,6 @@ export const BoxButton: React.FC<BoxButtonProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border, // Subtle border for contrast
-    ...shadows.sm, // Soft shadow for depth
-  },
   badge: {
     position: 'absolute',
     top: -2,

@@ -6,7 +6,7 @@ import Animated, {
   withSpring,
   ZoomIn,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { IconContainer } from '../IconContainer/IconContainer';
 import { colors, spacing, radii, shadows, fonts, fontSizes } from '../../theme';
 
 interface MissionCardProps {
@@ -59,14 +59,16 @@ export const MissionCard: React.FC<MissionCardProps> = ({
       >
         {/* Left Checkbox Area */}
         <View style={styles.checkboxContainer}>
-            <View style={[
-                styles.checkbox, 
-                completed ? styles.checkboxChecked : styles.checkboxUnchecked
-            ]}>
-                {completed && (
-                    <Ionicons name="checkmark" size={16} color={colors.white} />
-                )}
-            </View>
+          <IconContainer
+            name={completed ? "checkmark" : "ellipse-outline"}
+            size={28}
+            iconSize={16}
+            color={completed ? colors.white : colors.border}
+            backgroundColor={completed ? colors.pink : "transparent"}
+            borderColor={completed ? colors.pink : colors.border}
+            borderWidth={2}
+            shadow={false}
+          />
         </View>
         
         {/* Content */}

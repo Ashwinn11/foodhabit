@@ -4,6 +4,7 @@ export { GutProfileScreen } from './GutProfileScreen';
 export { AddEntryScreen } from './AddEntryScreen';
 export { InsightsScreen } from './InsightsScreen';
 export { SettingsScreen } from './SettingsScreen';
+export { CameraScreen } from './CameraScreen';
 
 // Auth screens (default export)
 export { default as AuthScreen } from './AuthScreen';

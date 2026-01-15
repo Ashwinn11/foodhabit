@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ViewStyle, StyleProp } from 'react-native';
+import { IconContainer } from '../IconContainer/IconContainer';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, shadows, fontSizes, fonts } from '../../theme';
 
@@ -7,7 +8,7 @@ interface StatCardProps {
   value: string | number;
   unit?: string;
   color?: string;
-  icon?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -20,12 +21,23 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, unit, color, i
     <View style={[
       styles.container, 
       { 
-        backgroundColor: accentColor + '15', // 8% opacity for soft background
+        backgroundColor: accentColor + '15', // 15% opacity for soft background
         borderColor: accentColor,
       }, 
       style
     ]}>
-      {icon && <Ionicons name={icon as any} size={20} color={accentColor} style={styles.icon} />}
+      {icon && (
+        <IconContainer
+          name={icon as any}
+          size={32}
+          iconSize={18}
+          color={accentColor}
+          backgroundColor="transparent"
+          borderWidth={0}
+          shadow={false}
+          style={styles.icon}
+        />
+      )}
       <Text style={[styles.label, { color: colors.black }]}>{label}</Text>
       <View style={styles.valueRow}>
         <Text style={[styles.value, { color: colors.black }]}>{value}</Text>

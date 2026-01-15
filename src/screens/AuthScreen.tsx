@@ -17,10 +17,9 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme';
-import { GutAvatar, ScreenWrapper } from '../components';
+import { GutAvatar, ScreenWrapper, IconContainer } from '../components';
 
 export default function AuthScreen() {
   const { signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
@@ -94,7 +93,16 @@ export default function AuthScreen() {
           entering={FadeInDown.delay(200).springify()}
           style={styles.welcomeCard}
         >
-          <Ionicons name="sparkles" size={32} color={colors.yellow} style={styles.welcomeIcon} />
+          <IconContainer
+            name="sparkles"
+            size={48}
+            iconSize={32}
+            color={colors.yellow}
+            backgroundColor="transparent"
+            borderWidth={0}
+            shadow={false}
+            style={styles.welcomeIcon}
+          />
           <Text style={styles.welcomeTitle}>Track your gut health</Text>
           <Text style={styles.welcomeText}>
             Log your poops, meals, and symptoms to understand your digestive patterns better!
@@ -136,9 +144,9 @@ export default function AuthScreen() {
             By continuing, you agree to our Terms & Privacy Policy
           </Text>
           <View style={styles.footerIcons}>
-            <Ionicons name="heart" size={20} color={colors.pink} />
-            <Ionicons name="happy" size={20} color={colors.yellow} />
-            <Ionicons name="leaf" size={20} color={colors.blue} />
+            <IconContainer name="heart" size={28} iconSize={20} color={colors.pink} backgroundColor="transparent" borderWidth={0} shadow={false} />
+            <IconContainer name="happy" size={28} iconSize={20} color={colors.yellow} backgroundColor="transparent" borderWidth={0} shadow={false} />
+            <IconContainer name="leaf" size={28} iconSize={20} color={colors.blue} backgroundColor="transparent" borderWidth={0} shadow={false} />
           </View>
         </Animated.View>
       </View>
@@ -151,7 +159,7 @@ interface AuthButtonProps {
   onPress: () => void;
   disabled: boolean;
   loading: boolean;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: any; // Using any for icon name compatibility
   text: string;
   variant: 'dark' | 'light';
 }
@@ -198,11 +206,15 @@ const AuthButton: React.FC<AuthButtonProps> = ({
           <ActivityIndicator color={isDark ? colors.white : colors.black} />
         ) : (
           <>
-            <Ionicons 
-                name={icon} 
-                size={20} 
-                color={isDark ? colors.white : colors.black} 
-                style={styles.buttonIcon} 
+            <IconContainer
+              name={icon}
+              size={32}
+              iconSize={20}
+              color={isDark ? colors.white : colors.black}
+              backgroundColor="transparent"
+              borderWidth={0}
+              shadow={false}
+              style={styles.buttonIcon}
             />
             <Text style={[
               styles.buttonText,
