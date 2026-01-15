@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 import { deleteAccount } from '../services/accountService';
+import { colors, fonts, fontSizes, spacing, radii, shadows } from '../theme';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -123,7 +124,7 @@ export default function ProfileScreen() {
                 {isDeleting ? 'Deleting...' : 'Delete Account'}
               </Text>
             </View>
-            {isDeleting && <ActivityIndicator color="#FF7664" />}
+            {isDeleting && <ActivityIndicator color={colors.pink} />}
           </TouchableOpacity>
         </View>
 
@@ -139,90 +140,97 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: colors.white,
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing['4xl'],
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    paddingVertical: 16,
+    fontSize: fontSizes['2xl'],
+    fontFamily: fonts.heading,
+    color: colors.black,
+    paddingVertical: spacing.lg,
   },
   avatarSection: {
     alignItems: 'center',
-    marginBottom: 32,
-    paddingVertical: 16,
+    marginBottom: spacing['3xl'],
+    paddingVertical: spacing.lg,
   },
   avatar: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#FF7664',
+    backgroundColor: colors.pink,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: fontSizes['3xl'],
+    fontFamily: fonts.heading,
+    color: colors.white,
   },
   name: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginTop: 12,
+    fontSize: fontSizes.xl,
+    fontFamily: fonts.bodyBold,
+    color: colors.black,
+    marginTop: spacing.md,
   },
   email: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 4,
+    fontSize: fontSizes.sm,
+    fontFamily: fonts.body,
+    color: colors.black + '66',
+    marginTop: spacing.xs,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: spacing['2xl'],
   },
   sectionTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 12,
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.bodyBold,
+    color: colors.black + '66',
+    marginBottom: spacing.md,
     marginLeft: 4,
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
+    backgroundColor: colors.white,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.sm,
+    ...shadows.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   settingInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
   },
   settingLabel: {
-    fontSize: 16,
-    color: '#fff',
+    fontSize: fontSizes.md,
+    fontFamily: fonts.bodyBold,
+    color: colors.black,
   },
   dangerRow: {
-    backgroundColor: 'rgba(255, 118, 100, 0.1)',
+    backgroundColor: colors.pink + '15',
+    borderColor: colors.pink + '40',
   },
   dangerText: {
-    color: '#FF7664',
+    color: colors.pink,
   },
   versionInfo: {
     alignItems: 'center',
-    paddingVertical: 24,
+    paddingVertical: spacing['2xl'],
   },
   versionText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: fontSizes.xs,
+    fontFamily: fonts.body,
+    color: colors.black + '40',
   },
 });

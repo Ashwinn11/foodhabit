@@ -1,0 +1,1 @@
+export { FoodBlobCard } from './FoodBlobCard';

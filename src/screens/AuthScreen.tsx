@@ -3,22 +3,44 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Alert,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
+import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme';
+import { GutAvatar, ScreenWrapper } from '../components';
 
 export default function AuthScreen() {
   const { signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
   const [loading, setLoading] = useState<'apple' | 'google' | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
-
+  
+  const avatarWiggle = useSharedValue(0);
+  
   React.useEffect(() => {
     checkAppleAuth();
-  }, []);
+    // Start wiggle animation
+    avatarWiggle.value = withRepeat(
+      withSequence(
+        withTiming(-5, { duration: 1000 }),
+        withTiming(5, { duration: 1000 })
+      ),
+      -1,
+      true
+    );
+  }, [avatarWiggle]);
 
   const checkAppleAuth = async () => {
     const available = await isAppleAuthAvailable();
@@ -30,7 +52,7 @@ export default function AuthScreen() {
     try {
       await signInWithApple();
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to sign in with Apple');
+      Alert.alert('Oops!', error.message || 'Failed to sign in with Apple');
     } finally {
       setLoading(null);
     }
@@ -41,94 +63,258 @@ export default function AuthScreen() {
     try {
       await signInWithGoogle();
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to sign in with Google');
+      Alert.alert('Oops!', error.message || 'Failed to sign in with Google');
     } finally {
       setLoading(null);
     }
   };
+  
+  const avatarStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${avatarWiggle.value}deg` }],
+  }));
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenWrapper style={styles.container}>
       <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.emojiLogo}>🥗</Text>
-        </View>
+        {/* Header with mascot */}
+        <Animated.View 
+          entering={FadeInDown.delay(100).springify()}
+          style={styles.header}
+        >
+          <Animated.View style={avatarStyle}>
+            <GutAvatar mood="happy" size={120} showBadge badgeIcon="hand-right" />
+          </Animated.View>
+          
+          <Text style={styles.title}>Gut Buddy</Text>
+          <Text style={styles.subtitle}>Your friendly poop tracker!</Text>
+        </Animated.View>
+        
+        {/* Welcome text */}
+        <Animated.View 
+          entering={FadeInDown.delay(200).springify()}
+          style={styles.welcomeCard}
+        >
+          <Ionicons name="sparkles" size={32} color={colors.yellow} style={styles.welcomeIcon} />
+          <Text style={styles.welcomeTitle}>Track your gut health</Text>
+          <Text style={styles.welcomeText}>
+            Log your poops, meals, and symptoms to understand your digestive patterns better!
+          </Text>
+        </Animated.View>
 
         {/* Auth Buttons */}
-        <View style={styles.authButtons}>
+        <Animated.View 
+          entering={FadeInDown.delay(300).springify()}
+          style={styles.authButtons}
+        >
           {appleAvailable && Platform.OS === 'ios' && (
-            <TouchableOpacity
-              style={[styles.button, styles.appleButton]}
+            <AuthButton
               onPress={handleAppleSignIn}
               disabled={loading !== null}
-            >
-              {loading === 'apple' ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.appleButtonText}>Continue with Apple</Text>
-              )}
-            </TouchableOpacity>
+              loading={loading === 'apple'}
+              icon="logo-apple"
+              text="Continue with Apple"
+              variant="dark"
+            />
           )}
 
-          <TouchableOpacity
-            style={[styles.button, styles.googleButton]}
+          <AuthButton
             onPress={handleGoogleSignIn}
             disabled={loading !== null}
-          >
-            {loading === 'google' ? (
-              <ActivityIndicator color="#333" />
-            ) : (
-              <Text style={styles.googleButtonText}>Continue with Google</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+            loading={loading === 'google'}
+            icon="logo-google"
+            text="Continue with Google"
+            variant="light"
+          />
+        </Animated.View>
+        
+        {/* Footer */}
+        <Animated.View 
+          entering={FadeInDown.delay(400).springify()}
+          style={styles.footer}
+        >
+          <Text style={styles.footerText}>
+            By continuing, you agree to our Terms & Privacy Policy
+          </Text>
+          <View style={styles.footerIcons}>
+            <Ionicons name="heart" size={20} color={colors.pink} />
+            <Ionicons name="happy" size={20} color={colors.yellow} />
+            <Ionicons name="leaf" size={20} color={colors.blue} />
+          </View>
+        </Animated.View>
       </View>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
+
+// Reusable auth button component
+interface AuthButtonProps {
+  onPress: () => void;
+  disabled: boolean;
+  loading: boolean;
+  icon: keyof typeof Ionicons.glyphMap;
+  text: string;
+  variant: 'dark' | 'light';
+}
+
+const AuthButton: React.FC<AuthButtonProps> = ({
+  onPress,
+  disabled,
+  loading,
+  icon,
+  text,
+  variant,
+}) => {
+  const scale = useSharedValue(1);
+  
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+  
+  const handlePressIn = () => {
+    scale.value = withSpring(0.97);
+  };
+  
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+  
+  const isDark = variant === 'dark';
+  
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      disabled={disabled}
+    >
+      <Animated.View
+        style={[
+          styles.button,
+          isDark ? styles.darkButton : styles.lightButton,
+          animatedStyle,
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator color={isDark ? colors.white : colors.black} />
+        ) : (
+          <>
+            <Ionicons 
+                name={icon} 
+                size={20} 
+                color={isDark ? colors.white : colors.black} 
+                style={styles.buttonIcon} 
+            />
+            <Text style={[
+              styles.buttonText,
+              isDark ? styles.darkButtonText : styles.lightButtonText,
+            ]}>
+              {text}
+            </Text>
+          </>
+        )}
+      </Animated.View>
+    </Pressable>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
   },
   content: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.xl,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: spacing['3xl'],
   },
-  emojiLogo: {
-    fontSize: 80,
+  title: {
+    fontSize: fontSizes['4xl'],
+    fontFamily: fonts.heading, // Chewy
+    color: colors.black,
+    marginTop: spacing.xl,
+  },
+  subtitle: {
+    fontSize: fontSizes.lg,
+    color: colors.pink, // Candy Pink
+    marginTop: spacing.xs,
+    fontFamily: fonts.bodyBold,
+  },
+  welcomeCard: {
+    backgroundColor: colors.white,
+    borderRadius: radii['2xl'],
+    padding: spacing.xl,
+    alignItems: 'center',
+    marginBottom: spacing['2xl'],
+    ...shadows.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  welcomeIcon: {
+    marginBottom: spacing.md,
+  },
+  welcomeTitle: {
+    fontSize: fontSizes.xl,
+    fontFamily: fonts.heading,
+    color: colors.black,
+    marginBottom: spacing.sm,
+  },
+  welcomeText: {
+    fontSize: fontSizes.md,
+    color: colors.black + '99',
+    textAlign: 'center',
+    lineHeight: 22,
+    fontFamily: fonts.body,
   },
   authButtons: {
-    gap: 12,
+    gap: spacing.md,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
+    height: 56,
+    borderRadius: radii.xl,
+    paddingHorizontal: spacing.lg,
+    ...shadows.sm,
   },
-  appleButton: {
-    backgroundColor: '#000',
+  darkButton: {
+    backgroundColor: colors.black,
   },
-  appleButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+  lightButton: {
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
-  googleButton: {
-    backgroundColor: '#fff',
+  buttonIcon: {
+    marginRight: spacing.sm,
   },
-  googleButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+  buttonText: {
+    fontSize: fontSizes.md,
+    fontFamily: fonts.bodyBold,
+  },
+  darkButtonText: {
+    color: colors.white,
+  },
+  lightButtonText: {
+    color: colors.black,
+  },
+  footer: {
+    marginTop: spacing['3xl'],
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: fontSizes.xs,
+    color: colors.black + '66',
+    textAlign: 'center',
+    fontFamily: fonts.body,
+    marginBottom: spacing.md,
+  },
+  footerIcons: {
+    flexDirection: 'row',
+    marginTop: spacing.md,
+    gap: spacing.md,
   },
 });

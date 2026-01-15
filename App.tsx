@@ -1,99 +1,97 @@
 import React from 'react';
-import { StyleSheet, ActivityIndicator, Text as RNText, View } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import * as ExpoSplashScreen from 'expo-splash-screen';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { AppNavigator } from './src/navigation';
+import { colors } from './src/theme';
 import { useAuth } from './src/hooks/useAuth';
-import { AuthScreen, ProfileScreen } from './src/screens';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AuthScreen from './src/screens/AuthScreen';
 
 // Keep the native splash screen visible while we fetch resources
 ExpoSplashScreen.preventAutoHideAsync();
 
-const Stack = createNativeStackNavigator();
+// Gut Buddy Light Theme
+const GutBuddyTheme = {
+  ...DefaultTheme,
+  dark: false,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: colors.pink,
+    background: colors.background,
+    card: colors.white,
+    text: colors.black,
+    border: colors.border,
+    notification: colors.pink,
+  },
+};
+
+import { useFonts, Chewy_400Regular } from '@expo-google-fonts/chewy';
+import { Fredoka_400Regular, Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
+
+// ... (keep imports)
 
 function AppContent() {
   const { session, loading } = useAuth();
+  const [fontsLoaded] = useFonts({
+    'Chewy': Chewy_400Regular,
+    'Fredoka-Regular': Fredoka_400Regular,
+    'Fredoka-Medium': Fredoka_500Medium,
+    'Fredoka-SemiBold': Fredoka_600SemiBold,
+    'Fredoka-Bold': Fredoka_700Bold,
+  });
 
-  if (loading) {
+  const [isReady, setIsReady] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!loading && fontsLoaded) {
+      setIsReady(true);
+      ExpoSplashScreen.hideAsync();
+    }
+  }, [loading, fontsLoaded]);
+
+  if (loading || !isReady) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: '#1a1a1a' }]}>
-        <ActivityIndicator size="large" color="#FF7664" />
-        <RNText style={{ marginTop: 16, color: '#fff' }}>
-          Loading...
-        </RNText>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.pink} />
       </View>
     );
   }
 
-  // Return the appropriate screen based on auth state
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: 'transparent' },
-        animation: 'slide_from_right',
-      }}
-    >
-      {!session ? (
-        // Auth flow
-        <Stack.Screen
-          name="Auth"
-          component={AuthScreen}
-          options={{ presentation: 'card' }}
-        />
-      ) : (
-        // Main app flow - Profile screen
-        <Stack.Screen
-          name="Profile"
-          component={ProfileScreen}
-          options={{ presentation: 'card' }}
-        />
-      )}
-    </Stack.Navigator>
-  );
+
+  // Show auth screen if not logged in
+  if (!session) {
+    return <AuthScreen />;
+  }
+
+  // Show main app if logged in
+  return <AppNavigator />;
 }
 
 export default function App() {
-  React.useEffect(() => {
-    // Hide native splash screen immediately as we're not loading fonts anymore
-    ExpoSplashScreen.hideAsync();
-  }, []);
-
-  const NavigationTheme = {
-    dark: true,
-    colors: {
-      primary: '#FF7664',
-      background: '#1a1a1a',
-      card: '#2a2a2a',
-      text: '#fff',
-      border: 'rgba(255, 255, 255, 0.1)',
-      notification: '#FF7664',
-    },
-    fonts: {
-      regular: { fontFamily: 'System', fontWeight: '400' as const },
-      bold: { fontFamily: 'System', fontWeight: '700' as const },
-      heavy: { fontFamily: 'System', fontWeight: '700' as const },
-      medium: { fontFamily: 'System', fontWeight: '500' as const },
-      thin: { fontFamily: 'System', fontWeight: '300' as const },
-    },
-  };
-
   return (
-    <SafeAreaProvider>
-      <NavigationContainer theme={NavigationTheme}>
-        <AppContent />
-        <StatusBar style="light" backgroundColor="#1a1a1a" />
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.container}>
+      <SafeAreaProvider>
+        <NavigationContainer theme={GutBuddyTheme}>
+          <AppContent />
+          <StatusBar style="dark" translucent backgroundColor="transparent" />
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.background,
   },
 });
