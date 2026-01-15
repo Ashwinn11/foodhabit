@@ -1,14 +1,13 @@
 import React, { useState, useRef } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Pressable,
   Image,
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { IconContainer } from '../components';
-import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme';
+import { IconContainer, Typography, Button, Card } from '../components';
+import { colors, spacing, radii } from '../theme';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { useGutStore } from '../store';
@@ -29,7 +28,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
   if (!permission) {
     return (
       <View style={styles.container}>
-        <Text style={styles.permissionText}>Loading camera...</Text>
+        <Typography variant="body" color={colors.white}>Loading camera...</Typography>
       </View>
     );
   }
@@ -37,7 +36,7 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
   if (!permission.granted) {
     return (
       <View style={styles.permissionContainer}>
-        <View style={styles.permissionCard}>
+        <Card variant="white" style={styles.permissionCard} padding="2xl">
           <IconContainer
             name="camera"
             size={80}
@@ -48,17 +47,23 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
             shadow={false}
             style={styles.permissionIcon}
           />
-          <Text style={styles.permissionTitle}>Camera Access</Text>
-          <Text style={styles.permissionText}>
+          <Typography variant="h2" style={{ marginBottom: spacing.md }}>Camera Access</Typography>
+          <Typography variant="body" align="center" color={colors.black + '99'} style={{ marginBottom: spacing.xl }}>
             We need camera access to let you take photos of your meals and track your gut health journey!
-          </Text>
-          <Pressable style={styles.permissionButton} onPress={requestPermission}>
-            <Text style={styles.permissionButtonText}>Enable Camera</Text>
-          </Pressable>
-          <Pressable style={styles.cancelButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.cancelButtonText}>Maybe Later</Text>
-          </Pressable>
-        </View>
+          </Typography>
+          <Button 
+            title="Enable Camera"
+            onPress={requestPermission}
+            color={colors.pink}
+            style={{ marginBottom: spacing.md, width: '100%' }}
+          />
+          <Button 
+            title="Maybe Later"
+            onPress={() => navigation.goBack()}
+            variant="ghost"
+            color={colors.black + '66'}
+          />
+        </Card>
       </View>
     );
   }
@@ -102,31 +107,22 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
         <Image source={{ uri: capturedPhoto }} style={styles.previewImage} />
         
         <View style={styles.previewControls}>
-          <Pressable style={styles.retakeButton} onPress={retakePhoto}>
-            <IconContainer
-              name="refresh"
-              size={32}
-              iconSize={24}
-              color={colors.white}
-              backgroundColor="transparent"
-              borderWidth={0}
-              shadow={false}
-            />
-            <Text style={styles.retakeButtonText}>Retake</Text>
-          </Pressable>
+          <Button 
+            title="Retake"
+            onPress={retakePhoto}
+            icon="refresh"
+            variant="ghost"
+            color={colors.white}
+            style={styles.retakeButton}
+          />
           
-          <Pressable style={styles.confirmButton} onPress={confirmPhoto}>
-            <IconContainer
-              name="checkmark"
-              size={32}
-              iconSize={24}
-              color={colors.white}
-              backgroundColor="transparent"
-              borderWidth={0}
-              shadow={false}
-            />
-            <Text style={styles.confirmButtonText}>Use Photo</Text>
-          </Pressable>
+          <Button 
+            title="Use Photo"
+            onPress={confirmPhoto}
+            icon="checkmark"
+            color={colors.pink}
+            style={styles.confirmButton}
+          />
         </View>
       </View>
     );
@@ -172,7 +168,9 @@ export const CameraScreen: React.FC<CameraScreenProps> = ({ navigation }) => {
         
         {/* Bottom hint */}
         <View style={styles.hintContainer}>
-          <Text style={styles.hintText}>Take a photo of your meal</Text>
+          <Typography variant="body" color={colors.white} style={styles.hintText}>
+            Take a photo of your meal
+          </Typography>
         </View>
         
         {/* Capture button */}
@@ -206,48 +204,10 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   permissionCard: {
-    backgroundColor: colors.white,
-    borderRadius: radii['2xl'],
-    padding: spacing['2xl'],
     alignItems: 'center',
-    ...shadows.md,
   },
   permissionIcon: {
     marginBottom: spacing.lg,
-  },
-  permissionTitle: {
-    fontSize: fontSizes['2xl'],
-    fontFamily: fonts.heading,
-    color: colors.black,
-    marginBottom: spacing.md,
-  },
-  permissionText: {
-    fontSize: fontSizes.md,
-    fontFamily: fonts.body,
-    color: colors.black + '99',
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-    lineHeight: 22,
-  },
-  permissionButton: {
-    backgroundColor: colors.pink,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing['2xl'],
-    borderRadius: radii.xl,
-    marginBottom: spacing.md,
-  },
-  permissionButtonText: {
-    fontSize: fontSizes.md,
-    fontFamily: fonts.bodyBold,
-    color: colors.white,
-  },
-  cancelButton: {
-    paddingVertical: spacing.sm,
-  },
-  cancelButtonText: {
-    fontSize: fontSizes.md,
-    fontFamily: fonts.body,
-    color: colors.black + '66',
   },
   // Camera controls
   topControls: {
@@ -280,9 +240,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   hintText: {
-    fontSize: fontSizes.md,
-    fontFamily: fonts.body,
-    color: colors.white,
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
@@ -325,31 +282,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   retakeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
-    borderRadius: radii.xl,
-    gap: spacing.sm,
-  },
-  retakeButtonText: {
-    fontSize: fontSizes.md,
-    fontFamily: fonts.bodyBold,
-    color: colors.white,
   },
   confirmButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: colors.pink,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
-    borderRadius: radii.xl,
-    gap: spacing.sm,
-  },
-  confirmButtonText: {
-    fontSize: fontSizes.md,
-    fontFamily: fonts.bodyBold,
-    color: colors.white,
   },
 });

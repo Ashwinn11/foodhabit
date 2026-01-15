@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, StyleSheet, Pressable } from 'react-native';
+import { StyleSheet, Pressable } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Animated, {
@@ -8,14 +8,14 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, shadows, fonts } from '../theme';
-import { IconContainer } from '../components';
+import { colors, shadows } from '../theme';
+import { IconContainer, Typography } from '../components';
 import {
   HomeScreen,
   GutProfileScreen,
   AddEntryScreen,
   InsightsScreen,
-  SettingsScreen,
+  ProfileScreen,
   CameraScreen,
 } from '../screens';
 
@@ -52,12 +52,15 @@ const TabIcon: React.FC<TabIconProps> = ({ iconName, label, focused }) => {
         borderWidth={0}
         shadow={false}
       />
-      <Text style={[
-        styles.tabLabel,
-        { color: color }
-      ]}>
+      <Typography 
+        variant="bodyXS" 
+        style={[
+          styles.tabLabel,
+          { color: color }
+        ]}
+      >
         {label}
-      </Text>
+      </Typography>
     </Animated.View>
   );
 };
@@ -147,11 +150,11 @@ const TabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="SettingsTab"
-        component={SettingsScreen}
+        name="ProfileTab"
+        component={ProfileScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon iconName="settings" label="Settings" focused={focused} />
+            <TabIcon iconName="person" label="Profile" focused={focused} />
           ),
         }}
       />
@@ -201,8 +204,8 @@ const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: colors.white,
     borderTopWidth: 0,
-    height: 90, // Taller
-    paddingTop: 10, // Adjust centering
+    height: 60, // Taller
+    paddingTop:10, // Adjust centering
     paddingBottom: 25, // Adjust for Home Indicator area
     position: 'absolute',
     bottom: 25, // Float above bottom
@@ -214,12 +217,9 @@ const styles = StyleSheet.create({
   tabIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 6,
   },
   tabLabel: {
     fontSize: 10,
-    fontFamily: fonts.bodyBold,
-    marginTop: 4,
   },
   centerButtonWrapper: {
     top: -25, // Lift above bar

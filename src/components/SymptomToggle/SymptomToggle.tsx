@@ -1,15 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ViewStyle } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withSequence,
-  withTiming,
+import { View, StyleSheet, Pressable, ViewStyle } from 'react-native';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  withSequence, 
+  withTiming 
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, radii, shadows } from '../../theme/theme';
 import { IconContainer } from '../IconContainer/IconContainer';
-import { colors, spacing, radii, shadows, fontSizes, fonts } from '../../theme';
+import { Typography } from '../Typography';
 
 interface SymptomToggleProps {
   label: string;
@@ -78,7 +79,12 @@ export const SymptomToggle: React.FC<SymptomToggleProps> = ({
           shadow={false}
           style={styles.icon}
         />
-        <Text style={[styles.label, active && styles.labelActive]}>{label}</Text>
+        <Typography 
+          variant="bodyBold" 
+          color={active ? colors.black : colors.black + '66'}
+        >
+          {label}
+        </Typography>
         {active && (
           <View style={styles.activeDot} />
         )}
@@ -103,14 +109,6 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: spacing.sm,
-  },
-  label: {
-    fontSize: fontSizes.md,
-    fontFamily: fonts.bodyBold,
-    color: colors.black + '66',
-  },
-  labelActive: {
-    color: colors.black,
   },
   activeDot: {
     width: 6,

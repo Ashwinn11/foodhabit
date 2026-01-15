@@ -1,27 +1,28 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
+import { View, StyleSheet, Pressable } from 'react-native';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring 
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
-import { IconContainer } from '../IconContainer/IconContainer';
-import { colors, spacing, radii, shadows, fontSizes, fonts, moodIcons } from '../../theme';
+import { colors, spacing, moodIcons } from '../../theme/theme';
 import { MoodType } from '../../store';
+import { IconContainer } from '../IconContainer/IconContainer';
+import { Typography } from '../Typography';
+import { Card } from '../Card';
 
 interface MoodPickerProps {
   selected: MoodType | undefined;
   onSelect: (mood: MoodType) => void;
 }
 
-const moods: { type: MoodType; icon: keyof typeof Ionicons.glyphMap; label: string; color: string }[] = [
-  { type: 'amazing', icon: moodIcons.amazing as any, label: 'Amazing', color: colors.yellow },
-  { type: 'happy', icon: moodIcons.happy as any, label: 'Happy', color: colors.blue },
-  { type: 'okay', icon: moodIcons.okay as any, label: 'Okay', color: colors.blue },
-  { type: 'bloated', icon: moodIcons.bloated as any, label: 'Bloated', color: colors.yellow },
-  { type: 'constipated', icon: moodIcons.constipated as any, label: 'Stuck', color: colors.pink },
-  { type: 'urgent', icon: moodIcons.urgent as any, label: 'Urgent', color: colors.pink },
+const moods: { type: MoodType; icon: any; label: string; color: string }[] = [
+  { type: 'amazing', icon: moodIcons.amazing, label: 'Amazing', color: colors.yellow },
+  { type: 'happy', icon: moodIcons.happy, label: 'Happy', color: colors.blue },
+  { type: 'okay', icon: moodIcons.okay, label: 'Okay', color: colors.blue },
+  { type: 'bloated', icon: moodIcons.bloated, label: 'Bloated', color: colors.yellow },
+  { type: 'constipated', icon: moodIcons.constipated, label: 'Stuck', color: colors.pink },
+  { type: 'urgent', icon: moodIcons.urgent, label: 'Urgent', color: colors.pink },
 ];
 
 const MoodOption: React.FC<{
@@ -49,24 +50,29 @@ const MoodOption: React.FC<{
   
   return (
     <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
-      <Animated.View
-        style={[
-          styles.option,
-          isSelected && { backgroundColor: item.color + '40', borderColor: item.color },
-          animatedStyle,
-        ]}
-      >
-        <IconContainer
-          name={item.icon}
-          size={50}
-          iconSize={32}
+      <Animated.View style={animatedStyle}>
+        <Card 
+          variant={isSelected ? "colored" : "white"}
           color={item.color}
-          borderColor={item.color}
-          shape="circle"
-        />
-        <Text style={[styles.label, isSelected && styles.labelSelected]}>
-          {item.label}
-        </Text>
+          style={styles.option}
+          padding="md"
+        >
+          <IconContainer
+            name={item.icon}
+            size={50}
+            iconSize={32}
+            color={item.color}
+            borderColor={item.color}
+            shape="circle"
+          />
+          <Typography 
+            variant="bodyXS" 
+            color={isSelected ? colors.black : colors.black + '66'} 
+            style={{ marginTop: 8 }}
+          >
+            {item.label}
+          </Typography>
+        </Card>
       </Animated.View>
     </Pressable>
   );
@@ -75,7 +81,9 @@ const MoodOption: React.FC<{
 export const MoodPicker: React.FC<MoodPickerProps> = ({ selected, onSelect }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>How are you feeling?</Text>
+      <Typography variant="h4" style={{ marginBottom: spacing.md }}>
+        How are you feeling?
+      </Typography>
       <View style={styles.grid}>
         {moods.map((item) => (
           <MoodOption
@@ -94,12 +102,6 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: spacing.lg,
   },
-  title: {
-    fontSize: fontSizes.lg,
-    fontFamily: fonts.heading, // Chewy
-    color: colors.black,
-    marginBottom: spacing.md,
-  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -108,21 +110,6 @@ const styles = StyleSheet.create({
   option: {
     width: 95,
     alignItems: 'center',
-    padding: spacing.md,
     margin: spacing.xs,
-    backgroundColor: colors.white,
-    borderRadius: radii.xl,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    ...shadows.sm,
-  },
-  label: {
-    fontSize: fontSizes.xs,
-    fontFamily: fonts.bodyBold,
-    color: colors.black + '66',
-    marginTop: 8,
-  },
-  labelSelected: {
-    color: colors.black,
   },
 });

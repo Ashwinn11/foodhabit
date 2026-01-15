@@ -1,8 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { colors, spacing, fontSizes, radii, shadows, fonts } from '../theme';
-import { GutAvatar, ScreenWrapper, StatCard, IconContainer } from '../components';
+import { colors, spacing } from '../theme';
+import { 
+  GutAvatar, 
+  ScreenWrapper, 
+  StatCard, 
+  IconContainer,
+  Typography,
+  Card,
+  SectionHeader
+} from '../components';
 import { useGutStore } from '../store';
 
 export const InsightsScreen: React.FC = () => {
@@ -10,7 +18,6 @@ export const InsightsScreen: React.FC = () => {
   const stats = getStats();
   const todayWater = getTodayWater();
   
-  // Calculate most common Bristol type
   const getMostCommonBristol = () => {
     if (gutMoments.length === 0) return '-';
     const counts: { [key: number]: number } = {};
@@ -19,27 +26,24 @@ export const InsightsScreen: React.FC = () => {
         counts[m.bristolType] = (counts[m.bristolType] || 0) + 1;
       }
     });
-    const maxType = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    const sortedEntries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const maxType = sortedEntries[0];
     return maxType ? `Type ${maxType[0]}` : '-';
   };
   
-  // Calculate symptom frequency
   const getSymptomStats = () => {
     if (gutMoments.length === 0) return { bloating: 0, gas: 0, cramping: 0, nausea: 0 };
     
-    const counts = {
+    return {
       bloating: gutMoments.filter(m => m.symptoms.bloating).length,
       gas: gutMoments.filter(m => m.symptoms.gas).length,
       cramping: gutMoments.filter(m => m.symptoms.cramping).length,
       nausea: gutMoments.filter(m => m.symptoms.nausea).length,
     };
-    
-    return counts;
   };
   
   const symptomStats = getSymptomStats();
   
-  // Get mood distribution
   const getMoodStats = () => {
     if (gutMoments.length === 0) return {};
     const counts: { [key: string]: number } = {};
@@ -52,7 +56,6 @@ export const InsightsScreen: React.FC = () => {
   const moodStats = getMoodStats();
   const totalMoods = Object.values(moodStats).reduce((a, b) => a + b, 0);
   
-  // Get avatar mood based on recent trends
   const getAvatarMood = () => {
     if (gutMoments.length === 0) return 'okay';
     const recent = gutMoments.slice(0, 5);
@@ -69,7 +72,7 @@ export const InsightsScreen: React.FC = () => {
           entering={FadeInDown.delay(100).springify()}
           style={styles.header}
         >
-          <Text style={styles.title}>Gut Insights</Text>
+          <Typography variant="h2">Gut Insights</Typography>
           <View style={styles.subtitleRow}>
              <IconContainer
                name="bar-chart"
@@ -81,52 +84,46 @@ export const InsightsScreen: React.FC = () => {
                shadow={false}
                style={{ marginRight: 6 }}
              />
-             <Text style={styles.subtitle}>Your health at a glance</Text>
+             <Typography variant="body" color={colors.black + '99'}>
+               Your health at a glance
+             </Typography>
           </View>
         </Animated.View>
         
         <View style={styles.content}>
-          {/* Overview Card */}
-          <Animated.View 
-            entering={FadeInDown.delay(200).springify()}
+          <Card 
+            variant="white"
             style={styles.overviewCard}
+            padding="xl"
           >
             <GutAvatar mood={getAvatarMood()} size={80} />
             <View style={styles.overviewStats}>
               <View style={styles.overviewStat}>
-                <Text style={styles.overviewValue}>{stats.totalPoops}</Text>
-                <Text style={styles.overviewLabel}>Total Logs</Text>
+                <Typography variant="h3">{stats.totalPoops}</Typography>
+                <Typography variant="bodyXS" color={colors.black + '66'}>Total Logs</Typography>
               </View>
               <View style={styles.overviewDivider} />
               <View style={styles.overviewStat}>
-                <Text style={styles.overviewValue}>{stats.longestStreak}</Text>
-                <Text style={styles.overviewLabel}>Day Streak</Text>
+                <Typography variant="h3">{stats.longestStreak}</Typography>
+                <Typography variant="bodyXS" color={colors.black + '66'}>Day Streak</Typography>
               </View>
               <View style={styles.overviewDivider} />
               <View style={styles.overviewStat}>
-                <Text style={styles.overviewValue}>{meals.length}</Text>
-                <Text style={styles.overviewLabel}>Meals</Text>
+                <Typography variant="h3">{meals.length}</Typography>
+                <Typography variant="bodyXS" color={colors.black + '66'}>Meals</Typography>
               </View>
             </View>
-          </Animated.View>
+          </Card>
           
-          {/* Weekly Stats */}
           <Animated.View 
             entering={FadeInDown.delay(300).springify()}
             style={styles.section}
           >
-            <View style={styles.sectionHeader}>
-              <IconContainer 
-                name="calendar" 
-                size={32} 
-                iconSize={18}
-                color={colors.blue}
-                borderColor={colors.blue}
-                shape="circle"
-                style={{ marginRight: spacing.sm }}
-              />
-              <Text style={styles.sectionTitle}>This Week</Text>
-            </View>
+            <SectionHeader 
+              title="This Week" 
+              icon="calendar" 
+              iconColor={colors.blue}
+            />
             <View style={styles.statsRow}>
               <StatCard
                 label="AVG/DAY"
@@ -152,28 +149,20 @@ export const InsightsScreen: React.FC = () => {
             </View>
           </Animated.View>
           
-          {/* Mood Distribution */}
           {totalMoods > 0 && (
             <Animated.View 
               entering={FadeInDown.delay(400).springify()}
               style={styles.section}
             >
-              <View style={styles.sectionHeader}>
-                <IconContainer 
-                  name="happy" 
-                  size={32} 
-                  iconSize={18}
-                  color={colors.pink}
-                  borderColor={colors.pink}
-                  shape="circle"
-                  style={{ marginRight: spacing.sm }}
-                />
-                <Text style={styles.sectionTitle}>Mood Breakdown</Text>
-              </View>
-              <View style={styles.moodBreakdown}>
+              <SectionHeader 
+                title="Mood Breakdown" 
+                icon="happy" 
+                iconColor={colors.pink}
+              />
+              <Card variant="white" style={styles.moodBreakdown}>
                 {Object.entries(moodStats).map(([mood, count]) => (
                   <View key={mood} style={styles.moodBar}>
-                    <Text style={styles.moodLabel}>{mood}</Text>
+                    <Typography variant="bodySmall" style={styles.moodLabel}>{mood}</Typography>
                     <View style={styles.moodBarTrack}>
                       <View 
                         style={[
@@ -182,32 +171,26 @@ export const InsightsScreen: React.FC = () => {
                         ]} 
                       />
                     </View>
-                    <Text style={styles.moodCount}>{count}</Text>
+                    <Typography variant="bodySmall" align="right" color={colors.black + '66'} style={{ width: 30 }}>
+                      {count}
+                    </Typography>
                   </View>
                 ))}
-              </View>
+              </Card>
             </Animated.View>
           )}
           
-          {/* Symptom Tracker */}
           <Animated.View 
             entering={FadeInDown.delay(500).springify()}
             style={styles.section}
           >
-            <View style={styles.sectionHeader}>
-              <IconContainer 
-                name="warning" 
-                size={32} 
-                iconSize={18}
-                color={colors.blue}
-                borderColor={colors.blue}
-                shape="circle"
-                style={{ marginRight: spacing.sm }}
-              />
-              <Text style={styles.sectionTitle}>Symptom Tracker</Text>
-            </View>
+            <SectionHeader 
+              title="Symptom Tracker" 
+              icon="warning" 
+              iconColor={colors.blue}
+            />
             <View style={styles.symptomGrid}>
-              <View style={[styles.symptomCard, { backgroundColor: colors.pink + '15' }]}>
+              <Card variant="colored" color={colors.pink} style={styles.symptomCard}>
                 <IconContainer
                   name="balloon-outline"
                   size={44}
@@ -217,10 +200,10 @@ export const InsightsScreen: React.FC = () => {
                   borderWidth={0}
                   shadow={false}
                 />
-                <Text style={styles.symptomValue}>{symptomStats.bloating}</Text>
-                <Text style={styles.symptomLabel}>Bloating</Text>
-              </View>
-              <View style={[styles.symptomCard, { backgroundColor: colors.blue + '15' }]}>
+                <Typography variant="h3" style={{ marginTop: spacing.sm }}>{symptomStats.bloating}</Typography>
+                <Typography variant="bodySmall" color={colors.black + '66'}>Bloating</Typography>
+              </Card>
+              <Card variant="colored" color={colors.blue} style={styles.symptomCard}>
                 <IconContainer
                   name="cloud-outline"
                   size={44}
@@ -230,10 +213,10 @@ export const InsightsScreen: React.FC = () => {
                   borderWidth={0}
                   shadow={false}
                 />
-                <Text style={styles.symptomValue}>{symptomStats.gas}</Text>
-                <Text style={styles.symptomLabel}>Gas</Text>
-              </View>
-              <View style={[styles.symptomCard, { backgroundColor: colors.pink + '15' }]}>
+                <Typography variant="h3" style={{ marginTop: spacing.sm }}>{symptomStats.gas}</Typography>
+                <Typography variant="bodySmall" color={colors.black + '66'}>Gas</Typography>
+              </Card>
+              <Card variant="colored" color={colors.pink} style={styles.symptomCard}>
                 <IconContainer
                   name="flash-outline"
                   size={44}
@@ -243,10 +226,10 @@ export const InsightsScreen: React.FC = () => {
                   borderWidth={0}
                   shadow={false}
                 />
-                <Text style={styles.symptomValue}>{symptomStats.cramping}</Text>
-                <Text style={styles.symptomLabel}>Cramping</Text>
-              </View>
-              <View style={[styles.symptomCard, { backgroundColor: colors.yellow + '15' }]}>
+                <Typography variant="h3" style={{ marginTop: spacing.sm }}>{symptomStats.cramping}</Typography>
+                <Typography variant="bodySmall" color={colors.black + '66'}>Cramping</Typography>
+              </Card>
+              <Card variant="colored" color={colors.yellow} style={styles.symptomCard}>
                 <IconContainer
                   name="medkit-outline"
                   size={44}
@@ -256,27 +239,29 @@ export const InsightsScreen: React.FC = () => {
                   borderWidth={0}
                   shadow={false}
                 />
-                <Text style={styles.symptomValue}>{symptomStats.nausea}</Text>
-                <Text style={styles.symptomLabel}>Nausea</Text>
-              </View>
+                <Typography variant="h3" style={{ marginTop: spacing.sm }}>{symptomStats.nausea}</Typography>
+                <Typography variant="bodySmall" color={colors.black + '66'}>Nausea</Typography>
+              </Card>
             </View>
           </Animated.View>
           
-          {/* Empty State */}
           {stats.totalPoops === 0 && (
-            <Animated.View 
-              entering={FadeInDown.delay(300).springify()}
-              style={styles.emptyCard}
-            >
-              <GutAvatar mood="okay" size={100} />
-              <Text style={styles.emptyTitle}>Start Tracking!</Text>
-              <Text style={styles.emptyText}>
-                Log your first poop to see beautiful insights about your gut health patterns!
-              </Text>
+            <Animated.View entering={FadeInDown.delay(300).springify()}>
+              <Card 
+                variant="white"
+                style={styles.emptyCard}
+              >
+                <GutAvatar mood="okay" size={100} />
+                <Typography variant="h3" style={{ marginTop: spacing.lg, marginBottom: spacing.sm }}>
+                  Start Tracking!
+                </Typography>
+                <Typography variant="body" align="center" color={colors.black + '99'}>
+                  Log your first poop to see beautiful insights about your gut health patterns!
+                </Typography>
+              </Card>
             </Animated.View>
           )}
           
-          {/* Bottom Padding */}
           <View style={styles.bottomPadding} />
         </View>
       </ScrollView>
@@ -293,35 +278,19 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,
   },
-  title: {
-    fontSize: fontSizes['3xl'],
-    fontFamily: fonts.heading,
-    color: colors.black,
-  },
   subtitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: spacing.xs,
-  },
-  subtitle: {
-    fontSize: fontSizes.lg,
-    fontFamily: fonts.body,
-    color: colors.black + '99',
   },
   content: {
     flex: 1,
     paddingHorizontal: spacing.lg,
   },
   overviewCard: {
-    backgroundColor: colors.white,
-    borderRadius: radii['2xl'],
-    padding: spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.xl,
-    ...shadows.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
   },
   overviewStats: {
     flex: 1,
@@ -332,17 +301,6 @@ const styles = StyleSheet.create({
   overviewStat: {
     alignItems: 'center',
   },
-  overviewValue: {
-    fontSize: fontSizes['2xl'],
-    fontFamily: fonts.heading,
-    color: colors.black,
-  },
-  overviewLabel: {
-    fontSize: fontSizes.xs,
-    fontFamily: fonts.body,
-    color: colors.black + '66',
-    marginTop: 2,
-  },
   overviewDivider: {
     width: 1,
     height: 40,
@@ -350,16 +308,6 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: spacing.xl,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: fontSizes.lg,
-    fontFamily: fonts.heading,
-    color: colors.black,
   },
   statsRow: {
     flexDirection: 'row',
@@ -369,12 +317,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   moodBreakdown: {
-    backgroundColor: colors.white,
-    borderRadius: radii['2xl'],
-    padding: spacing.lg,
-    ...shadows.sm,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    // Styling handled by Card component
   },
   moodBar: {
     flexDirection: 'row',
@@ -383,9 +326,6 @@ const styles = StyleSheet.create({
   },
   moodLabel: {
     width: 80,
-    fontSize: fontSizes.sm,
-    fontFamily: fonts.bodyBold,
-    color: colors.black,
     textTransform: 'capitalize',
   },
   moodBarTrack: {
@@ -400,13 +340,6 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 6,
   },
-  moodCount: {
-    width: 30,
-    fontSize: fontSizes.sm,
-    fontFamily: fonts.bodyBold,
-    color: colors.black + '66',
-    textAlign: 'right',
-  },
   symptomGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -414,48 +347,12 @@ const styles = StyleSheet.create({
   },
   symptomCard: {
     width: '48%',
-    borderRadius: radii['2xl'],
-    padding: spacing.lg,
     alignItems: 'center',
-    ...shadows.sm,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  symptomValue: {
-    fontSize: fontSizes['2xl'],
-    fontFamily: fonts.heading,
-    color: colors.black,
-    marginTop: spacing.sm,
-  },
-  symptomLabel: {
-    fontSize: fontSizes.sm,
-    fontFamily: fonts.body,
-    color: colors.black + '66',
-    marginTop: 2,
   },
   emptyCard: {
-    backgroundColor: colors.white,
-    borderRadius: radii['2xl'],
     padding: spacing['2xl'],
     alignItems: 'center',
     marginBottom: spacing['2xl'],
-    ...shadows.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  emptyTitle: {
-    fontSize: fontSizes.xl,
-    fontFamily: fonts.heading,
-    color: colors.black,
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
-  },
-  emptyText: {
-    fontSize: fontSizes.md,
-    fontFamily: fonts.body,
-    color: colors.black + '99',
-    textAlign: 'center',
-    lineHeight: 22,
   },
   bottomPadding: {
     height: 100,

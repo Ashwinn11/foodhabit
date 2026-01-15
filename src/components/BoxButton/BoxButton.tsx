@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { IconContainer } from '../IconContainer/IconContainer';
-import { colors, fonts } from '../../theme';
+import { colors } from '../../theme/theme';
+import { Typography } from '../Typography';
 
 interface BoxButtonProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -57,9 +58,13 @@ export const BoxButton: React.FC<BoxButtonProps> = ({
         />
         {badgeCount !== undefined && badgeCount > 0 && (
           <Animated.View style={styles.badge}>
-            <Animated.Text style={styles.badgeText}>
+            <Typography 
+              variant="bodyBold" 
+              color={colors.white} 
+              style={{ fontSize: 9, lineHeight: 12 }}
+            >
               {badgeCount > 9 ? '9+' : badgeCount}
-            </Animated.Text>
+            </Typography>
           </Animated.View>
         )}
       </Animated.View>
@@ -81,10 +86,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 2,
-  },
-  badgeText: {
-    color: colors.white,
-    fontSize: 10,
-    fontFamily: fonts.bodyBold,
   },
 });

@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  Pressable,
-  ActivityIndicator,
   Alert,
   Platform,
 } from 'react-native';
@@ -12,14 +9,13 @@ import Animated, {
   FadeInDown,
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withRepeat,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import { useAuth } from '../hooks/useAuth';
-import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme';
-import { GutAvatar, ScreenWrapper, IconContainer } from '../components';
+import { colors, spacing } from '../theme';
+import { GutAvatar, ScreenWrapper, IconContainer, Typography, Card, Button } from '../components';
 
 export default function AuthScreen() {
   const { signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
@@ -84,29 +80,34 @@ export default function AuthScreen() {
             <GutAvatar mood="happy" size={120} showBadge badgeIcon="hand-right" />
           </Animated.View>
           
-          <Text style={styles.title}>Gut Buddy</Text>
-          <Text style={styles.subtitle}>Your friendly poop tracker!</Text>
+          <Typography variant="h1" style={{ marginTop: spacing.xl }}>Gut Buddy</Typography>
+          <Typography variant="bodyBold" color={colors.pink} style={{ marginTop: spacing.xs }}>
+            Your friendly poop tracker!
+          </Typography>
         </Animated.View>
         
         {/* Welcome text */}
-        <Animated.View 
-          entering={FadeInDown.delay(200).springify()}
-          style={styles.welcomeCard}
-        >
-          <IconContainer
-            name="sparkles"
-            size={48}
-            iconSize={32}
-            color={colors.yellow}
-            backgroundColor="transparent"
-            borderWidth={0}
-            shadow={false}
-            style={styles.welcomeIcon}
-          />
-          <Text style={styles.welcomeTitle}>Track your gut health</Text>
-          <Text style={styles.welcomeText}>
-            Log your poops, meals, and symptoms to understand your digestive patterns better!
-          </Text>
+        <Animated.View entering={FadeInDown.delay(200).springify()}>
+          <Card 
+            variant="white"
+            style={styles.welcomeCard}
+            padding="xl"
+          >
+            <IconContainer
+              name="sparkles"
+              size={48}
+              iconSize={32}
+              color={colors.yellow}
+              backgroundColor="transparent"
+              borderWidth={0}
+              shadow={false}
+              style={styles.welcomeIcon}
+            />
+            <Typography variant="h3">Track your gut health</Typography>
+            <Typography variant="body" align="center" color={colors.black + '99'}>
+              Log your poops, meals, and symptoms to understand your digestive patterns better!
+            </Typography>
+          </Card>
         </Animated.View>
 
         {/* Auth Buttons */}
@@ -115,23 +116,26 @@ export default function AuthScreen() {
           style={styles.authButtons}
         >
           {appleAvailable && Platform.OS === 'ios' && (
-            <AuthButton
+            <Button
+              title="Continue with Apple"
               onPress={handleAppleSignIn}
               disabled={loading !== null}
               loading={loading === 'apple'}
               icon="logo-apple"
-              text="Continue with Apple"
-              variant="dark"
+              variant="primary"
+              color={colors.black}
+              size="lg"
             />
           )}
 
-          <AuthButton
+          <Button
+            title="Continue with Google"
             onPress={handleGoogleSignIn}
             disabled={loading !== null}
             loading={loading === 'google'}
             icon="logo-google"
-            text="Continue with Google"
-            variant="light"
+            variant="white"
+            size="lg"
           />
         </Animated.View>
         
@@ -140,9 +144,9 @@ export default function AuthScreen() {
           entering={FadeInDown.delay(400).springify()}
           style={styles.footer}
         >
-          <Text style={styles.footerText}>
+          <Typography variant="bodyXS" color={colors.black + '66'} align="center">
             By continuing, you agree to our Terms & Privacy Policy
-          </Text>
+          </Typography>
           <View style={styles.footerIcons}>
             <IconContainer name="heart" size={28} iconSize={20} color={colors.pink} backgroundColor="transparent" borderWidth={0} shadow={false} />
             <IconContainer name="happy" size={28} iconSize={20} color={colors.yellow} backgroundColor="transparent" borderWidth={0} shadow={false} />
@@ -153,81 +157,6 @@ export default function AuthScreen() {
     </ScreenWrapper>
   );
 }
-
-// Reusable auth button component
-interface AuthButtonProps {
-  onPress: () => void;
-  disabled: boolean;
-  loading: boolean;
-  icon: any; // Using any for icon name compatibility
-  text: string;
-  variant: 'dark' | 'light';
-}
-
-const AuthButton: React.FC<AuthButtonProps> = ({
-  onPress,
-  disabled,
-  loading,
-  icon,
-  text,
-  variant,
-}) => {
-  const scale = useSharedValue(1);
-  
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-  
-  const handlePressIn = () => {
-    scale.value = withSpring(0.97);
-  };
-  
-  const handlePressOut = () => {
-    scale.value = withSpring(1);
-  };
-  
-  const isDark = variant === 'dark';
-  
-  return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      disabled={disabled}
-    >
-      <Animated.View
-        style={[
-          styles.button,
-          isDark ? styles.darkButton : styles.lightButton,
-          animatedStyle,
-        ]}
-      >
-        {loading ? (
-          <ActivityIndicator color={isDark ? colors.white : colors.black} />
-        ) : (
-          <>
-            <IconContainer
-              name={icon}
-              size={32}
-              iconSize={20}
-              color={isDark ? colors.white : colors.black}
-              backgroundColor="transparent"
-              borderWidth={0}
-              shadow={false}
-              style={styles.buttonIcon}
-            />
-            <Text style={[
-              styles.buttonText,
-              isDark ? styles.darkButtonText : styles.lightButtonText,
-            ]}>
-              {text}
-            </Text>
-          </>
-        )}
-      </Animated.View>
-    </Pressable>
-  );
-};
 
 const styles = StyleSheet.create({
   container: {
@@ -242,87 +171,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing['3xl'],
   },
-  title: {
-    fontSize: fontSizes['4xl'],
-    fontFamily: fonts.heading, // Chewy
-    color: colors.black,
-    marginTop: spacing.xl,
-  },
-  subtitle: {
-    fontSize: fontSizes.lg,
-    color: colors.pink, // Candy Pink
-    marginTop: spacing.xs,
-    fontFamily: fonts.bodyBold,
-  },
   welcomeCard: {
-    backgroundColor: colors.white,
-    borderRadius: radii['2xl'],
-    padding: spacing.xl,
     alignItems: 'center',
     marginBottom: spacing['2xl'],
-    ...shadows.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
   },
   welcomeIcon: {
     marginBottom: spacing.md,
   },
-  welcomeTitle: {
-    fontSize: fontSizes.xl,
-    fontFamily: fonts.heading,
-    color: colors.black,
-    marginBottom: spacing.sm,
-  },
-  welcomeText: {
-    fontSize: fontSizes.md,
-    color: colors.black + '99',
-    textAlign: 'center',
-    lineHeight: 22,
-    fontFamily: fonts.body,
-  },
   authButtons: {
     gap: spacing.md,
-  },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 56,
-    borderRadius: radii.xl,
-    paddingHorizontal: spacing.lg,
-    ...shadows.sm,
-  },
-  darkButton: {
-    backgroundColor: colors.black,
-  },
-  lightButton: {
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  buttonIcon: {
-    marginRight: spacing.sm,
-  },
-  buttonText: {
-    fontSize: fontSizes.md,
-    fontFamily: fonts.bodyBold,
-  },
-  darkButtonText: {
-    color: colors.white,
-  },
-  lightButtonText: {
-    color: colors.black,
   },
   footer: {
     marginTop: spacing['3xl'],
     alignItems: 'center',
-  },
-  footerText: {
-    fontSize: fontSizes.xs,
-    color: colors.black + '66',
-    textAlign: 'center',
-    fontFamily: fonts.body,
-    marginBottom: spacing.md,
   },
   footerIcons: {
     flexDirection: 'row',

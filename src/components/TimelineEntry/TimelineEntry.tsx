@@ -1,7 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import { IconContainer } from '../IconContainer/IconContainer';
-import { colors, spacing, radii, shadows, fontSizes, fonts, moodIcons, foodCategories } from '../../theme';
+import { Typography } from '../Typography';
+import { Card } from '../Card';
+import { colors, spacing } from '../../theme/theme';
+import { moodIcons, foodCategories } from '../../theme/theme';
 import { MealEntry } from '../../store';
 
 interface TimelineEntryProps {
@@ -53,22 +56,26 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ entry, style }) =>
       </View>
       
       {/* Content card */}
-      <View style={styles.contentCard}>
+      <Card variant="white" style={styles.contentCard} padding="lg">
         <View style={styles.header}>
-          <Text style={styles.title}>{entry.name}</Text>
-          <Text style={[styles.time, { color: config.saturatedColor }]}>{formatTime(entry.timestamp)}</Text>
+          <Typography variant="h3" style={{ flex: 1 }}>{entry.name}</Typography>
+          <Typography variant="bodyXS" color={config.saturatedColor} style={{ fontFamily: 'Chewy' }}>
+            {formatTime(entry.timestamp)}
+          </Typography>
         </View>
         
         {entry.description && (
-          <Text style={styles.description}>{entry.description}</Text>
+          <Typography variant="bodySmall" color={colors.black + '99'} style={{ marginTop: spacing.xs }}>
+            {entry.description}
+          </Typography>
         )}
         
         {entry.foods.length > 0 && (
-          <Text style={styles.foods}>
+          <Typography variant="bodyXS" color={colors.black + '66'} style={{ marginTop: spacing.xs }}>
             {entry.foods.join(' • ')}
-          </Text>
+          </Typography>
         )}
-      </View>
+      </Card>
     </View>
   );
 };
@@ -82,17 +89,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 50,
   },
-  dot: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderWidth: 2.5,
-    ...shadows.sm,
-    zIndex: 1,
-  },
   line: {
     position: 'absolute',
     top: -spacing.lg,
@@ -103,41 +99,13 @@ const styles = StyleSheet.create({
   },
   contentCard: {
     flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
     marginLeft: spacing.md,
-    ...shadows.sm,
-    borderWidth: 1.5,
-    borderColor: colors.border,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.xs,
-  },
-  title: {
-    fontSize: fontSizes.lg,
-    fontFamily: fonts.heading, // Chewy
-    color: colors.black,
-    flex: 1,
-  },
-  time: {
-    fontSize: fontSizes.xs,
-    fontFamily: fonts.bodyBold,
-  },
-  description: {
-    fontSize: fontSizes.sm,
-    fontFamily: fonts.body,
-    color: colors.black + '99',
-    marginTop: spacing.xs,
-  },
-  foods: {
-    fontSize: fontSizes.xs,
-    fontFamily: fonts.body,
-    color: colors.black + '66',
-    marginTop: spacing.xs,
   },
   moodBadge: {
     position: 'absolute',

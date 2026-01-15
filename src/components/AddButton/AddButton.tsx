@@ -8,7 +8,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { colors } from '../../theme';
+import { colors } from '../../theme/theme';
 
 interface AddButtonProps {
   size?: number;

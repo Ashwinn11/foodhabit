@@ -1,14 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ViewStyle } from 'react-native';
+import { View, StyleSheet, Pressable, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, radii, shadows, fonts, fontSizes } from '../../theme';
+import { colors, spacing } from '../../theme/theme';
 import { MealType } from '../../store';
 import { IconContainer } from '../IconContainer/IconContainer';
+import { Typography } from '../Typography';
+import { Card } from '../Card';
 
 interface FoodBlobCardProps {
   mealType: MealType;
@@ -56,54 +58,55 @@ export const FoodBlobCard: React.FC<FoodBlobCardProps> = ({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
     >
-      <Animated.View
-        style={[
-          styles.container,
-          { 
-            backgroundColor: config.bg,
-            borderColor: config.accent + '40', // Semi-transparent colored border
-          },
-          style,
-          animatedStyle,
-        ]}
-      >
-        {/* Top Right Check Status */}
-        <View style={styles.statusBadge}>
-            {completed && (
-              <IconContainer
-                name="checkmark"
-                size={24}
-                iconSize={12}
-                color={colors.white}
-                backgroundColor={config.accent}
-                borderWidth={0}
-                shadow={false}
-              />
-            )}
-        </View>
+      <Animated.View style={[{ width: 155, height: 170 }, animatedStyle]}>
+        <Card 
+          variant="colored" 
+          color={config.accent} 
+          style={[styles.container, style]} 
+          padding="md"
+        >
+          {/* Top Right Check Status */}
+          <View style={styles.statusBadge}>
+              {completed && (
+                <IconContainer
+                  name="checkmark"
+                  size={24}
+                  iconSize={12}
+                  color={colors.white}
+                  backgroundColor={config.accent}
+                  borderWidth={0}
+                  shadow={false}
+                />
+              )}
+          </View>
 
-        {/* Center Top Icon using IconContainer */}
-        <IconContainer
-          name={config.icon}
-          size={70}
-          iconSize={32}
-          color={config.accent}
-          borderColor={config.accent}
-          shape="circle"
-          style={{ marginTop: spacing.md }}
-        />
-        
-        {/* Bottom Info */}
-        <View style={styles.infoContainer}>
-            <Text style={[styles.mealName, { color: config.accent }]}>{name}</Text>
-            
-            <View style={styles.timeRow}>
-                <Text style={[styles.mealTime, { color: config.accent }]}>{time}</Text>
-                <View style={[styles.periodBadge, { backgroundColor: config.accent }]}>
-                    <Text style={styles.periodText}>{config.period}</Text>
-                </View>
-            </View>
-        </View>
+          {/* Center Top Icon using IconContainer */}
+          <IconContainer
+            name={config.icon}
+            size={70}
+            iconSize={32}
+            color={config.accent}
+            borderColor={config.accent}
+            shape="circle"
+            style={{ marginTop: spacing.md }}
+          />
+          
+          {/* Bottom Info */}
+          <View style={styles.infoContainer}>
+              <Typography variant="bodyBold" color={config.accent} align="center">
+                {name}
+              </Typography>
+              
+              <View style={styles.timeRow}>
+                  <Typography variant="h2" color={config.accent}>{time}</Typography>
+                  <View style={[styles.periodBadge, { backgroundColor: config.accent }]}>
+                      <Typography variant="bodyXS" color={colors.white} style={{ fontSize: 10 }}>
+                        {config.period}
+                      </Typography>
+                  </View>
+              </View>
+          </View>
+        </Card>
       </Animated.View>
     </Pressable>
   );
@@ -111,14 +114,10 @@ export const FoodBlobCard: React.FC<FoodBlobCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: 155,
-    height: 170, // Slightly taller
-    borderRadius: radii['2xl'],
-    padding: spacing.md,
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'space-between',
-    ...shadows.sm,
-    borderWidth: 1.5,
   },
   statusBadge: {
     position: 'absolute',
@@ -130,25 +129,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  iconContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: spacing.md,
-    borderWidth: 1.5,
-    ...shadows.sm,
-  },
   infoContainer: {
     alignItems: 'center',
     width: '100%',
-    marginBottom: spacing.xs,
-  },
-  mealName: {
-    fontFamily: fonts.bodyBold,
-    fontSize: fontSizes.md,
     marginBottom: spacing.xs,
   },
   timeRow: {
@@ -157,20 +140,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
   },
-  mealTime: {
-    fontFamily: fonts.heading, // Chewy font for time numbers
-    fontSize: 28, 
-  },
   periodBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  periodText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 10,
-    color: colors.white,
   },
 });

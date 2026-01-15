@@ -7,8 +7,9 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { colors, shadows, radii, fonts, avatarMoodColors } from '../../theme';
+import { colors, shadows, radii, avatarMoodColors } from '../../theme/theme';
 import { IconContainer } from '../IconContainer/IconContainer';
+import { Typography } from '../Typography';
 import { MoodType } from '../../store';
 
 interface GutAvatarProps {
@@ -313,9 +314,9 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
                 ) : (
                     <View style={[styles.statusDot, { backgroundColor: colors.white }]} />
                 )}
-                <Animated.Text style={styles.badgeText}>
-                {badgeText || mood}
-                </Animated.Text>
+                <Typography variant="bodyBold" color={colors.white} style={{ fontSize: 10 }}>
+                  {badgeText || mood}
+                </Typography>
             </View>
           </View>
         )}
@@ -413,7 +414,6 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 12,
-    fontFamily: fonts.bodyBold,
     color: colors.white,
   },
 });

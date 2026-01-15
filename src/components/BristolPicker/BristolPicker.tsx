@@ -1,13 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Image } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
+import { View, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring 
 } from 'react-native-reanimated';
-import { colors, spacing, radii, shadows, fontSizes, fonts, bristolColors } from '../../theme';
+import { colors, spacing, bristolColors } from '../../theme/theme';
 import { BristolType } from '../../store';
 import { IconContainer } from '../IconContainer/IconContainer';
+import { Typography } from '../Typography';
+import { Card } from '../Card';
 
 interface BristolPickerProps {
   selected: BristolType | undefined;
@@ -47,29 +49,31 @@ const BristolOption: React.FC<{
   
   return (
     <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
-      <Animated.View
-        style={[
-          styles.option,
-          isSelected && styles.optionSelected,
-          isSelected && { borderColor: item.color },
-          animatedStyle,
-        ]}
-      >
-        <Image source={item.image} style={styles.bristolImage} resizeMode="contain" />
-        <Text style={styles.typeNumber}>Type {item.type}</Text>
-        <Text style={styles.typeLabel}>{item.label}</Text>
-        {isSelected && (
-          <IconContainer
-            name="checkmark"
-            size={22}
-            iconSize={14}
-            color={colors.white}
-            backgroundColor={item.color}
-            borderWidth={0}
-            shadow={false}
-            style={styles.selectedBadge}
-          />
-        )}
+      <Animated.View style={animatedStyle}>
+        <Card 
+          variant={isSelected ? "colored" : "white"}
+          color={item.color}
+          style={styles.option}
+          padding="md"
+        >
+          <Image source={item.image} style={styles.bristolImage} resizeMode="contain" />
+          <Typography variant="bodyBold" color={item.color}>Type {item.type}</Typography>
+          <Typography variant="bodyXS" color={colors.black + '66'} align="center" style={{ marginTop: 2 }}>
+            {item.label}
+          </Typography>
+          {isSelected && (
+            <IconContainer
+              name="checkmark"
+              size={22}
+              iconSize={14}
+              color={colors.white}
+              backgroundColor={item.color}
+              borderWidth={0}
+              shadow={false}
+              style={styles.selectedBadge}
+            />
+          )}
+        </Card>
       </Animated.View>
     </Pressable>
   );
@@ -81,8 +85,10 @@ export const BristolPicker: React.FC<BristolPickerProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Bristol Scale</Text>
-      <Text style={styles.subtitle}>What did it look like?</Text>
+      <Typography variant="h4" style={{ marginBottom: spacing.xs }}>Bristol Scale</Typography>
+      <Typography variant="bodySmall" color={colors.black + '99'} style={{ marginBottom: spacing.md }}>
+        What did it look like?
+      </Typography>
       
       <ScrollView
         horizontal
@@ -106,59 +112,21 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: spacing.lg,
   },
-  title: {
-    fontSize: fontSizes.lg,
-    fontFamily: fonts.heading, // Chewy
-    color: colors.black,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    fontSize: fontSizes.sm,
-    fontFamily: fonts.body,
-    color: colors.black + '99',
-    marginBottom: spacing.md,
-  },
   scrollContent: {
     paddingRight: spacing.lg,
   },
   option: {
     width: 90,
-    padding: spacing.md,
-    backgroundColor: colors.white,
-    borderRadius: radii.xl,
     marginRight: spacing.md,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    ...shadows.sm,
-  },
-  optionSelected: {
-    backgroundColor: colors.blue + '15',
   },
   bristolImage: {
     width: 70,
     height: 70,
   },
-  typeNumber: {
-    fontSize: fontSizes.xs,
-    fontFamily: fonts.bodyBold,
-    color: colors.black,
-  },
-  typeLabel: {
-    fontSize: fontSizes.xs,
-    fontFamily: fonts.body,
-    color: colors.black + '66',
-    textAlign: 'center',
-    marginTop: 2,
-  },
   selectedBadge: {
     position: 'absolute',
     top: -6,
     right: -6,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

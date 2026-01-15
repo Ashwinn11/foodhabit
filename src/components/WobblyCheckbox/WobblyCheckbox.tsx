@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ViewStyle } from 'react-native';
+import { View, StyleSheet, Pressable, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,7 +9,9 @@ import Animated, {
   interpolate,
   Extrapolate,
 } from 'react-native-reanimated';
-import { colors, spacing, radii, shadows, fontSizes, fonts } from '../../theme';
+import { colors, spacing, radii, shadows } from '../../theme/theme';
+import { Typography } from '../Typography';
+import { IconContainer } from '../IconContainer/IconContainer';
 
 interface WobblyCheckboxProps {
   checked: boolean;
@@ -98,8 +100,15 @@ export const WobblyCheckbox: React.FC<WobblyCheckboxProps> = ({
       <Animated.View style={containerStyle}>
         <View style={[styles.checkboxOuter, checked && styles.checkboxChecked]}>
           <Animated.View style={[styles.checkmarkContainer, checkmarkStyle]}>
-            {/* Hand-drawn style checkmark */}
-            <Text style={styles.checkmark}>✓</Text>
+            <IconContainer 
+              name="checkmark" 
+              size={20} 
+              iconSize={16} 
+              color={colors.white} 
+              backgroundColor="transparent"
+              borderWidth={0}
+              shadow={false}
+            />
           </Animated.View>
         </View>
       </Animated.View>
@@ -107,12 +116,18 @@ export const WobblyCheckbox: React.FC<WobblyCheckboxProps> = ({
       {(label || subtitle) && (
         <View style={styles.labelContainer}>
           {label && (
-            <Text style={[styles.label, checked && styles.labelChecked]}>
+            <Typography 
+              variant="h4" 
+              color={checked ? colors.black + '40' : colors.black}
+              style={checked ? styles.labelChecked : undefined}
+            >
               {label}
-            </Text>
+            </Typography>
           )}
           {subtitle && (
-            <Text style={styles.subtitle}>{subtitle}</Text>
+            <Typography variant="bodySmall" color={colors.black + '66'} style={{ marginTop: 2 }}>
+              {subtitle}
+            </Typography>
           )}
         </View>
       )}
@@ -120,7 +135,7 @@ export const WobblyCheckbox: React.FC<WobblyCheckboxProps> = ({
       {/* Yay! badge that appears on check */}
       {showYay && (
         <Animated.View style={[styles.yayBadge, yayStyle]}>
-          <Text style={styles.yayText}>Yay!</Text>
+          <Typography variant="bodyBold" style={{ fontSize: 10 }}>Yay!</Typography>
         </Animated.View>
       )}
     </Pressable>
@@ -152,29 +167,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  checkmark: {
-    fontSize: 18,
-    fontFamily: fonts.heading,
-    color: colors.white,
-    marginTop: -2,
-  },
   labelContainer: {
     marginLeft: spacing.md,
     flex: 1,
   },
-  label: {
-    fontSize: fontSizes.lg,
-    fontFamily: fonts.bodyBold,
-    color: colors.black,
-  },
   labelChecked: {
     textDecorationLine: 'line-through',
-    color: colors.black + '40',
-  },
-  subtitle: {
-    fontSize: fontSizes.sm,
-    color: colors.black + '66',
-    marginTop: 2,
   },
   yayBadge: {
     position: 'absolute',
@@ -185,10 +183,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: radii.full,
     ...shadows.sm,
-  },
-  yayText: {
-    fontSize: fontSizes.xs,
-    fontFamily: fonts.bodyBold,
-    color: colors.black,
   },
 });

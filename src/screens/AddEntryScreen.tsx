@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Pressable,
@@ -10,12 +9,9 @@ import {
 import Animated, {
   FadeInDown,
   FadeIn,
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme';
+import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme/theme';
 import { useGutStore, MoodType, BristolType, MealType } from '../store';
 import {
   PhotoPlaceholder,
@@ -25,6 +21,10 @@ import {
   ScreenWrapper,
   BoxButton,
   IconContainer,
+  Typography,
+  Card,
+  Button,
+  SectionHeader,
 } from '../components';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -75,12 +75,6 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
     }
   }, [capturedPhotoUri, setCapturedPhotoUri]);
   
-  const buttonScale = useSharedValue(1);
-  
-  const buttonAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: buttonScale.value }],
-  }));
-  
   const handleSubmit = () => {
     if (mode === 'poop') {
       if (!mood) return;
@@ -91,7 +85,6 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
         bristolType,
         notes: notes || undefined,
         symptoms,
-        // No photo for poop - Bristol scale is the standard
       });
     } else {
       // Meal mode
@@ -101,19 +94,11 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
         name: mealName || `${mealType.charAt(0).toUpperCase() + mealType.slice(1)}`,
         foods: foods.length > 0 ? foods : ['General meal'],
         mood: mood,
-        photoUri, // Photo makes sense for meals
+        photoUri,
       });
     }
     
     navigation.goBack();
-  };
-  
-  const handlePressIn = () => {
-    buttonScale.value = withSpring(0.95);
-  };
-  
-  const handlePressOut = () => {
-    buttonScale.value = withSpring(1);
   };
   
   const toggleSymptom = (symptom: keyof typeof symptoms) => {
@@ -147,10 +132,10 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
         />
         
         <View style={styles.titleContainer}>
-          <Text style={styles.titleNew}>New</Text>
-          <Text style={styles.titleMoment}>
+          <Typography variant="bodyBold" color={colors.black + '99'}>New</Typography>
+          <Typography variant="h3" color={colors.pink}>
             {mode === 'poop' ? 'Gut Moment' : 'Meal Log'}
-          </Text>
+          </Typography>
         </View>
         
         <BoxButton 
@@ -181,9 +166,9 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               borderWidth={0}
               shadow={false}
             />
-            <Text style={[styles.modeButtonText, mode === 'poop' && styles.modeButtonTextActive]}>
+            <Typography variant="bodyBold" color={mode === 'poop' ? colors.white : colors.black}>
               Poop
-            </Text>
+            </Typography>
           </Pressable>
           <Pressable
             style={[styles.modeButton, mode === 'meal' && styles.modeButtonActive, mode === 'meal' && { backgroundColor: colors.blue }]}
@@ -198,9 +183,9 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               borderWidth={0}
               shadow={false}
             />
-            <Text style={[styles.modeButtonText, mode === 'meal' && styles.modeButtonTextActive]}>
+            <Typography variant="bodyBold" color={mode === 'meal' ? colors.white : colors.black}>
               Meal
-            </Text>
+            </Typography>
           </Pressable>
         </View>
       </Animated.View>
@@ -218,7 +203,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               <MoodPicker selected={mood} onSelect={setMood} />
             </Animated.View>
             
-            {/* Bristol Type Picker - THE medical standard for stool tracking */}
+            {/* Bristol Type Picker */}
             <Animated.View entering={FadeInDown.delay(300).springify()}>
               <BristolPicker selected={bristolType} onSelect={setBristolType} />
             </Animated.View>
@@ -228,7 +213,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               entering={FadeInDown.delay(500).springify()}
               style={styles.symptomsSection}
             >
-              <Text style={styles.sectionTitle}>Any symptoms?</Text>
+              <SectionHeader title="Any symptoms?" />
               <View style={styles.symptomsGrid}>
                 <SymptomToggle
                   label="Bloating"
@@ -266,8 +251,8 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               entering={FadeInDown.delay(600).springify()}
               style={styles.notesSection}
             >
-              <Text style={styles.inputTitle}>Any notes?</Text>
-              <View style={styles.inputCard}>
+              <Typography variant="bodyBold" style={styles.inputTitle}>Any notes?</Typography>
+              <Card variant="white" style={styles.inputCard} padding="md">
                 <TextInput
                   style={styles.notesInput}
                   placeholder="How are you feeling?"
@@ -285,7 +270,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                   borderWidth={0}
                   shadow={false}
                 />
-              </View>
+              </Card>
             </Animated.View>
           </>
         ) : (
@@ -309,31 +294,32 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               entering={FadeInDown.delay(300).springify()}
               style={styles.mealTypeSection}
             >
-              <Text style={styles.sectionTitle}>What meal?</Text>
+              <SectionHeader title="What meal?" />
               <View style={styles.mealTypeGrid}>
                 {MEAL_TYPES.map((meal) => (
                   <Pressable
                     key={meal.type}
-                    style={[
-                      styles.mealTypeButton,
-                      mealType === meal.type && { backgroundColor: meal.color + '20', borderColor: meal.color },
-                    ]}
                     onPress={() => setMealType(meal.type)}
+                    style={{ width: '48%' }}
                   >
-                    <IconContainer
-                      name={meal.icon as any}
-                      size={48}
+                    <Card 
+                      variant={mealType === meal.type ? 'colored' : 'white'} 
                       color={meal.color}
-                      borderColor={meal.color}
-                      shape="circle"
-                      style={{ marginBottom: spacing.sm }}
-                    />
-                    <Text style={[
-                      styles.mealTypeLabel,
-                      mealType === meal.type && { color: meal.color },
-                    ]}>
-                      {meal.label}
-                    </Text>
+                      style={styles.mealTypeCard}
+                      padding="md"
+                    >
+                      <IconContainer
+                        name={meal.icon as any}
+                        size={48}
+                        color={meal.color}
+                        borderColor={meal.color}
+                        shape="circle"
+                        style={{ marginBottom: spacing.sm }}
+                      />
+                      <Typography variant="bodyBold" color={mealType === meal.type ? meal.color : colors.black}>
+                        {meal.label}
+                      </Typography>
+                    </Card>
                   </Pressable>
                 ))}
               </View>
@@ -344,8 +330,8 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               entering={FadeInDown.delay(300).springify()}
               style={styles.notesSection}
             >
-              <Text style={styles.inputTitle}>Meal name (optional)</Text>
-              <View style={styles.inputCard}>
+              <Typography variant="bodyBold" style={styles.inputTitle}>Meal name (optional)</Typography>
+              <Card variant="white" style={styles.inputCard} padding="md">
                 <TextInput
                   style={styles.notesInput}
                   placeholder="e.g., Morning Oatmeal"
@@ -362,7 +348,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                   borderWidth={0}
                   shadow={false}
                 />
-              </View>
+              </Card>
             </Animated.View>
             
             {/* Foods */}
@@ -370,7 +356,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               entering={FadeInDown.delay(400).springify()}
               style={styles.foodsSection}
             >
-              <Text style={styles.sectionTitle}>What did you eat?</Text>
+              <SectionHeader title="What did you eat?" />
               
               {/* Food input */}
               <View style={styles.foodInputRow}>
@@ -404,7 +390,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                     style={styles.foodTag}
                     onPress={() => removeFood(index)}
                   >
-                    <Text style={styles.foodTagText}>{food}</Text>
+                    <Typography variant="bodySmall" color={colors.pink}>{food}</Typography>
                     <IconContainer
                       name="close"
                       size={20}
@@ -419,7 +405,9 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               </View>
               
               {/* Quick food suggestions */}
-              <Text style={styles.quickFoodsLabel}>Quick add:</Text>
+              <Typography variant="bodyXS" color={colors.black + '66'} style={{ marginBottom: spacing.sm }}>
+                Quick add:
+              </Typography>
               <View style={styles.quickFoods}>
                 {['Coffee', 'Bread', 'Eggs', 'Salad', 'Rice', 'Pasta', 'Fruit', 'Dairy'].map((food) => (
                   <Pressable
@@ -427,7 +415,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                     style={styles.quickFoodButton}
                     onPress={() => setFoods(prev => [...prev, food])}
                   >
-                    <Text style={styles.quickFoodText}>{food}</Text>
+                    <Typography variant="bodySmall">{food}</Typography>
                   </Pressable>
                 ))}
               </View>
@@ -435,7 +423,6 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
           </>
         )}
         
-        {/* Bottom padding for button */}
         <View style={styles.bottomPadding} />
       </ScrollView>
       
@@ -444,34 +431,16 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
         entering={FadeInDown.delay(700).springify()}
         style={styles.submitContainer}
       >
-        <Pressable
+        <Button
+          title={mode === 'poop' ? 'Add My Moment' : 'Log Meal'}
           onPress={handleSubmit}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
+          variant="primary"
+          color={colors.black}
+          icon={mode === 'poop' ? 'happy' : 'restaurant'}
           disabled={!isValid}
-        >
-          <Animated.View
-            style={[
-              styles.submitButton,
-              !isValid && styles.submitButtonDisabled,
-              buttonAnimatedStyle,
-            ]}
-          >
-            <Text style={styles.submitButtonText}>
-              {mode === 'poop' ? 'Add My Moment' : 'Log Meal'}
-            </Text>
-            <IconContainer
-              name={mode === 'poop' ? 'happy' : 'restaurant'}
-              size={32}
-              iconSize={20}
-              color={colors.white}
-              backgroundColor="transparent"
-              borderWidth={0}
-              shadow={false}
-              style={{ marginLeft: 8 }}
-            />
-          </Animated.View>
-        </Pressable>
+          size="lg"
+          style={{ width: '100%' }}
+        />
       </Animated.View>
     </ScreenWrapper>
   );
@@ -490,16 +459,6 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     alignItems: 'center',
-  },
-  titleNew: {
-    fontSize: fontSizes.lg,
-    fontFamily: fonts.bodyBold,
-    color: colors.black + '99',
-  },
-  titleMoment: {
-    fontSize: fontSizes['2xl'],
-    fontFamily: fonts.heading,
-    color: colors.pink,
   },
   modeToggleContainer: {
     paddingHorizontal: spacing.lg,
@@ -524,14 +483,6 @@ const styles = StyleSheet.create({
   modeButtonActive: {
     backgroundColor: colors.pink,
   },
-  modeButtonText: {
-    fontSize: fontSizes.md,
-    fontFamily: fonts.bodyBold,
-    color: colors.black,
-  },
-  modeButtonTextActive: {
-    color: colors.white,
-  },
   scrollView: {
     flex: 1,
   },
@@ -544,12 +495,6 @@ const styles = StyleSheet.create({
   },
   symptomsSection: {
     marginVertical: spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: fontSizes.lg,
-    fontFamily: fonts.heading,
-    color: colors.black,
-    marginBottom: spacing.md,
   },
   symptomsGrid: {
     flexDirection: 'row',
@@ -566,24 +511,8 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   inputCard: {
-    backgroundColor: colors.white,
-    borderRadius: radii.xl,
-    padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.border,
-    ...shadows.sm,
-  },
-  inputIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.pink,
   },
   notesInput: {
     flex: 1,
@@ -592,7 +521,6 @@ const styles = StyleSheet.create({
     color: colors.black,
     minHeight: 40,
   },
-  // Meal specific styles
   mealTypeSection: {
     marginVertical: spacing.lg,
   },
@@ -601,28 +529,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  mealTypeButton: {
-    width: '48%',
-    backgroundColor: colors.white,
-    borderRadius: radii.xl,
-    padding: spacing.md,
+  mealTypeCard: {
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.border,
-    ...shadows.sm,
-  },
-  mealTypeIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  mealTypeLabel: {
-    fontSize: fontSizes.md,
-    fontFamily: fonts.bodyBold,
-    color: colors.black,
   },
   foodsSection: {
     marginVertical: spacing.lg,
@@ -666,17 +574,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     gap: spacing.xs,
   },
-  foodTagText: {
-    fontSize: fontSizes.sm,
-    fontFamily: fonts.bodyBold,
-    color: colors.pink,
-  },
-  quickFoodsLabel: {
-    fontSize: fontSizes.sm,
-    fontFamily: fonts.body,
-    color: colors.black + '66',
-    marginBottom: spacing.sm,
-  },
   quickFoods: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -690,11 +587,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  quickFoodText: {
-    fontSize: fontSizes.sm,
-    fontFamily: fonts.body,
-    color: colors.black,
-  },
   bottomPadding: {
     height: 120,
   },
@@ -706,22 +598,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.xl,
     backgroundColor: 'transparent',
-  },
-  submitButton: {
-    backgroundColor: colors.black,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.lg,
-    borderRadius: radii['2xl'],
-    ...shadows.md,
-  },
-  submitButtonDisabled: {
-    backgroundColor: colors.black + '40',
-  },
-  submitButtonText: {
-    fontSize: fontSizes.lg,
-    fontFamily: fonts.bodyBold,
-    color: colors.white,
   },
 });

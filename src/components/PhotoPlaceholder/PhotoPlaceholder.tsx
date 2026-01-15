@@ -1,15 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ViewStyle, Image } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withRepeat,
-  withTiming,
-  Easing,
+import { View, StyleSheet, Pressable, Image, ViewStyle } from 'react-native';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  withRepeat, 
+  withTiming, 
+  Easing 
 } from 'react-native-reanimated';
-import { colors, spacing, fontSizes, fonts, shadows } from '../../theme';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, radii, shadows } from '../../theme/theme';
 import { IconContainer } from '../IconContainer/IconContainer';
+import { Typography } from '../Typography';
 
 interface PhotoPlaceholderProps {
   size?: number;
@@ -73,7 +75,9 @@ export const PhotoPlaceholder: React.FC<PhotoPlaceholderProps> = ({
               shadow={false}
               style={{ marginBottom: spacing.xs }}
             />
-            <Text style={styles.retakeText}>Tap to retake</Text>
+            <Typography variant="bodyXS" color={colors.white} style={styles.retakeText}>
+              Tap to retake
+            </Typography>
           </View>
         </Animated.View>
       </Pressable>
@@ -131,11 +135,15 @@ export const PhotoPlaceholder: React.FC<PhotoPlaceholderProps> = ({
             />
           </View>
           
-          <Text style={styles.addText}>ADD PHOTO</Text>
+          <Typography variant="bodyXS" color={colors.black + '99'} style={{ letterSpacing: 1 }}>
+            ADD PHOTO
+          </Typography>
         </View>
       </Animated.View>
       
-      <Text style={styles.helpText}>Tap to snap a pic!</Text>
+      <Typography variant="bodySmall" color={colors.black + '66'} align="center" style={{ marginTop: spacing.md, fontStyle: 'italic' }}>
+        Tap to snap a pic!
+      </Typography>
     </Pressable>
   );
 };
@@ -176,26 +184,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -2,
     right: -2,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors.blue,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addText: {
-    fontSize: fontSizes.xs,
-    fontFamily: fonts.bodyBold,
-    color: colors.black + '99',
-    letterSpacing: 1,
-  },
-  helpText: {
-    fontSize: fontSizes.sm,
-    color: colors.black + '66',
-    textAlign: 'center',
-    marginTop: spacing.md,
-    fontFamily: fonts.body,
-    fontStyle: 'italic',
   },
   capturedImage: {
     resizeMode: 'cover',
@@ -215,9 +203,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   retakeText: {
-    fontSize: fontSizes.xs,
-    fontFamily: fonts.body,
-    color: colors.white,
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
