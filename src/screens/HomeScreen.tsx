@@ -113,10 +113,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             <View style={styles.healthCard}>
               {/* Left: Avatar + Score */}
               <View style={styles.healthLeft}>
-                <GutAvatar 
-                  mood={healthScore.mood} 
-                  size={80} 
-                />
+                <GutAvatar score={healthScore.score} size={70} />
                 <View style={styles.scoreInfo}>
                   <Typography variant="h1" color={colors.black} style={{ fontSize: 36 }}>
                     {healthScore.score}

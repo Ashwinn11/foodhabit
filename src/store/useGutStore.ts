@@ -4,14 +4,12 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Types for gut tracking
-export type MoodType = 'easy' | 'normal' | 'strained' | 'bloated' | 'painful' | 'urgent';
 export type BristolType = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'drink';
 
 export interface GutMoment {
     id: string;
     timestamp: Date;
-    mood?: MoodType; // Optional - for backward compatibility
     bristolType?: BristolType;
     notes?: string;
     photoUri?: string;
@@ -31,7 +29,6 @@ export interface MealEntry {
     name: string;
     description?: string;
     foods: string[];
-    mood?: MoodType;
     photoUri?: string;
 }
 
@@ -50,7 +47,6 @@ export interface WaterLog {
 
 export interface UserProfile {
     name: string;
-    avatarMood: MoodType;
     streak: number;
     totalLogs: number;
 }
@@ -113,7 +109,6 @@ interface GutStore {
     getGutHealthScore: () => {
         score: number;
         grade: string;
-        mood: MoodType;
         breakdown?: {
             bristol: number;
             symptoms: number;
@@ -266,7 +261,6 @@ export const useGutStore = create<GutStore>()(
             // User
             user: {
                 name: 'Gut Buddy',
-                avatarMood: 'normal',
                 streak: 0,
                 totalLogs: 0,
             },
@@ -293,12 +287,10 @@ export const useGutStore = create<GutStore>()(
                 gutMoments: state.gutMoments.filter((m) => m.id !== id),
             })),
 
-            // Quick log poop with minimal friction
             quickLogPoop: (bristolType = 4) => set((state) => {
                 const newMoment: GutMoment = {
                     id: generateId(),
                     timestamp: new Date(),
-                    mood: 'normal',
                     bristolType: bristolType as BristolType,
                     symptoms: { bloating: false, gas: false, cramping: false, nausea: false },
                 };
@@ -335,7 +327,6 @@ export const useGutStore = create<GutStore>()(
                         ...state.user,
                         streak: newStreak,
                         totalLogs: state.user.totalLogs + 1,
-                        avatarMood: 'easy', // Update mood on successful log
                     },
                 };
             }),
@@ -523,7 +514,7 @@ export const useGutStore = create<GutStore>()(
                 const { gutMoments } = get();
 
                 if (gutMoments.length === 0) {
-                    return { score: 50, grade: 'No Data', mood: 'normal' as MoodType };
+                    return { score: 50, grade: 'No Data' };
                 }
 
                 // Get last 7 days of data
@@ -535,7 +526,7 @@ export const useGutStore = create<GutStore>()(
                 );
 
                 if (recentMoments.length === 0) {
-                    return { score: 50, grade: 'No Recent Data', mood: 'normal' as MoodType };
+                    return { score: 50, grade: 'No Recent Data' };
                 }
 
                 let totalScore = 0;
@@ -570,12 +561,6 @@ export const useGutStore = create<GutStore>()(
                 totalScore += symptomScore;
 
                 // 3. Regularity Score (20 points)
-                const daysWithLogs = new Set(
-                    recentMoments.map(m =>
-                        new Date(m.timestamp).toDateString()
-                    )
-                ).size;
-
                 const avgPerDay = recentMoments.length / 7;
                 let regularityScore = 20;
                 if (avgPerDay >= 1 && avgPerDay <= 3) regularityScore = 20; // Ideal
@@ -592,28 +577,22 @@ export const useGutStore = create<GutStore>()(
                 const medicalScore = hasRedFlags ? 0 : 10;
                 totalScore += medicalScore;
 
-                // Determine grade and mood based on score
+                // Determine grade based on score
                 let grade: string;
-                let mood: MoodType;
 
                 if (totalScore >= 90) {
                     grade = 'Excellent';
-                    mood = 'easy';
                 } else if (totalScore >= 70) {
                     grade = 'Good';
-                    mood = 'normal';
                 } else if (totalScore >= 50) {
                     grade = 'Fair';
-                    mood = 'strained';
                 } else {
                     grade = 'Poor';
-                    mood = 'painful';
                 }
 
                 return {
                     score: Math.round(totalScore),
                     grade,
-                    mood,
                     breakdown: {
                         bristol: Math.round(avgBristolScore),
                         symptoms: symptomScore,

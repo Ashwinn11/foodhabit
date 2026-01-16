@@ -285,7 +285,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               <Card variant="white" style={styles.inputCard} padding="md">
                 <TextInput
                   style={styles.notesInput}
-                  placeholder="How are you feeling?"
+                  placeholder="Add notes (optional)"
                   placeholderTextColor={colors.black + '40'}
                   value={notes}
                   onChangeText={setNotes}

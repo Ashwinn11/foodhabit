@@ -79,7 +79,7 @@ export const InsightsScreen: React.FC = () => {
             style={styles.overviewCard}
             padding="xl"
           >
-            <GutAvatar mood={healthScore.mood} size={80} />
+            <GutAvatar score={healthScore.score} size={80} />
             <View style={styles.overviewStats}>
               <View style={styles.overviewStat}>
                 <Typography variant="h3">{stats.totalPoops}</Typography>
@@ -280,7 +280,7 @@ export const InsightsScreen: React.FC = () => {
                 variant="white"
                 style={styles.emptyCard}
               >
-                <GutAvatar mood="normal" size={100} />
+                <GutAvatar score={50} size={100} />
                 <Typography variant="h3" style={{ marginTop: spacing.lg, marginBottom: spacing.sm }}>
                   Start Tracking!
                 </Typography>

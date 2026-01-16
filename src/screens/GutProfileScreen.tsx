@@ -85,7 +85,7 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
         >
           <View style={styles.mainAvatarContainer}>
             <GutAvatar 
-              mood={healthScore.mood} 
+              score={healthScore.score} 
               size={120}
               showBadge
               badgeText={stats.totalPoops > 0 ? `${stats.totalPoops} Logs` : 'Newbie'}

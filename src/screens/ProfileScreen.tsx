@@ -50,7 +50,8 @@ const SettingsItem: React.FC<{
 );
 
 export const ProfileScreen: React.FC = () => {
-  const { user: gutUser } = useGutStore();
+  const { user: gutUser, getGutHealthScore } = useGutStore();
+  const healthScore = getGutHealthScore();
   const { user, signOut } = useAuth();
   const { showAlert, showConfirm } = useUIStore();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -145,7 +146,7 @@ export const ProfileScreen: React.FC = () => {
             </>
           ) : (
             <>
-              <GutAvatar mood={gutUser.avatarMood} size={70} />
+              <GutAvatar score={healthScore.score} size={70} />
               <View style={styles.profileInfo}>
                 <Typography variant="h3">{gutUser.name}</Typography>
                 <Typography variant="body" color={colors.black + '99'} style={{ marginTop: spacing.xs }}>

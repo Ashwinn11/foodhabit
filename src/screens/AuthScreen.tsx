@@ -78,31 +78,28 @@ export default function AuthScreen() {
           style={styles.header}
         >
           <Animated.View style={avatarStyle}>
-            <GutAvatar mood="easy" size={120} showBadge badgeIcon="hand-right" />
+            <GutAvatar score={100} size={120} showBadge badgeIcon="hand-right" />
           </Animated.View>
           
           <Typography variant="h1" style={{ marginTop: spacing.xl }}>Gut Buddy</Typography>
-          <Typography variant="bodyBold" color={colors.pink} style={{ marginTop: spacing.xs }}>
-            Your friendly poop tracker!
+          <Typography variant="body" align="center" color={colors.black + '99'}>
+            Your friendly gut health companion
           </Typography>
         </Animated.View>
         
-        {/* Welcome text */}
-        <Animated.View entering={FadeInDown.delay(200).springify()}>
-          <Card 
+        {/* Welcome Card */}
+        <Animated.View 
+          entering={FadeInDown.delay(400).springify()}
+        >
+          <Card
             variant="white"
             style={styles.welcomeCard}
             padding="xl"
           >
-            <IconContainer
-              name="sparkles"
+            <GutAvatar 
+              score={100} 
               size={48}
-              iconSize={32}
-              color={colors.black}
-              backgroundColor={colors.yellow}
-              borderWidth={0}
-              shadow={false}
-              style={styles.welcomeIcon}
+              showBadge={false}
             />
             <Typography variant="h3">Track your gut health</Typography>
             <Typography variant="body" align="center" color={colors.black + '99'}>

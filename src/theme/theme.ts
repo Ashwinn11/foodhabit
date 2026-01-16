@@ -84,15 +84,6 @@ export const bristolColors = {
     type7: '#D7CCC8',
 } as const;
 
-// 🧩 Component-specific mappings (using core colors)
-export const moodIcons = {
-    easy: 'checkmark-circle',
-    normal: 'thumbs-up',
-    strained: 'fitness',
-    bloated: 'balloon',
-    painful: 'warning',
-    urgent: 'flash',
-} as const;
 
 export const foodCategories = {
     breakfast: { icon: 'sunny', color: '#70CFFF' }, // Blue
@@ -102,15 +93,6 @@ export const foodCategories = {
     drink: { icon: 'water', color: '#70CFFF' },     // Blue
 } as const;
 
-// 💖 Gut Avatar Moody Colors
-export const avatarMoodColors = {
-    easy: { body: colors.blue, cheeks: '#FF9B9B' },
-    normal: { body: colors.blue, cheeks: '#FF9B9B' },
-    strained: { body: colors.yellow, cheeks: '#FF9B9B' },
-    bloated: { body: colors.yellow, cheeks: '#FF9B9B' },
-    painful: { body: colors.pink, cheeks: '#FF9B9B' },
-    urgent: { body: colors.pink, cheeks: '#FF9B9B' },
-} as const;
 
 export const theme = {
     colors,
@@ -120,9 +102,7 @@ export const theme = {
     radii,
     shadows,
     bristolColors,
-    moodIcons,
     foodCategories,
-    avatarMoodColors,
 } as const;
 
 export type Theme = typeof theme;

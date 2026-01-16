@@ -7,13 +7,12 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { colors, shadows, radii, avatarMoodColors } from '../../theme/theme';
+import { colors, shadows, radii } from '../../theme/theme';
 import { IconContainer } from '../IconContainer/IconContainer';
 import { Typography } from '../Typography';
-import { MoodType } from '../../store';
 
 interface GutAvatarProps {
-  mood: MoodType;
+  score?: number; // 0-100 health score
   size?: number;
   showBadge?: boolean;
   badgeText?: string;
@@ -23,10 +22,37 @@ interface GutAvatarProps {
   onPress?: () => void;
 }
 
-const moodColors = avatarMoodColors;
+// Map score to colors and expression
+const getAvatarAppearance = (score: number) => {
+  if (score >= 90) {
+    return {
+      body: colors.blue,
+      cheeks: '#FF9B9B',
+      expression: 'happy' as const,
+    };
+  } else if (score >= 70) {
+    return {
+      body: colors.blue,
+      cheeks: '#FF9B9B',
+      expression: 'happy' as const,
+    };
+  } else if (score >= 50) {
+    return {
+      body: colors.yellow,
+      cheeks: '#FF9B9B',
+      expression: 'neutral' as const,
+    };
+  } else {
+    return {
+      body: colors.pink,
+      cheeks: '#FF9B9B',
+      expression: 'sad' as const,
+    };
+  }
+};
 
 export const GutAvatar: React.FC<GutAvatarProps> = ({
-  mood,
+  score = 50,
   size = 80,
   showBadge = false,
   badgeText,
@@ -37,8 +63,7 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
   
-  // Fallback to 'normal' if mood doesn't exist in new system
-  const moodColor = moodColors[mood] || moodColors.normal;
+  const appearance = getAvatarAppearance(score);
   
   // Wiggle animation on mount
   React.useEffect(() => {
@@ -47,7 +72,7 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
       withTiming(5, { duration: 100 }),
       withTiming(0, { duration: 100 })
     );
-  }, [mood, rotation]);
+  }, [score, rotation]);
   
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -98,14 +123,13 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
         onTouchStart={handlePressIn}
         onTouchEnd={handlePressOut}
       >
-        {/* Main blob body */}
         <View
           style={[
             styles.blobBody,
             {
               width: blobSize,
               height: blobSize,
-              backgroundColor: moodColor.body,
+              backgroundColor: appearance.body,
               borderRadius: blobSize / 2,
             },
             shadows.sm,
@@ -209,7 +233,7 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
                     width: size * 0.15,
                     height: size * 0.08,
                     borderRadius: size * 0.04,
-                    backgroundColor: moodColor.cheeks,
+                    backgroundColor: appearance.cheeks,
                     marginHorizontal: size * 0.08,
                   },
                 ]}
@@ -221,7 +245,7 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
                     width: size * 0.15,
                     height: size * 0.08,
                     borderRadius: size * 0.04,
-                    backgroundColor: moodColor.cheeks,
+                    backgroundColor: appearance.cheeks,
                     marginHorizontal: size * 0.08,
                   },
                 ]}
@@ -232,7 +256,7 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
             <View
               style={[
                 styles.mouth,
-                mood === 'easy' || mood === 'normal'
+                appearance.expression === 'happy'
                   ? {
                       width: mouthWidth,
                       height: mouthWidth * 0.5,
@@ -240,7 +264,7 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
                       borderBottomRightRadius: mouthWidth,
                       borderTopWidth: 0,
                     }
-                  : mood === 'strained'
+                  : appearance.expression === 'neutral'
                   ? {
                       width: mouthWidth * 0.6,
                       height: 3,
@@ -255,8 +279,8 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
             />
           </View>
           
-          {/* Little arms/wiggles for happy moods */}
-          {(mood === 'easy' || mood === 'normal') && (
+          {/* Little arms/wiggles for happy expressions */}
+          {appearance.expression === 'happy' && (
             <>
               <View
                 style={[
@@ -286,7 +310,7 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
           )}
         </View>
         
-        {/* Mood badge - Pill shape from reference */}
+        {/* Status badge - Pill shape from reference */}
         {showBadge && (
           <View
             style={[
@@ -316,7 +340,7 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
                     <View style={[styles.statusDot, { backgroundColor: colors.white }]} />
                 )}
                 <Typography variant="bodyBold" color={colors.white} style={{ fontSize: 10 }}>
-                  {badgeText || mood}
+                  {badgeText || `Score: ${score}`}
                 </Typography>
             </View>
           </View>

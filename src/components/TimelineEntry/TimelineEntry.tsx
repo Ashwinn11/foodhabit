@@ -3,7 +3,7 @@ import { View, StyleSheet, ViewStyle } from 'react-native';
 import { IconContainer } from '../IconContainer/IconContainer';
 import { Typography } from '../Typography';
 import { Card } from '../Card';
-import { colors, spacing, moodIcons, foodCategories, bristolColors } from '../../theme/theme';
+import { colors, spacing, foodCategories, bristolColors } from '../../theme/theme';
 import { MealEntry, GutMoment } from '../../store';
 
 interface TimelineEntryProps {
@@ -36,7 +36,7 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ item, style }) => 
       case 'drink': saturatedColor = colors.blue; break;
     }
 
-    const iconName = item.mood ? moodIcons[item.mood] : config.icon;
+    const iconName = config.icon;
 
     return (
       <View style={[styles.container, style]}>
@@ -105,7 +105,6 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ item, style }) => 
               <Typography variant="bodyXS" color={colors.white}>Type {item.bristolType}</Typography>
             </View>
           )}
-          <Typography variant="bodyXS" color={colors.black + '66'}>• {item.mood}</Typography>
         </View>
 
         {activeSymptoms.length > 0 && (
