@@ -9,6 +9,7 @@ import { AppNavigator, AuthNavigator } from './src/navigation';
 import { colors } from './src/theme';
 import { useAuth } from './src/hooks/useAuth';
 import { GlobalModal } from './src/components/Modal/GlobalModal';
+import { GlobalToast } from './src/components/Toast/GlobalToast';
 
 // Keep the native splash screen visible while we fetch resources
 ExpoSplashScreen.preventAutoHideAsync();
@@ -77,6 +78,7 @@ export default function App() {
         <NavigationContainer theme={GutBuddyTheme}>
           <AppContent />
           <GlobalModal />
+          <GlobalToast />
           <StatusBar style="dark" translucent backgroundColor="transparent" />
         </NavigationContainer>
       </SafeAreaProvider>

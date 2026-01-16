@@ -320,7 +320,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                         shape="circle"
                         style={{ marginBottom: spacing.sm }}
                       />
-                      <Typography variant="bodyBold" color={mealType === meal.type ? (meal.color === colors.yellow ? colors.black : meal.color) : colors.black}>
+                      <Typography variant="bodyBold" color={colors.black}>
                         {meal.label}
                       </Typography>
                     </Card>

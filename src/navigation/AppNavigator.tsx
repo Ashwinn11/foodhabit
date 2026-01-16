@@ -147,7 +147,7 @@ const TabNavigator = () => {
         component={InsightsScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon iconName="analytics" label="Health" focused={focused} />
+            <TabIcon iconName="bar-chart" label="Insights" focused={focused} />
           ),
         }}
       />

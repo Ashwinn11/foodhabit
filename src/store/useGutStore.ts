@@ -2,6 +2,9 @@ import { Alert } from 'react-native';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useUIStore } from './useUIStore';
+
+import { colors } from '../theme/theme';
 
 // Types for gut tracking
 export type BristolType = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -200,7 +203,7 @@ const createDailyTasks = (state: {
         {
             id: 'poop',
             title: 'Log Poop',
-            subtitle: hasPoopToday ? 'Done today!' : 'Track your gut',
+            subtitle: hasPoopToday ? 'Mission Accomplished!' : 'Track your gut',
             completed: hasPoopToday,
             type: 'poop',
         },
@@ -211,7 +214,7 @@ const createDailyTasks = (state: {
         tasks.push({
             id: 'breakfast',
             title: 'Log Breakfast',
-            subtitle: hasBreakfast ? 'Logged!' : 'Morning fuel',
+            subtitle: hasBreakfast ? 'Fueled up!' : 'Morning fuel',
             completed: hasBreakfast,
             type: 'meal',
         });
@@ -221,7 +224,7 @@ const createDailyTasks = (state: {
         tasks.push({
             id: 'lunch',
             title: 'Log Lunch',
-            subtitle: hasLunch ? 'Logged!' : 'Midday meal',
+            subtitle: hasLunch ? 'Yum! Lunch done' : 'Midday meal',
             completed: hasLunch,
             type: 'meal',
         });
@@ -231,7 +234,7 @@ const createDailyTasks = (state: {
         tasks.push({
             id: 'dinner',
             title: 'Log Dinner',
-            subtitle: hasDinner ? 'Logged!' : 'Evening meal',
+            subtitle: hasDinner ? 'Dinner logged!' : 'Evening meal',
             completed: hasDinner,
             type: 'meal',
         });
@@ -241,7 +244,7 @@ const createDailyTasks = (state: {
     tasks.push({
         id: 'water',
         title: 'Drink Water',
-        subtitle: `${todayWater}/${waterGoal} glasses`,
+        subtitle: todayWater >= waterGoal ? `Hydrated! ${todayWater}/${waterGoal}` : `${todayWater}/${waterGoal} glasses`,
         completed: todayWater >= waterGoal,
         type: 'water',
     });
@@ -252,7 +255,7 @@ const createDailyTasks = (state: {
     tasks.push({
         id: 'fiber',
         title: 'Log Fiber',
-        subtitle: `${todayFiber}/${fiberGoal}g`,
+        subtitle: todayFiber >= fiberGoal ? `Fiber Power! ${todayFiber}g` : `${todayFiber}/${fiberGoal}g`,
         completed: todayFiber >= fiberGoal,
         type: 'fiber',
     });
@@ -263,7 +266,7 @@ const createDailyTasks = (state: {
     tasks.push({
         id: 'probiotic',
         title: 'Take Probiotic',
-        subtitle: todayProbiotics >= probioticGoal ? 'Done! 🦠' : 'Good bacteria',
+        subtitle: todayProbiotics >= probioticGoal ? 'Gut buddies active!' : 'Good bacteria',
         completed: todayProbiotics >= probioticGoal,
         type: 'probiotic',
     });
@@ -274,7 +277,7 @@ const createDailyTasks = (state: {
     tasks.push({
         id: 'exercise',
         title: 'Exercise',
-        subtitle: `${todayExercise}/${exerciseGoal} min`,
+        subtitle: todayExercise >= exerciseGoal ? `Strong & Healthy! ${todayExercise}m` : `${todayExercise}/${exerciseGoal} min`,
         completed: todayExercise >= exerciseGoal,
         type: 'exercise',
     });
@@ -307,6 +310,29 @@ export const useGutStore = create<GutStore>()(
             addGutMoment: (moment) => set((state) => {
                 const newMoment = { ...moment, id: generateId() };
                 const newMoments = [newMoment, ...state.gutMoments];
+
+                // Check if this is the first poop today
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const poopsToday = state.gutMoments.filter(m => {
+                    const mDate = new Date(m.timestamp);
+                    mDate.setHours(0, 0, 0, 0);
+                    return mDate.getTime() === today.getTime();
+                }).length;
+
+                if (poopsToday === 0) {
+                    useUIStore.getState().showToast({
+                        message: 'Mission Plop-plete!',
+                        icon: 'sparkles',
+                        iconColor: colors.yellow
+                    });
+                } else {
+                    useUIStore.getState().showToast({
+                        message: 'Poop logged!',
+                        icon: 'happy',
+                        iconColor: colors.yellow
+                    });
+                }
 
                 return {
                     gutMoments: newMoments,
@@ -344,6 +370,29 @@ export const useGutStore = create<GutStore>()(
 
                 const newMoments = [newMoment, ...state.gutMoments];
 
+                // Check if this is the first poop today
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const poopsToday = state.gutMoments.filter(m => {
+                    const mDate = new Date(m.timestamp);
+                    mDate.setHours(0, 0, 0, 0);
+                    return mDate.getTime() === today.getTime();
+                }).length;
+
+                if (poopsToday === 0) {
+                    useUIStore.getState().showToast({
+                        message: 'Mission Plop-plete!',
+                        icon: 'sparkles',
+                        iconColor: colors.yellow
+                    });
+                } else {
+                    useUIStore.getState().showToast({
+                        message: 'Quick plop logged!',
+                        icon: 'checkmark-circle',
+                        iconColor: colors.blue
+                    });
+                }
+
                 return {
                     gutMoments: newMoments,
                     user: {
@@ -356,9 +405,28 @@ export const useGutStore = create<GutStore>()(
 
             // Meals (start empty)
             meals: [],
-            addMeal: (meal) => set((state) => ({
-                meals: [{ ...meal, id: generateId() }, ...state.meals],
-            })),
+            addMeal: (meal) => set((state) => {
+                // Check if this meal type was already logged today
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const mealTypeLogged = state.meals.some(m => {
+                    const mDate = new Date(m.timestamp);
+                    mDate.setHours(0, 0, 0, 0);
+                    return mDate.getTime() === today.getTime() && m.mealType === meal.mealType;
+                });
+
+                if (!mealTypeLogged) {
+                    useUIStore.getState().showToast({
+                        message: `${meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1)} logged!`,
+                        icon: 'restaurant',
+                        iconColor: colors.blue
+                    });
+                }
+
+                return {
+                    meals: [{ ...meal, id: generateId() }, ...state.meals],
+                };
+            }),
             updateMeal: (id, meal) => set((state) => ({
                 meals: state.meals.map((m) =>
                     m.id === id ? { ...m, ...meal } : m
@@ -373,6 +441,26 @@ export const useGutStore = create<GutStore>()(
             addWater: () => set((state) => {
                 const todayStr = getTodayString();
                 const existingLog = state.waterLogs.find(w => w.date === todayStr);
+                const waterGoal = 8;
+                const currentGlasses = existingLog ? existingLog.glasses + 1 : 1;
+
+                // Show toast
+                let icon: any = 'water';
+                let message = `${currentGlasses}/${waterGoal} glasses. Gulp!`;
+                
+                if (currentGlasses === waterGoal) {
+                    icon = 'trophy';
+                    message = `Goal reached! Hydrated!`;
+                } else if (currentGlasses > waterGoal) {
+                    icon = 'water';
+                    message = `Extra hydration logged!`;
+                }
+
+                useUIStore.getState().showToast({ 
+                    message, 
+                    icon,
+                    iconColor: colors.blue 
+                });
 
                 if (existingLog) {
                     return {
@@ -396,6 +484,28 @@ export const useGutStore = create<GutStore>()(
             addFiber: (grams) => set((state) => {
                 const todayStr = getTodayString();
                 const existingLog = state.fiberLogs.find(f => f.date === todayStr);
+                const fiberGoal = 25;
+                const currentFiber = (existingLog ? existingLog.grams : 0) + grams;
+
+                useUIStore.getState().showToast({ 
+                    message: `+${grams}g Fiber logged!`, 
+                    icon: 'leaf',
+                    iconColor: colors.yellow
+                });
+
+                if (currentFiber >= fiberGoal && (existingLog ? existingLog.grams : 0) < fiberGoal) {
+                    useUIStore.getState().showToast({
+                        message: `Fiber goal met! Rockstar!`,
+                        icon: 'happy',
+                        iconColor: colors.yellow
+                    });
+                } else if (currentFiber > fiberGoal) {
+                    useUIStore.getState().showToast({
+                        message: `Fiber powerhouse!`,
+                        icon: 'sparkles',
+                        iconColor: colors.yellow
+                    });
+                }
 
                 if (existingLog) {
                     return {
@@ -419,6 +529,13 @@ export const useGutStore = create<GutStore>()(
             addProbiotic: () => set((state) => {
                 const todayStr = getTodayString();
                 const existingLog = state.probioticLogs.find(p => p.date === todayStr);
+                const currentProbiotics = existingLog ? existingLog.servings + 1 : 1;
+
+                useUIStore.getState().showToast({ 
+                    message: currentProbiotics === 1 ? 'Probiotic logged!' : 'More probiotics logged!', 
+                    icon: 'bug',
+                    iconColor: colors.blue
+                });
 
                 if (existingLog) {
                     return {
@@ -442,6 +559,22 @@ export const useGutStore = create<GutStore>()(
             addExercise: (minutes) => set((state) => {
                 const todayStr = getTodayString();
                 const existingLog = state.exerciseLogs.find(e => e.date === todayStr);
+                const exerciseGoal = 30;
+                const currentMinutes = (existingLog ? existingLog.minutes : 0) + minutes;
+
+                useUIStore.getState().showToast({ 
+                    message: `+${minutes}m Exercise logged!`, 
+                    icon: 'fitness',
+                    iconColor: colors.yellow
+                });
+
+                if (currentMinutes >= exerciseGoal && (existingLog ? existingLog.minutes : 0) < exerciseGoal) {
+                    useUIStore.getState().showToast({
+                        message: `Exercise goal reached!`,
+                        icon: 'medal',
+                        iconColor: colors.yellow
+                    });
+                }
 
                 if (existingLog) {
                     return {

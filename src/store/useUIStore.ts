@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { create } from 'zustand';
 import { ModalType } from '../components/Modal/CustomModal';
 
@@ -12,11 +13,25 @@ interface ModalOptions {
   cancelable?: boolean;
 }
 
+interface ToastOptions {
+  message: string;
+  icon?: keyof typeof Ionicons.glyphMap;
+  iconColor?: string;
+  type?: 'success' | 'info' | 'error';
+  duration?: number;
+}
+
 interface UIStore {
   modalVisible: boolean;
   modalOptions: ModalOptions;
   showModal: (options: ModalOptions) => void;
   hideModal: () => void;
+  
+  // Toast
+  toastVisible: boolean;
+  toastOptions: ToastOptions;
+  showToast: (options: ToastOptions) => void;
+  hideToast: () => void;
   
   // Shortcuts
   showAlert: (title: string, message: string, type?: ModalType) => void;
@@ -29,6 +44,12 @@ const defaultOptions: ModalOptions = {
   type: 'info',
 };
 
+const defaultToastOptions: ToastOptions = {
+  message: '',
+  type: 'success',
+  duration: 3000,
+};
+
 export const useUIStore = create<UIStore>((set, get) => ({
   modalVisible: false,
   modalOptions: defaultOptions,
@@ -39,6 +60,24 @@ export const useUIStore = create<UIStore>((set, get) => ({
   }),
   
   hideModal: () => set({ modalVisible: false }),
+
+  // Toast
+  toastVisible: false,
+  toastOptions: defaultToastOptions,
+  
+  showToast: (options) => {
+    set({
+      toastVisible: true,
+      toastOptions: { ...defaultToastOptions, ...options }
+    });
+    
+    // Auto hide
+    setTimeout(() => {
+      get().hideToast();
+    }, options.duration || defaultToastOptions.duration);
+  },
+  
+  hideToast: () => set({ toastVisible: false }),
   
   showAlert: (title, message, type = 'info') => {
     get().showModal({
