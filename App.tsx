@@ -5,10 +5,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { AppNavigator } from './src/navigation';
+import { AppNavigator, AuthNavigator } from './src/navigation';
 import { colors } from './src/theme';
 import { useAuth } from './src/hooks/useAuth';
-import AuthScreen from './src/screens/AuthScreen';
 import { GlobalModal } from './src/components/Modal/GlobalModal';
 
 // Keep the native splash screen visible while we fetch resources
@@ -64,7 +63,7 @@ function AppContent() {
 
   // Show auth screen if not logged in
   if (!session) {
-    return <AuthScreen />;
+    return <AuthNavigator />;
   }
 
   // Show main app if logged in

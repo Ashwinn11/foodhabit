@@ -49,7 +49,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const diffDays = Math.floor(diffHours / 24);
     return { 
       time: `${diffDays}d ago`, 
-      message: diffDays > 3 ? 'Stalled! 😬' : 'Check in!', 
+      message: diffDays > 3 ? 'Stalled!' : 'Check in!', 
       color: diffDays > 3 ? colors.pink : colors.yellow, 
       urgency: diffDays > 3 ? 'urgent' : 'warning' 
     };

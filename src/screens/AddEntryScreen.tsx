@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -15,7 +15,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme/theme';
 import { useGutStore, BristolType, MealType } from '../store';
 import {
-  PhotoPlaceholder,
   BristolPicker,
   SymptomToggle,
   ScreenWrapper,
@@ -42,7 +41,7 @@ const MEAL_TYPES: { type: MealType; label: string; icon: keyof typeof Ionicons.g
 ];
 
 export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) => {
-  const { addGutMoment, addMeal, capturedPhotoUri, setCapturedPhotoUri } = useGutStore();
+  const { addGutMoment, addMeal } = useGutStore();
   
   // Mode toggle
   const [mode, setMode] = useState<EntryMode>('poop');
@@ -64,16 +63,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
   const [foods, setFoods] = useState<string[]>([]);
   const [foodInput, setFoodInput] = useState('');
   
-  // Photo state (synced from store when returning from camera)
-  const [photoUri, setPhotoUri] = useState<string | undefined>(undefined);
   
-  // Sync photo from store when it changes (returning from Camera)
-  useEffect(() => {
-    if (capturedPhotoUri) {
-      setPhotoUri(capturedPhotoUri);
-      setCapturedPhotoUri(null); // Clear from store
-    }
-  }, [capturedPhotoUri, setCapturedPhotoUri]);
   
   const handleSubmit = () => {
     if (mode === 'poop') {
@@ -97,7 +87,6 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
         mealType,
         name: mealName || `${mealType.charAt(0).toUpperCase() + mealType.slice(1)}`,
         foods: foods,
-        photoUri,
       });
     }
     
@@ -207,7 +196,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
       >
         {mode === 'poop' ? (
           <>
-            {/* Bristol Type Picker */}
+            {/* Poop Type */}
             <Animated.View entering={FadeInDown.delay(200).springify()}>
               <BristolPicker selected={bristolType} onSelect={setBristolType} />
             </Animated.View>
@@ -217,7 +206,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               entering={FadeInDown.delay(300).springify()}
               style={styles.symptomsSection}
             >
-              <SectionHeader title="Symptoms & Details" icon="medical" iconColor={colors.pink} />
+              <SectionHeader title="How did it feel?" icon="medical" iconColor={colors.pink} />
               <View style={styles.symptomsGrid}>
                 <SymptomToggle
                   label="Bloating"
@@ -291,34 +280,18 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                   onChangeText={setNotes}
                   multiline
                 />
-                <IconContainer
-                  name="pencil"
-                  size={36}
-                  iconSize={18}
-                  color={colors.pink}
-                  backgroundColor={colors.pink + '15'}
-                  borderWidth={0}
-                  shadow={false}
-                />
+                      <BoxButton 
+          icon="pencil" 
+          onPress={() => {}}
+          size={44}
+          color={colors.blue}
+          style={{ backgroundColor: colors.white }} 
+        />
               </Card>
             </Animated.View>
           </>
         ) : (
-          <>
-            {/* Photo Placeholder for Meal */}
-            <Animated.View 
-              entering={FadeInDown.delay(200).springify()}
-              style={styles.photoSection}
-            >
-              <PhotoPlaceholder
-                size={140}
-                photoUri={photoUri}
-                onPress={() => {
-                  navigation.navigate('Camera');
-                }}
-              />
-            </Animated.View>
-            
+          <> 
             {/* Meal Type Selector */}
             <Animated.View 
               entering={FadeInDown.delay(300).springify()}
@@ -355,32 +328,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                 ))}
               </View>
             </Animated.View>
-            
-            {/* Meal Name */}
-            <Animated.View 
-              entering={FadeInDown.delay(300).springify()}
-              style={styles.notesSection}
-            >
-              <Typography variant="bodyBold" style={styles.inputTitle}>Meal name (optional)</Typography>
-              <Card variant="white" style={styles.inputCard} padding="md">
-                <TextInput
-                  style={styles.notesInput}
-                  placeholder="e.g., Morning Oatmeal"
-                  placeholderTextColor={colors.black + '40'}
-                  value={mealName}
-                  onChangeText={setMealName}
-                />
-                <IconContainer
-                  name="restaurant"
-                  size={36}
-                  iconSize={18}
-                  color={colors.blue}
-                  backgroundColor={colors.blue + '15'}
-                  borderWidth={0}
-                  shadow={false}
-                />
-              </Card>
-            </Animated.View>
+          
             
             {/* Foods */}
             <Animated.View 
@@ -450,6 +398,30 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                   </Pressable>
                 ))}
               </View>
+
+                  {/* Meal Name */}
+            <Animated.View 
+              entering={FadeInDown.delay(300).springify()}
+              style={styles.notesSection}
+            >
+              <Typography variant="bodyBold" style={styles.inputTitle}>Meal name (optional)</Typography>
+              <Card variant="white" style={styles.inputCard} padding="md">
+                <TextInput
+                  style={styles.notesInput}
+                  placeholder="e.g., Morning Oatmeal"
+                  placeholderTextColor={colors.black + '40'}
+                  value={mealName}
+                  onChangeText={setMealName}
+                />
+                    <BoxButton 
+          icon="restaurant" 
+          onPress={() => {}}
+          size={44}
+          color={colors.blue}
+          style={{ backgroundColor: colors.white }} 
+        />
+              </Card>
+            </Animated.View>
             </Animated.View>
           </>
         )}
@@ -519,10 +491,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
-  },
-  photoSection: {
-    alignItems: 'center',
-    paddingVertical: spacing['2xl'],
   },
   symptomsSection: {
     marginVertical: spacing.lg,

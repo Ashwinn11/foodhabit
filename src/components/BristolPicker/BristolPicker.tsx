@@ -7,7 +7,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { colors, spacing, bristolColors } from '../../theme/theme';
 import { BristolType } from '../../store';
-import { IconContainer } from '../IconContainer/IconContainer';
 import { Typography } from '../Typography';
 import { Card } from '../Card';
 
@@ -50,30 +49,28 @@ const BristolOption: React.FC<{
   return (
     <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
       <Animated.View style={animatedStyle}>
-        <Card 
-          variant={isSelected ? "colored" : "white"}
-          color={item.color}
-          style={styles.option}
-          padding="md"
-        >
-          <Image source={item.image} style={styles.bristolImage} resizeMode="contain" />
-          <Typography variant="bodyBold" color={item.color}>Type {item.type}</Typography>
-          <Typography variant="bodyXS" color={colors.black + '66'} align="center" style={{ marginTop: 2 }}>
-            {item.label}
-          </Typography>
-          {isSelected && (
-            <IconContainer
-              name="checkmark"
-              size={22}
-              iconSize={14}
-              color={colors.white}
-              backgroundColor={item.color}
-              borderWidth={0}
-              shadow={false}
-              style={styles.selectedBadge}
-            />
-          )}
-        </Card>
+        {isSelected ? (
+          <Card 
+            variant="colored"
+            color={colors.pink}
+            style={styles.option}
+            padding="md"
+          >
+            <Image source={item.image} style={styles.bristolImage} resizeMode="contain" />
+            <Typography variant="bodyBold" color={colors.black}>Type {item.type}</Typography>
+            <Typography variant="bodyXS" color={colors.black + '99'} align="center" style={{ marginTop: 2 }}>
+              {item.label}
+            </Typography>
+          </Card>
+        ) : (
+          <View style={styles.option}>
+            <Image source={item.image} style={styles.bristolImage} resizeMode="contain" />
+            <Typography variant="bodyBold" color={item.color}>Type {item.type}</Typography>
+            <Typography variant="bodyXS" color={colors.black + '66'} align="center" style={{ marginTop: 2 }}>
+              {item.label}
+            </Typography>
+          </View>
+        )}
       </Animated.View>
     </Pressable>
   );
@@ -85,9 +82,9 @@ export const BristolPicker: React.FC<BristolPickerProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <Typography variant="h4" style={{ marginBottom: spacing.xs }}>Bristol Scale</Typography>
+      <Typography variant="h4" style={{ marginBottom: spacing.xs }}>What kind of poop did you make? <Typography variant="bodySmall" color={colors.black + '66'}>(Bristol Stool Scale)</Typography></Typography>
       <Typography variant="bodySmall" color={colors.black + '99'} style={{ marginBottom: spacing.md }}>
-        What did it look like?
+        Pick the one that looks most like yours!
       </Typography>
       
       <ScrollView

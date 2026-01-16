@@ -3,7 +3,9 @@ import {
   View,
   StyleSheet,
   Platform,
+  Pressable,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Animated, {
   FadeInDown,
   useSharedValue,
@@ -18,6 +20,7 @@ import { useUIStore } from '../store/useUIStore';
 import { GutAvatar, ScreenWrapper, IconContainer, Typography, Card, Button } from '../components';
 
 export default function AuthScreen() {
+  const navigation = useNavigation<any>();
   const { signInWithApple, signInWithGoogle, isAppleAuthAvailable } = useAuth();
   const { showAlert } = useUIStore();
   const [loading, setLoading] = useState<'apple' | 'google' | null>(null);
@@ -101,9 +104,12 @@ export default function AuthScreen() {
               size={48}
               showBadge={false}
             />
-            <Typography variant="h3">Track your gut health</Typography>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+              <Typography variant="h3">Let's track your poops!</Typography>
+              <IconContainer name="water" size={24} iconSize={16} color={colors.pink} backgroundColor="transparent" borderWidth={0} shadow={false} />
+            </View>
             <Typography variant="body" align="center" color={colors.black + '99'}>
-              Log your poops, meals, and symptoms to understand your digestive patterns better!
+              Keep tabs on your gut health and feel amazing
             </Typography>
           </Card>
         </Animated.View>
@@ -142,9 +148,11 @@ export default function AuthScreen() {
           entering={FadeInDown.delay(400).springify()}
           style={styles.footer}
         >
-          <Typography variant="bodyXS" color={colors.black + '66'} align="center">
-            By continuing, you agree to our Terms & Privacy Policy
-          </Typography>
+          <Pressable onPress={() => navigation.navigate('PrivacyPolicy')}>
+            <Typography variant="bodyXS" color={colors.black + '66'} align="center">
+              By continuing, you agree to our <Typography variant="bodyXS" color={colors.pink}>Privacy Policy</Typography>
+            </Typography>
+          </Pressable>
           <View style={styles.footerIcons}>
             <IconContainer name="heart" size={28} iconSize={20} color={colors.pink} backgroundColor="transparent" borderWidth={0} shadow={false} />
             <IconContainer name="happy" size={28} iconSize={20} color={colors.black} backgroundColor={colors.yellow} borderWidth={0} shadow={false} />

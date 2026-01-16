@@ -12,7 +12,6 @@ export interface GutMoment {
     timestamp: Date;
     bristolType?: BristolType;
     notes?: string;
-    photoUri?: string;
     symptoms: {
         bloating: boolean;
         gas: boolean;
@@ -29,7 +28,6 @@ export interface MealEntry {
     name: string;
     description?: string;
     foods: string[];
-    photoUri?: string;
 }
 
 export interface DailyTask {
@@ -118,15 +116,44 @@ interface GutStore {
     };
     exportData: () => Promise<void>;
 
+    // Notifications
+    notificationSettings: {
+        enabled: boolean;
+        reminderTime: { hour: number; minute: number };
+    };
+    setNotificationSettings: (settings: Partial<{ enabled: boolean; reminderTime: { hour: number; minute: number } }>) => void;
+
     // Quick log helpers
     quickLogPoop: (bristolType?: BristolType) => void;
-
-    // Camera photo capture (temporary storage)
-    capturedPhotoUri: string | null;
-    setCapturedPhotoUri: (uri: string | null) => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 15);
+
+// Helper to calculate the current consecutive poop streak
+const calculateCurrentStreak = (moments: GutMoment[]) => {
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < 365; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(checkDate.getDate() - i);
+
+        const hasPoopOnDate = moments.some(m => {
+            const mDate = new Date(m.timestamp);
+            mDate.setHours(0, 0, 0, 0);
+            return mDate.getTime() === checkDate.getTime();
+        });
+
+        if (hasPoopOnDate) {
+            streak++;
+        } else if (i > 0) {
+            // Allow today to be empty (user might not have pooped yet)
+            break;
+        }
+    }
+    return streak;
+};
 
 // Helper to get today's date string
 const getTodayString = () => {
@@ -173,7 +200,7 @@ const createDailyTasks = (state: {
         {
             id: 'poop',
             title: 'Log Poop',
-            subtitle: hasPoopToday ? 'Done today! 🎉' : 'Track your gut',
+            subtitle: hasPoopToday ? 'Done today!' : 'Track your gut',
             completed: hasPoopToday,
             type: 'poop',
         },
@@ -184,7 +211,7 @@ const createDailyTasks = (state: {
         tasks.push({
             id: 'breakfast',
             title: 'Log Breakfast',
-            subtitle: hasBreakfast ? 'Logged! ☀️' : 'Morning fuel',
+            subtitle: hasBreakfast ? 'Logged!' : 'Morning fuel',
             completed: hasBreakfast,
             type: 'meal',
         });
@@ -194,7 +221,7 @@ const createDailyTasks = (state: {
         tasks.push({
             id: 'lunch',
             title: 'Log Lunch',
-            subtitle: hasLunch ? 'Logged! 🥗' : 'Midday meal',
+            subtitle: hasLunch ? 'Logged!' : 'Midday meal',
             completed: hasLunch,
             type: 'meal',
         });
@@ -204,7 +231,7 @@ const createDailyTasks = (state: {
         tasks.push({
             id: 'dinner',
             title: 'Log Dinner',
-            subtitle: hasDinner ? 'Logged! 🍽️' : 'Evening meal',
+            subtitle: hasDinner ? 'Logged!' : 'Evening meal',
             completed: hasDinner,
             type: 'meal',
         });
@@ -266,15 +293,27 @@ export const useGutStore = create<GutStore>()(
             },
             setUser: (userData) => set((state) => ({ user: { ...state.user, ...userData } })),
 
+            // Notifications
+            notificationSettings: {
+                enabled: false,
+                reminderTime: { hour: 19, minute: 0 },
+            },
+            setNotificationSettings: (settings) => set((state) => ({
+                notificationSettings: { ...state.notificationSettings, ...settings }
+            })),
+
             // Gut moments (start empty)
             gutMoments: [],
             addGutMoment: (moment) => set((state) => {
                 const newMoment = { ...moment, id: generateId() };
+                const newMoments = [newMoment, ...state.gutMoments];
+
                 return {
-                    gutMoments: [newMoment, ...state.gutMoments],
+                    gutMoments: newMoments,
                     user: {
                         ...state.user,
-                        totalLogs: state.user.totalLogs + 1,
+                        streak: calculateCurrentStreak(newMoments),
+                        totalLogs: newMoments.length,
                     },
                 };
             }),
@@ -283,9 +322,17 @@ export const useGutStore = create<GutStore>()(
                     m.id === id ? { ...m, ...moment } : m
                 ),
             })),
-            deleteGutMoment: (id) => set((state) => ({
-                gutMoments: state.gutMoments.filter((m) => m.id !== id),
-            })),
+            deleteGutMoment: (id) => set((state) => {
+                const newMoments = state.gutMoments.filter((m) => m.id !== id);
+                return {
+                    gutMoments: newMoments,
+                    user: {
+                        ...state.user,
+                        streak: calculateCurrentStreak(newMoments),
+                        totalLogs: newMoments.length,
+                    },
+                };
+            }),
 
             quickLogPoop: (bristolType = 4) => set((state) => {
                 const newMoment: GutMoment = {
@@ -295,38 +342,14 @@ export const useGutStore = create<GutStore>()(
                     symptoms: { bloating: false, gas: false, cramping: false, nausea: false },
                 };
 
-                // Calculate new streak
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                yesterday.setHours(0, 0, 0, 0);
-
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                const hadPoopYesterday = state.gutMoments.some(m => {
-                    const mDate = new Date(m.timestamp);
-                    mDate.setHours(0, 0, 0, 0);
-                    return mDate.getTime() === yesterday.getTime();
-                });
-
-                const hadPoopToday = state.gutMoments.some(m => {
-                    const mDate = new Date(m.timestamp);
-                    mDate.setHours(0, 0, 0, 0);
-                    return mDate.getTime() === today.getTime();
-                });
-
-                let newStreak = state.user.streak;
-                if (!hadPoopToday) {
-                    // First poop of the day
-                    newStreak = hadPoopYesterday ? state.user.streak + 1 : 1;
-                }
+                const newMoments = [newMoment, ...state.gutMoments];
 
                 return {
-                    gutMoments: [newMoment, ...state.gutMoments],
+                    gutMoments: newMoments,
                     user: {
                         ...state.user,
-                        streak: newStreak,
-                        totalLogs: state.user.totalLogs + 1,
+                        streak: calculateCurrentStreak(newMoments),
+                        totalLogs: newMoments.length,
                     },
                 };
             }),
@@ -478,32 +501,9 @@ export const useGutStore = create<GutStore>()(
                 const weekMoments = moments.filter((m) => new Date(m.timestamp) >= weekAgo);
                 const avgFrequency = weekMoments.length / 7;
 
-                // Calculate real streak (consecutive days with at least one poop)
-                let streak = 0;
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                for (let i = 0; i < 365; i++) {
-                    const checkDate = new Date(today);
-                    checkDate.setDate(checkDate.getDate() - i);
-
-                    const hasPoopOnDate = moments.some(m => {
-                        const mDate = new Date(m.timestamp);
-                        mDate.setHours(0, 0, 0, 0);
-                        return mDate.getTime() === checkDate.getTime();
-                    });
-
-                    if (hasPoopOnDate) {
-                        streak++;
-                    } else if (i > 0) {
-                        // Allow today to be empty (user might not have pooped yet)
-                        break;
-                    }
-                }
-
                 return {
                     avgFrequency: Math.round(avgFrequency * 10) / 10,
-                    longestStreak: streak,
+                    longestStreak: calculateCurrentStreak(moments),
                     lastPoopTime: lastPoop,
                     totalPoops: moments.length,
                 };
@@ -602,48 +602,90 @@ export const useGutStore = create<GutStore>()(
                 };
             },
 
-            // Pattern detection logic
+            // Advanced Pattern Detection: Relative Risk & Time Proximity
             getPotentialTriggers: () => {
                 const { gutMoments, meals } = get();
-                const triggerMap: { [food: string]: { count: number; symptoms: Set<string> } } = {};
 
-                // Look at moments with symptoms
-                gutMoments.forEach(moment => {
-                    const hasSymptoms = Object.values(moment.symptoms).some(v => v);
-                    if (!hasSymptoms) return;
+                // Map to track food statistics
+                const foodStats: {
+                    [food: string]: {
+                        total: number,
+                        weightedSymptomScore: number,
+                        associatedSymptoms: Set<string>
+                    }
+                } = {};
 
-                    // Find meals eaten within 24 hours BEFORE this moment
-                    const momentTime = new Date(moment.timestamp).getTime();
-                    const dayBefore = momentTime - 24 * 60 * 60 * 1000;
+                // 1. Process every meal to build a baseline of what was eaten
+                meals.forEach(meal => {
+                    const mealTime = new Date(meal.timestamp).getTime();
 
-                    const activeSymptoms = Object.entries(moment.symptoms)
-                        .filter(([_, active]) => active)
-                        .map(([name]) => name);
-
-                    meals.forEach(meal => {
-                        const mealTime = new Date(meal.timestamp).getTime();
-                        if (mealTime >= dayBefore && mealTime < momentTime) {
-                            // Associate all food items in this meal with these symptoms
-                            meal.foods.forEach(food => {
-                                const normalizedFood = food.toLowerCase().trim();
-                                if (!triggerMap[normalizedFood]) {
-                                    triggerMap[normalizedFood] = { count: 0, symptoms: new Set() };
-                                }
-                                triggerMap[normalizedFood].count++;
-                                activeSymptoms.forEach(s => triggerMap[normalizedFood].symptoms.add(s));
-                            });
+                    meal.foods.forEach(food => {
+                        const normalizedFood = food.toLowerCase().trim();
+                        if (!foodStats[normalizedFood]) {
+                            foodStats[normalizedFood] = {
+                                total: 0,
+                                weightedSymptomScore: 0,
+                                associatedSymptoms: new Set()
+                            };
                         }
+                        foodStats[normalizedFood].total++;
+
+                        // 2. Check if a symptomatic moment occurred 2-24 hours AFTER this specific meal
+                        const symptomWindows = gutMoments.filter(moment => {
+                            const momentTime = new Date(moment.timestamp).getTime();
+                            const diffHours = (momentTime - mealTime) / (1000 * 60 * 60);
+
+                            // A "Symptomatic Moment" is defined by:
+                            // a) Manual checkboxes (bloating, gas, etc.)
+                            const hasManualSymptoms = Object.values(moment.symptoms).some(v => v);
+                            // b) Unhealthy Bristol Type (1, 2 = Constipation; 6, 7 = Diarrhea)
+                            const isUnhealthyStool = moment.bristolType && [1, 2, 6, 7].includes(moment.bristolType);
+                            // c) Medical Red Flags (Blood, Mucus)
+                            const hasRedFlags = moment.tags?.some(t => ['blood', 'mucus'].includes(t));
+
+                            return (hasManualSymptoms || isUnhealthyStool || hasRedFlags) && diffHours >= 2 && diffHours <= 24;
+                        });
+
+                        // 3. Apply weights based on time proximity
+                        symptomWindows.forEach(moment => {
+                            const momentTime = new Date(moment.timestamp).getTime();
+                            const diffHours = (momentTime - mealTime) / (1000 * 60 * 60);
+
+                            // Peak risk window (2-8h) gets 1.5x weight
+                            const weight = (diffHours >= 2 && diffHours <= 8) ? 1.5 : 1.0;
+                            foodStats[normalizedFood].weightedSymptomScore += weight;
+
+                            // Record Manual Symptoms
+                            Object.entries(moment.symptoms).forEach(([name, active]) => {
+                                if (active) foodStats[normalizedFood].associatedSymptoms.add(name);
+                            });
+
+                            // Record Bristol Symptoms
+                            if (moment.bristolType === 1 || moment.bristolType === 2) foodStats[normalizedFood].associatedSymptoms.add('constipation');
+                            if (moment.bristolType === 6 || moment.bristolType === 7) foodStats[normalizedFood].associatedSymptoms.add('diarrhea');
+
+                            // Record Medical Tags
+                            if (moment.tags?.includes('blood')) foodStats[normalizedFood].associatedSymptoms.add('blood in stool');
+                            if (moment.tags?.includes('mucus')) foodStats[normalizedFood].associatedSymptoms.add('mucus in stool');
+                        });
                     });
                 });
 
-                // Sort and return top triggers
-                return Object.entries(triggerMap)
-                    .map(([food, data]) => ({
+                // 4. Calculate final probability and filter results
+                return Object.entries(foodStats)
+                    .map(([food, stats]) => ({
                         food: food.charAt(0).toUpperCase() + food.slice(1),
-                        count: data.count,
-                        symptoms: Array.from(data.symptoms)
+                        // Likelihood = (Weighted Symptom Count) / (Total times eaten)
+                        // A score of 1.0 means it almost always leads to symptoms
+                        count: stats.total,
+                        probability: stats.total > 0 ? (stats.weightedSymptomScore / stats.total) : 0,
+                        symptoms: Array.from(stats.associatedSymptoms)
                     }))
-                    .sort((a, b) => b.count - a.count)
+                    // Only show foods eaten at least twice to avoid one-off noise
+                    // Filter for foods that have at least some symptomatic link
+                    .filter(item => item.count >= 2 && item.probability > 0.1)
+                    // Sort by highest probability first
+                    .sort((a, b) => b.probability - a.probability)
                     .slice(0, 5);
             },
 
@@ -685,10 +727,6 @@ export const useGutStore = create<GutStore>()(
                 // In a real app, we'd use expo-print or expo-sharing here
                 Alert.alert('Report Exported', 'Success! Your health report has been generated for your doctor.');
             },
-
-            // Camera photo capture (temporary storage - not persisted)
-            capturedPhotoUri: null,
-            setCapturedPhotoUri: (uri) => set({ capturedPhotoUri: uri }),
         }),
         {
             name: 'gut-buddy-storage',
@@ -698,6 +736,10 @@ export const useGutStore = create<GutStore>()(
                 gutMoments: state.gutMoments,
                 meals: state.meals,
                 waterLogs: state.waterLogs,
+                fiberLogs: state.fiberLogs,
+                probioticLogs: state.probioticLogs,
+                exerciseLogs: state.exerciseLogs,
+                notificationSettings: state.notificationSettings,
             }),
             onRehydrateStorage: () => (state) => {
                 // Convert date strings back to Date objects after rehydration

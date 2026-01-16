@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +9,7 @@ import { GutAvatar, ScreenWrapper, IconContainer, Typography, Card } from '../co
 import { useGutStore, useUIStore } from '../store';
 import { useAuth } from '../hooks/useAuth';
 import { deleteAccount } from '../services/accountService';
+import { requestNotificationPermissions, scheduleDailyReminder, cancelAllNotifications } from '../services/notificationService';
 
 const SettingsItem: React.FC<{
   icon: keyof typeof Ionicons.glyphMap;
@@ -50,11 +52,44 @@ const SettingsItem: React.FC<{
 );
 
 export const ProfileScreen: React.FC = () => {
-  const { user: gutUser, getGutHealthScore } = useGutStore();
+  const { user: gutUser, getGutHealthScore, getStats } = useGutStore();
   const healthScore = getGutHealthScore();
-  const { user, signOut } = useAuth();
+  const stats = getStats();
+  const navigation = useNavigation<any>();
   const { showAlert, showConfirm } = useUIStore();
+  const { notificationSettings, setNotificationSettings } = useGutStore();
+  const { user, signOut } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleToggleDailyReminder = async () => {
+    if (!notificationSettings.enabled) {
+      const granted = await requestNotificationPermissions();
+      if (granted) {
+        setNotificationSettings({ enabled: true });
+        await scheduleDailyReminder(notificationSettings.reminderTime.hour, notificationSettings.reminderTime.minute);
+        showAlert('Notifications Enabled', 'We will remind you daily to check in!');
+      } else {
+        showAlert('Permission Denied', 'Please enable notifications in your device settings.');
+      }
+    } else {
+      setNotificationSettings({ enabled: false });
+      await cancelAllNotifications();
+      showAlert('Notifications Disabled', 'Daily reminders have been turned off.');
+    }
+  };
+
+  const handleMuteAll = async () => {
+    setNotificationSettings({ enabled: false });
+    await cancelAllNotifications();
+    showAlert('Muted', 'All notifications have been silenced.');
+  };
+
+  const formatTime = (hour: number, minute: number) => {
+    const h = hour % 12 || 12;
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const m = minute < 10 ? `0${minute}` : minute;
+    return `${h}:${m} ${ampm}`;
+  };
   
   const getDisplayName = () => {
     return user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Gut Buddy';
@@ -140,7 +175,7 @@ export const ProfileScreen: React.FC = () => {
                   <Typography variant="bodySmall" color={colors.black + '66'}>{user.email}</Typography>
                 )}
                 <Typography variant="body" color={colors.black + '99'} style={{ marginTop: spacing.xs }}>
-                  {gutUser.totalLogs} logs • {gutUser.streak} day streak
+                  {stats.totalPoops} logs • {stats.longestStreak} day streak
                 </Typography>
               </View>
             </>
@@ -150,121 +185,133 @@ export const ProfileScreen: React.FC = () => {
               <View style={styles.profileInfo}>
                 <Typography variant="h3">{gutUser.name}</Typography>
                 <Typography variant="body" color={colors.black + '99'} style={{ marginTop: spacing.xs }}>
-                  {gutUser.totalLogs} logs • {gutUser.streak} day streak
+                  {stats.totalPoops} logs • {stats.longestStreak} day streak
                 </Typography>
               </View>
             </>
           )}
-          <Pressable style={styles.editButton}>
-            <IconContainer
-              name="pencil"
-              size={32}
-              iconSize={20}
-              color={colors.pink}
-              backgroundColor="transparent"
-              borderWidth={0}
-              shadow={false}
-            />
-          </Pressable>
         </Card>
         </Animated.View>
-        
-        {/* Settings List */}
-        <View style={styles.settingsList}>
-          <Typography variant="caption" color={colors.black + '66'} style={styles.sectionTitle}>NOTIFICATIONS</Typography>
+
+        {/* Goals */}
+        <Animated.View 
+          entering={FadeInDown.delay(300).springify()}
+          style={styles.accountSection}
+        >
+          <Typography variant="caption" color={colors.black + '66'} style={styles.sectionTitle}>GOALS</Typography>
           <SettingsItem 
-            icon="notifications" 
-            title="Daily Reminder" 
-            value="7:00 PM"
+            icon="water" 
+            title="Water Intake" 
+            value="2.5L"
             onPress={() => {}}
             color={colors.blue}
           />
           <SettingsItem 
+            icon="leaf" 
+            title="Fiber Target" 
+            value="30g"
+            onPress={() => {}}
+            color={colors.yellow}
+          />
+        </Animated.View>
+        
+        {/* Notifications */}
+        <Animated.View 
+          entering={FadeInDown.delay(400).springify()}
+          style={styles.settingsList}
+        >
+          <Typography variant="caption" color={colors.black + '66'} style={styles.sectionTitle}>NOTIFICATIONS</Typography>
+          <SettingsItem 
+            icon={notificationSettings.enabled ? "notifications" : "notifications-outline"} 
+            title="Daily Reminder" 
+            value={notificationSettings.enabled ? formatTime(notificationSettings.reminderTime.hour, notificationSettings.reminderTime.minute) : "Off"}
+            onPress={handleToggleDailyReminder}
+            color={notificationSettings.enabled ? colors.blue : colors.black + '40'}
+          />
+          <SettingsItem 
             icon="notifications-off" 
             title="Mute All" 
-            onPress={() => {}}
+            onPress={handleMuteAll}
             color={colors.pink}
           />
-        </View>
+        </Animated.View>
 
-          {/* Goals */}
-          <Animated.View 
-            entering={FadeInDown.delay(200).springify()}
-            style={styles.accountSection}
-          >
-            <Typography variant="caption" color={colors.black + '66'} style={styles.sectionTitle}>GOALS</Typography>
-            <SettingsItem 
-              icon="water" 
-              title="Water Intake" 
-              value="2.5L"
-              onPress={() => {}}
-              color={colors.blue}
-            />
-            <SettingsItem 
-              icon="leaf" 
-              title="Fiber Target" 
-              value="30g"
-              onPress={() => {}}
-              color={colors.yellow}
-            />
-          </Animated.View>
+        {/* About */}
+        <Animated.View 
+          entering={FadeInDown.delay(500).springify()}
+          style={styles.accountSection}
+        >
+          <Typography variant="caption" color={colors.black + '66'} style={styles.sectionTitle}>ABOUT</Typography>
+          <SettingsItem 
+            icon="shield-checkmark-outline" 
+            title="Privacy Policy" 
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+            color={colors.blue}
+          />
+          <SettingsItem 
+            icon="information-circle-outline" 
+            title="Help & Support" 
+            onPress={() => navigation.navigate('HelpSupport')}
+            color={colors.blue}
+          />
+        </Animated.View>
 
-          {/* Account */}
-          <Animated.View 
-            entering={FadeInDown.delay(300).springify()}
-            style={styles.accountSection}
-          >
-            <Typography variant="caption" color={colors.black + '66'} style={styles.sectionTitle}>ACCOUNT</Typography>
-            <Card variant="white" style={styles.signOutButton} padding="md">
-              <Pressable style={styles.settingsItemInner} onPress={handleSignOut}>
-                <IconContainer
-                  name="log-out-outline"
-                  size={40}
-                  iconSize={20}
-                  color={colors.blue}
-                  backgroundColor={colors.blue + '15'}
-                  borderColor={colors.blue}
-                  borderWidth={1.5}
-                  shadow={false}
-                  style={{ marginRight: spacing.md }}
-                />
-                <Typography variant="bodyBold">Sign Out</Typography>
-              </Pressable>
-            </Card>
-            
-            <Card variant="colored" color={colors.pink} style={styles.deleteCard} padding="md">
-              <Pressable 
-                style={styles.settingsItemInner}
-                onPress={handleDeleteAccount}
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <ActivityIndicator color={colors.pink} />
-                ) : (
-                  <>
-                    <IconContainer
-                      name="trash-outline"
-                      size={40}
-                      iconSize={20}
-                      color={colors.pink}
-                      backgroundColor={colors.pink + '15'}
-                      borderColor={colors.pink}
-                      borderWidth={1.5}
-                      shadow={false}
-                      style={{ marginRight: spacing.md }}
-                    />
-                    <Typography variant="bodyBold" color={colors.pink}>Delete Account</Typography>
-                  </>
-                )}
-              </Pressable>
-            </Card>
-          </Animated.View>
+        {/* Account */}
+        <Animated.View 
+          entering={FadeInDown.delay(600).springify()}
+          style={styles.accountSection}
+        >
+          <Typography variant="caption" color={colors.black + '66'} style={styles.sectionTitle}>ACCOUNT</Typography>
+          <Card variant="white" style={styles.signOutButton} padding="md">
+            <Pressable style={styles.settingsItemInner} onPress={handleSignOut}>
+              <IconContainer
+                name="log-out-outline"
+                size={40}
+                iconSize={20}
+                color={colors.blue}
+                backgroundColor={colors.blue + '15'}
+                borderColor={colors.blue}
+                borderWidth={1.5}
+                shadow={false}
+                style={{ marginRight: spacing.md }}
+              />
+              <Typography variant="bodyBold">Sign Out</Typography>
+            </Pressable>
+          </Card>
+          
+          <Card variant="colored" color={colors.pink} style={styles.deleteCard} padding="md">
+            <Pressable 
+              style={styles.settingsItemInner}
+              onPress={handleDeleteAccount}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <ActivityIndicator color={colors.pink} />
+              ) : (
+                <>
+                  <IconContainer
+                    name="trash-outline"
+                    size={40}
+                    iconSize={20}
+                    color={colors.pink}
+                    backgroundColor={colors.pink + '15'}
+                    borderColor={colors.pink}
+                    borderWidth={1.5}
+                    shadow={false}
+                    style={{ marginRight: spacing.md }}
+                  />
+                  <Typography variant="bodyBold" color={colors.pink}>Delete Account</Typography>
+                </>
+              )}
+            </Pressable>
+          </Card>
+        </Animated.View>
           
           {/* Footer */}
           <View style={styles.footer}>
             <Typography variant="bodyXS" color={colors.black + '40'}>Gut Buddy v1.0.0</Typography>
             <Typography variant="bodyXS" color={colors.black + '40'} style={{ marginTop: 4 }}>
-              Made with ❤️ and 💩
+              Made with love and care
             </Typography>
           </View>
         </ScrollView>

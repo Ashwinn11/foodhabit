@@ -7,7 +7,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { colors, shadows, radii } from '../../theme/theme';
+import { colors, shadows, radii, spacing, fonts } from '../../theme/theme';
 import { IconContainer } from '../IconContainer/IconContainer';
 import { Typography } from '../Typography';
 
@@ -316,8 +316,6 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
             style={[
               styles.badge,
               {
-                paddingHorizontal: 8,
-                paddingVertical: 4,
                 bottom: -size * 0.1,
                 minWidth: size * 0.6,
               },
@@ -419,12 +417,14 @@ const styles = StyleSheet.create({
   badge: {
     position: 'absolute',
     alignSelf: 'center',
-    backgroundColor: colors.blue, // Simplified to blue
+    backgroundColor: colors.black,
     borderRadius: radii.full,
-    ...shadows.sm,
+    ...shadows.md,
     zIndex: 2,
     borderWidth: 2,
     borderColor: colors.white,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
   },
   badgeContent: {
     flexDirection: 'row',
@@ -435,11 +435,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    marginRight: 4,
+    marginRight: 6,
   },
   badgeText: {
-    fontSize: 12,
+    fontSize: 10,
     color: colors.white,
+    fontFamily: fonts.bodyBold,
   },
 });
 

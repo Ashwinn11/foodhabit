@@ -8,7 +8,7 @@ import Animated, {
   FadeInDown,
   FadeIn,
 } from 'react-native-reanimated';
-import { colors, spacing } from '../theme';
+import { colors, spacing, radii, shadows, fonts } from '../theme';
 import { useGutStore } from '../store';
 import {
   GutAvatar,
@@ -33,16 +33,46 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
   const stats = getStats();
   const healthScore = getGutHealthScore();
   
-  // Combine and sort meals + gut moments for the "Memory Bank" job
-  const combinedHistory = useMemo(() => {
+  // Helper to get relative date label (Today, Yesterday, or Date string)
+  const formatRelativeDate = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    
+    if (d.getTime() === today.getTime()) return 'Today';
+    if (d.getTime() === yesterday.getTime()) return 'Yesterday';
+    
+    return d.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  // Group history by date
+  const groupedHistory = useMemo(() => {
     const combined = [
       ...meals.map(m => ({ ...m, type: 'meal' as const })),
       ...gutMoments.map(g => ({ ...g, type: 'poop' as const }))
     ];
     
-    return combined.sort((a, b) => 
+    const sorted = combined.sort((a, b) => 
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
+
+    const groups: { [key: string]: typeof combined } = {};
+    
+    sorted.forEach(item => {
+      const dateKey = formatRelativeDate(new Date(item.timestamp));
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(item);
+    });
+
+    return Object.entries(groups);
   }, [meals, gutMoments]);
   
   // Get last poop time formatted
@@ -143,14 +173,27 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
           />
           
           <View style={styles.timelineContainer}>
-            {combinedHistory.length > 0 ? (
-              combinedHistory.map((item, index) => (
-                <Animated.View
-                  key={item.id}
-                  entering={FadeInDown.delay(500 + index * 50).springify()}
-                >
-                  <TimelineEntry item={item} />
-                </Animated.View>
+            {groupedHistory.length > 0 ? (
+              groupedHistory.map(([date, items], groupIndex) => (
+                <View key={date} style={{ marginBottom: spacing.xs }}>
+                  <Animated.View 
+                    entering={FadeInDown.delay(400 + groupIndex * 100).springify()}
+                    style={styles.dateHeader}
+                  >
+                    <Typography variant="caption" color={colors.white} style={styles.dateHeaderText}>
+                      {date.toUpperCase()}
+                    </Typography>
+                  </Animated.View>
+                  
+                  {items.map((item, index) => (
+                    <Animated.View
+                      key={item.id}
+                      entering={FadeInDown.delay(500 + (groupIndex * 100) + (index * 50)).springify()}
+                    >
+                      <TimelineEntry item={item} />
+                    </Animated.View>
+                  ))}
+                </View>
               ))
             ) : (
               <Card variant="white" style={styles.emptyTimeline}>
@@ -225,6 +268,20 @@ const styles = StyleSheet.create({
   },
   timelineContainer: {
     paddingTop: spacing.md,
+  },
+  dateHeader: {
+    backgroundColor: colors.black,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radii.sm,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.md,
+    ...shadows.sm,
+  },
+  dateHeaderText: {
+    letterSpacing: 1.5,
+    fontSize: 10,
+    fontFamily: fonts.bodyBold,
   },
   emptyTimeline: {
     alignItems: 'center',

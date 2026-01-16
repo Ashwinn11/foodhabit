@@ -15,11 +15,16 @@ import {
 import { useGutStore } from '../store';
 
 export const InsightsScreen: React.FC = () => {
-  const { gutMoments, meals, getPotentialTriggers, getPoopHistoryData, exportData, getTodayWater, getGutHealthScore, getStats } = useGutStore();
+  const { gutMoments, getPotentialTriggers, getPoopHistoryData, exportData, getTodayWater, getGutHealthScore, getStats } = useGutStore();
   const stats = getStats();
   const todayWater = getTodayWater();
   const triggers = getPotentialTriggers();
   const historyData = getPoopHistoryData();
+  
+  // Calculate weekly logs for Insights focus
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const weeklyLogs = gutMoments.filter(m => new Date(m.timestamp) >= weekAgo).length;
   
   const getMostCommonBristol = () => {
     if (gutMoments.length === 0) return '-';
@@ -82,18 +87,18 @@ export const InsightsScreen: React.FC = () => {
             <GutAvatar score={healthScore.score} size={80} />
             <View style={styles.overviewStats}>
               <View style={styles.overviewStat}>
-                <Typography variant="h3">{stats.totalPoops}</Typography>
-                <Typography variant="bodyXS" color={colors.black + '66'}>Total Logs</Typography>
+                <Typography variant="h3" color={colors.pink}>{healthScore.score}</Typography>
+                <Typography variant="bodyXS" color={colors.black + '66'}>Gut Score</Typography>
               </View>
               <View style={styles.overviewDivider} />
               <View style={styles.overviewStat}>
-                <Typography variant="h3">{stats.longestStreak}</Typography>
-                <Typography variant="bodyXS" color={colors.black + '66'}>Day Streak</Typography>
+                <Typography variant="h3">{weeklyLogs}</Typography>
+                <Typography variant="bodyXS" color={colors.black + '66'}>Weekly Logs</Typography>
               </View>
               <View style={styles.overviewDivider} />
               <View style={styles.overviewStat}>
-                <Typography variant="h3">{meals.length}</Typography>
-                <Typography variant="bodyXS" color={colors.black + '66'}>Meals</Typography>
+                <Typography variant="h3" color={colors.blue}>{healthScore.grade}</Typography>
+                <Typography variant="bodyXS" color={colors.black + '66'}>Gut Status</Typography>
               </View>
             </View>
           </Card>
@@ -103,20 +108,20 @@ export const InsightsScreen: React.FC = () => {
             style={styles.section}
           >
             <SectionHeader 
-              title="This Week" 
+              title="This Week's Stats" 
               icon="calendar" 
               iconColor={colors.blue}
             />
             <View style={styles.statsRow}>
               <StatCard
-                label="AVG/DAY"
+                label="DAILY AVG"
                 value={stats.avgFrequency}
                 unit="x"
                 color={colors.yellow}
                 style={styles.statCard}
               />
               <StatCard
-                label="COMMON"
+                label="MOST COMMON"
                 value={getMostCommonBristol()}
                 color={colors.pink}
                 style={styles.statCard}

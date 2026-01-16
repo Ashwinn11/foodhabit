@@ -1,1 +1,0 @@
-export { PhotoPlaceholder } from './PhotoPlaceholder';

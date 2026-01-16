@@ -4,7 +4,8 @@ export { GutProfileScreen } from './GutProfileScreen';
 export { AddEntryScreen } from './AddEntryScreen';
 export { InsightsScreen } from './InsightsScreen';
 export { ProfileScreen } from './ProfileScreen';
-export { CameraScreen } from './CameraScreen';
+export { PrivacyPolicyScreen } from './PrivacyPolicyScreen';
+export { HelpSupportScreen } from './HelpSupportScreen';
 
 // Auth screens (default export)
 export { default as AuthScreen } from './AuthScreen';

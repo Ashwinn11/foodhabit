@@ -93,7 +93,10 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ item, style }) => 
       
       <Card variant="colored" color={colors.pink} style={styles.contentCard} padding="lg">
         <View style={styles.header}>
-          <Typography variant="h3" style={{ flex: 1 }}>Bowel Movement</Typography>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+            <Typography variant="h3">Poop Log</Typography>
+            <IconContainer name="water" size={20} iconSize={14} color={colors.pink} backgroundColor="transparent" borderWidth={0} shadow={false} />
+          </View>
           <Typography variant="bodyXS" color={colors.pink} style={{ fontFamily: 'Chewy' }}>
             {formatTime(item.timestamp)}
           </Typography>

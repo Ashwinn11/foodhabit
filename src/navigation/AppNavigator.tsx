@@ -16,7 +16,9 @@ import {
   AddEntryScreen,
   InsightsScreen,
   ProfileScreen,
-  CameraScreen,
+  PrivacyPolicyScreen,
+  AuthScreen,
+  HelpSupportScreen,
 } from '../screens';
 
 const Tab = createBottomTabNavigator();
@@ -189,11 +191,40 @@ export const AppNavigator = () => {
         }}
       />
       <Stack.Screen
-        name="Camera"
-        component={CameraScreen}
+        name="PrivacyPolicy"
+        component={PrivacyPolicyScreen}
         options={{
-          presentation: 'fullScreenModal',
-          animation: 'fade',
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="HelpSupport"
+        component={HelpSupportScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
+
+// Auth Navigator for when user is not logged in
+export const AuthNavigator = () => {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    >
+      <Stack.Screen name="Auth" component={AuthScreen} />
+      <Stack.Screen
+        name="PrivacyPolicy"
+        component={PrivacyPolicyScreen}
+        options={{
+          animation: 'slide_from_right',
         }}
       />
     </Stack.Navigator>
