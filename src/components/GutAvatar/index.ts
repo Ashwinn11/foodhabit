@@ -1,1 +1,2 @@
+
 export { GutAvatar } from './GutAvatar';

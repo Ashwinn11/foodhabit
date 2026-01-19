@@ -3,7 +3,7 @@ import { View, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { OnboardingScreen } from '../../components/Onboarding';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useNavigation } from '@react-navigation/native';
-import { Typography, Card } from '../../components';
+import { Typography, Card, ScreenWrapper } from '../../components';
 import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeIn, Layout } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -87,11 +87,13 @@ export const OnboardingCustomPlanScreen = () => {
 
   if (isGenerating) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.pink} />
-        <Typography variant="h3" style={styles.loadingText}>Creating your custom plan...</Typography>
-        <Typography variant="body" color={colors.black + '66'}>Analyzing your profile</Typography>
-      </View>
+      <ScreenWrapper useGradient={true}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.pink} />
+          <Typography variant="h3" style={styles.loadingText}>Creating your custom plan...</Typography>
+          <Typography variant="body" color={colors.black + '66'}>Analyzing your profile</Typography>
+        </View>
+      </ScreenWrapper>
     );
   }
 
@@ -161,7 +163,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
     padding: spacing.xl,
   },
   loadingText: {

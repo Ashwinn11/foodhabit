@@ -7,6 +7,7 @@ import * as ExpoSplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppNavigator, AuthNavigator, OnboardingNavigator } from './src/navigation';
 import { colors } from './src/theme';
+import { ScreenWrapper } from './src/components';
 import { useAuth } from './src/hooks/useAuth';
 import { GlobalModal } from './src/components/Modal/GlobalModal';
 import { GlobalToast } from './src/components/Toast/GlobalToast';
@@ -121,9 +122,11 @@ function AppContent() {
 
   if (loading || !isReady || (session && !dataLoaded)) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.pink} />
-      </View>
+      <ScreenWrapper>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.pink} />
+        </View>
+      </ScreenWrapper>
     );
   }
 
@@ -165,6 +168,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
   },
 });
