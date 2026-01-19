@@ -2,6 +2,8 @@ import { Alert } from 'react-native';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { useUIStore } from './useUIStore';
 
 import { colors } from '../theme/theme';
@@ -447,7 +449,7 @@ export const useGutStore = create<GutStore>()(
                 // Show toast
                 let icon: any = 'water';
                 let message = `${currentGlasses}/${waterGoal} glasses. Gulp!`;
-                
+
                 if (currentGlasses === waterGoal) {
                     icon = 'trophy';
                     message = `Goal reached! Hydrated!`;
@@ -456,10 +458,10 @@ export const useGutStore = create<GutStore>()(
                     message = `Extra hydration logged!`;
                 }
 
-                useUIStore.getState().showToast({ 
-                    message, 
+                useUIStore.getState().showToast({
+                    message,
                     icon,
-                    iconColor: colors.blue 
+                    iconColor: colors.blue
                 });
 
                 if (existingLog) {
@@ -487,8 +489,8 @@ export const useGutStore = create<GutStore>()(
                 const fiberGoal = 25;
                 const currentFiber = (existingLog ? existingLog.grams : 0) + grams;
 
-                useUIStore.getState().showToast({ 
-                    message: `+${grams}g Fiber logged!`, 
+                useUIStore.getState().showToast({
+                    message: `+${grams}g Fiber logged!`,
                     icon: 'leaf',
                     iconColor: colors.yellow
                 });
@@ -531,8 +533,8 @@ export const useGutStore = create<GutStore>()(
                 const existingLog = state.probioticLogs.find(p => p.date === todayStr);
                 const currentProbiotics = existingLog ? existingLog.servings + 1 : 1;
 
-                useUIStore.getState().showToast({ 
-                    message: currentProbiotics === 1 ? 'Probiotic logged!' : 'More probiotics logged!', 
+                useUIStore.getState().showToast({
+                    message: currentProbiotics === 1 ? 'Probiotic logged!' : 'More probiotics logged!',
                     icon: 'bug',
                     iconColor: colors.blue
                 });
@@ -562,8 +564,8 @@ export const useGutStore = create<GutStore>()(
                 const exerciseGoal = 30;
                 const currentMinutes = (existingLog ? existingLog.minutes : 0) + minutes;
 
-                useUIStore.getState().showToast({ 
-                    message: `+${minutes}m Exercise logged!`, 
+                useUIStore.getState().showToast({
+                    message: `+${minutes}m Exercise logged!`,
                     icon: 'fitness',
                     iconColor: colors.yellow
                 });
@@ -847,18 +849,70 @@ export const useGutStore = create<GutStore>()(
             },
 
             exportData: async () => {
-                const { gutMoments, meals, waterLogs, user } = get();
-                const report = {
-                    user: user.name,
-                    generatedAt: new Date().toISOString(),
-                    gutMoments,
-                    meals,
-                    waterLogs
-                };
+                try {
+                    const { gutMoments, meals, waterLogs, fiberLogs, probioticLogs, exerciseLogs, user } = get();
+                    const healthScore = get().getGutHealthScore();
+                    const stats = get().getStats();
+                    const triggers = get().getPotentialTriggers();
 
-                console.log('Exporting data:', JSON.stringify(report, null, 2));
-                // In a real app, we'd use expo-print or expo-sharing here
-                Alert.alert('Report Exported', 'Success! Your health report has been generated for your doctor.');
+                    const report = {
+                        user: user.name,
+                        generatedAt: new Date().toISOString(),
+                        summary: {
+                            gutHealthScore: healthScore.score,
+                            grade: healthScore.grade,
+                            totalLogs: stats.totalPoops,
+                            currentStreak: user.streak,
+                            avgFrequency: stats.avgFrequency,
+                        },
+                        potentialTriggers: triggers,
+                        gutMoments: gutMoments.map(m => ({
+                            ...m,
+                            timestamp: m.timestamp.toISOString(),
+                        })),
+                        meals: meals.map(m => ({
+                            ...m,
+                            timestamp: m.timestamp.toISOString(),
+                        })),
+                        waterLogs,
+                        fiberLogs,
+                        probioticLogs,
+                        exerciseLogs,
+                    };
+
+                    // Create file name with timestamp
+                    const timestamp = new Date().toISOString().split('T')[0];
+                    const fileName = `gut-health-report-${timestamp}.json`;
+                    
+                    // Use the new File API from expo-file-system
+                    const file = new FileSystem.File(FileSystem.Paths.document, fileName);
+                    
+                    // Write the report to the file
+                    await file.write(JSON.stringify(report, null, 2));
+
+                    // Check if sharing is available
+                    const isAvailable = await Sharing.isAvailableAsync();
+                    if (isAvailable) {
+                        await Sharing.shareAsync(file.uri, {
+                            mimeType: 'application/json',
+                            dialogTitle: 'Share your gut health report',
+                            UTI: 'public.json',
+                        });
+                    } else {
+                        Alert.alert(
+                            'Export Complete',
+                            `Your report has been saved to:\n${file.uri}`,
+                            [{ text: 'OK' }]
+                        );
+                    }
+                } catch (error) {
+                    console.error('Export error:', error);
+                    Alert.alert(
+                        'Export Failed',
+                        'There was an error exporting your data. Please try again.',
+                        [{ text: 'OK' }]
+                    );
+                }
             },
         }),
         {
