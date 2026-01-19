@@ -1,0 +1,144 @@
+import React from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, radii, shadows } from '../../theme';
+import { Typography } from '../Typography';
+
+interface QuizOptionProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  description?: string;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+export const QuizOption: React.FC<QuizOptionProps> = ({
+  icon,
+  label,
+  description,
+  selected,
+  onSelect,
+}) => {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.97);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+    onSelect();
+  };
+
+  return (
+    <AnimatedPressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[
+        styles.container,
+        animatedStyle,
+        selected && styles.selected,
+      ]}
+    >
+      <View style={styles.content}>
+        <View style={[styles.iconContainer, selected && styles.iconSelected]}>
+          <Ionicons
+            name={icon}
+            size={24}
+            color={selected ? colors.white : colors.pink}
+          />
+        </View>
+        <View style={styles.textContainer}>
+          <Typography
+            variant="bodyBold"
+            color={selected ? colors.pink : colors.black}
+          >
+            {label}
+          </Typography>
+          {description && (
+            <Typography
+              variant="bodySmall"
+              color={colors.mediumGray}
+              style={styles.description}
+            >
+              {description}
+            </Typography>
+          )}
+        </View>
+      </View>
+      
+      <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
+        {selected && (
+          <Ionicons name="checkmark" size={16} color={colors.white} />
+        )}
+      </View>
+    </AnimatedPressable>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.white + 'CC', // Slightly translucent for gradient
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 2,
+    borderColor: colors.border,
+    ...shadows.sm,
+  },
+  selected: {
+    borderColor: colors.pink,
+    backgroundColor: colors.pink + '08',
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.lg,
+    backgroundColor: colors.pink + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  iconSelected: {
+    backgroundColor: colors.pink,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  description: {
+    marginTop: spacing.xs,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: radii.full,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.md,
+  },
+  checkboxSelected: {
+    backgroundColor: colors.pink,
+    borderColor: colors.pink,
+  },
+});

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Pressable, ActivityIndicator, Linking } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -10,6 +10,7 @@ import { useGutStore, useUIStore } from '../store';
 import { useAuth } from '../hooks/useAuth';
 import { deleteAccount } from '../services/accountService';
 import { requestNotificationPermissions, scheduleDailyReminder, cancelAllNotifications } from '../services/notificationService';
+import { RevenueCatService } from '../services/revenueCatService';
 
 const SettingsItem: React.FC<{
   icon: keyof typeof Ionicons.glyphMap;
@@ -143,8 +144,6 @@ export const ProfileScreen: React.FC = () => {
     );
   };
   
-
-  
   return (
     <ScreenWrapper style={styles.container} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -262,6 +261,21 @@ export const ProfileScreen: React.FC = () => {
           style={styles.accountSection}
         >
           <Typography variant="caption" color={colors.black + '66'} style={styles.sectionTitle}>ACCOUNT</Typography>
+          
+          <SettingsItem 
+            icon="card-outline" 
+            title="Manage Subscription" 
+            onPress={async () => {
+              const url = await RevenueCatService.manageSubscription();
+              if (url) {
+                Linking.openURL(url);
+              } else {
+                showAlert('Subscription', 'No managed subscription found. Please check your App Store settings.');
+              }
+            }}
+            color={colors.blue}
+          />
+
           <Card variant="white" style={styles.signOutButton} padding="md">
             <Pressable style={styles.settingsItemInner} onPress={handleSignOut}>
               <IconContainer
@@ -317,7 +331,7 @@ export const ProfileScreen: React.FC = () => {
         </ScrollView>
       </ScreenWrapper>
     );
-  };
+};
 
 const styles = StyleSheet.create({
   container: {

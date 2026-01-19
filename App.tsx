@@ -5,11 +5,16 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { AppNavigator, AuthNavigator } from './src/navigation';
+import { AppNavigator, AuthNavigator, OnboardingNavigator } from './src/navigation';
 import { colors } from './src/theme';
 import { useAuth } from './src/hooks/useAuth';
 import { GlobalModal } from './src/components/Modal/GlobalModal';
 import { GlobalToast } from './src/components/Toast/GlobalToast';
+import { useOnboardingStore } from './src/store/onboardingStore';
+import { RevenueCatService } from './src/services/revenueCatService';
+
+import { useFonts, Chewy_400Regular } from '@expo-google-fonts/chewy';
+import { Fredoka_400Regular, Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
 
 // Keep the native splash screen visible while we fetch resources
 ExpoSplashScreen.preventAutoHideAsync();
@@ -29,13 +34,10 @@ const GutBuddyTheme = {
   },
 };
 
-import { useFonts, Chewy_400Regular } from '@expo-google-fonts/chewy';
-import { Fredoka_400Regular, Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
-
-// ... (keep imports)
-
 function AppContent() {
   const { session, loading } = useAuth();
+  const { isOnboardingComplete } = useOnboardingStore();
+  
   const [fontsLoaded] = useFonts({
     'Chewy': Chewy_400Regular,
     'Fredoka-Regular': Fredoka_400Regular,
@@ -47,13 +49,51 @@ function AppContent() {
   const [isReady, setIsReady] = React.useState(false);
 
   React.useEffect(() => {
-    if (!loading && fontsLoaded) {
-      setIsReady(true);
-      ExpoSplashScreen.hideAsync();
-    }
-  }, [loading, fontsLoaded]);
+    RevenueCatService.initialize();
+    
+    // Initialize sync service
+    import('./src/services/syncService').then(({ syncService }) => {
+      syncService.initialize();
+    });
+  }, []);
 
-  if (loading || !isReady) {
+  // Sync RevenueCat session
+  const prevSessionRef = React.useRef<string | null>(null);
+  
+  React.useEffect(() => {
+    const currentUserId = session?.user?.id || null;
+    const prevUserId = prevSessionRef.current;
+    
+    if (currentUserId && currentUserId !== prevUserId) {
+      // User logged in or switched accounts
+      RevenueCatService.logIn(currentUserId);
+      prevSessionRef.current = currentUserId;
+    } else if (!currentUserId && prevUserId && !loading) {
+      // User logged out (only if they were previously logged in)
+      RevenueCatService.logOut();
+      prevSessionRef.current = null;
+    }
+  }, [session, loading]);
+
+  const [dataLoaded, setDataLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    const loadData = async () => {
+      if (!loading && fontsLoaded) {
+        // Load user data from database if logged in
+        if (session?.user?.id) {
+          const { loadUserDataFromDatabase } = await import('./src/utils/loadUserData');
+          await loadUserDataFromDatabase();
+        }
+        setDataLoaded(true);
+        setIsReady(true);
+        ExpoSplashScreen.hideAsync();
+      }
+    };
+    loadData();
+  }, [loading, fontsLoaded, session]);
+
+  if (loading || !isReady || (session && !dataLoaded)) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.pink} />
@@ -67,7 +107,12 @@ function AppContent() {
     return <AuthNavigator />;
   }
 
-  // Show main app if logged in
+  // Show onboarding if not complete
+  if (!isOnboardingComplete) {
+    return <OnboardingNavigator />;
+  }
+
+  // Show main app if logged in and onboarding complete
   return <AppNavigator />;
 }
 
