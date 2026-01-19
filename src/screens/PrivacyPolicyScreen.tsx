@@ -151,6 +151,74 @@ export const PrivacyPolicyScreen: React.FC = () => {
         <Animated.View entering={FadeInDown.delay(800).springify()}>
           <Card variant="white" padding="lg" style={styles.section}>
             <Typography variant="h3" style={{ marginBottom: spacing.md }}>
+              Third-Party Services
+            </Typography>
+            <Typography variant="body" color={colors.black + '99'}>
+              We use Supabase for authentication and optional cloud backup:{'\\n'}
+              • Privacy Policy: supabase.com/privacy{'\\n'}
+              • Data: Email address, encrypted health logs (if backup enabled){'\\n'}
+              • Location: US-based servers{'\\n'}
+              • Purpose: Secure authentication and data sync across devices
+            </Typography>
+          </Card>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(900).springify()}>
+          <Card variant="white" padding="lg" style={styles.section}>
+            <Typography variant="h3" style={{ marginBottom: spacing.md }}>
+              Data Retention
+            </Typography>
+            <Typography variant="body" color={colors.black + '99'}>
+              • Health logs: Retained until you delete them{'\\n'}
+              • Account data: Retained while your account is active{'\\n'}
+              • Deleted data: Permanently removed within 30 days{'\\n'}
+              • Backup data: Removed from cloud servers within 30 days of deletion
+            </Typography>
+          </Card>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(1000).springify()}>
+          <Card variant="white" padding="lg" style={styles.section}>
+            <Typography variant="h3" style={{ marginBottom: spacing.md }}>
+              Age Restrictions
+            </Typography>
+            <Typography variant="body" color={colors.black + '99'}>
+              You must be at least 13 years old to use Gut Buddy. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us.
+            </Typography>
+          </Card>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(1100).springify()}>
+          <Card variant="white" padding="lg" style={styles.section}>
+            <Typography variant="h3" style={{ marginBottom: spacing.md }}>
+              International Privacy Laws
+            </Typography>
+            <Typography variant="body" color={colors.black + '99'}>
+              We comply with GDPR (EU), CCPA (California), and other applicable privacy laws. You have the right to:{'\\n'}
+              • Access your data{'\\n'}
+              • Correct inaccurate data{'\\n'}
+              • Request data deletion{'\\n'}
+              • Export your data{'\\n'}
+              • Withdraw consent{'\\n'}
+              • Lodge a complaint with supervisory authorities
+            </Typography>
+          </Card>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(1200).springify()}>
+          <Card variant="white" padding="lg" style={styles.section}>
+            <Typography variant="h3" style={{ marginBottom: spacing.md }}>
+              Data Breach Notification
+            </Typography>
+            <Typography variant="body" color={colors.black + '99'}>
+              In the unlikely event of a data breach affecting your personal information, we will notify you via email within 72 hours and provide details about the breach, affected data, and steps we're taking to address it.
+            </Typography>
+          </Card>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(1300).springify()}>
+          <Card variant="white" padding="lg" style={styles.section}>
+            <Typography variant="h3" style={{ marginBottom: spacing.md }}>
               Contact Us
             </Typography>
             <Typography variant="body" color={colors.black + '99'}>

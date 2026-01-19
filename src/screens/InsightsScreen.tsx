@@ -15,10 +15,11 @@ import {
 import { useGutStore } from '../store';
 
 export const InsightsScreen: React.FC = () => {
-  const { gutMoments, getPotentialTriggers, getPoopHistoryData, exportData, getTodayWater, getGutHealthScore, getStats } = useGutStore();
+  const { gutMoments, getEnhancedTriggers, getCombinationTriggers, getPoopHistoryData, exportData, getTodayWater, getGutHealthScore, getStats, addTriggerFeedback } = useGutStore();
   const stats = getStats();
   const todayWater = getTodayWater();
-  const triggers = getPotentialTriggers();
+  const enhancedTriggers = getEnhancedTriggers();
+  const combinationTriggers = getCombinationTriggers();
   const historyData = getPoopHistoryData();
   
   // Calculate weekly logs for Insights focus
@@ -154,31 +155,108 @@ export const InsightsScreen: React.FC = () => {
             </Card>
           </Animated.View>
 
-          {/* Potential Triggers */}
-          {triggers.length > 0 && (
+          {/* Enhanced Triggers */}
+          {enhancedTriggers.length > 0 && (
             <Animated.View 
               entering={FadeInDown.delay(350).springify()}
               style={styles.section}
             >
               <SectionHeader 
-                title="Potential Triggers" 
+                title="Food Triggers" 
                 icon="alert-circle" 
                 iconColor={colors.pink}
               />
-              <Card variant="colored" color={colors.pink} padding="md">
-                <Typography variant="bodySmall" color={colors.pink} style={{ marginBottom: spacing.sm }}>
-                  These foods appear often before you feel symptoms:
+              {enhancedTriggers.map((trigger, i) => (
+                <Card key={i} variant="white" padding="md" style={{ marginBottom: spacing.sm }}>
+                  <View style={styles.triggerItem}>
+                    <View style={styles.triggerDetails}>
+                      {/* Food name with confidence badge */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: 4 }}>
+                        <Typography variant="bodyBold" color={colors.black}>{trigger.food}</Typography>
+                        <View style={[
+                          styles.confidenceBadge,
+                          { backgroundColor: 
+                            trigger.confidence === 'High' ? colors.pink :
+                            trigger.confidence === 'Medium' ? '#FFA500' : '#999'
+                          }
+                        ]}>
+                          <Typography variant="bodyXS" color={colors.white}>{trigger.confidence}</Typography>
+                        </View>
+                      </View>
+                      
+                      {/* Frequency */}
+                      <Typography variant="bodySmall" color={colors.black + '99'} style={{ marginBottom: 2 }}>
+                        Triggers {trigger.frequencyText}
+                      </Typography>
+                      
+                      {/* Latency */}
+                      <Typography variant="bodyXS" color={colors.black + '66'} style={{ marginBottom: 4 }}>
+                        Typically in {trigger.avgLatencyHours}h • {trigger.symptoms.join(', ')}
+                      </Typography>
+                      
+                      {/* User Feedback Buttons */}
+                      <View style={{ flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xs }}>
+                        <Button
+                          title={trigger.userFeedback === true ? "✓ Confirmed" : "Confirm"}
+                          variant={trigger.userFeedback === true ? "primary" : "outline"}
+                          size="sm"
+                          onPress={() => addTriggerFeedback({
+                            foodName: trigger.food,
+                            userConfirmed: true,
+                            timestamp: new Date()
+                          })}
+                          color={trigger.userFeedback === true ? colors.blue : colors.black}
+                          style={{ flex: 1 }}
+                        />
+                        <Button
+                          title={trigger.userFeedback === false ? "✗ Denied" : "Not a trigger"}
+                          variant={trigger.userFeedback === false ? "primary" : "outline"}
+                          size="sm"
+                          onPress={() => addTriggerFeedback({
+                            foodName: trigger.food,
+                            userConfirmed: false,
+                            timestamp: new Date()
+                          })}
+                          color={trigger.userFeedback === false ? colors.pink : colors.black}
+                          style={{ flex: 1 }}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                </Card>
+              ))}
+            </Animated.View>
+          )}
+          
+          {/* Combination Triggers */}
+          {combinationTriggers.length > 0 && (
+            <Animated.View 
+              entering={FadeInDown.delay(400).springify()}
+              style={styles.section}
+            >
+              <SectionHeader 
+                title="Food Combinations" 
+                icon="link" 
+                iconColor={colors.blue}
+              />
+              <Card variant="colored" color={colors.blue} padding="md">
+                <Typography variant="bodySmall" color={colors.blue} style={{ marginBottom: spacing.sm }}>
+                  These food combos trigger more than individually:
                 </Typography>
-                {triggers.map((t, i) => (
+                {combinationTriggers.map((combo, i) => (
                   <View key={i} style={styles.triggerItem}>
                     <View style={styles.triggerDetails}>
-                      <Typography variant="bodyBold" color={colors.black}>{t.food}</Typography>
-                      <Typography variant="bodyXS" color={colors.black + '66'}>
-                        Linked to: {t.symptoms.join(', ')}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
+                        <Typography variant="bodyBold" color={colors.black}>
+                          {combo.foods.join(' + ')}
+                        </Typography>
+                        <View style={[styles.confidenceBadge, { backgroundColor: colors.blue }]}>
+                          <Typography variant="bodyXS" color={colors.white}>{combo.confidence}</Typography>
+                        </View>
+                      </View>
+                      <Typography variant="bodyXS" color={colors.black + '66'} style={{ marginTop: 2 }}>
+                        {combo.frequencyText}
                       </Typography>
-                    </View>
-                    <View style={styles.triggerBadge}>
-                      <Typography variant="bodySmall" color={colors.white}>{t.count}x</Typography>
                     </View>
                   </View>
                 ))}
@@ -417,6 +495,25 @@ const styles = StyleSheet.create({
   },
   triggerBadge: {
     backgroundColor: colors.pink,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  fodmapBadge: {
+    backgroundColor: colors.blue,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  fodmapInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.white + 'CC',
+    padding: spacing.sm,
+    borderRadius: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  confidenceBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,

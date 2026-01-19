@@ -17,6 +17,13 @@ export const colors = {
     border: '#E8D9C0',     // Minimal warm border
     iconInactive: '#A1A1A1', // Standard gray for inactive icons as per reference
     gradientBackground: ['#FFF9C4', '#FFFFFF', '#FDE1E8'], // Softened Yellow (TR) -> White (C) -> Softened Pink (BL)
+
+    // Additional colors for extended features
+    darkGray: '#2D2D2D',
+    mediumGray: '#666666',
+    lightGray: '#F5F5F5',
+    red: '#FF4444',
+    green: '#4CAF50',
 } as const;
 
 export const fonts = {

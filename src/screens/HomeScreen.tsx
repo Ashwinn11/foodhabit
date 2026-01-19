@@ -27,12 +27,13 @@ type HomeScreenProps = {
 };
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const { user, getStats, getDynamicTasks, addWater, addFiber, addProbiotic, addExercise, getGutHealthScore } = useGutStore();
+  const { user, getStats, getDynamicTasks, addWater, addFiber, addProbiotic, addExercise, getGutHealthScore, checkMedicalAlerts } = useGutStore();
   
   const dynamicTasks = getDynamicTasks();
   const incompleteTasks = dynamicTasks.filter(t => !t.completed).length;
   const stats = getStats();
   const healthScore = getGutHealthScore();
+  const medicalAlerts = checkMedicalAlerts();
 
   const lastPoopInfo = (() => {
     const lastTime = stats.lastPoopTime;
@@ -103,6 +104,46 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             badgeCount={2}
           />
         </Animated.View>
+        
+        {/* Medical Alerts Banner */}
+        {medicalAlerts.hasAlerts && (
+          <Animated.View 
+            entering={FadeInDown.delay(150).springify()}
+            style={styles.section}
+          >
+            {medicalAlerts.alerts.map((alert) => (
+              <Card 
+                key={alert.type}
+                variant="white"
+                padding="lg"
+                style={[
+                  styles.alertCard,
+                  { borderLeftWidth: 4, borderLeftColor: alert.severity === 'critical' ? colors.pink : '#FFA500' }
+                ]}
+              >
+                <View style={styles.alertContent}>
+                  <IconContainer
+                    name={alert.severity === 'critical' ? 'warning' : 'alert-circle'}
+                    size={40}
+                    iconSize={24}
+                    color={alert.severity === 'critical' ? colors.pink : '#FFA500'}
+                    backgroundColor={alert.severity === 'critical' ? colors.pink + '15' : '#FFA50015'}
+                    borderWidth={0}
+                    shadow={false}
+                  />
+                  <View style={styles.alertText}>
+                    <Typography variant="bodyBold" color={colors.black}>
+                      {alert.severity === 'critical' ? '⚠️ Medical Attention Recommended' : '⚡ Health Notice'}
+                    </Typography>
+                    <Typography variant="bodySmall" color={colors.black + '99'} style={{ marginTop: 4 }}>
+                      {alert.message}
+                    </Typography>
+                  </View>
+                </View>
+              </Card>
+            ))}
+          </Animated.View>
+        )}
         
         {/* Consolidated: Gut Health Score + Last Poop */}
         <Animated.View 
@@ -349,5 +390,16 @@ const styles = StyleSheet.create({
   emptyGutState: {
     alignItems: 'center',
     marginRight: spacing.md,
+  },
+  alertCard: {
+    marginBottom: spacing.sm,
+  },
+  alertContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
+  alertText: {
+    flex: 1,
   },
 });

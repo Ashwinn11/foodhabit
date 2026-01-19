@@ -11,6 +11,9 @@ import { colors } from '../theme/theme';
 // Types for gut tracking
 export type BristolType = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'drink';
+export type UrgencyLevel = 'none' | 'mild' | 'severe';
+export type PortionSize = 'small' | 'medium' | 'large';
+export type SymptomType = 'bloating' | 'gas' | 'cramping' | 'nausea' | 'reflux' | 'diarrhea' | 'constipation';
 
 export interface GutMoment {
     id: string;
@@ -24,6 +27,11 @@ export interface GutMoment {
         nausea: boolean;
     };
     tags?: ('strain' | 'blood' | 'mucus' | 'urgency')[];
+    // Enhanced fields
+    urgency?: UrgencyLevel;
+    painScore?: number; // 0-10
+    incompleteEvacuation?: boolean;
+    duration?: number; // minutes
 }
 
 export interface MealEntry {
@@ -33,6 +41,27 @@ export interface MealEntry {
     name: string;
     description?: string;
     foods: string[];
+    // Enhanced fields
+    portionSize?: PortionSize;
+    foodTags?: string[]; // spicy, dairy, gluten, fried, caffeine, alcohol, high-fat
+}
+
+// Standalone symptom logging (not tied to bowel movements)
+export interface SymptomLog {
+    id: string;
+    timestamp: Date;
+    type: SymptomType;
+    severity: number; // 0-10
+    duration?: number; // minutes
+    notes?: string;
+}
+
+// Trigger feedback from users
+export interface TriggerFeedback {
+    foodName: string;
+    userConfirmed: boolean | null; // true = yes, false = no, null = not answered
+    timestamp: Date;
+    notes?: string;
 }
 
 export interface DailyTask {
@@ -97,6 +126,16 @@ interface GutStore {
     addExercise: (minutes: number) => void;
     getTodayExercise: () => number;
 
+    // Standalone symptom logs
+    symptomLogs: SymptomLog[];
+    addSymptomLog: (log: Omit<SymptomLog, 'id'>) => void;
+    deleteSymptomLog: (id: string) => void;
+
+    // Trigger feedback
+    triggerFeedback: TriggerFeedback[];
+    addTriggerFeedback: (feedback: TriggerFeedback) => void;
+    getTriggerFeedback: (foodName: string) => TriggerFeedback | undefined;
+
     // Computed
     getRecentMoments: (count: number) => GutMoment[];
     getTodaysMeals: () => MealEntry[];
@@ -108,6 +147,27 @@ interface GutStore {
     };
     // Pattern detection
     getPotentialTriggers: () => { food: string; count: number; symptoms: string[] }[];
+    getEnhancedTriggers: () => {
+        food: string;
+        occurrences: number;
+        symptomOccurrences: number;
+        confidence: 'Low' | 'Medium' | 'High';
+        frequencyText: string;
+        avgLatencyHours: number;
+        symptoms: string[];
+        userFeedback?: boolean | null;
+    }[];
+    getCombinationTriggers: () => {
+        foods: string[];
+        occurrences: number;
+        symptomOccurrences: number;
+        confidence: 'Low' | 'Medium' | 'High';
+        frequencyText: string;
+    }[];
+    checkMedicalAlerts: () => {
+        hasAlerts: boolean;
+        alerts: { type: string; message: string; severity: 'warning' | 'critical' }[];
+    };
     getPoopHistoryData: () => { date: string; count: number }[];
     getGutHealthScore: () => {
         score: number;
@@ -595,6 +655,28 @@ export const useGutStore = create<GutStore>()(
                 return get().exerciseLogs.find(e => e.date === todayStr)?.minutes || 0;
             },
 
+            // Standalone symptom logs
+            symptomLogs: [],
+            addSymptomLog: (log) => set((state) => ({
+                symptomLogs: [{ ...log, id: generateId() }, ...state.symptomLogs],
+            })),
+            deleteSymptomLog: (id) => set((state) => ({
+                symptomLogs: state.symptomLogs.filter((s) => s.id !== id),
+            })),
+
+            // Trigger feedback
+            triggerFeedback: [],
+            addTriggerFeedback: (feedback) => set((state) => {
+                // Remove existing feedback for this food
+                const filtered = state.triggerFeedback.filter(f => f.foodName !== feedback.foodName);
+                return {
+                    triggerFeedback: [feedback, ...filtered],
+                };
+            }),
+            getTriggerFeedback: (foodName) => {
+                return get().triggerFeedback.find(f => f.foodName === foodName);
+            },
+
             // Daily tasks (dynamically generated)
             dailyTasks: [],
             getDynamicTasks: () => createDailyTasks({
@@ -824,6 +906,240 @@ export const useGutStore = create<GutStore>()(
                     .slice(0, 5);
             },
 
+            // Enhanced trigger detection with confidence and frequency
+            getEnhancedTriggers: () => {
+                const { gutMoments, meals, triggerFeedback } = get();
+
+                const foodStats: {
+                    [food: string]: {
+                        total: number;
+                        symptomOccurrences: number;
+                        latencies: number[]; // hours
+                        associatedSymptoms: Set<string>;
+                    }
+                } = {};
+
+                meals.forEach(meal => {
+                    const mealTime = new Date(meal.timestamp).getTime();
+
+                    meal.foods.forEach(food => {
+                        const normalizedFood = food.toLowerCase().trim();
+                        if (!foodStats[normalizedFood]) {
+                            foodStats[normalizedFood] = {
+                                total: 0,
+                                symptomOccurrences: 0,
+                                latencies: [],
+                                associatedSymptoms: new Set()
+                            };
+                        }
+                        foodStats[normalizedFood].total++;
+
+                        const symptomWindows = gutMoments.filter(moment => {
+                            const momentTime = new Date(moment.timestamp).getTime();
+                            const diffHours = (momentTime - mealTime) / (1000 * 60 * 60);
+
+                            const hasManualSymptoms = Object.values(moment.symptoms).some(v => v);
+                            const isUnhealthyStool = moment.bristolType && [1, 2, 6, 7].includes(moment.bristolType);
+                            const hasRedFlags = moment.tags?.some(t => ['blood', 'mucus'].includes(t));
+
+                            return (hasManualSymptoms || isUnhealthyStool || hasRedFlags) && diffHours >= 2 && diffHours <= 24;
+                        });
+
+                        if (symptomWindows.length > 0) {
+                            foodStats[normalizedFood].symptomOccurrences++;
+
+                            symptomWindows.forEach(moment => {
+                                const momentTime = new Date(moment.timestamp).getTime();
+                                const diffHours = (momentTime - mealTime) / (1000 * 60 * 60);
+                                foodStats[normalizedFood].latencies.push(diffHours);
+
+                                Object.entries(moment.symptoms).forEach(([name, active]) => {
+                                    if (active) foodStats[normalizedFood].associatedSymptoms.add(name);
+                                });
+
+                                if (moment.bristolType === 1 || moment.bristolType === 2) foodStats[normalizedFood].associatedSymptoms.add('constipation');
+                                if (moment.bristolType === 6 || moment.bristolType === 7) foodStats[normalizedFood].associatedSymptoms.add('diarrhea');
+                                if (moment.tags?.includes('blood')) foodStats[normalizedFood].associatedSymptoms.add('blood in stool');
+                                if (moment.tags?.includes('mucus')) foodStats[normalizedFood].associatedSymptoms.add('mucus in stool');
+                            });
+                        }
+                    });
+                });
+
+                return Object.entries(foodStats)
+                    .map(([food, stats]) => {
+                        const capitalizedFood = food.charAt(0).toUpperCase() + food.slice(1);
+                        const occurrences = stats.total;
+                        const symptomOccurrences = stats.symptomOccurrences;
+
+                        // Confidence based on occurrences
+                        let confidence: 'Low' | 'Medium' | 'High' = 'Low';
+                        if (occurrences >= 10) confidence = 'High';
+                        else if (occurrences >= 5) confidence = 'Medium';
+
+                        // Frequency text
+                        const frequencyText = `${symptomOccurrences} out of ${occurrences} times`;
+
+                        // Average latency
+                        const avgLatencyHours = stats.latencies.length > 0
+                            ? stats.latencies.reduce((a, b) => a + b, 0) / stats.latencies.length
+                            : 0;
+
+                        // User feedback
+                        const feedback = triggerFeedback.find(f => f.foodName.toLowerCase() === food);
+
+                        return {
+                            food: capitalizedFood,
+                            occurrences,
+                            symptomOccurrences,
+                            confidence,
+                            frequencyText,
+                            avgLatencyHours: Math.round(avgLatencyHours * 10) / 10,
+                            symptoms: Array.from(stats.associatedSymptoms),
+                            userFeedback: feedback?.userConfirmed ?? null
+                        };
+                    })
+                    .filter(item => item.occurrences >= 5 && item.symptomOccurrences >= 2)
+                    .sort((a, b) => (b.symptomOccurrences / b.occurrences) - (a.symptomOccurrences / a.occurrences))
+                    .slice(0, 5);
+            },
+
+            // Combination trigger detection
+            getCombinationTriggers: () => {
+                const { gutMoments, meals } = get();
+
+                const comboStats: {
+                    [combo: string]: {
+                        foods: string[];
+                        total: number;
+                        symptomOccurrences: number;
+                    }
+                } = {};
+
+                meals.forEach(meal => {
+                    if (meal.foods.length < 2) return; // Need at least 2 foods for combination
+
+                    const mealTime = new Date(meal.timestamp).getTime();
+
+                    // Create combinations of 2 foods
+                    for (let i = 0; i < meal.foods.length; i++) {
+                        for (let j = i + 1; j < meal.foods.length; j++) {
+                            const foods = [meal.foods[i], meal.foods[j]].map(f => f.toLowerCase().trim()).sort();
+                            const comboKey = foods.join(' + ');
+
+                            if (!comboStats[comboKey]) {
+                                comboStats[comboKey] = {
+                                    foods: foods.map(f => f.charAt(0).toUpperCase() + f.slice(1)),
+                                    total: 0,
+                                    symptomOccurrences: 0
+                                };
+                            }
+                            comboStats[comboKey].total++;
+
+                            const symptomWindows = gutMoments.filter(moment => {
+                                const momentTime = new Date(moment.timestamp).getTime();
+                                const diffHours = (momentTime - mealTime) / (1000 * 60 * 60);
+
+                                const hasManualSymptoms = Object.values(moment.symptoms).some(v => v);
+                                const isUnhealthyStool = moment.bristolType && [1, 2, 6, 7].includes(moment.bristolType);
+
+                                return (hasManualSymptoms || isUnhealthyStool) && diffHours >= 2 && diffHours <= 24;
+                            });
+
+                            if (symptomWindows.length > 0) {
+                                comboStats[comboKey].symptomOccurrences++;
+                            }
+                        }
+                    }
+                });
+
+                return Object.values(comboStats)
+                    .map(stats => {
+                        let confidence: 'Low' | 'Medium' | 'High' = 'Low';
+                        if (stats.total >= 10) confidence = 'High';
+                        else if (stats.total >= 5) confidence = 'Medium';
+
+                        return {
+                            foods: stats.foods,
+                            occurrences: stats.total,
+                            symptomOccurrences: stats.symptomOccurrences,
+                            confidence,
+                            frequencyText: `${stats.symptomOccurrences} out of ${stats.total} times`
+                        };
+                    })
+                    .filter(item => item.occurrences >= 5 && item.symptomOccurrences >= 3)
+                    .sort((a, b) => (b.symptomOccurrences / b.occurrences) - (a.symptomOccurrences / a.occurrences))
+                    .slice(0, 3);
+            },
+
+            // Medical alert system
+            checkMedicalAlerts: () => {
+                const { gutMoments } = get();
+                const alerts: { type: string; message: string; severity: 'warning' | 'critical' }[] = [];
+
+                // Check for blood in stool
+                const recentBlood = gutMoments.filter(m => {
+                    const daysSince = (Date.now() - new Date(m.timestamp).getTime()) / (1000 * 60 * 60 * 24);
+                    return daysSince <= 7 && m.tags?.includes('blood');
+                });
+
+                if (recentBlood.length > 0) {
+                    alerts.push({
+                        type: 'blood',
+                        message: 'Blood in stool detected in the last 7 days. This may indicate a medical condition. Please consult a healthcare provider.',
+                        severity: 'critical'
+                    });
+                }
+
+                // Check for persistent mucus
+                const recentMucus = gutMoments.filter(m => {
+                    const daysSince = (Date.now() - new Date(m.timestamp).getTime()) / (1000 * 60 * 60 * 24);
+                    return daysSince <= 14 && m.tags?.includes('mucus');
+                });
+
+                if (recentMucus.length >= 5) {
+                    alerts.push({
+                        type: 'mucus',
+                        message: 'Frequent mucus in stool detected. Consider consulting a healthcare provider.',
+                        severity: 'warning'
+                    });
+                }
+
+                // Check for severe constipation (no BM in 3+ days)
+                const last3Days = gutMoments.filter(m => {
+                    const daysSince = (Date.now() - new Date(m.timestamp).getTime()) / (1000 * 60 * 60 * 24);
+                    return daysSince <= 3;
+                });
+
+                if (last3Days.length === 0 && gutMoments.length > 0) {
+                    alerts.push({
+                        type: 'constipation',
+                        message: 'No bowel movements in 3+ days. If this persists or causes discomfort, consult a healthcare provider.',
+                        severity: 'warning'
+                    });
+                }
+
+                // Check for persistent diarrhea (Bristol 6-7 for 3+ days)
+                const last7Days = gutMoments.filter(m => {
+                    const daysSince = (Date.now() - new Date(m.timestamp).getTime()) / (1000 * 60 * 60 * 24);
+                    return daysSince <= 7;
+                });
+
+                const diarrheaDays = last7Days.filter(m => m.bristolType && [6, 7].includes(m.bristolType)).length;
+                if (diarrheaDays >= 5) {
+                    alerts.push({
+                        type: 'diarrhea',
+                        message: 'Persistent diarrhea detected. Stay hydrated and consider consulting a healthcare provider if it continues.',
+                        severity: 'warning'
+                    });
+                }
+
+                return {
+                    hasAlerts: alerts.length > 0,
+                    alerts
+                };
+            },
+
             getPoopHistoryData: () => {
                 const moments = get().gutMoments;
                 const last7Days: { [date: string]: number } = {};
@@ -883,10 +1199,10 @@ export const useGutStore = create<GutStore>()(
                     // Create file name with timestamp
                     const timestamp = new Date().toISOString().split('T')[0];
                     const fileName = `gut-health-report-${timestamp}.json`;
-                    
+
                     // Use the new File API from expo-file-system
                     const file = new FileSystem.File(FileSystem.Paths.document, fileName);
-                    
+
                     // Write the report to the file
                     await file.write(JSON.stringify(report, null, 2));
 
@@ -926,6 +1242,8 @@ export const useGutStore = create<GutStore>()(
                 fiberLogs: state.fiberLogs,
                 probioticLogs: state.probioticLogs,
                 exerciseLogs: state.exerciseLogs,
+                symptomLogs: state.symptomLogs,
+                triggerFeedback: state.triggerFeedback,
                 notificationSettings: state.notificationSettings,
             }),
             onRehydrateStorage: () => (state) => {
@@ -939,6 +1257,18 @@ export const useGutStore = create<GutStore>()(
                         ...m,
                         timestamp: new Date(m.timestamp),
                     }));
+                    if (state.symptomLogs) {
+                        state.symptomLogs = state.symptomLogs.map(s => ({
+                            ...s,
+                            timestamp: new Date(s.timestamp),
+                        }));
+                    }
+                    if (state.triggerFeedback) {
+                        state.triggerFeedback = state.triggerFeedback.map(f => ({
+                            ...f,
+                            timestamp: new Date(f.timestamp),
+                        }));
+                    }
                 }
             },
         }
