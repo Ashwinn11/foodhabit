@@ -10,7 +10,6 @@ import { colors } from './src/theme';
 import { useAuth } from './src/hooks/useAuth';
 import { GlobalModal } from './src/components/Modal/GlobalModal';
 import { GlobalToast } from './src/components/Toast/GlobalToast';
-import { useOnboardingStore } from './src/store/onboardingStore';
 import { RevenueCatService } from './src/services/revenueCatService';
 
 import { useFonts, Chewy_400Regular } from '@expo-google-fonts/chewy';
@@ -36,7 +35,6 @@ const GutBuddyTheme = {
 
 function AppContent() {
   const { session, loading } = useAuth();
-  const { isOnboardingComplete } = useOnboardingStore();
   
   const [fontsLoaded] = useFonts({
     'Chewy': Chewy_400Regular,
@@ -47,6 +45,9 @@ function AppContent() {
   });
 
   const [isReady, setIsReady] = React.useState(false);
+  const [dataLoaded, setDataLoaded] = React.useState(false);
+  const [onboardingComplete, setOnboardingComplete] = React.useState(false);
+  const [refreshKey, setRefreshKey] = React.useState(0);
 
   React.useEffect(() => {
     RevenueCatService.initialize();
@@ -55,6 +56,20 @@ function AppContent() {
     import('./src/services/syncService').then(({ syncService }) => {
       syncService.initialize();
     });
+    
+    // Listen for custom event to refresh onboarding status
+    const handleRefresh = () => {
+      console.log('🔄 Refreshing onboarding status...');
+      setRefreshKey(prev => prev + 1);
+    };
+    
+    // @ts-ignore - using global event emitter
+    global.refreshOnboardingStatus = handleRefresh;
+    
+    return () => {
+      // @ts-ignore
+      delete global.refreshOnboardingStatus;
+    };
   }, []);
 
   // Sync RevenueCat session
@@ -65,33 +80,44 @@ function AppContent() {
     const prevUserId = prevSessionRef.current;
     
     if (currentUserId && currentUserId !== prevUserId) {
-      // User logged in or switched accounts
       RevenueCatService.logIn(currentUserId);
       prevSessionRef.current = currentUserId;
     } else if (!currentUserId && prevUserId && !loading) {
-      // User logged out (only if they were previously logged in)
       RevenueCatService.logOut();
       prevSessionRef.current = null;
     }
   }, [session, loading]);
 
-  const [dataLoaded, setDataLoaded] = React.useState(false);
-
+  // Load user data and onboarding status from database
   React.useEffect(() => {
     const loadData = async () => {
-      if (!loading && fontsLoaded) {
-        // Load user data from database if logged in
-        if (session?.user?.id) {
-          const { loadUserDataFromDatabase } = await import('./src/utils/loadUserData');
-          await loadUserDataFromDatabase();
-        }
+      if (!loading && fontsLoaded && session?.user?.id) {
+        const { supabase } = await import('./src/config/supabase');
+        
+        // Check onboarding status from database
+        const { data: userProfile } = await supabase
+          .from('users')
+          .select('onboarding_completed')
+          .eq('id', session.user.id)
+          .single();
+        
+        console.log('📊 Onboarding status from DB:', userProfile?.onboarding_completed);
+        setOnboardingComplete(userProfile?.onboarding_completed || false);
+        
+        // Load other user data
+        const { loadUserDataFromDatabase } = await import('./src/utils/loadUserData');
+        await loadUserDataFromDatabase();
+        
         setDataLoaded(true);
+        setIsReady(true);
+        ExpoSplashScreen.hideAsync();
+      } else if (!loading && fontsLoaded && !session) {
         setIsReady(true);
         ExpoSplashScreen.hideAsync();
       }
     };
     loadData();
-  }, [loading, fontsLoaded, session]);
+  }, [loading, fontsLoaded, session?.user?.id, refreshKey]); // Re-run when refreshKey changes
 
   if (loading || !isReady || (session && !dataLoaded)) {
     return (
@@ -101,18 +127,17 @@ function AppContent() {
     );
   }
 
-
   // Show auth screen if not logged in
   if (!session) {
     return <AuthNavigator />;
   }
 
-  // Show onboarding if not complete
-  if (!isOnboardingComplete) {
+  // Show onboarding if not complete (database is source of truth)
+  if (!onboardingComplete) {
     return <OnboardingNavigator />;
   }
 
-  // Show main app if logged in and onboarding complete
+  // Show main app
   return <AppNavigator />;
 }
 

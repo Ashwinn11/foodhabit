@@ -4,10 +4,12 @@ import {
   StyleSheet,
   Platform,
   Pressable,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Animated, {
   FadeInDown,
+  FadeIn,
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
@@ -15,9 +17,60 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useAuth } from '../hooks/useAuth';
-import { colors, spacing } from '../theme';
+import { colors, spacing } from '../theme/theme';
 import { useUIStore } from '../store/useUIStore';
-import { GutAvatar, ScreenWrapper, IconContainer, Typography, Card, Button } from '../components';
+import { GutAvatar, ScreenWrapper, IconContainer, Typography, Button } from '../components';
+
+const { width, height } = Dimensions.get('window');
+
+const FeatureItem = ({ icon, text, color, delay }: { icon: string, text: string, color: string, delay: number }) => (
+  <Animated.View 
+    entering={FadeInDown.delay(delay).springify()}
+    style={styles.featureItem}
+  >
+    <View style={[styles.featureIcon, { backgroundColor: color + '20' }]}>
+      <IconContainer 
+        name={icon as any} 
+        size={32} 
+        iconSize={18} 
+        color={color} 
+        backgroundColor="transparent" 
+        borderWidth={0} 
+        shadow={false} 
+      />
+    </View>
+    <Typography variant="body" style={{ fontSize: 13, fontWeight: '500' }}>{text}</Typography>
+  </Animated.View>
+);
+
+const FloatingShape = ({ color, size, top, left, delay }: { color: string, size: number, top: number, left: number, delay: number }) => {
+  const offset = useSharedValue(0);
+  
+  React.useEffect(() => {
+    offset.value = withRepeat(
+      withSequence(
+        withTiming(15, { duration: 2500 + delay % 1000 }),
+        withTiming(0, { duration: 2500 + delay % 1000 })
+      ),
+      -1,
+      true
+    );
+  }, [offset, delay]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: offset.value }],
+  }));
+
+  return (
+    <Animated.View 
+      style={[
+        styles.floatingShape, 
+        { width: size, height: size, borderRadius: size / 2, backgroundColor: color + '15', top, left },
+        animatedStyle
+      ]}
+    />
+  );
+};
 
 export default function AuthScreen() {
   const navigation = useNavigation<any>();
@@ -26,20 +79,20 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState<'apple' | 'google' | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
   
-  const avatarWiggle = useSharedValue(0);
+  const avatarScale = useSharedValue(1);
   
   React.useEffect(() => {
     checkAppleAuth();
-    // Start wiggle animation
-    avatarWiggle.value = withRepeat(
+    // Subtle breathing animation
+    avatarScale.value = withRepeat(
       withSequence(
-        withTiming(-5, { duration: 1000 }),
-        withTiming(5, { duration: 1000 })
+        withTiming(1.05, { duration: 2000 }),
+        withTiming(1, { duration: 2000 })
       ),
       -1,
       true
     );
-  }, [avatarWiggle]);
+  }, [avatarScale]);
 
   const checkAppleAuth = async () => {
     const available = await isAppleAuthAvailable();
@@ -69,95 +122,90 @@ export default function AuthScreen() {
   };
   
   const avatarStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${avatarWiggle.value}deg` }],
+    transform: [{ scale: avatarScale.value }],
   }));
 
   return (
-    <ScreenWrapper style={styles.container}>
+    <ScreenWrapper style={styles.container} useGradient={true}>
+      {/* Background Decorations */}
+      <View style={StyleSheet.absoluteFill}>
+        <FloatingShape color={colors.blue} size={120} top={-20} left={-40} delay={0} />
+        <FloatingShape color={colors.pink} size={80} top={height * 0.2} left={width - 40} delay={1000} />
+        <FloatingShape color={colors.yellow} size={60} top={height * 0.6} left={-20} delay={2000} />
+      </View>
+      
       <View style={styles.content}>
-        {/* Header with mascot */}
+        {/* Header Section */}
         <Animated.View 
-          entering={FadeInDown.delay(100).springify()}
+          entering={FadeIn.duration(1000)}
           style={styles.header}
         >
-          <Animated.View style={avatarStyle}>
-            <GutAvatar score={100} size={120} showBadge badgeIcon="hand-right" />
+          <Animated.View style={[avatarStyle, styles.avatarContainer]}>
+            <GutAvatar score={100} size={160} showBadge badgeIcon="thumbs-up" badgeText="Very Happy!" ringColor={colors.blue + '40'} />
           </Animated.View>
           
-          <Typography variant="h1" style={{ marginTop: spacing.xl }}>Gut Buddy</Typography>
-          <Typography variant="body" align="center" color={colors.black + '99'}>
-            Your friendly gut health companion
-          </Typography>
+          <Animated.View entering={FadeInDown.delay(300).springify()}>
+            <Typography variant="h1" align="center" style={styles.title}>Gut Buddy</Typography>
+            <Typography variant="body" align="center" color={colors.black + '99'} style={styles.subtitle}>
+              Your journey to a happier gut starts here.
+            </Typography>
+          </Animated.View>
         </Animated.View>
         
-        {/* Welcome Card */}
-        <Animated.View 
-          entering={FadeInDown.delay(400).springify()}
-        >
-          <Card
-            variant="white"
-            style={styles.welcomeCard}
-            padding="xl"
-          >
-            <GutAvatar 
-              score={100} 
-              size={48}
-              showBadge={false}
-            />
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-              <Typography variant="h3">Let's track your poops!</Typography>
-              <IconContainer name="water" size={24} iconSize={16} color={colors.pink} backgroundColor="transparent" borderWidth={0} shadow={false} />
-            </View>
-            <Typography variant="body" align="center" color={colors.black + '99'}>
-              Keep tabs on your gut health and feel amazing
-            </Typography>
-          </Card>
-        </Animated.View>
+        {/* Features Section */}
+        <View style={styles.featuresRow}>
+          <FeatureItem icon="restaurant" text="Track Meals" color={colors.blue} delay={500} />
+          <FeatureItem icon="stats-chart" text="Deep Insights" color={colors.pink} delay={600} />
+          <FeatureItem icon="leaf" text="Eat Better" color={colors.yellow} delay={700} />
+        </View>
 
         {/* Auth Buttons */}
         <Animated.View 
-          entering={FadeInDown.delay(300).springify()}
-          style={styles.authButtons}
+          entering={FadeInDown.delay(800).springify()}
+          style={styles.authContainer}
         >
-          {appleAvailable && Platform.OS === 'ios' && (
-            <Button
-              title="Continue with Apple"
-              onPress={handleAppleSignIn}
-              disabled={loading !== null}
-              loading={loading === 'apple'}
-              icon="logo-apple"
-              variant="primary"
-              color={colors.black}
-              size="lg"
-            />
-          )}
+          <Typography variant="bodyXS" color={colors.black + '66'} align="center" style={{ marginBottom: spacing.md }}>
+            Secure sign in with your favorite account
+          </Typography>
+          
+          <View style={styles.buttonWrapper}>
+            {appleAvailable && Platform.OS === 'ios' && (
+              <Button
+                title="Continue with Apple"
+                onPress={handleAppleSignIn}
+                disabled={loading !== null}
+                loading={loading === 'apple'}
+                icon="logo-apple"
+                variant="primary"
+                color={colors.black}
+                size="lg"
+                style={styles.authButton}
+              />
+            )}
 
-          <Button
-            title="Continue with Google"
-            onPress={handleGoogleSignIn}
-            disabled={loading !== null}
-            loading={loading === 'google'}
-            icon="logo-google"
-            variant="white"
-            size="lg"
-          />
+            <Button
+              title="Continue with Google"
+              onPress={handleGoogleSignIn}
+              disabled={loading !== null}
+              loading={loading === 'google'}
+              icon="logo-google"
+              variant="white"
+              size="lg"
+              style={styles.authButton}
+            />
+          </View>
         </Animated.View>
         
         {/* Footer */}
         <Animated.View 
-          entering={FadeInDown.delay(400).springify()}
+          entering={FadeIn.delay(1200)}
           style={styles.footer}
         >
           <Pressable onPress={() => navigation.navigate('PrivacyPolicy')}>
             <Typography variant="bodyXS" color={colors.black + '66'} align="center">
-              By continuing, you agree to our <Typography variant="bodyXS" color={colors.pink}>Privacy Policy</Typography>
+              By joining, you agree to our <Typography variant="bodyXS" color={colors.pink} style={{ fontWeight: 'bold' }}>Terms & Privacy Policy</Typography>
             </Typography>
           </Pressable>
-          <View style={styles.footerIcons}>
-            <IconContainer name="heart" size={28} iconSize={20} color={colors.pink} backgroundColor="transparent" borderWidth={0} shadow={false} />
-            <IconContainer name="happy" size={28} iconSize={20} color={colors.black} backgroundColor={colors.yellow} borderWidth={0} shadow={false} />
-            <IconContainer name="leaf" size={28} iconSize={20} color={colors.blue} backgroundColor="transparent" borderWidth={0} shadow={false} />
-          </View>
         </Animated.View>
       </View>
     </ScreenWrapper>
@@ -167,33 +215,64 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
+    paddingTop: height * 0.08,
+    paddingBottom: spacing['4xl'],
   },
   header: {
     alignItems: 'center',
-    marginBottom: spacing['3xl'],
   },
-  welcomeCard: {
+  avatarContainer: {
+    marginBottom: spacing.xl,
+    zIndex: 10,
+  },
+  title: {
+    fontSize: 48,
+    lineHeight: 52,
+    marginBottom: spacing.xs,
+  },
+  subtitle: {
+    fontSize: 18,
+    maxWidth: 280,
+  },
+  featuresRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: spacing['2xl'],
+    paddingHorizontal: spacing.sm,
+  },
+  featureItem: {
     alignItems: 'center',
-    marginBottom: spacing['2xl'],
+    flex: 1,
+    gap: spacing.sm,
   },
-  welcomeIcon: {
-    marginBottom: spacing.md,
+  featureIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  authButtons: {
+  authContainer: {
+    width: '100%',
+  },
+  buttonWrapper: {
     gap: spacing.md,
+  },
+  authButton: {
+    height: 56,
+    borderRadius: 16,
   },
   footer: {
-    marginTop: spacing['3xl'],
     alignItems: 'center',
   },
-  footerIcons: {
-    flexDirection: 'row',
-    marginTop: spacing.md,
-    gap: spacing.md,
+  floatingShape: {
+    position: 'absolute',
+    zIndex: 0,
   },
 });

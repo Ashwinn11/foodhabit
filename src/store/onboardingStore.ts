@@ -29,7 +29,7 @@ export const useOnboardingStore = create<OnboardingState>()((set) => ({
     isOnboardingComplete: false,
     quizAnswers: {},
     currentStep: 0,
-    totalSteps: 9, // Quiz(3) + Results + Symptoms + HowAppHelps + Reviews + Features + CustomPlan + Paywall
+    totalSteps: 5, // Quiz(3) + Analysis + Social Proof + Custom Plan
 
     setQuizAnswer: (key, value) =>
         set((state) => ({
@@ -39,19 +39,35 @@ export const useOnboardingStore = create<OnboardingState>()((set) => ({
     setCurrentStep: (step: number) =>
         set({ currentStep: step }),
 
-    completeOnboarding: () => {
+    completeOnboarding: async () => {
+        console.log('📝 completeOnboarding called');
         const state = useOnboardingStore.getState();
         set({ isOnboardingComplete: true });
+        console.log('✅ Store updated: isOnboardingComplete = true');
 
-        // Sync onboarding data to Supabase
-        import('../services/syncService').then(({ syncService }) => {
-            syncService.queueSync({
-                type: 'onboarding',
-                data: state.quizAnswers,
-                priority: 'high',
-                timestamp: new Date(),
-            });
-        });
+        // Directly update database
+        const { supabase } = await import('../config/supabase');
+        const { data: { session } } = await supabase.auth.getSession();
+
+        console.log('👤 Session user ID:', session?.user?.id);
+
+        if (session?.user?.id) {
+            const { data, error } = await supabase
+                .from('users')
+                .update({
+                    onboarding_completed: true,
+                    onboarding_data: state.quizAnswers
+                })
+                .eq('id', session.user.id);
+
+            if (error) {
+                console.error('❌ Database update error:', error);
+            } else {
+                console.log('✅ Database updated successfully:', data);
+            }
+        } else {
+            console.warn('⚠️ No session found, skipping database update');
+        }
     },
 
     resetOnboarding: () =>

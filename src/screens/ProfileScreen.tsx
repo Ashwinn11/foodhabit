@@ -115,16 +115,7 @@ export const ProfileScreen: React.FC = () => {
   const handleDeleteAccount = () => {
     showConfirm(
       'Delete Account',
-      'This will permanently delete:\n\n• Your profile and preferences\n• All gut logs and history\n\nThis action cannot be undone.',
-      () => confirmDelete(),
-      'Delete'
-    );
-  };
-
-  const confirmDelete = () => {
-    showConfirm(
-      'Are you absolutely sure?',
-      'This action is irreversible. Are you sure you want to delete your account?',
+      'This will permanently delete:\n\n• Your profile and preferences\n• All gut logs and history\n\nThis action cannot be undone. Are you sure?',
       async () => {
         setIsDeleting(true);
         try {
@@ -140,7 +131,7 @@ export const ProfileScreen: React.FC = () => {
           setIsDeleting(false);
         }
       },
-      'Yes, Delete My Account'
+      'Delete My Account'
     );
   };
   

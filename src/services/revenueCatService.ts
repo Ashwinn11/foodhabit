@@ -89,7 +89,7 @@ export class RevenueCatService {
 
         try {
             const result = await PurchasesUI.presentPaywall({
-                displayCloseButton: true,
+                displayCloseButton: false, // Hard paywall - no close button
             });
             return result;
         } catch (e) {
@@ -98,12 +98,18 @@ export class RevenueCatService {
         }
     }
 
-    static async isPremium() {
+    static async isPremium(forceRefresh: boolean = false) {
         if (!this.checkAvailability() || !this.initialized) return false;
 
         try {
-            const customerInfo = await Purchases.getCustomerInfo();
-            return customerInfo.entitlements.active['Premium'] !== undefined;
+            // Force refresh to get latest purchase status, bypassing cache
+            const customerInfo = forceRefresh
+                ? await Purchases.getCustomerInfo({ fetchPolicy: 'FETCH_POLICY_FETCH_CURRENT' })
+                : await Purchases.getCustomerInfo();
+
+            const hasPremium = customerInfo.entitlements.active['Premium'] !== undefined;
+            console.log('🔐 Premium check:', { hasPremium, forceRefresh, activeEntitlements: Object.keys(customerInfo.entitlements.active) });
+            return hasPremium;
         } catch (e) {
             console.error('Error checking premium status', e);
             return false;

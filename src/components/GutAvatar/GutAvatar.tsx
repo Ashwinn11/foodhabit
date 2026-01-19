@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,9 +7,13 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { colors, shadows, radii, spacing, fonts } from '../../theme/theme';
+import { colors, shadows, radii, spacing } from '../../theme/theme';
 import { IconContainer } from '../IconContainer/IconContainer';
 import { Typography } from '../Typography';
+
+const MASCOT_HAPPY = require('../../../assets/mascot/mascot_happy.png');
+const MASCOT_NEUTRAL = require('../../../assets/mascot/mascot_neutral.png');
+const MASCOT_SAD = require('../../../assets/mascot/mascot_sad.png');
 
 interface GutAvatarProps {
   score?: number; // 0-100 health score
@@ -24,28 +28,19 @@ interface GutAvatarProps {
 
 // Map score to colors and expression
 const getAvatarAppearance = (score: number) => {
-  if (score >= 90) {
+  if (score >= 70) {
     return {
-      body: colors.blue,
-      cheeks: '#FF9B9B',
+      source: MASCOT_HAPPY,
       expression: 'happy' as const,
     };
-  } else if (score >= 70) {
+  } else if (score >= 40) {
     return {
-      body: colors.blue,
-      cheeks: '#FF9B9B',
-      expression: 'happy' as const,
-    };
-  } else if (score >= 50) {
-    return {
-      body: colors.yellow,
-      cheeks: '#FF9B9B',
+      source: MASCOT_NEUTRAL,
       expression: 'neutral' as const,
     };
   } else {
     return {
-      body: colors.pink,
-      cheeks: '#FF9B9B',
+      source: MASCOT_SAD,
       expression: 'sad' as const,
     };
   }
@@ -96,9 +91,6 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
     );
   };
   
-  const blobSize = size;
-  const eyeSize = size * 0.12;
-  const mouthWidth = size * 0.25;
   const ringSize = size + 8; // Ring is slightly larger
   
   return (
@@ -125,189 +117,22 @@ export const GutAvatar: React.FC<GutAvatarProps> = ({
       >
         <View
           style={[
-            styles.blobBody,
             {
-              width: blobSize,
-              height: blobSize,
-              backgroundColor: appearance.body,
-              borderRadius: blobSize / 2,
+              width: size,
+              height: size,
+              borderRadius: size / 2,
             },
             shadows.sm,
           ]}
         >
-          {/* Highlight/shine */}
-          <View
-            style={[
-              styles.shine,
-              {
-                width: blobSize * 0.25,
-                height: blobSize * 0.15,
-                top: blobSize * 0.15,
-                left: blobSize * 0.2,
-              },
-            ]}
+          <Image 
+            source={appearance.source}
+            style={{
+              width: size,
+              height: size,
+            }}
+            resizeMode="contain"
           />
-          
-          {/* Face container */}
-          <View style={styles.faceContainer}>
-            {/* Eyes */}
-            <View style={[styles.eyesRow, { marginBottom: size * 0.05 }]}>
-              <View
-                style={[
-                  styles.eye,
-                  {
-                    width: eyeSize,
-                    height: eyeSize * 1.2,
-                    borderRadius: eyeSize / 2,
-                    marginHorizontal: size * 0.06,
-                  },
-                ]}
-              >
-                {/* Pupil */}
-                <View
-                  style={[
-                    styles.pupil,
-                    {
-                      width: eyeSize * 0.5,
-                      height: eyeSize * 0.5,
-                      borderRadius: eyeSize * 0.25,
-                    },
-                  ]}
-                />
-                {/* Eye sparkle */}
-                <View
-                  style={[
-                    styles.eyeSparkle,
-                    {
-                      width: eyeSize * 0.25,
-                      height: eyeSize * 0.25,
-                      borderRadius: eyeSize * 0.125,
-                      top: eyeSize * 0.2,
-                      right: eyeSize * 0.15,
-                    },
-                  ]}
-                />
-              </View>
-              <View
-                style={[
-                  styles.eye,
-                  {
-                    width: eyeSize,
-                    height: eyeSize * 1.2,
-                    borderRadius: eyeSize / 2,
-                    marginHorizontal: size * 0.06,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.pupil,
-                    {
-                      width: eyeSize * 0.5,
-                      height: eyeSize * 0.5,
-                      borderRadius: eyeSize * 0.25,
-                    },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.eyeSparkle,
-                    {
-                      width: eyeSize * 0.25,
-                      height: eyeSize * 0.25,
-                      borderRadius: eyeSize * 0.125,
-                      top: eyeSize * 0.2,
-                      right: eyeSize * 0.15,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-            
-            {/* Cheeks */}
-            <View style={styles.cheeksRow}>
-              <View
-                style={[
-                  styles.cheek,
-                  {
-                    width: size * 0.15,
-                    height: size * 0.08,
-                    borderRadius: size * 0.04,
-                    backgroundColor: appearance.cheeks,
-                    marginHorizontal: size * 0.08,
-                  },
-                ]}
-              />
-              <View
-                style={[
-                  styles.cheek,
-                  {
-                    width: size * 0.15,
-                    height: size * 0.08,
-                    borderRadius: size * 0.04,
-                    backgroundColor: appearance.cheeks,
-                    marginHorizontal: size * 0.08,
-                  },
-                ]}
-              />
-            </View>
-            
-            {/* Mouth */}
-            <View
-              style={[
-                styles.mouth,
-                appearance.expression === 'happy'
-                  ? {
-                      width: mouthWidth,
-                      height: mouthWidth * 0.5,
-                      borderBottomLeftRadius: mouthWidth,
-                      borderBottomRightRadius: mouthWidth,
-                      borderTopWidth: 0,
-                    }
-                  : appearance.expression === 'neutral'
-                  ? {
-                      width: mouthWidth * 0.6,
-                      height: 3,
-                      borderRadius: 2,
-                    }
-                  : {
-                      width: mouthWidth * 0.5,
-                      height: mouthWidth * 0.3,
-                      borderRadius: mouthWidth * 0.25,
-                    },
-              ]}
-            />
-          </View>
-          
-          {/* Little arms/wiggles for happy expressions */}
-          {appearance.expression === 'happy' && (
-            <>
-              <View
-                style={[
-                  styles.arm,
-                  styles.leftArm,
-                  { 
-                    width: size * 0.15,
-                    height: size * 0.08,
-                    left: -size * 0.08,
-                    top: size * 0.4,
-                  },
-                ]}
-              />
-              <View
-                style={[
-                  styles.arm,
-                  styles.rightArm,
-                  {
-                    width: size * 0.15,
-                    height: size * 0.08,
-                    right: -size * 0.08,
-                    top: size * 0.4,
-                  },
-                ]}
-              />
-            </>
-          )}
         </View>
         
         {/* Status badge - Pill shape from reference */}
@@ -359,61 +184,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     zIndex: 0,
   },
-  blobBody: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'visible',
-    zIndex: 1,
-  },
-  shine: {
-    position: 'absolute',
-    backgroundColor: colors.white + '66', // 40% alpha equivalent
-    borderRadius: 20,
-    transform: [{ rotate: '-20deg' }],
-  },
-  faceContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eyesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  eye: {
-    backgroundColor: colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pupil: {
-    backgroundColor: colors.black,
-  },
-  eyeSparkle: {
-    position: 'absolute',
-    backgroundColor: colors.white,
-  },
-  cheeksRow: {
-    flexDirection: 'row',
-    marginVertical: 2,
-  },
-  cheek: {
-    opacity: 0.6,
-  },
-  mouth: {
-    backgroundColor: colors.black,
-    marginTop: 2,
-  },
-  arm: {
-    position: 'absolute',
-    backgroundColor: colors.black + '20',
-    borderRadius: 10,
-    zIndex: -1,
-  },
-  leftArm: {
-    transform: [{ rotate: '-30deg' }],
-  },
-  rightArm: {
-    transform: [{ rotate: '30deg' }],
-  },
   badge: {
     position: 'absolute',
     alignSelf: 'center',
@@ -436,11 +206,6 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     marginRight: 6,
-  },
-  badgeText: {
-    fontSize: 10,
-    color: colors.white,
-    fontFamily: fonts.bodyBold,
   },
 });
 

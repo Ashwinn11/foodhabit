@@ -3,9 +3,10 @@ import { StyleSheet, ScrollView, View } from 'react-native';
 import { OnboardingScreen } from '../../components/Onboarding';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useNavigation } from '@react-navigation/native';
-import { Typography, Card, IconContainer } from '../../components';
+import { Typography, Card, GutAvatar } from '../../components';
 import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 
 export const OnboardingResultsScreen = () => {
   const navigation = useNavigation<any>();
@@ -26,111 +27,89 @@ export const OnboardingResultsScreen = () => {
       currentStep={3}
       totalSteps={totalSteps}
       title="The Toll on Your Body"
-      subtitle="Your results show your gut is under significant stress."
+      subtitle="Your profile shows your gut is under significant stress."
       onNext={handleNext}
       onBack={handleBack}
       nextLabel="See the Solution"
     >
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Animated.View entering={FadeInDown.delay(200)}>
-          <Card variant="colored" color={colors.pink} style={styles.warningCard}>
-            <View style={styles.warningHeader}>
-              <IconContainer name="alert-circle" color={colors.pink} backgroundColor={colors.white} size={40} />
-              <Typography variant="bodyBold" color={colors.pink} style={{ marginLeft: spacing.md }}>
-                High Gut Irritation Detected
-              </Typography>
-            </View>
-            <Typography variant="bodySmall" color={colors.pink} style={styles.warningText}>
-              Your current profile suggests that stress and diet are causing micro-inflammation in your gut lining.
-            </Typography>
-          </Card>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
+        <Animated.View entering={FadeInDown.delay(100)} style={styles.mascotContainer}>
+          <GutAvatar score={30} size={120} ringColor={colors.pink + '20'} />
+          <Typography variant="bodyBold" color={colors.pink} style={{ marginTop: spacing.md }}>
+            High Inflammation Detected
+          </Typography>
         </Animated.View>
 
         <View style={styles.statsContainer}>
-          <ResultStat 
-            label="Internal Stress" 
-            value="High" 
-            color={colors.pink} 
-            description="Your digestive system is in 'fight or flight' mode."
-          />
-          <ResultStat 
-            label="Skin Barrier Risk" 
-            value="Elevated" 
-            color={colors.yellow} 
-            description="Gut inflammation is starting to surface on your skin."
-          />
-          <ResultStat 
-            label="Bacterial Balance" 
-            value="Critical" 
-            color={colors.pink} 
-            description="Good bacteria levels are below the optimal 80% threshold."
-          />
+          <ResultStat label="Internal Stress" value="High" color={colors.pink} percent="85%" />
+          <ResultStat label="Skin Barrier Risk" value="Elevated" color={colors.yellow} percent="65%" />
         </View>
 
-        <Typography variant="bodySmall" color={colors.black + '99'} align="center" style={styles.footerNote}>
-          Based on your {quizAnswers.stressLevel} stress profile and symptoms.
+        <Typography variant="bodyBold" style={{ marginBottom: spacing.md }}>
+          What's really happening:
         </Typography>
+
+        <View style={styles.symptomsContainer}>
+          <SymptomItem icon="flame" title="Gut Lining Irritation" color={colors.pink} />
+          <SymptomItem icon="thunderstorm" title="Neural Fog & Fatigue" color={colors.yellow} />
+          <SymptomItem icon="water" title="Microbiome Disbalance" color={colors.blue} />
+        </View>
+
+        <Card style={styles.warningCard}>
+          <Typography variant="caption" color={colors.black + '99'}>
+            ⚠️ Left untreated, these triggers can lead to chronic fatigue and long-term digestive sensitivity.
+          </Typography>
+        </Card>
       </ScrollView>
     </OnboardingScreen>
   );
 };
 
-const ResultStat = ({ label, value, color, description }: { label: string, value: string, color: string, description: string }) => (
+const ResultStat = ({ label, value, color, percent }: any) => (
   <View style={styles.statItem}>
     <View style={styles.statHeader}>
-      <Typography variant="bodyBold">{label}</Typography>
-      <Typography variant="bodyBold" color={color}>{value}</Typography>
+      <Typography variant="caption" color={colors.black + '99'}>{label}</Typography>
+      <Typography variant="caption" color={color}>{value}</Typography>
     </View>
     <View style={styles.progressBarBg}>
-      <View style={[styles.progressBarFill, { width: value === 'High' || value === 'Critical' ? '85%' : '60%', backgroundColor: color }]} />
+      <View style={[styles.progressBarFill, { width: percent, backgroundColor: color }]} />
     </View>
-    <Typography variant="caption" color={colors.black + '66'} style={{ marginTop: 4 }}>
-      {description}
-    </Typography>
+  </View>
+);
+
+const SymptomItem = ({ icon, title, color }: any) => (
+  <View style={styles.symptomItem}>
+    <View style={[styles.iconCircle, { backgroundColor: color + '20' }]}>
+      <Ionicons name={icon as any} size={20} color={color} />
+    </View>
+    <Typography variant="bodySmall" style={{ marginLeft: spacing.md }}>{title}</Typography>
+    <View style={styles.severityDots}>
+      <View style={[styles.dot, { backgroundColor: color }]} />
+      <View style={[styles.dot, { backgroundColor: color }]} />
+      <View style={[styles.dot, { backgroundColor: color + '30' }]} />
+    </View>
   </View>
 );
 
 const styles = StyleSheet.create({
-  warningCard: {
-    padding: spacing.md,
-    backgroundColor: colors.pink + '10',
-    marginBottom: spacing.xl,
+  mascotContainer: { alignItems: 'center', marginBottom: spacing.xl },
+  statsContainer: { gap: spacing.md, marginBottom: spacing.xl },
+  statItem: { backgroundColor: colors.white + '80', padding: spacing.md, borderRadius: radii.md },
+  statHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  progressBarBg: { height: 6, backgroundColor: colors.border + '40', borderRadius: 3, overflow: 'hidden' },
+  progressBarFill: { height: '100%', borderRadius: 3 },
+  symptomsContainer: { gap: spacing.sm, marginBottom: spacing.xl },
+  symptomItem: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: colors.white, 
+    padding: spacing.md, 
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border + '50'
   },
-  warningHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  warningText: {
-    marginTop: spacing.xs,
-    lineHeight: 18,
-  },
-  statsContainer: {
-    gap: spacing.lg,
-    marginBottom: spacing.xl,
-  },
-  statItem: {
-    backgroundColor: colors.white + '66',
-    padding: spacing.md,
-    borderRadius: radii.lg,
-  },
-  statHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xs,
-  },
-  progressBarBg: {
-    height: 8,
-    backgroundColor: colors.border + '40',
-    borderRadius: radii.full,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: radii.full,
-  },
-  footerNote: {
-    marginTop: spacing.md,
-    fontStyle: 'italic',
-  }
+  iconCircle: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  severityDots: { flexDirection: 'row', gap: 4, marginLeft: 'auto' },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  warningCard: { padding: spacing.md, backgroundColor: colors.yellow + '10', borderColor: colors.yellow + '30', borderWidth: 1 }
 });

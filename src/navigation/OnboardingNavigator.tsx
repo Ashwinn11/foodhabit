@@ -6,7 +6,6 @@ import {
   QuizLifestyleScreen,
   OnboardingResultsScreen,
   OnboardingValuePropScreen,
-  OnboardingFeaturesScreen,
   OnboardingCustomPlanScreen
 } from '../screens/Onboarding';
 import { colors } from '../theme';
@@ -27,7 +26,6 @@ export const OnboardingNavigator = () => {
       <Stack.Screen name="QuizLifestyle" component={QuizLifestyleScreen} />
       <Stack.Screen name="OnboardingResults" component={OnboardingResultsScreen} />
       <Stack.Screen name="OnboardingValueProp" component={OnboardingValuePropScreen} />
-      <Stack.Screen name="OnboardingFeatures" component={OnboardingFeaturesScreen} />
       <Stack.Screen name="OnboardingCustomPlan" component={OnboardingCustomPlanScreen} />
     </Stack.Navigator>
   );
