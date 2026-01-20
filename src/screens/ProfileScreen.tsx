@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, Pressable, ActivityIndicator, Linking } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -61,6 +61,25 @@ export const ProfileScreen: React.FC = () => {
   const { notificationSettings, setNotificationSettings } = useGutStore();
   const { user, signOut } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [checkingPremium, setCheckingPremium] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      checkPremiumStatus();
+    }, [])
+  );
+
+  const checkPremiumStatus = async () => {
+    const premium = await RevenueCatService.isPremium();
+    setIsPremium(premium);
+    setCheckingPremium(false);
+  };
+  
+  const handleGoPremium = async () => {
+    await RevenueCatService.presentPaywall();
+    checkPremiumStatus();
+  };
 
   const handleToggleDailyReminder = async () => {
     if (!notificationSettings.enabled) {
@@ -183,6 +202,89 @@ export const ProfileScreen: React.FC = () => {
         </Card>
         </Animated.View>
 
+        {/* Premium Banner or Status */}
+        {!checkingPremium && (
+          <Animated.View entering={FadeInDown.delay(250).springify()}>
+            {isPremium ? (
+               <View style={{ marginHorizontal: spacing.lg, marginBottom: spacing.xl, flexDirection: 'row', justifyContent: 'center' }}>
+                  <View style={styles.premiumBadgeLarge}>
+                    <IconContainer
+                      name="star"
+                      size={16}
+                      iconSize={10}
+                      color={colors.black}
+                      backgroundColor="transparent"
+                      borderWidth={0}
+                      shadow={false}
+                      style={{ marginRight: 4 }}
+                    />
+                    <Typography variant="bodySmall" style={styles.premiumBadgeTextLarge}>PREMIUM MEMBER</Typography>
+                  </View>
+               </View>
+            ) : (
+              <Pressable onPress={handleGoPremium} style={{ marginHorizontal: spacing.lg, marginBottom: spacing.xl }}>
+                <Card 
+                  variant="colored" 
+                  color={colors.yellow} 
+                  style={{ backgroundColor: colors.yellow + '40', borderWidth: 2 }}
+                  padding="lg"
+                  shadow="md"
+                >
+                  <View style={styles.premiumContent}>
+                    <IconContainer
+                      name="star"
+                      size={48}
+                      iconSize={24}
+                      color={colors.black}
+                      backgroundColor={colors.yellow}
+                      borderWidth={0}
+                      shadow={true}
+                      style={{ marginRight: spacing.md }}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Typography variant="h3">Go Premium</Typography>
+                      <Typography variant="bodySmall" color={colors.black + '80'}>
+                        Unlock unlimited history & insights
+                      </Typography>
+                    </View>
+                    <IconContainer
+                      name="arrow-forward"
+                      size={32}
+                      iconSize={16}
+                      color={colors.black}
+                      backgroundColor="transparent"
+                      borderWidth={0}
+                      shadow={false}
+                    />
+                  </View>
+                </Card>
+              </Pressable>
+            )}
+          </Animated.View>
+        )}
+
+        {/* Subscription Management */}
+        {isPremium && (
+          <Animated.View 
+            entering={FadeInDown.delay(275).springify()}
+            style={styles.accountSection}
+          >
+             <SettingsItem 
+              icon="card-outline" 
+              title="Manage Subscription" 
+              onPress={async () => {
+                const url = await RevenueCatService.manageSubscription();
+                if (url) {
+                  Linking.openURL(url);
+                } else {
+                  showAlert('Subscription', 'No managed subscription found. Please check your App Store settings.');
+                }
+              }}
+              color={colors.blue}
+            />
+          </Animated.View>
+        )}
+
         {/* Goals */}
         <Animated.View 
           entering={FadeInDown.delay(300).springify()}
@@ -253,19 +355,6 @@ export const ProfileScreen: React.FC = () => {
         >
           <Typography variant="caption" color={colors.black + '66'} style={styles.sectionTitle}>ACCOUNT</Typography>
           
-          <SettingsItem 
-            icon="card-outline" 
-            title="Manage Subscription" 
-            onPress={async () => {
-              const url = await RevenueCatService.manageSubscription();
-              if (url) {
-                Linking.openURL(url);
-              } else {
-                showAlert('Subscription', 'No managed subscription found. Please check your App Store settings.');
-              }
-            }}
-            color={colors.blue}
-          />
 
           <Card variant="white" style={styles.signOutButton} padding="md">
             <Pressable style={styles.settingsItemInner} onPress={handleSignOut}>
@@ -497,5 +586,39 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     color: colors.black + '40',
     marginTop: 4,
+  },
+  premiumContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  nameHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  premiumBadge: {
+    backgroundColor: colors.yellow,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radii.sm,
+    marginLeft: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.black + '10',
+  },
+  premiumBadgeLarge: {
+    backgroundColor: colors.yellow,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: radii.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.black + '15',
+    ...shadows.sm,
+  },
+  premiumBadgeTextLarge: {
+    fontSize: 12,
+    fontFamily: fonts.bodyBold,
+    color: colors.black,
+    letterSpacing: 1,
   },
 });

@@ -57,24 +57,49 @@ export const loadUserDataFromDatabase = async () => {
         } else if (gutLogs && gutLogs.length > 0) {
             // Convert database format to app format
             const gutStore = useGutStore.getState();
-            gutLogs.forEach((log) => {
-                gutStore.addGutMoment({
-                    timestamp: new Date(log.timestamp),
-                    bristolType: log.bristol_type,
-                    symptoms: log.symptoms || {
-                        bloating: false,
-                        gas: false,
-                        cramping: false,
-                        nausea: false,
-                    },
-                    tags: log.tags || [],
-                    urgency: log.urgency,
-                    painScore: log.pain_score,
-                    notes: log.notes,
-                });
-            });
+            const moments = gutLogs.map((log) => ({
+                id: log.id,
+                timestamp: new Date(log.timestamp),
+                bristolType: log.bristol_type,
+                symptoms: log.symptoms || {
+                    bloating: false,
+                    gas: false,
+                    cramping: false,
+                    nausea: false,
+                },
+                tags: log.tags || [],
+                urgency: log.urgency,
+                painScore: log.pain_score,
+                notes: log.notes,
+            }));
+            gutStore.setGutMoments(moments);
         }
 
+        // Load recent meals (last 30 days)
+        const { data: meals, error: mealsError } = await supabase
+            .from('meals')
+            .select('*')
+            .eq('user_id', userId)
+            .gte('timestamp', thirtyDaysAgo.toISOString())
+            .order('timestamp', { ascending: false })
+            .limit(100);
+
+        if (mealsError) {
+            console.error('Failed to load meals:', mealsError);
+        } else if (meals && meals.length > 0) {
+            const gutStore = useGutStore.getState();
+            const mealEntries = meals.map((meal) => ({
+                id: meal.id,
+                timestamp: new Date(meal.timestamp),
+                mealType: meal.meal_type,
+                name: meal.name,
+                foods: meal.foods || [],
+                portionSize: meal.portion_size,
+                description: meal.description,
+                foodTags: meal.food_tags || [],
+            }));
+            gutStore.setMeals(mealEntries);
+        }
         // Load trigger foods
         const { data: triggerFoods, error: triggersError } = await supabase
             .from('trigger_foods')
@@ -85,13 +110,58 @@ export const loadUserDataFromDatabase = async () => {
             console.error('Failed to load trigger foods:', triggersError);
         } else if (triggerFoods && triggerFoods.length > 0) {
             const gutStore = useGutStore.getState();
-            triggerFoods.forEach((trigger) => {
-                gutStore.addTriggerFeedback({
-                    foodName: trigger.food_name,
-                    userConfirmed: trigger.user_confirmed,
-                    timestamp: new Date(trigger.created_at),
-                });
+            const triggers = triggerFoods.map((trigger) => ({
+                foodName: trigger.food_name,
+                userConfirmed: trigger.user_confirmed,
+                timestamp: new Date(trigger.created_at),
+            }));
+            gutStore.setTriggerFeedback(triggers);
+        }
+
+        // Load health logs (water, fiber, probiotic, exercise) - last 30 days
+        const { data: healthLogs, error: healthLogsError } = await supabase
+            .from('health_logs')
+            .select('*')
+            .eq('user_id', userId)
+            .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
+            .order('date', { ascending: false });
+
+        if (healthLogsError) {
+            console.error('Failed to load health logs:', healthLogsError);
+        } else if (healthLogs && healthLogs.length > 0) {
+            const gutStore = useGutStore.getState();
+
+            // Group by log type
+            const waterLogs: { date: string; glasses: number }[] = [];
+            const fiberLogs: { date: string; grams: number }[] = [];
+            const probioticLogs: { date: string; servings: number }[] = [];
+            const exerciseLogs: { date: string; minutes: number }[] = [];
+
+            healthLogs.forEach((log) => {
+                const date = log.date;
+                const value = parseFloat(log.value);
+
+                switch (log.log_type) {
+                    case 'water':
+                        waterLogs.push({ date, glasses: value });
+                        break;
+                    case 'fiber':
+                        fiberLogs.push({ date, grams: value });
+                        break;
+                    case 'probiotic':
+                        probioticLogs.push({ date, servings: value });
+                        break;
+                    case 'exercise':
+                        exerciseLogs.push({ date, minutes: value });
+                        break;
+                }
             });
+
+            // Update store with loaded data
+            gutStore.waterLogs = waterLogs;
+            gutStore.fiberLogs = fiberLogs;
+            gutStore.probioticLogs = probioticLogs;
+            gutStore.exerciseLogs = exerciseLogs;
         }
 
         console.log('✅ User data loaded from database successfully');

@@ -54,7 +54,7 @@ export class RevenueCatService {
             if (Platform.OS === 'ios') {
                 await Purchases.configure({ apiKey: APPLE_API_KEY });
                 this.initialized = true;
-                console.log('RevenueCat initialized successfully for iOS');
+
             }
         } catch (e) {
             console.error('RevenueCat initialization failed', e);
@@ -65,7 +65,7 @@ export class RevenueCatService {
         if (!this.checkAvailability() || !this.initialized) return;
         try {
             await Purchases.logIn(userId);
-            console.log('RevenueCat user logged in:', userId);
+
         } catch (e) {
             console.error('RevenueCat login failed', e);
         }
@@ -75,7 +75,7 @@ export class RevenueCatService {
         if (!this.checkAvailability() || !this.initialized) return;
         try {
             await Purchases.logOut();
-            console.log('RevenueCat user logged out');
+
         } catch (e) {
             console.error('RevenueCat logout failed', e);
         }
@@ -107,8 +107,8 @@ export class RevenueCatService {
                 ? await Purchases.getCustomerInfo({ fetchPolicy: 'FETCH_POLICY_FETCH_CURRENT' })
                 : await Purchases.getCustomerInfo();
 
-            const hasPremium = customerInfo.entitlements.active['Premium'] !== undefined;
-            console.log('🔐 Premium check:', { hasPremium, forceRefresh, activeEntitlements: Object.keys(customerInfo.entitlements.active) });
+            const hasPremium = customerInfo.entitlements.active[REVENUECAT_PAYWALL_ID] !== undefined;
+
             return hasPremium;
         } catch (e) {
             console.error('Error checking premium status', e);

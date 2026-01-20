@@ -43,7 +43,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const last = new Date(lastTime);
     const diffHours = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60));
     
-    if (diffHours < 1) return { time: 'Just now', message: 'Fresh!', color: colors.blue, urgency: 'low' };
+    const diffMinutes = Math.floor((now.getTime() - last.getTime()) / (1000 * 60));
+    
+    if (diffMinutes < 1) return { time: 'Just now', message: 'Fresh!', color: colors.blue, urgency: 'low' };
+    if (diffMinutes < 60) return { time: `${diffMinutes}m ago`, message: 'Fresh!', color: colors.blue, urgency: 'low' };
     if (diffHours < 24) return { time: `${diffHours}h ago`, message: 'All good', color: colors.blue, urgency: 'low' };
     if (diffHours < 48) return { time: '1 day ago', message: 'Time soon?', color: colors.yellow, urgency: 'medium' };
     

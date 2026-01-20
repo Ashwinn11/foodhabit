@@ -2,6 +2,7 @@ import { Alert } from 'react-native';
 import { create } from 'zustand';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { supabase } from '../config/supabase';
 import { useUIStore } from './useUIStore';
 
 import { colors } from '../theme/theme';
@@ -91,12 +92,14 @@ interface GutStore {
     addGutMoment: (moment: Omit<GutMoment, 'id'>) => void;
     updateGutMoment: (id: string, moment: Partial<GutMoment>) => void;
     deleteGutMoment: (id: string) => void;
+    setGutMoments: (moments: GutMoment[]) => void;
 
     // Meals
     meals: MealEntry[];
     addMeal: (meal: Omit<MealEntry, 'id'>) => void;
     updateMeal: (id: string, meal: Partial<MealEntry>) => void;
     deleteMeal: (id: string) => void;
+    setMeals: (meals: MealEntry[]) => void;
 
     // Daily tasks
     dailyTasks: DailyTask[];
@@ -132,6 +135,7 @@ interface GutStore {
     // Trigger feedback
     triggerFeedback: TriggerFeedback[];
     addTriggerFeedback: (feedback: TriggerFeedback) => void;
+    setTriggerFeedback: (feedback: TriggerFeedback[]) => void;
     getTriggerFeedback: (foodName: string) => TriggerFeedback | undefined;
 
     // Computed
@@ -392,14 +396,28 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             });
         }
 
-        // Sync to Supabase if medically significant
-        import('../services/syncService').then(({ syncService }) => {
-            syncService.queueSync({
-                type: 'gut_log',
-                data: newMoment,
-                priority: 'medium',
-                timestamp: new Date(),
-            });
+        // Sync to Supabase
+        // Direct DB Write (Fire & Forget with Error Handling)
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user?.id) {
+                supabase.from('gut_logs').insert({
+                    user_id: session.user.id,
+                    timestamp: newMoment.timestamp,
+                    bristol_type: newMoment.bristolType,
+                    symptoms: newMoment.symptoms || {},
+                    tags: newMoment.tags || [],
+                    urgency: newMoment.urgency,
+                    pain_score: newMoment.painScore,
+                    notes: newMoment.notes,
+                }).then(({ error }) => {
+                    if (error) {
+                        console.error('DB Write Failed:', error);
+                        // Optional: Show toast or handle offline persistence here if prompted in future
+                    } else {
+
+                    }
+                });
+            }
         });
 
         return {
@@ -427,6 +445,14 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             },
         };
     }),
+    setGutMoments: (moments) => set((state) => ({
+        gutMoments: moments,
+        user: {
+            ...state.user,
+            streak: calculateCurrentStreak(moments),
+            totalLogs: moments.length,
+        },
+    })),
 
     quickLogPoop: (bristolType = 4) => set((state) => {
         const newMoment: GutMoment = {
@@ -461,6 +487,24 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             });
         }
 
+        // Direct DB Write
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user?.id) {
+                supabase.from('gut_logs').insert({
+                    user_id: session.user.id,
+                    timestamp: newMoment.timestamp,
+                    bristol_type: newMoment.bristolType,
+                    symptoms: newMoment.symptoms || {},
+                    tags: newMoment.tags || [],
+                    urgency: newMoment.urgency,
+                    pain_score: newMoment.painScore,
+                    notes: newMoment.notes,
+                }).then(({ error }) => {
+                    if (error) console.error('Quick Log DB Write Failed:', error);
+                });
+            }
+        });
+
         return {
             gutMoments: newMoments,
             user: {
@@ -491,8 +535,33 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             });
         }
 
+        const newMeal = { ...meal, id: generateId() };
+
+        // Sync to Supabase
+        // Direct DB Write
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user?.id) {
+                supabase.from('meals').insert({
+                    user_id: session.user.id,
+                    timestamp: newMeal.timestamp,
+                    meal_type: newMeal.mealType,
+                    name: newMeal.name,
+                    foods: newMeal.foods || [],
+                    portion_size: newMeal.portionSize,
+                    description: newMeal.description,
+                    food_tags: newMeal.foodTags || [],
+                }).then(({ error }) => {
+                    if (error) {
+                        console.error('Meal DB Write Failed:', error);
+                    } else {
+
+                    }
+                });
+            }
+        });
+
         return {
-            meals: [{ ...meal, id: generateId() }, ...state.meals],
+            meals: [newMeal, ...state.meals],
         };
     }),
     updateMeal: (id, meal) => set((state) => ({
@@ -503,6 +572,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
     deleteMeal: (id) => set((state) => ({
         meals: state.meals.filter((m) => m.id !== id),
     })),
+    setMeals: (meals) => set({ meals }),
 
     // Water tracking
     waterLogs: [],
@@ -528,6 +598,20 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             message,
             icon,
             iconColor: colors.blue
+        });
+
+        // Sync to Supabase
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user?.id) {
+                supabase.from('health_logs').upsert({
+                    user_id: session.user.id,
+                    date: todayStr,
+                    log_type: 'water',
+                    value: currentGlasses,
+                }, { onConflict: 'user_id,date,log_type' }).then(({ error }) => {
+                    if (error) console.error('Water log DB write failed:', error);
+                });
+            }
         });
 
         if (existingLog) {
@@ -575,6 +659,20 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             });
         }
 
+        // Sync to Supabase
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user?.id) {
+                supabase.from('health_logs').upsert({
+                    user_id: session.user.id,
+                    date: todayStr,
+                    log_type: 'fiber',
+                    value: currentFiber,
+                }, { onConflict: 'user_id,date,log_type' }).then(({ error }) => {
+                    if (error) console.error('Fiber log DB write failed:', error);
+                });
+            }
+        });
+
         if (existingLog) {
             return {
                 fiberLogs: state.fiberLogs.map(f =>
@@ -603,6 +701,20 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             message: currentProbiotics === 1 ? 'Probiotic logged!' : 'More probiotics logged!',
             icon: 'bug',
             iconColor: colors.blue
+        });
+
+        // Sync to Supabase
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user?.id) {
+                supabase.from('health_logs').upsert({
+                    user_id: session.user.id,
+                    date: todayStr,
+                    log_type: 'probiotic',
+                    value: currentProbiotics,
+                }, { onConflict: 'user_id,date,log_type' }).then(({ error }) => {
+                    if (error) console.error('Probiotic log DB write failed:', error);
+                });
+            }
         });
 
         if (existingLog) {
@@ -644,6 +756,20 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             });
         }
 
+        // Sync to Supabase
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user?.id) {
+                supabase.from('health_logs').upsert({
+                    user_id: session.user.id,
+                    date: todayStr,
+                    log_type: 'exercise',
+                    value: currentMinutes,
+                }, { onConflict: 'user_id,date,log_type' }).then(({ error }) => {
+                    if (error) console.error('Exercise log DB write failed:', error);
+                });
+            }
+        });
+
         if (existingLog) {
             return {
                 exerciseLogs: state.exerciseLogs.map(e =>
@@ -677,19 +803,25 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         const filtered = state.triggerFeedback.filter(f => f.foodName !== feedback.foodName);
 
         // Sync to Supabase when user provides feedback
-        import('../services/syncService').then(({ syncService }) => {
-            syncService.queueSync({
-                type: 'trigger_food',
-                data: feedback,
-                priority: 'high',
-                timestamp: new Date(),
-            });
+        // Direct DB Write
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user?.id) {
+                supabase.from('trigger_foods').upsert({
+                    user_id: session.user.id,
+                    food_name: feedback.foodName,
+                    user_confirmed: feedback.userConfirmed,
+                    updated_at: new Date().toISOString(),
+                }, { onConflict: 'user_id,food_name' }).then(({ error }) => {
+                    if (error) console.error('Feedback DB Write Failed:', error);
+                });
+            }
         });
 
         return {
             triggerFeedback: [feedback, ...filtered],
         };
     }),
+    setTriggerFeedback: (feedback) => set({ triggerFeedback: feedback }),
     getTriggerFeedback: (foodName) => {
         return get().triggerFeedback.find(f => f.foodName === foodName);
     },

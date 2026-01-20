@@ -8,6 +8,7 @@ import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeIn, Layout } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { RevenueCatService } from '../../services/revenueCatService';
+import * as StoreReview from 'expo-store-review';
 
 export const OnboardingCustomPlanScreen = () => {
   const navigation = useNavigation<any>();
@@ -15,36 +16,41 @@ export const OnboardingCustomPlanScreen = () => {
   const [isGenerating, setIsGenerating] = useState(true);
   
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       setIsGenerating(false);
+      
+      // Prompt for rating after "analysis" is complete
+      if (await StoreReview.hasAction()) {
+        StoreReview.requestReview();
+      }
     }, 2500);
     return () => clearTimeout(timer);
   }, []);
 
   const handleNext = async () => {
-    console.log('🚀 Starting hard paywall flow...');
+
     
     // Show paywall (hard paywall - must purchase to proceed)
     try {
-      console.log('📱 Presenting paywall...');
+
       const paywallResult = await RevenueCatService.presentPaywall();
-      console.log('✅ Paywall dismissed, result:', paywallResult);
+
       
       // Check if user actually purchased (force refresh to bypass cache)
       const isPremium = await RevenueCatService.isPremium(true);
-      console.log('🔍 Premium status after paywall:', isPremium);
+
       
       // Also check the paywall result for immediate feedback
       const purchasedOrRestored = paywallResult === 'PURCHASED' || paywallResult === 'RESTORED';
       
       if (!isPremium && !purchasedOrRestored) {
         // User closed paywall without purchasing - stay on onboarding screen
-        console.log('⚠️ User closed paywall without purchasing - staying on onboarding screen');
+
         return; // Exit early, don't complete onboarding
       }
       
       // User purchased! Proceed with onboarding completion
-      console.log('🎉 User purchased! Completing onboarding...');
+
       
     } catch (error) {
       console.error('❌ Paywall error:', error);
@@ -53,7 +59,7 @@ export const OnboardingCustomPlanScreen = () => {
     }
     
     // Update database - single source of truth
-    console.log('💾 Updating database...');
+
     const { supabase } = await import('../../config/supabase');
     const { data: { session } } = await supabase.auth.getSession();
     
@@ -69,7 +75,7 @@ export const OnboardingCustomPlanScreen = () => {
       if (error) {
         console.error('❌ Database update error:', error);
       } else {
-        console.log('✅ Database updated - onboarding complete!');
+
         // Trigger App.tsx to re-check onboarding status
         // @ts-ignore
         if (global.refreshOnboardingStatus) {

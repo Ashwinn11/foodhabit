@@ -81,7 +81,9 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
     const last = new Date(stats.lastPoopTime);
     const now = new Date();
     const diffHours = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60));
-    if (diffHours < 1) return 'Now!';
+    const diffMinutes = Math.floor((now.getTime() - last.getTime()) / (1000 * 60));
+    if (diffMinutes < 1) return 'Now!';
+    if (diffMinutes < 60) return `${diffMinutes}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     const diffDays = Math.floor(diffHours / 24);
     return `${diffDays}d ago`;
