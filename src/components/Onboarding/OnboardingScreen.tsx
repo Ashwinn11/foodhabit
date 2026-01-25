@@ -97,7 +97,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing['3xl'] }]}>
+      <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
         <Button
           title={nextLabel}
           onPress={onNext}

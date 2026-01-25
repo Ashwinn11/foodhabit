@@ -4,76 +4,102 @@
  */
 import { create } from 'zustand';
 
-export interface QuizAnswers {
-    healthGoal?: string;
-    gutIssues?: string[];
-    dietType?: string;
-    stressLevel?: string;
-    sleepQuality?: string;
+export interface GutCheckAnswers {
+    stoolConsistency?: number; // 0-2 (Hard, Normal, Loose) -> Mapped to score
+    symptomFrequency?: number; // 0-3 (Rarely...Daily)
+    bowelRegularity?: number;  // 0-2 (Regular...Unpredictable)
+    medicalFlags?: boolean;    // true/false
 }
 
 interface OnboardingState {
     isOnboardingComplete: boolean;
-    quizAnswers: QuizAnswers;
+    gutCheckAnswers: GutCheckAnswers;
+    calculatedScore: number;
     currentStep: number;
     totalSteps: number;
 
     // Actions
-    setQuizAnswer: <K extends keyof QuizAnswers>(key: K, value: QuizAnswers[K]) => void;
+    setGutCheckAnswer: <K extends keyof GutCheckAnswers>(key: K, value: GutCheckAnswers[K]) => void;
+    calculateScore: () => void;
     setCurrentStep: (step: number) => void;
-    completeOnboarding: () => void;
+    completeOnboarding: () => Promise<void>;
     resetOnboarding: () => void;
 }
 
-export const useOnboardingStore = create<OnboardingState>()((set) => ({
+export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
     isOnboardingComplete: false,
-    quizAnswers: {},
+    gutCheckAnswers: {},
+    calculatedScore: 0,
     currentStep: 0,
-    totalSteps: 5, // Quiz(3) + Analysis + Social Proof + Custom Plan
+    totalSteps: 6, // Hook + Quiz + Results + Solution + Reviews + Plan
 
-    setQuizAnswer: (key, value) =>
+    setGutCheckAnswer: (key, value) => {
         set((state) => ({
-            quizAnswers: { ...state.quizAnswers, [key]: value },
-        })),
+            gutCheckAnswers: { ...state.gutCheckAnswers, [key]: value },
+        }));
+    },
+
+    calculateScore: () => {
+        const { gutCheckAnswers } = get();
+        let totalScore = 0;
+
+        // 1. Bristol/Stool Consistency (40pts)
+        // Mapped from UI: 0=Hard(10), 1=SlightHard(25), 2=Normal(40), 3=Loose(25), 4=Watery(10)
+        const stoolScores = [10, 25, 40, 25, 10];
+        totalScore += stoolScores[gutCheckAnswers.stoolConsistency ?? 2] || 20;
+
+        // 2. Symptom Frequency (30pts)
+        // 0=Rarely(30), 1=1-2x(20), 2=3-5x(10), 3=Daily(0)
+        const symptomScores = [30, 20, 10, 0];
+        totalScore += symptomScores[gutCheckAnswers.symptomFrequency ?? 1] || 15;
+
+        // 3. Regularity (20pts)
+        // 0=Regular(20), 1=So-so(15), 2=Unpredictable(5)
+        const regularityScores = [20, 15, 5];
+        totalScore += regularityScores[gutCheckAnswers.bowelRegularity ?? 1] || 10;
+
+        // 4. Medical Flags (10pts)
+        // false=10, true=0
+        totalScore += gutCheckAnswers.medicalFlags ? 0 : 10;
+
+        set({ calculatedScore: totalScore });
+    },
 
     setCurrentStep: (step: number) =>
         set({ currentStep: step }),
 
     completeOnboarding: async () => {
         console.log('📝 completeOnboarding called');
-        const state = useOnboardingStore.getState();
+        const state = get();
         set({ isOnboardingComplete: true });
-        console.log('✅ Store updated: isOnboardingComplete = true');
 
         // Directly update database
         const { supabase } = await import('../config/supabase');
         const { data: { session } } = await supabase.auth.getSession();
 
-        console.log('👤 Session user ID:', session?.user?.id);
-
         if (session?.user?.id) {
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('users')
                 .update({
                     onboarding_completed: true,
-                    onboarding_data: state.quizAnswers
+                    onboarding_data: {
+                        answers: state.gutCheckAnswers,
+                        score: state.calculatedScore
+                    }
                 })
                 .eq('id', session.user.id);
 
             if (error) {
                 console.error('❌ Database update error:', error);
-            } else {
-                console.log('✅ Database updated successfully:', data);
             }
-        } else {
-            console.warn('⚠️ No session found, skipping database update');
         }
     },
 
     resetOnboarding: () =>
         set({
             isOnboardingComplete: false,
-            quizAnswers: {},
+            gutCheckAnswers: {},
+            calculatedScore: 0,
             currentStep: 0,
         }),
 }));

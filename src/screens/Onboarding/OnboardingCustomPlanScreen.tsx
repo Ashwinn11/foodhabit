@@ -12,14 +12,13 @@ import * as StoreReview from 'expo-store-review';
 
 export const OnboardingCustomPlanScreen = () => {
   const navigation = useNavigation<any>();
-  const { quizAnswers, totalSteps, setCurrentStep } = useOnboardingStore();
+  const { calculatedScore, totalSteps, setCurrentStep, completeOnboarding } = useOnboardingStore();
   const [isGenerating, setIsGenerating] = useState(true);
   
   useEffect(() => {
     const timer = setTimeout(async () => {
       setIsGenerating(false);
-      
-      // Prompt for rating after "analysis" is complete
+      // Prompt for review earlier? or later. Leaving as is from original.
       if (await StoreReview.hasAction()) {
         StoreReview.requestReview();
       }
@@ -28,67 +27,35 @@ export const OnboardingCustomPlanScreen = () => {
   }, []);
 
   const handleNext = async () => {
-
-    
-    // Show paywall (hard paywall - must purchase to proceed)
+    // Show paywall
     try {
-
       const paywallResult = await RevenueCatService.presentPaywall();
-
-      
-      // Check if user actually purchased (force refresh to bypass cache)
       const isPremium = await RevenueCatService.isPremium(true);
-
-      
-      // Also check the paywall result for immediate feedback
       const purchasedOrRestored = paywallResult === 'PURCHASED' || paywallResult === 'RESTORED';
       
       if (!isPremium && !purchasedOrRestored) {
-        // User closed paywall without purchasing - stay on onboarding screen
-
-        return; // Exit early, don't complete onboarding
+        return; // Exit early
       }
       
-      // User purchased! Proceed with onboarding completion
-
+      // User purchased!
+      await completeOnboarding();
       
+      // Trigger update
+      // @ts-ignore
+      if (global.refreshOnboardingStatus) {
+         // @ts-ignore
+         global.refreshOnboardingStatus();
+      }
+
     } catch (error) {
       console.error('❌ Paywall error:', error);
-      // On error, stay on onboarding screen
       return;
-    }
-    
-    // Update database - single source of truth
-
-    const { supabase } = await import('../../config/supabase');
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session?.user?.id) {
-      const { error } = await supabase
-        .from('users')
-        .update({ 
-          onboarding_completed: true,
-          onboarding_data: quizAnswers 
-        })
-        .eq('id', session.user.id);
-      
-      if (error) {
-        console.error('❌ Database update error:', error);
-      } else {
-
-        // Trigger App.tsx to re-check onboarding status
-        // @ts-ignore
-        if (global.refreshOnboardingStatus) {
-          // @ts-ignore
-          global.refreshOnboardingStatus();
-        }
-      }
     }
   };
 
   const handleBack = () => {
     navigation.goBack();
-    setCurrentStep(4);
+    setCurrentStep(2);
   };
 
   if (isGenerating) {
@@ -96,8 +63,8 @@ export const OnboardingCustomPlanScreen = () => {
       <ScreenWrapper useGradient={true}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.pink} />
-          <Typography variant="h3" style={styles.loadingText}>Creating your custom plan...</Typography>
-          <Typography variant="body" color={colors.black + '66'}>Analyzing your profile</Typography>
+          <Typography variant="h3" style={styles.loadingText}>Building Your Protocol...</Typography>
+          <Typography variant="body" color={colors.black + '66'}>Analyzing gut profile</Typography>
         </View>
       </ScreenWrapper>
     );
@@ -107,36 +74,61 @@ export const OnboardingCustomPlanScreen = () => {
     <OnboardingScreen
       currentStep={5}
       totalSteps={totalSteps}
-      title="Your Personal Plan"
-      subtitle="The 90-Day Gut Buddy Protocol tailored for you."
+      title="Your Personalized Protocol"
+      subtitle=""
       onNext={handleNext}
       onBack={handleBack}
-      nextLabel="Get Started"
+      nextLabel="Start My Transformation"
     >
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
         <Animated.View entering={FadeIn} layout={Layout}>
+          
+          <Card style={styles.summaryCard}>
+              <Typography variant="bodyBold" style={{marginBottom: spacing.xs}}>Based on your profile:</Typography>
+              <View style={styles.bulletItem}><Ionicons name="ellipse" size={8} color={colors.pink} /><Typography variant="bodySmall" style={{marginLeft: 8}}>Score: {calculatedScore} (Goal: 85+)</Typography></View>
+              <View style={styles.bulletItem}><Ionicons name="ellipse" size={8} color={colors.pink} /><Typography variant="bodySmall" style={{marginLeft: 8}}>Optimized for sensitive digestion</Typography></View>
+              <View style={styles.bulletItem}><Ionicons name="ellipse" size={8} color={colors.pink} /><Typography variant="bodySmall" style={{marginLeft: 8}}>Focus on symptom reduction</Typography></View>
+          </Card>
+
           <Card style={styles.planCard}>
             <View style={styles.planHeader}>
-              <View style={styles.iconCircle}>
-                <Ionicons name="document-text" size={32} color={colors.white} />
-              </View>
-              <View>
-                <Typography variant="bodyBold">Personal Protocol</Typography>
-                <Typography variant="caption" color={colors.pink}>90 Days to Success</Typography>
-              </View>
+                <Typography variant="h3" color={colors.black}>90-Day Gut Reset</Typography>
             </View>
             
             <View style={styles.divider} />
             
-            <TimelineItem title="Phase 1: Calm" duration="Week 1" desc="Reduce inflammation and soothe gut lining." color={colors.pink} />
-            <TimelineItem title="Phase 2: Restore" duration="Week 2-4" desc="Rebuild bacterial diversity with smart hydration." color={colors.yellow} />
-            <TimelineItem title="Phase 3: Heal" duration="Week 5-12" desc="Sustain clear skin and optimal energy." color={colors.blue} isLast />
+            <TimelineItem title="Phase 1: CALM" duration="Week 1-2" desc="Reduce inflammation & find triggers." color={colors.pink} />
+            <TimelineItem title="Phase 2: RESTORE" duration="Week 3-6" desc="Rebuild bacteria & optimize hydration." color={colors.yellow} />
+            <TimelineItem title="Phase 3: THRIVE" duration="Week 7-12" desc="Maintain progress & fine-tune diet." color={colors.blue} isLast />
           </Card>
 
-          <View style={styles.featuresList}>
-            <PlanItem icon="leaf-outline" text="Fiber-focused nutrition guide" />
-            <PlanItem icon="water-outline" text="Smart hydration tracking" />
-            <PlanItem icon="pulse-outline" text="Stress-management routines" />
+          <View style={styles.projectionContainer}>
+               <Typography variant="bodyBold" align="center" style={{marginBottom: spacing.sm}}>Expected Improvement</Typography>
+               <View style={styles.projectionBar}>
+                   <View style={{alignItems: 'center'}}>
+                       <Typography variant="h3" color={colors.pink}>{calculatedScore}</Typography>
+                       <Typography variant="caption">Today</Typography>
+                   </View>
+                   <Ionicons name="arrow-forward" size={24} color={colors.mediumGray} />
+                   <View style={{alignItems: 'center'}}>
+                       <Typography variant="h3" color={colors.green}>85+</Typography>
+                       <Typography variant="caption">12 Weeks</Typography>
+                   </View>
+               </View>
+          </View>
+
+          <View style={{ marginTop: spacing.xl }}>
+              <Typography variant="h3" style={{ marginBottom: spacing.md }}>Success Stories</Typography>
+              <ReviewItem 
+                name="Sarah M." 
+                text="The bloating is GONE! I used to look 6 months pregnant... now I can wear my jeans without pain." 
+                stars={5}
+              />
+              <ReviewItem 
+                name="Michael T." 
+                text="My skin cleared up in 3 weeks. I had no idea my acne was connected to my gut." 
+                stars={5}
+              />
           </View>
         </Animated.View>
       </ScrollView>
@@ -145,7 +137,7 @@ export const OnboardingCustomPlanScreen = () => {
 };
 
 const TimelineItem = ({ title, duration, desc, color, isLast }: any) => (
-  <View style={{ flexDirection: 'row', marginBottom: isLast ? 0 : spacing.md }}>
+  <View style={{ flexDirection: 'row', marginBottom: isLast ? 0 : spacing.lg }}>
     <View style={{ alignItems: 'center', width: 24, marginRight: spacing.md }}>
       <View style={[styles.timelineDot, { backgroundColor: color }]} />
       {!isLast && <View style={[styles.timelineLine, { backgroundColor: color + '30' }]} />}
@@ -157,11 +149,16 @@ const TimelineItem = ({ title, duration, desc, color, isLast }: any) => (
   </View>
 );
 
-const PlanItem = ({ icon, text }: { icon: any, text: string }) => (
-  <View style={styles.planItem}>
-    <Ionicons name={icon} size={20} color={colors.pink} />
-    <Typography variant="bodySmall" style={styles.planItemText}>{text}</Typography>
-  </View>
+const ReviewItem = ({ name, text, stars }: any) => (
+    <View style={{ padding: spacing.md, backgroundColor: colors.white, borderRadius: 24, marginBottom: spacing.md, shadowColor: colors.black, shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+            <Typography variant="bodyBold">{name}</Typography>
+            <View style={{ flexDirection: 'row' }}>
+                {[...Array(stars)].map((_, i) => <Ionicons key={i} name="star" size={14} color={colors.yellow} />)}
+            </View>
+        </View>
+        <Typography variant="caption" color={colors.black + '80'}>"{text}"</Typography>
+    </View>
 );
 
 const styles = StyleSheet.create({
@@ -169,64 +166,63 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'transparent',
     padding: spacing.xl,
   },
   loadingText: {
     marginTop: spacing.xl,
     marginBottom: spacing.xs,
   },
+  summaryCard: {
+      padding: spacing.md,
+      marginBottom: spacing.md,
+      backgroundColor: colors.background,
+  },
+  bulletItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
+  },
   planCard: {
     padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.white,
-    borderRadius: radii.xl,
+    borderRadius: 32,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    // Removed border
   },
   planHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: spacing.lg,
-  },
-  iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.pink,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
   },
   divider: {
     height: 1,
     backgroundColor: colors.border,
     marginBottom: spacing.lg,
   },
-  planItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-    backgroundColor: colors.white + '80',
-    padding: spacing.md,
-    borderRadius: radii.md,
-  },
-  planItemText: {
-    marginLeft: spacing.md,
-  },
   timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     zIndex: 1,
   },
   timelineLine: {
     position: 'absolute',
-    top: 12,
+    top: 14,
     width: 2,
-    bottom: -spacing.md,
-    left: 11,
+    bottom: -spacing.lg,
+    left: 6,
   },
-  featuresList: {
-    marginTop: spacing.lg,
+  projectionContainer: {
+      marginTop: spacing.xl,
+  },
+  projectionBar: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      backgroundColor: colors.white,
+      padding: spacing.md,
+      borderRadius: radii.lg,
   }
 });

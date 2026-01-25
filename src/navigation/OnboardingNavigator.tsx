@@ -1,12 +1,11 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { 
-  QuizHealthGoalScreen, 
-  QuizGutIssuesScreen, 
-  QuizLifestyleScreen,
+  OnboardingHookScreen,
+  OnboardingQuizScreen,
   OnboardingResultsScreen,
-  OnboardingValuePropScreen,
-  OnboardingCustomPlanScreen
+  OnboardingSolutionScreen,
+  OnboardingCustomPlanScreen,
 } from '../screens/Onboarding';
 import { colors } from '../theme';
 
@@ -21,11 +20,10 @@ export const OnboardingNavigator = () => {
         animation: 'slide_from_right',
       }}
     >
-      <Stack.Screen name="QuizHealthGoal" component={QuizHealthGoalScreen} />
-      <Stack.Screen name="QuizGutIssues" component={QuizGutIssuesScreen} />
-      <Stack.Screen name="QuizLifestyle" component={QuizLifestyleScreen} />
+      <Stack.Screen name="OnboardingHook" component={OnboardingHookScreen} />
+      <Stack.Screen name="OnboardingQuiz" component={OnboardingQuizScreen} />
       <Stack.Screen name="OnboardingResults" component={OnboardingResultsScreen} />
-      <Stack.Screen name="OnboardingValueProp" component={OnboardingValuePropScreen} />
+      <Stack.Screen name="OnboardingSolution" component={OnboardingSolutionScreen} />
       <Stack.Screen name="OnboardingCustomPlan" component={OnboardingCustomPlanScreen} />
     </Stack.Navigator>
   );
