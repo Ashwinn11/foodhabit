@@ -1,3 +1,4 @@
+import { supabase } from '../config/supabase';
 import { FODMAP_FOODS, FODMAPCategory, FODMAPLevel, FODMAPTag } from '../types/fodmap';
 
 /**
@@ -5,7 +6,7 @@ import { FODMAP_FOODS, FODMAPCategory, FODMAPLevel, FODMAPTag } from '../types/f
  */
 
 /**
- * Get FODMAP information for a specific food
+ * Get FODMAP information for a specific food (Local Sync Lookup)
  */
 export const getFODMAPInfo = (food: string): FODMAPTag | null => {
     const normalizedFood = food.toLowerCase().trim();
@@ -23,6 +24,39 @@ export const getFODMAPInfo = (food: string): FODMAPTag | null => {
     }
 
     return null;
+};
+
+/**
+ * AI-Powered Analysis (Remote)
+ * Falls back to local lookup if API fails or returns null
+ */
+export const analyzeFoodWithAI = async (food: string): Promise<FODMAPTag & { alternatives?: string[] } | null> => {
+    // 1. Check local first (Fastest)
+    const localResult = getFODMAPInfo(food);
+    if (localResult) return localResult;
+
+    // 2. Call Supabase Edge Function (Infinite DB)
+    try {
+        const { data, error } = await supabase.functions.invoke('analyze-food', {
+            body: { food }
+        });
+
+        if (error || !data) {
+            console.warn('AI Analysis failed:', error);
+            return null;
+        }
+
+        // Return standardized format
+        return {
+            level: data.level,
+            categories: data.categories,
+            // We append the AI alternatives to the result object
+            alternatives: data.alternatives
+        } as any; // Cast to bypass strict type checking for the extra 'alternatives' field if needed
+    } catch (e) {
+        console.error('Edge Function Error:', e);
+        return null;
+    }
 };
 
 /**
@@ -134,17 +168,53 @@ export const getLowFODMAPAlternatives = (food: string): string[] => {
     const normalizedFood = food.toLowerCase().trim();
 
     const alternatives: Record<string, string[]> = {
-        'wheat': ['Rice', 'Quinoa', 'Oats (gluten-free)', 'Corn tortillas'],
-        'bread': ['Sourdough (spelt)', 'Gluten-free bread', 'Rice cakes'],
-        'pasta': ['Rice noodles', 'Quinoa pasta', 'Gluten-free pasta'],
-        'onion': ['Green onion tops', 'Chives', 'Garlic-infused oil'],
-        'garlic': ['Garlic-infused oil', 'Asafoetida powder'],
-        'milk': ['Lactose-free milk', 'Almond milk', 'Coconut milk'],
-        'yogurt': ['Lactose-free yogurt', 'Coconut yogurt'],
-        'apple': ['Banana', 'Blueberries', 'Strawberries', 'Orange'],
-        'beans': ['Tofu', 'Tempeh', 'Canned lentils (rinsed)'],
-        'mushroom': ['Zucchini', 'Eggplant', 'Bell peppers'],
-        'cauliflower': ['Broccoli (small portions)', 'Green beans', 'Bok choy'],
+        // Grains & Carbs
+        'wheat': ['Rice', 'Quinoa', 'Oats (gluten-free)', 'Sourdough (spelt)', 'Corn tortillas'],
+        'bread': ['Sourdough (spelt)', 'Gluten-free bread', 'Rice cakes', 'Cornbread'],
+        'pasta': ['Rice noodles', 'Quinoa pasta', 'Gluten-free pasta', 'Soba noodles (100% buckwheat)'],
+        'pizza': ['Sourdough base', 'Gluten-free base', 'Polenta base'],
+        'couscous': ['Quinoa', 'Rice', 'Millet'],
+        
+        // Vegetables
+        'onion': ['Green onion tops', 'Chives', 'Garlic-infused oil', 'Asafoetida'],
+        'garlic': ['Garlic-infused oil', 'Asafoetida powder', 'Chives'],
+        'mushroom': ['Oyster mushrooms', 'Canned champignons', 'Zucchini', 'Eggplant'],
+        'cauliflower': ['Broccoli heads (small amount)', 'Green beans', 'Bok choy'],
+        'asparagus': ['Green beans', 'Bok choy', 'Spinach'],
+        'artichoke': ['Green beans', 'Cucumber', 'Carrot'],
+        
+        // Dairy
+        'milk': ['Lactose-free milk', 'Almond milk', 'Coconut milk', 'Rice milk'],
+        'yogurt': ['Lactose-free yogurt', 'Coconut yogurt', 'Almond yogurt'],
+        'cheese': ['Cheddar', 'Parmesan', 'Feta', 'Mozzarella', 'Swiss'],
+        'cream': ['Lactose-free cream', 'Coconut cream'],
+        'ice cream': ['Lactose-free ice cream', 'Sorbet', 'Gelato (fruit based)'],
+        
+        // Fruits
+        'apple': ['Banana', 'Blueberries', 'Strawberries', 'Orange', 'Kiwi'],
+        'pear': ['Orange', 'Mandarin', 'Pineapple', 'Grapes'],
+        'mango': ['Papaya', 'Pineapple', 'Cantaloupe'],
+        'watermelon': ['Cantaloupe', 'Honeydew melon', 'Pineapple'],
+        'peach': ['Orange', 'Strawberry', 'Pineapple'],
+        
+        // Legumes
+        'beans': ['Canned chickpeas (rinsed)', 'Canned lentils (rinsed)', 'Tofu', 'Tempeh'],
+        'chickpeas': ['Canned chickpeas (rinsed)', 'Tofu'],
+        'lentils': ['Canned lentils (rinsed)', 'Tempeh'],
+        'hummus': ['Homemade hummus (no garlic)', 'Eggplant dip'],
+        
+        // Sweeteners
+        'honey': ['Maple syrup', 'Rice malt syrup', 'Stevia'],
+        'high fructose corn syrup': ['Maple syrup', 'Sugar', 'Stevia'],
+        'agave': ['Maple syrup', 'Rice malt syrup'],
+        
+        // Nuts
+        'cashews': ['Peanuts', 'Walnuts', 'Macadamia nuts', 'Pecans'],
+        'pistachios': ['Peanuts', 'Walnuts', 'Pumpkin seeds', 'Sunflower seeds'],
+        
+        // Proteins
+        'sausages': ['Plain meat', 'Eggs', 'Tofu', 'Fish'],
+        'processed meat': ['Fresh meat', 'Chicken', 'Turkey'],
     };
 
     // Check for direct match or partial match

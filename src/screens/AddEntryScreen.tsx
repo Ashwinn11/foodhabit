@@ -42,7 +42,7 @@ const MEAL_TYPES: { type: MealType; label: string; icon: keyof typeof Ionicons.g
 ];
 
 export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) => {
-  const { addGutMoment, addMeal } = useGutStore();
+  const { addGutMoment, addMeal, triggerFeedback } = useGutStore();
   
   // Mode toggle
   const [mode, setMode] = useState<EntryMode>('poop');
@@ -80,6 +80,14 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
     return checkFODMAPStacking(foods);
   }, [foods]);
   
+  // Active Shield: Check for known confirmed triggers
+  const activeTriggers = useMemo(() => {
+    if (foods.length === 0) return [];
+    return foods.filter(food => {
+        const feedback = triggerFeedback.find(f => f.foodName.toLowerCase() === food.toLowerCase().trim());
+        return feedback?.userConfirmed === true;
+    });
+  }, [foods, triggerFeedback]);
   
   
   const handleSubmit = () => {
@@ -463,6 +471,44 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                   </Pressable>
                 ))}
               </View>
+
+              {/* Active Shield Warning */}
+              {activeTriggers.length > 0 && (
+                <Animated.View entering={FadeInDown.springify()}>
+                  <Card 
+                    variant="colored" 
+                    color={colors.pink} 
+                    padding="md"
+                    style={{ marginBottom: spacing.md }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm }}>
+                      <IconContainer
+                        name="alert-circle"
+                        size={24}
+                        iconSize={18}
+                        color={colors.pink}
+                        backgroundColor="transparent"
+                        borderWidth={0}
+                        shadow={false}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Typography variant="bodyBold" color={colors.black} style={{ marginBottom: 4 }}>
+                          Known Trigger Detected!
+                        </Typography>
+                        <Typography variant="bodyXS" color={colors.black + '99'}>
+                          You previously confirmed {activeTriggers.length === 1 ? 'this' : 'these'} as a trigger:
+                        </Typography>
+                        <Typography variant="bodyBold" color={colors.black} style={{ marginTop: 2 }}>
+                          {activeTriggers.join(', ')}
+                        </Typography>
+                        <Typography variant="bodyXS" color={colors.black + '66'} style={{ marginTop: 4 }}>
+                          Proceed with caution.
+                        </Typography>
+                      </View>
+                    </View>
+                  </Card>
+                </Animated.View>
+              )}
               
               {/* FODMAP Warning */}
               {fodmapStacking && fodmapStacking.riskLevel !== 'low' && (

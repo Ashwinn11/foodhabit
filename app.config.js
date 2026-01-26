@@ -19,16 +19,20 @@ module.exports = {
       bundleIdentifier: "com.foodhabit.app",
       usesAppleSignIn: true,
       associatedDomains: [
-        "applinks:foodhabit.com",
         "applinks:foodhabit.com"
       ],
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false
       },
+      entitlements: {
+        "com.apple.security.application-groups": ["group.com.foodhabit.app"]
+      },
+      appleTeamId: "PVQK77DQWL"
     },
     plugins: [
       "expo-apple-authentication",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@bacons/apple-targets"
     ],
     extra: {
       eas: {

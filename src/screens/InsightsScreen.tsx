@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { colors, spacing } from '../theme';
@@ -13,6 +13,7 @@ import {
   Button
 } from '../components';
 import { useGutStore } from '../store';
+import { analyzeFoodWithAI } from '../services/fodmapService';
 
 export const InsightsScreen: React.FC = () => {
   const { gutMoments, getEnhancedTriggers, getCombinationTriggers, getPoopHistoryData, exportData, getTodayWater, getGutHealthScore, getStats, addTriggerFeedback } = useGutStore();
@@ -21,6 +22,34 @@ export const InsightsScreen: React.FC = () => {
   const enhancedTriggers = getEnhancedTriggers();
   const combinationTriggers = getCombinationTriggers();
   const historyData = getPoopHistoryData();
+
+  // State for AI-enriched insights
+  const [aiInsights, setAiInsights] = useState<Record<string, { fodmapIssues?: any; alternatives?: string[] }>>({});
+  
+  // Background enrichment for unknown triggers
+  useEffect(() => {
+    const fetchMissingInsights = async () => {
+      for (const trigger of enhancedTriggers) {
+        // If trigger has no local FODMAP info and we haven't checked AI yet
+        if (!trigger.fodmapIssues && !aiInsights[trigger.food]) {
+          const result = await analyzeFoodWithAI(trigger.food);
+          if (result) {
+            setAiInsights(prev => ({
+              ...prev,
+              [trigger.food]: {
+                fodmapIssues: result.level !== 'low' ? { level: result.level, categories: result.categories } : undefined,
+                alternatives: result.alternatives
+              }
+            }));
+          }
+        }
+      }
+    };
+
+    fetchMissingInsights();
+  }, [enhancedTriggers]);
+  
+  // Calculate weekly logs for Insights focus
   
   // Calculate weekly logs for Insights focus
   const weekAgo = new Date();
@@ -53,6 +82,20 @@ export const InsightsScreen: React.FC = () => {
   
   const symptomStats = getSymptomStats();
   const healthScore = getGutHealthScore();
+
+    // Get last poop time formatted
+  const getLastPoopTime = () => {
+      if (!stats.lastPoopTime) return 'No logs';
+      const last = new Date(stats.lastPoopTime);
+      const now = new Date();
+      const diffHours = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60));
+      const diffMinutes = Math.floor((now.getTime() - last.getTime()) / (1000 * 60));
+      if (diffMinutes < 1) return 'Now!';
+      if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+  };
 
   return (
     <ScreenWrapper style={styles.container} edges={['top']}>
@@ -119,21 +162,21 @@ export const InsightsScreen: React.FC = () => {
                 value={stats.avgFrequency}
                 unit="x"
                 color={colors.yellow}
-                style={styles.statCard}
+                style={[styles.statCard, { transform: [{ rotate: '-1.5deg' }] }]}
               />
               <StatCard
                 label="MOST COMMON"
                 value={getMostCommonBristol()}
                 color={colors.pink}
-                style={styles.statCard}
+                style={[styles.statCard, { transform: [{ rotate: '1deg' }] }]}
               />
+
               <StatCard
-                label="WATER"
-                value={todayWater}
-                unit="cups"
-                color={colors.blue}
-                icon="water"
-                style={styles.statCard}
+              label="LAST POOP"
+              value={getLastPoopTime()}
+              color={colors.yellow}
+              icon="time"
+              style={[styles.statCard, { transform: [{ rotate: '-1deg' }], marginTop: 2 }]}
               />
             </View>
 
@@ -166,65 +209,95 @@ export const InsightsScreen: React.FC = () => {
                 icon="alert-circle" 
                 iconColor={colors.pink}
               />
-              {enhancedTriggers.map((trigger, i) => (
+              {enhancedTriggers.map((trigger, i) => {
+                // Merge store data with background AI results
+                const enriched = {
+                  ...trigger,
+                  fodmapIssues: trigger.fodmapIssues || aiInsights[trigger.food]?.fodmapIssues,
+                  alternatives: trigger.alternatives || aiInsights[trigger.food]?.alternatives
+                };
+
+                return (
                 <Card key={i} variant="white" padding="md" style={{ marginBottom: spacing.sm }}>
                   <View style={styles.triggerItem}>
                     <View style={styles.triggerDetails}>
                       {/* Food name with confidence badge */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: 4 }}>
-                        <Typography variant="bodyBold" color={colors.black}>{trigger.food}</Typography>
+                        <Typography variant="bodyBold" color={colors.black}>{enriched.food}</Typography>
                         <View style={[
                           styles.confidenceBadge,
                           { backgroundColor: 
-                            trigger.confidence === 'High' ? colors.pink :
-                            trigger.confidence === 'Medium' ? '#FFA500' : '#999'
+                            enriched.confidence === 'High' ? colors.pink :
+                            enriched.confidence === 'Medium' ? '#FFA500' : '#999'
                           }
                         ]}>
-                          <Typography variant="bodyXS" color={colors.white}>{trigger.confidence}</Typography>
+                          <Typography variant="bodyXS" color={colors.white}>{enriched.confidence}</Typography>
                         </View>
                       </View>
                       
                       {/* Frequency */}
                       <Typography variant="bodySmall" color={colors.black + '99'} style={{ marginBottom: 2 }}>
-                        Triggers {trigger.frequencyText}
+                        Triggers {enriched.frequencyText}
                       </Typography>
                       
                       {/* Latency */}
                       <Typography variant="bodyXS" color={colors.black + '66'} style={{ marginBottom: 4 }}>
-                        Typically in {trigger.avgLatencyHours}h • {trigger.symptoms.join(', ')}
+                        Typically in {enriched.avgLatencyHours}h • {enriched.symptoms.join(', ')}
                       </Typography>
+
+                      {/* Smart Insights: FODMAP & Alternatives */}
+                      {(enriched.fodmapIssues || enriched.alternatives) && (
+                        <View style={{ marginTop: spacing.xs, padding: spacing.xs, backgroundColor: colors.blue + '10', borderRadius: spacing.sm }}>
+                          {enriched.fodmapIssues && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                                <IconContainer name="flask" size={14} color={colors.blue} variant="transparent" />
+                                <Typography variant="bodyXS" color={colors.black} style={{ marginLeft: 4, flex: 1 }}>
+                                  Likely Cause: <Typography variant="bodyXS" style={{ fontFamily: 'Fredoka-SemiBold' }}>High {enriched.fodmapIssues.categories.join(', ')}</Typography>
+                                </Typography>
+                            </View>
+                          )}
+                          {enriched.alternatives && (
+                            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                                <IconContainer name="leaf" size={14} color={colors.green || colors.blue} variant="transparent" />
+                                <Typography variant="bodyXS" color={colors.black} style={{ marginLeft: 4, flex: 1 }}>
+                                  Try instead: {enriched.alternatives.slice(0, 3).join(', ')}
+                                </Typography>
+                            </View>
+                          )}
+                        </View>
+                      )}
                       
                       {/* User Feedback Buttons */}
                       <View style={{ flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xs }}>
                         <Button
-                          title={trigger.userFeedback === true ? "✓ Confirmed" : "Confirm"}
-                          variant={trigger.userFeedback === true ? "primary" : "outline"}
+                          title={enriched.userFeedback === true ? "✓ Confirmed" : "Confirm"}
+                          variant={enriched.userFeedback === true ? "primary" : "outline"}
                           size="sm"
                           onPress={() => addTriggerFeedback({
-                            foodName: trigger.food,
+                            foodName: enriched.food,
                             userConfirmed: true,
                             timestamp: new Date()
                           })}
-                          color={trigger.userFeedback === true ? colors.blue : colors.black}
+                          color={enriched.userFeedback === true ? colors.blue : colors.black}
                           style={{ flex: 1 }}
                         />
                         <Button
-                          title={trigger.userFeedback === false ? "✗ Denied" : "Not a trigger"}
-                          variant={trigger.userFeedback === false ? "primary" : "outline"}
+                          title={enriched.userFeedback === false ? "✗ Denied" : "Not a trigger"}
+                          variant={enriched.userFeedback === false ? "primary" : "outline"}
                           size="sm"
                           onPress={() => addTriggerFeedback({
-                            foodName: trigger.food,
+                            foodName: enriched.food,
                             userConfirmed: false,
                             timestamp: new Date()
                           })}
-                          color={trigger.userFeedback === false ? colors.pink : colors.black}
+                          color={enriched.userFeedback === false ? colors.pink : colors.black}
                           style={{ flex: 1 }}
                         />
                       </View>
                     </View>
                   </View>
                 </Card>
-              ))}
+              )})}
             </Animated.View>
           )}
           

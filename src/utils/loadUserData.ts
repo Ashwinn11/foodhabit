@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../config/supabase';
 import { useOnboardingStore } from '../store/onboardingStore';
 import { useGutStore } from '../store/useGutStore';
@@ -162,6 +163,18 @@ export const loadUserDataFromDatabase = async () => {
             gutStore.fiberLogs = fiberLogs;
             gutStore.probioticLogs = probioticLogs;
             gutStore.exerciseLogs = exerciseLogs;
+        }
+
+        // Load dismissed alerts from AsyncStorage
+        try {
+            const dismissedAlertsJson = await AsyncStorage.getItem('dismissedAlerts');
+            if (dismissedAlertsJson) {
+                const dismissedAlerts = JSON.parse(dismissedAlertsJson);
+                const gutStore = useGutStore.getState();
+                gutStore.dismissedAlerts = dismissedAlerts;
+            }
+        } catch (error) {
+            console.error('Failed to load dismissed alerts:', error);
         }
 
         console.log('✅ User data loaded from database successfully');

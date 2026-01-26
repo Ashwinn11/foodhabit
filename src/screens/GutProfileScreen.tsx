@@ -12,7 +12,6 @@ import { colors, spacing, radii, shadows, fonts } from '../theme';
 import { useGutStore } from '../store';
 import {
   GutAvatar,
-  StatCard,
   TimelineEntry,
   ScreenWrapper,
   BoxButton,
@@ -75,19 +74,7 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
     return Object.entries(groups);
   }, [meals, gutMoments]);
   
-  // Get last poop time formatted
-  const getLastPoopTime = () => {
-    if (!stats.lastPoopTime) return 'No logs';
-    const last = new Date(stats.lastPoopTime);
-    const now = new Date();
-    const diffHours = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60));
-    const diffMinutes = Math.floor((now.getTime() - last.getTime()) / (1000 * 60));
-    if (diffMinutes < 1) return 'Now!';
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}d ago`;
-  };
+
   
   return (
     <ScreenWrapper edges={['top']} style={styles.container}>
@@ -129,36 +116,6 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
           <Typography variant="body" color={colors.black + '66'}>
             The full story of your gut
           </Typography>
-        </Animated.View>
-        
-        {/* Quick Review Stats */}
-        <Animated.View 
-          entering={FadeInDown.delay(300).springify()}
-          style={styles.statsSection}
-        >
-          <View style={styles.statsRow}>
-            <StatCard
-              label="TOTAL"
-              value={stats.totalPoops}
-              unit="logs"
-              color={colors.blue}
-              style={[styles.statCard, { transform: [{ rotate: '-1.5deg' }] }]}
-            />
-            <StatCard
-              label="STREAK"
-              value={stats.longestStreak}
-              unit="days"
-              color={colors.pink}
-              style={[styles.statCard, { transform: [{ rotate: '1deg' }] }]}
-            />
-            <StatCard
-              label="LAST POOP"
-              value={getLastPoopTime()}
-              color={colors.yellow}
-              icon="time"
-              style={[styles.statCard, { transform: [{ rotate: '-1deg' }], marginTop: 2 }]}
-            />
-          </View>
         </Animated.View>
         
         {/* The Memory Bank - Combined Timeline */}

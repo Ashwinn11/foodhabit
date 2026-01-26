@@ -190,10 +190,27 @@ function AppContent() {
 }
 
 export default function App() {
+
+  const linking = {
+    prefixes: ['foodhabit://'],
+    config: {
+      screens: {
+        Main: {
+          screens: {
+            HomeTab: 'home',
+            HistoryTab: 'history',
+            InsightsTab: 'insights',
+          },
+        },
+        AddEntry: 'add-entry',
+      },
+    },
+  };
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
-        <NavigationContainer theme={GutBuddyTheme}>
+        <NavigationContainer theme={GutBuddyTheme} linking={linking}>
           <AppContent />
           <GlobalModal />
           <GlobalToast />

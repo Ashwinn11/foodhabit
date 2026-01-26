@@ -1,9 +1,12 @@
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
+import SharedGroupPreferences from 'react-native-shared-group-preferences';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { supabase } from '../config/supabase';
 import { useUIStore } from './useUIStore';
+import { getFODMAPInfo, getLowFODMAPAlternatives } from '../services/fodmapService';
 
 import { colors } from '../theme/theme';
 
@@ -158,6 +161,11 @@ interface GutStore {
         avgLatencyHours: number;
         symptoms: string[];
         userFeedback?: boolean | null;
+        fodmapIssues?: {
+            level: 'high' | 'moderate' | 'low';
+            categories: string[];
+        };
+        alternatives?: string[];
     }[];
     getCombinationTriggers: () => {
         foods: string[];
@@ -196,7 +204,12 @@ interface GutStore {
 
     // Quick log helpers
     quickLogPoop: (bristolType?: BristolType) => void;
+
+    // Widget Sync
+    syncWidget: () => Promise<void>;
 }
+
+const APP_GROUP_IDENTIFIER = 'group.com.foodhabit.app';
 
 const generateId = () => Math.random().toString(36).substring(2, 15);
 
@@ -406,7 +419,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             if (session?.user?.id) {
                 supabase.from('gut_logs').insert({
                     user_id: session.user.id,
-                    timestamp: newMoment.timestamp,
+                    timestamp: newMoment.timestamp.toISOString(),
                     bristol_type: newMoment.bristolType,
                     symptoms: newMoment.symptoms || {},
                     tags: newMoment.tags || [],
@@ -415,7 +428,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     notes: newMoment.notes,
                 }).then(({ error }) => {
                     if (error) {
-                        console.error('DB Write Failed:', error);
+                        console.error('DB Write Failed:', error.message, error.details || '');
                         // Optional: Show toast or handle offline persistence here if prompted in future
                     } else {
 
@@ -433,30 +446,39 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             },
         };
     }),
-    updateGutMoment: (id, moment) => set((state) => ({
-        gutMoments: state.gutMoments.map((m) =>
-            m.id === id ? { ...m, ...moment } : m
-        ),
-    })),
-    deleteGutMoment: (id) => set((state) => {
-        const newMoments = state.gutMoments.filter((m) => m.id !== id);
-        return {
-            gutMoments: newMoments,
+    updateGutMoment: (id, moment) => {
+        set((state) => ({
+            gutMoments: state.gutMoments.map((m) =>
+                m.id === id ? { ...m, ...moment } : m
+            ),
+        }));
+        get().syncWidget();
+    },
+    deleteGutMoment: (id) => {
+        set((state) => {
+            const newMoments = state.gutMoments.filter((m) => m.id !== id);
+            return {
+                gutMoments: newMoments,
+                user: {
+                    ...state.user,
+                    streak: calculateCurrentStreak(newMoments),
+                    totalLogs: newMoments.length,
+                },
+            };
+        });
+        get().syncWidget();
+    },
+    setGutMoments: (moments) => {
+        set((state) => ({
+            gutMoments: moments,
             user: {
                 ...state.user,
-                streak: calculateCurrentStreak(newMoments),
-                totalLogs: newMoments.length,
+                streak: calculateCurrentStreak(moments),
+                totalLogs: moments.length,
             },
-        };
-    }),
-    setGutMoments: (moments) => set((state) => ({
-        gutMoments: moments,
-        user: {
-            ...state.user,
-            streak: calculateCurrentStreak(moments),
-            totalLogs: moments.length,
-        },
-    })),
+        }));
+        get().syncWidget();
+    },
 
     quickLogPoop: (bristolType = 4) => set((state) => {
         const newMoment: GutMoment = {
@@ -496,7 +518,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             if (session?.user?.id) {
                 supabase.from('gut_logs').insert({
                     user_id: session.user.id,
-                    timestamp: newMoment.timestamp,
+                    timestamp: newMoment.timestamp.toISOString(),
                     bristol_type: newMoment.bristolType,
                     symptoms: newMoment.symptoms || {},
                     tags: newMoment.tags || [],
@@ -504,10 +526,13 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     pain_score: newMoment.painScore,
                     notes: newMoment.notes,
                 }).then(({ error }) => {
-                    if (error) console.error('Quick Log DB Write Failed:', error);
+                    if (error) console.error('Quick Log DB Write Failed:', error.message, error.details || '');
                 });
             }
         });
+
+        // Helper to trigger widget sync after state update
+        setTimeout(() => get().syncWidget(), 0);
 
         return {
             gutMoments: newMoments,
@@ -547,7 +572,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             if (session?.user?.id) {
                 supabase.from('meals').insert({
                     user_id: session.user.id,
-                    timestamp: newMeal.timestamp,
+                    timestamp: newMeal.timestamp.toISOString(),
                     meal_type: newMeal.mealType,
                     name: newMeal.name,
                     foods: newMeal.foods || [],
@@ -556,7 +581,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     food_tags: newMeal.foodTags || [],
                 }).then(({ error }) => {
                     if (error) {
-                        console.error('Meal DB Write Failed:', error);
+                        console.error('Meal DB Write Failed:', error.message, error.details || '');
                     } else {
 
                     }
@@ -613,7 +638,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     log_type: 'water',
                     value: currentGlasses,
                 }, { onConflict: 'user_id,date,log_type' }).then(({ error }) => {
-                    if (error) console.error('Water log DB write failed:', error);
+                    if (error) console.error('Water log DB write failed:', error.message, error.details || '');
                 });
             }
         });
@@ -672,7 +697,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     log_type: 'fiber',
                     value: currentFiber,
                 }, { onConflict: 'user_id,date,log_type' }).then(({ error }) => {
-                    if (error) console.error('Fiber log DB write failed:', error);
+                    if (error) console.error('Fiber log DB write failed:', error.message, error.details || '');
                 });
             }
         });
@@ -716,7 +741,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     log_type: 'probiotic',
                     value: currentProbiotics,
                 }, { onConflict: 'user_id,date,log_type' }).then(({ error }) => {
-                    if (error) console.error('Probiotic log DB write failed:', error);
+                    if (error) console.error('Probiotic log DB write failed:', error.message, error.details || '');
                 });
             }
         });
@@ -769,7 +794,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     log_type: 'exercise',
                     value: currentMinutes,
                 }, { onConflict: 'user_id,date,log_type' }).then(({ error }) => {
-                    if (error) console.error('Exercise log DB write failed:', error);
+                    if (error) console.error('Exercise log DB write failed:', error.message, error.details || '');
                 });
             }
         });
@@ -1141,6 +1166,10 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                 // User feedback
                 const feedback = triggerFeedback.find(f => f.foodName.toLowerCase() === food);
 
+                // Nutrition/FODMAP Analysis
+                const fodmapInfo = getFODMAPInfo(food);
+                const alternatives = getLowFODMAPAlternatives(food);
+
                 return {
                     food: capitalizedFood,
                     occurrences,
@@ -1149,7 +1178,12 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     frequencyText,
                     avgLatencyHours: Math.round(avgLatencyHours * 10) / 10,
                     symptoms: Array.from(stats.associatedSymptoms),
-                    userFeedback: feedback?.userConfirmed ?? null
+                    userFeedback: feedback?.userConfirmed ?? null,
+                    fodmapIssues: fodmapInfo && fodmapInfo.level !== 'low' ? {
+                        level: fodmapInfo.level,
+                        categories: fodmapInfo.categories
+                    } : undefined,
+                    alternatives: alternatives.length > 0 ? alternatives : undefined
                 };
             })
             .filter(item => item.occurrences >= 5 && item.symptomOccurrences >= 2)
@@ -1334,11 +1368,17 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         }
         // For state-based alerts (Constipation), we just use current time (snooze)
 
+        const updatedDismissedAlerts = {
+            ...state.dismissedAlerts,
+            [type]: referenceTime
+        };
+
+        // Persist to AsyncStorage
+        AsyncStorage.setItem('dismissedAlerts', JSON.stringify(updatedDismissedAlerts))
+            .catch(error => console.error('Failed to save dismissed alerts:', error));
+
         return {
-            dismissedAlerts: {
-                ...state.dismissedAlerts,
-                [type]: referenceTime
-            }
+            dismissedAlerts: updatedDismissedAlerts
         };
     }),
 
@@ -1430,6 +1470,49 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                 'There was an error exporting your data. Please try again.',
                 [{ text: 'OK' }]
             );
+        }
+    },
+
+    syncWidget: async () => {
+        if (Platform.OS !== 'ios') return;
+
+        try {
+            const { getGutHealthScore, getStats } = get();
+            const healthScore = getGutHealthScore();
+            const stats = getStats();
+
+            // Format last poop time
+            let lastPoopTime = "No data";
+            let statusMessage = "Log your first poop!";
+
+            if (stats.lastPoopTime) {
+                const now = new Date();
+                const last = new Date(stats.lastPoopTime);
+                const diffMinutes = Math.floor((now.getTime() - last.getTime()) / (1000 * 60));
+                const diffHours = Math.floor(diffMinutes / 60);
+                const diffDays = Math.floor(diffHours / 24);
+
+                if (diffMinutes < 1) lastPoopTime = "Just now";
+                else if (diffMinutes < 60) lastPoopTime = `${diffMinutes}m ago`;
+                else if (diffHours < 24) lastPoopTime = `${diffHours}h ago`;
+                else lastPoopTime = `${diffDays}d ago`;
+
+                statusMessage = diffDays > 3 ? "Time for a check-in?" : "All good!";
+            }
+
+            const widgetData = {
+                score: healthScore.score,
+                grade: healthScore.grade,
+                lastPoopTime,
+                statusMessage,
+                breakdown: healthScore.breakdown,
+                weeklyHistory: get().getPoopHistoryData()
+            };
+
+            await SharedGroupPreferences.setItem('gut_health_data', JSON.stringify(widgetData), APP_GROUP_IDENTIFIER);
+            // console.log('Widget data synced:', widgetData);
+        } catch (error) {
+            console.error('Widget Sync Failed:', error);
         }
     },
 }),

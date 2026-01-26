@@ -283,28 +283,6 @@ export const ProfileScreen: React.FC = () => {
           </Animated.View>
         )}
 
-        {/* Goals */}
-        <Animated.View 
-          entering={FadeInDown.delay(300).springify()}
-          style={styles.accountSection}
-        >
-          <Typography variant="caption" color={colors.black + '66'} style={styles.sectionTitle}>GOALS</Typography>
-          <SettingsItem 
-            icon="water" 
-            title="Water Intake" 
-            value="2.5L"
-            onPress={() => {}}
-            color={colors.blue}
-          />
-          <SettingsItem 
-            icon="leaf" 
-            title="Fiber Target" 
-            value="30g"
-            onPress={() => {}}
-            color={colors.yellow}
-          />
-        </Animated.View>
-        
         {/* Notifications */}
         <Animated.View 
           entering={FadeInDown.delay(400).springify()}
