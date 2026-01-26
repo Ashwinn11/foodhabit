@@ -4,9 +4,9 @@
  */
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, shadows } from '../../theme';
 import { Typography } from '../Typography';
+import { IconContainer } from '../IconContainer/IconContainer';
 
 interface ReviewCardProps {
   name: string;
@@ -33,9 +33,6 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
         </View>
         <View style={styles.headerContent}>
           <Typography variant="bodyBold">{name}</Typography>
-import { IconContainer } from '../IconContainer/IconContainer';
-
-// ...
           <View style={styles.stars}>
             {stars.map((filled, index) => (
               <IconContainer

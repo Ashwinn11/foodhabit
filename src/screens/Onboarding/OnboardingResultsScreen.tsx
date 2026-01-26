@@ -86,13 +86,13 @@ export const OnboardingResultsScreen = () => {
         <Animated.View entering={FadeInDown.delay(300)}>
             <Typography variant="bodyBold" style={{ marginBottom: spacing.md }}>Here's what we found:</Typography>
             
-            <ScoreBar label="Stool Health" score={stoolScore} max={40} color={stoolScore >= 30 ? colors.green : stoolScore >= 20 ? colors.yellow : colors.pink} />
+            <ScoreBar label="Stool Health" score={stoolScore} max={40} color={stoolScore >= 30 ? colors.green : stoolScore >= 20 ? colors.red : colors.pink} />
             <ScoreBar label="Symptom Burden" score={symptomScore} max={30} color={symptomScore >= 20 ? colors.green : symptomScore >= 10 ? colors.yellow : colors.pink} />
             <ScoreBar label="Regularity" score={regularityScore} max={20} color={regularityScore >= 15 ? colors.green : colors.yellow} />
             <ScoreBar label="Medical Flags" score={medicalScore} max={10} color={medicalScore === 10 ? colors.green : colors.pink} />
 
             <Card style={styles.warningCard}>
-                 <Ionicons name="warning" size={24} color={colors.yellow} style={{ marginBottom: spacing.sm }} />
+                 <Ionicons name="warning" size={24} color={colors.black} style={{ marginBottom: spacing.sm }} />
                  <Typography variant="caption" color={colors.black}>
                     Without intervention, symptoms can worsen.
                  </Typography>

@@ -44,17 +44,16 @@ export const OnboardingHookScreen = () => {
 
         <Animated.View entering={FadeInDown.delay(200)} style={{ gap: spacing.md }}>
           {PAIN_POINTS.map((point, index) => (
-            <Card key={index} style={[styles.painCard, { backgroundColor: point.color, borderWidth: 0 }]}>
+            <Card key={index} style={[styles.painCard, { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border }]}>
               <IconContainer 
                 name={point.icon as any} 
                 size={48} 
                 iconSize={24} 
                 color={point.color} 
                 variant="solid"
-                backgroundColor={colors.white}
                 style={styles.iconMargin}
               />
-              <Typography variant="bodyBold" color={point.color === colors.yellow ? colors.black : colors.white} style={{ flex: 1, fontSize: 17 }}>
+              <Typography variant="bodyBold" color={colors.black} style={{ flex: 1, fontSize: 17 }}>
                 {point.text}
               </Typography>
             </Card>

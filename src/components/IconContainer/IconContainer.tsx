@@ -49,14 +49,18 @@ export const IconContainer: React.FC<IconContainerProps> = ({
 
   if (finalVariant === 'solid') {
     finalBgColor = backgroundColor || color;
-    // Contrast logic: use black for yellow, white for others
-    if (finalBgColor === colors.yellow) {
+    // Contrast logic: use black for yellow, white for others.
+    // However, if the background is explicitly set to white, use the primary color for the icon.
+    // If the primary color is also white, default to black for visibility.
+    if (finalBgColor === colors.white) {
+      finalIconColor = color === colors.white ? colors.black : color;
+    } else if (finalBgColor === colors.yellow) {
       finalIconColor = colors.black;
     } else {
       finalIconColor = colors.white;
     }
   } else {
-    finalBgColor = 'transparent';
+    finalBgColor = backgroundColor || 'transparent';
     finalIconColor = color;
   }
 

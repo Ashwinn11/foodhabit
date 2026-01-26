@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Typography, GutAvatar, Card, IconContainer } from '../../components';
 import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 
 
 export const OnboardingSolutionScreen = () => {
@@ -14,7 +15,7 @@ export const OnboardingSolutionScreen = () => {
   
   const handleNext = () => {
     setCurrentStep(4);
-    navigation.navigate('OnboardingCustomPlan'); // Reviews merged into Plan
+    navigation.navigate('OnboardingCustomPlan'); 
   };
 
   const handleBack = () => {
@@ -26,45 +27,70 @@ export const OnboardingSolutionScreen = () => {
     <OnboardingScreen
       currentStep={3}
       totalSteps={totalSteps}
-      title="Here's How We Fix It"
-      subtitle="Your 90-Day Gut Reset"
+      title="The Gut Reset Plan"
+      subtitle="Designed to heal & optimize"
       onNext={handleNext}
       onBack={handleBack}
       nextLabel="Get My Protocol"
     >
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
         <Animated.View entering={FadeInDown.delay(100)} style={styles.mascotContainer}>
-          <GutAvatar score={90} size={120} />
+          <GutAvatar score={90} size={140} />
           <View style={styles.speechBubble}>
-            <Typography variant="bodyBold" color={colors.white}>We can fix this together! 🛠️</Typography> 
+            <Typography variant="bodyBold" color={colors.white}>We've got this! 🚀</Typography> 
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(200)}>
-          <FeatureBlock 
+        <Animated.View entering={FadeInDown.delay(200)} style={styles.gridContainer}>
+          <FeatureGridItem 
             icon="search" 
-            title="IDENTIFY TRIGGERS" 
-            description="Track meals & symptoms. AI finds exactly what's causing your bloating."
+            title="Stop Bloating" 
+            desc="AI Pinpoints what's causing pain."
             color={colors.blue}
           />
-          <FeatureBlock 
+          <FeatureGridItem 
             icon="checkbox" 
-            title="DAILY MISSIONS" 
-            description="Small tasks for hydration, fiber, and stress that heal your gut step-by-step."
+            title="Heal Daily" 
+            desc="Easy habits to fix your digestion."
             color={colors.pink}
           />
-          <FeatureBlock 
+          <FeatureGridItem 
             icon="stats-chart" 
-            title="WATCH SCORE IMPROVE" 
-            description="See your Gut Score rise as you fix your stool consistency and regularity."
+            title="See Progress" 
+            desc="Weekly reports on your healing."
             color={colors.yellow}
+          />
+          <FeatureGridItem 
+            icon="grid" 
+            title="Quick Track" 
+            desc="Widgets for 1-tap logging."
+            color={colors.blue}
           />
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(400)} style={styles.extraFeatures}>
-             <Typography variant="caption" align="center" color={colors.mediumGray}>
-                 Also includes: FODMAP alerts • Smart Logging • Medical Insights
-             </Typography>
+        <Animated.View entering={FadeInDown.delay(350)}>
+            <Card style={styles.goalCard} variant="colored" color={colors.pink}>
+                <Typography variant="bodyBold" color={colors.black}>90-DAY TRANSFORMATION</Typography>
+                <Typography variant="bodySmall" color={colors.black + '99'} style={{ marginTop: 2 }}>
+                    Most users feel significant relief within the first 14 days.
+                </Typography>
+            </Card>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(450)} style={styles.extraSection}>
+            <View style={styles.badgeRow}>
+                <View style={styles.miniBadge}>
+                    <Ionicons name="shield-checkmark" size={14} color={colors.green} />
+                    <Typography variant="bodyXS" style={{ marginLeft: 4 }}>100% Private</Typography>
+                </View>
+                <View style={styles.miniBadge}>
+                    <Ionicons name="flash" size={14} color={colors.yellow} />
+                    <Typography variant="bodyXS" style={{ marginLeft: 4 }}>AI-Powered</Typography>
+                </View>
+            </View>
+            <Typography variant="caption" align="center" color={colors.mediumGray} style={{ marginTop: spacing.md }}>
+                Also includes: FODMAP Alerts • Smart Logging • Medical Insights • Home Widgets
+            </Typography>
         </Animated.View>
 
       </ScrollView>
@@ -72,20 +98,18 @@ export const OnboardingSolutionScreen = () => {
   );
 };
 
-const FeatureBlock = ({ icon, title, description, color }: any) => (
-  <Card style={styles.featureCard}>
+const FeatureGridItem = ({ icon, title, desc, color }: any) => (
+  <Card style={styles.gridCard} variant="white">
       <IconContainer
         name={icon}
-        size={56}
-        iconSize={28}
+        size={52}
+        iconSize={26}
         color={color}
         variant="solid"
-        style={styles.iconMargin}
+        style={{ marginBottom: spacing.sm }}
       />
-      <View style={{ flex: 1 }}>
-        <Typography variant="bodyBold" style={{ marginBottom: 4 }}>{title}</Typography>
-        <Typography variant="bodySmall" color={colors.mediumGray}>{description}</Typography>
-      </View>
+      <Typography variant="bodyBold" style={{ fontSize: 15 }}>{title}</Typography>
+      <Typography variant="bodyXS" color={colors.mediumGray} style={{ textAlign: 'center', marginTop: 4 }}>{desc}</Typography>
   </Card>
 );
 
@@ -93,7 +117,7 @@ const styles = StyleSheet.create({
   mascotContainer: {
     alignItems: 'center',
     marginBottom: spacing.xl,
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
   },
   speechBubble: {
     backgroundColor: colors.black,
@@ -102,30 +126,53 @@ const styles = StyleSheet.create({
     borderRadius: radii.xl,
     marginTop: -spacing.md,
     borderBottomLeftRadius: 0,
-    transform: [{ rotate: '-5deg' }, { translateX: 40 }],
+    transform: [{ rotate: '-5deg' }, { translateX: 35 }],
     zIndex: 10,
   },
-  featureCard: {
+  gridContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+    justifyContent: 'space-between',
+  },
+  gridCard: {
+    width: '47.5%', // Slightly less than 50% to account for gap
     padding: spacing.md,
-    marginBottom: spacing.md,
-    alignItems: 'flex-start',
-    backgroundColor: colors.white,
-    borderRadius: 32, // Whimsical round
+    alignItems: 'center',
+    borderRadius: 28,
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 12,
+    shadowRadius: 10,
     elevation: 2,
-    // No border
   },
-  iconMargin: {
-    marginRight: spacing.md,
+  goalCard: {
+    marginTop: spacing.xl,
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: 24,
   },
-  extraFeatures: {
-      marginTop: spacing.md,
-      padding: spacing.md,
-      backgroundColor: colors.white + '80', // Glass-ish
-      borderRadius: radii.lg,
+  extraSection: {
+      marginTop: spacing.xl,
+      padding: spacing.lg,
+      backgroundColor: colors.white + '80',
+      borderRadius: radii.xl,
+      borderWidth: 1,
+      borderColor: colors.border,
+  },
+  badgeRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: spacing.md,
+  },
+  miniBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.white,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 4,
+      borderRadius: radii.full,
+      borderWidth: 1,
+      borderColor: colors.border,
   }
 });
