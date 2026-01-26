@@ -19,6 +19,7 @@ import {
   PrivacyPolicyScreen,
   AuthScreen,
   HelpSupportScreen,
+  NotificationsScreen,
 } from '../screens';
 
 const Tab = createBottomTabNavigator();
@@ -199,6 +200,14 @@ export const AppNavigator = () => {
       <Stack.Screen
         name="HelpSupport"
         component={HelpSupportScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
         options={{
           headerShown: false,
           animation: 'slide_from_right',

@@ -12,6 +12,7 @@ import { ScreenWrapper } from './src/components';
 import { useAuth } from './src/hooks/useAuth';
 import { GlobalModal } from './src/components/Modal/GlobalModal';
 import { GlobalToast } from './src/components/Toast/GlobalToast';
+import { NotificationManager } from './src/components/NotificationManager';
 import { RevenueCatService } from './src/services/revenueCatService';
 
 import { useFonts, Chewy_400Regular } from '@expo-google-fonts/chewy';
@@ -191,7 +192,7 @@ function AppContent() {
 
 export default function App() {
 
-  const linking = {
+  const linking: any = {
     prefixes: ['foodhabit://'],
     config: {
       screens: {
@@ -203,6 +204,7 @@ export default function App() {
           },
         },
         AddEntry: 'add-entry',
+        Notifications: 'notifications',
       },
     },
   };
@@ -212,6 +214,7 @@ export default function App() {
       <SafeAreaProvider>
         <NavigationContainer theme={GutBuddyTheme} linking={linking}>
           <AppContent />
+          <NotificationManager />
           <GlobalModal />
           <GlobalToast />
           <StatusBar style="dark" translucent backgroundColor="transparent" />

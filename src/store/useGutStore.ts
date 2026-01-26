@@ -6,6 +6,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { supabase } from '../config/supabase';
 import { useUIStore } from './useUIStore';
+import { useNotificationStore } from './useNotificationStore';
 import { getFODMAPInfo, getLowFODMAPAlternatives } from '../services/fodmapService';
 
 import { colors } from '../theme/theme';
@@ -405,6 +406,11 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                 icon: 'sparkles',
                 iconColor: colors.yellow
             });
+            useNotificationStore.getState().addNotification({
+                title: 'Mission Plop-plete! 💩',
+                body: "You've logged your first gut moment of the day. Keep it up!",
+                type: 'achievement'
+            });
         } else {
             useUIStore.getState().showToast({
                 message: 'Poop logged!',
@@ -618,6 +624,11 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         if (currentGlasses === waterGoal) {
             icon = 'trophy';
             message = `Goal reached! Hydrated!`;
+            useNotificationStore.getState().addNotification({
+                title: 'Hydration Hero! 💧',
+                body: "You've reached your water goal for today. Your gut will thank you!",
+                type: 'achievement'
+            });
         } else if (currentGlasses > waterGoal) {
             icon = 'water';
             message = `Extra hydration logged!`;
@@ -679,6 +690,11 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                 message: `Fiber goal met! Rockstar!`,
                 icon: 'happy',
                 iconColor: colors.yellow
+            });
+            useNotificationStore.getState().addNotification({
+                title: 'Fiber Power! 🌾',
+                body: "Fiber goal reached! You're giving your gut the fuel it needs.",
+                type: 'achievement'
             });
         } else if (currentFiber > fiberGoal) {
             useUIStore.getState().showToast({
@@ -783,6 +799,11 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                 icon: 'medal',
                 iconColor: colors.yellow
             });
+            useNotificationStore.getState().addNotification({
+                title: 'Active Gut! 🏃‍♂️',
+                body: "Exercise goal reached! Movement is medicine for your digestion.",
+                type: 'achievement'
+            });
         }
 
         // Sync to Supabase
@@ -830,7 +851,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
     addTriggerFeedback: (feedback) => set((state) => {
         const normalizedFoodName = feedback.foodName.toLowerCase().trim();
         const updatedFeedback = { ...feedback, foodName: normalizedFoodName };
-        
+
         // Remove existing feedback for this food (case-insensitive)
         const filtered = state.triggerFeedback.filter(f => f.foodName.toLowerCase().trim() !== normalizedFoodName);
 

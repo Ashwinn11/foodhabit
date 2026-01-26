@@ -16,3 +16,4 @@ export { SectionHeader } from './SectionHeader';
 export * from './BoxButton/BoxButton';
 export * from './ScreenWrapper';
 export { CustomModal } from './Modal/CustomModal';
+export { NotificationManager } from './NotificationManager';

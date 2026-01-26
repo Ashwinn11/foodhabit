@@ -63,6 +63,30 @@ export const scheduleDailyReminder = async (hour: number, minute: number) => {
     });
 };
 
+export const triggerLocalNotification = async (title: string, body: string, data?: any) => {
+    await Notifications.scheduleNotificationAsync({
+        content: {
+            title,
+            body,
+            data: data || {},
+        },
+        trigger: null, // deliver immediately
+    });
+};
+
+export const getPushToken = async () => {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') return null;
+
+    try {
+        const token = (await Notifications.getExpoPushTokenAsync()).data;
+        return token;
+    } catch (e) {
+        console.log('Error getting push token:', e);
+        return null;
+    }
+};
+
 export const cancelAllNotifications = async () => {
     await Notifications.cancelAllScheduledNotificationsAsync();
 };

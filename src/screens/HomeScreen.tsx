@@ -9,7 +9,7 @@ import Animated, {
   FadeInDown,
 } from 'react-native-reanimated';
 import { colors, spacing, radii } from '../theme';
-import { useGutStore } from '../store';
+import { useGutStore, useNotificationStore } from '../store';
 import {
   MissionCard,
   ScreenWrapper,
@@ -29,6 +29,7 @@ type HomeScreenProps = {
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { user, getStats, getDynamicTasks, addWater, addFiber, addProbiotic, addExercise, getGutHealthScore, checkMedicalAlerts, dismissAlert } = useGutStore();
+  const { unreadCount } = useNotificationStore();
   
   const dynamicTasks = getDynamicTasks();
   const incompleteTasks = dynamicTasks.filter(t => !t.completed).length;
@@ -102,10 +103,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           
           <BoxButton 
             icon="notifications" 
-            onPress={() => console.log('Notifications')}
+            onPress={() => navigation.navigate('Notifications')}
             size={44}
             color={colors.pink}
-            badgeCount={2}
+            badgeCount={unreadCount}
           />
         </Animated.View>
         
