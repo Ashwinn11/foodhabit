@@ -6,6 +6,7 @@ export type FODMAPLevel = 'high' | 'moderate' | 'low';
 export interface FODMAPTag {
     categories: FODMAPCategory[];
     level: FODMAPLevel;
+    culprits?: string[];
 }
 
 export interface BloatingType {
@@ -416,7 +417,6 @@ export const FODMAP_FOODS: Record<string, FODMAPTag> = {
     'sandwich': { categories: ['fructans'], level: 'high' }, // Wheat bread
     'bagel': { categories: ['fructans'], level: 'high' },
     'donut': { categories: ['fructans'], level: 'high' },
-    'croissant': { categories: ['fructans', 'lactose'], level: 'high' },
     'pancakes': { categories: ['fructans', 'lactose'], level: 'high' }, // Wheat flour, Milk
     'waffles': { categories: ['fructans', 'lactose'], level: 'high' },
     'soup (canned)': { categories: ['fructans'], level: 'high' }, // Almost always has onion/garlic

@@ -16,15 +16,15 @@ import { useGutStore } from '../store';
 import { analyzeFoodWithAI } from '../services/fodmapService';
 
 export const InsightsScreen: React.FC = () => {
-  const { gutMoments, getEnhancedTriggers, getCombinationTriggers, getPoopHistoryData, exportData, getTodayWater, getGutHealthScore, getStats, addTriggerFeedback } = useGutStore();
+  const { gutMoments, getEnhancedTriggers, getCombinationTriggers, getPoopHistoryData, exportData, getGutHealthScore, getStats, addTriggerFeedback } = useGutStore();
   const stats = getStats();
-  const todayWater = getTodayWater();
   const enhancedTriggers = getEnhancedTriggers();
   const combinationTriggers = getCombinationTriggers();
   const historyData = getPoopHistoryData();
 
   // State for AI-enriched insights
-  const [aiInsights, setAiInsights] = useState<Record<string, { fodmapIssues?: any; alternatives?: string[] }>>({});
+  const [aiInsights, setAiInsights] = useState<Record<string, { fodmapIssues?: any; culprits?: string[]; alternatives?: string[] }>>({});
+  const [showAllTriggers, setShowAllTriggers] = useState(false);
   
   // Background enrichment for unknown triggers
   useEffect(() => {
@@ -38,6 +38,7 @@ export const InsightsScreen: React.FC = () => {
               ...prev,
               [trigger.food]: {
                 fodmapIssues: result.level !== 'low' ? { level: result.level, categories: result.categories } : undefined,
+                culprits: result.culprits,
                 alternatives: result.alternatives
               }
             }));
@@ -198,7 +199,6 @@ export const InsightsScreen: React.FC = () => {
             </Card>
           </Animated.View>
 
-          {/* Enhanced Triggers */}
           {enhancedTriggers.length > 0 && (
             <Animated.View 
               entering={FadeInDown.delay(350).springify()}
@@ -209,11 +209,12 @@ export const InsightsScreen: React.FC = () => {
                 icon="alert-circle" 
                 iconColor={colors.pink}
               />
-              {enhancedTriggers.map((trigger, i) => {
+              {enhancedTriggers.slice(0, showAllTriggers ? undefined : 3).map((trigger, i) => {
                 // Merge store data with background AI results
                 const enriched = {
                   ...trigger,
                   fodmapIssues: trigger.fodmapIssues || aiInsights[trigger.food]?.fodmapIssues,
+                  culprits: (trigger as any).culprits || aiInsights[trigger.food]?.culprits,
                   alternatives: trigger.alternatives || aiInsights[trigger.food]?.alternatives
                 };
 
@@ -253,6 +254,9 @@ export const InsightsScreen: React.FC = () => {
                                 <IconContainer name="flask" size={14} color={colors.blue} variant="transparent" />
                                 <Typography variant="bodyXS" color={colors.black} style={{ marginLeft: 4, flex: 1 }}>
                                   Likely Cause: <Typography variant="bodyXS" style={{ fontFamily: 'Fredoka-SemiBold' }}>High {enriched.fodmapIssues.categories.join(', ')}</Typography>
+                                  {enriched.culprits && enriched.culprits.length > 0 && (
+                                    <Typography variant="bodyXS" color={colors.black + '99'}> ({enriched.culprits.join(', ')})</Typography>
+                                  )}
                                 </Typography>
                             </View>
                           )}
@@ -298,6 +302,18 @@ export const InsightsScreen: React.FC = () => {
                   </View>
                 </Card>
               )})}
+              
+              {enhancedTriggers.length > 3 && (
+                <View style={{ marginTop: spacing.xs, marginBottom: spacing.md }}>
+                  <Button
+                    title={showAllTriggers ? "Show Less" : `See All ${enhancedTriggers.length} Triggers`}
+                    variant="outline"
+                    onPress={() => setShowAllTriggers(!showAllTriggers)}
+                    style={{ backgroundColor: colors.white, borderColor: colors.border }}
+                    color={colors.black + '80'}
+                  />
+                </View>
+              )}
             </Animated.View>
           )}
           

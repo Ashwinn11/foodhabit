@@ -31,7 +31,7 @@ serve(async (req) => {
       If the food is safe, "categories" and "culprits" can be empty.
     `
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + apiKey, {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -43,10 +43,17 @@ serve(async (req) => {
       })
     })
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API Error:', errorText);
+      throw new Error(`Gemini API Error: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
     const data = await response.json()
-    
+
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-      throw new Error('Invalid response from Gemini API')
+      console.error('Invalid Gemini Response:', JSON.stringify(data));
+      throw new Error('Invalid response structure from Gemini API')
     }
 
     const textResponse = data.candidates[0].content.parts[0].text

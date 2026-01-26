@@ -1,9 +1,11 @@
+const pkg = require('./package.json');
+
 module.exports = {
   expo: {
-    name: "Gut Scan",
+    name: "Gut Buddy",
     slug: "foodhabit",
     owner: "foodhabit",
-    version: "1.0.0",
+    version: pkg.version,
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",

@@ -50,6 +50,7 @@ export const analyzeFoodWithAI = async (food: string): Promise<FODMAPTag & { alt
         return {
             level: data.level,
             categories: data.categories,
+            culprits: data.culprits,
             // We append the AI alternatives to the result object
             alternatives: data.alternatives
         } as any; // Cast to bypass strict type checking for the extra 'alternatives' field if needed
@@ -174,7 +175,7 @@ export const getLowFODMAPAlternatives = (food: string): string[] => {
         'pasta': ['Rice noodles', 'Quinoa pasta', 'Gluten-free pasta', 'Soba noodles (100% buckwheat)'],
         'pizza': ['Sourdough base', 'Gluten-free base', 'Polenta base'],
         'couscous': ['Quinoa', 'Rice', 'Millet'],
-        
+
         // Vegetables
         'onion': ['Green onion tops', 'Chives', 'Garlic-infused oil', 'Asafoetida'],
         'garlic': ['Garlic-infused oil', 'Asafoetida powder', 'Chives'],
@@ -182,36 +183,36 @@ export const getLowFODMAPAlternatives = (food: string): string[] => {
         'cauliflower': ['Broccoli heads (small amount)', 'Green beans', 'Bok choy'],
         'asparagus': ['Green beans', 'Bok choy', 'Spinach'],
         'artichoke': ['Green beans', 'Cucumber', 'Carrot'],
-        
+
         // Dairy
         'milk': ['Lactose-free milk', 'Almond milk', 'Coconut milk', 'Rice milk'],
         'yogurt': ['Lactose-free yogurt', 'Coconut yogurt', 'Almond yogurt'],
         'cheese': ['Cheddar', 'Parmesan', 'Feta', 'Mozzarella', 'Swiss'],
         'cream': ['Lactose-free cream', 'Coconut cream'],
         'ice cream': ['Lactose-free ice cream', 'Sorbet', 'Gelato (fruit based)'],
-        
+
         // Fruits
         'apple': ['Banana', 'Blueberries', 'Strawberries', 'Orange', 'Kiwi'],
         'pear': ['Orange', 'Mandarin', 'Pineapple', 'Grapes'],
         'mango': ['Papaya', 'Pineapple', 'Cantaloupe'],
         'watermelon': ['Cantaloupe', 'Honeydew melon', 'Pineapple'],
         'peach': ['Orange', 'Strawberry', 'Pineapple'],
-        
+
         // Legumes
         'beans': ['Canned chickpeas (rinsed)', 'Canned lentils (rinsed)', 'Tofu', 'Tempeh'],
         'chickpeas': ['Canned chickpeas (rinsed)', 'Tofu'],
         'lentils': ['Canned lentils (rinsed)', 'Tempeh'],
         'hummus': ['Homemade hummus (no garlic)', 'Eggplant dip'],
-        
+
         // Sweeteners
         'honey': ['Maple syrup', 'Rice malt syrup', 'Stevia'],
         'high fructose corn syrup': ['Maple syrup', 'Sugar', 'Stevia'],
         'agave': ['Maple syrup', 'Rice malt syrup'],
-        
+
         // Nuts
         'cashews': ['Peanuts', 'Walnuts', 'Macadamia nuts', 'Pecans'],
         'pistachios': ['Peanuts', 'Walnuts', 'Pumpkin seeds', 'Sunflower seeds'],
-        
+
         // Proteins
         'sausages': ['Plain meat', 'Eggs', 'Tofu', 'Fish'],
         'processed meat': ['Fresh meat', 'Chicken', 'Turkey'],
