@@ -204,8 +204,7 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
                   size={72}
                   iconSize={48}
                   color={colors.black + '15'}
-                  backgroundColor="transparent"
-                  borderWidth={0}
+                  variant="transparent"
                   shadow={false}
                   style={styles.emptyIcon}
                 />

@@ -7,39 +7,61 @@ export interface IconContainerProps {
   name: keyof typeof Ionicons.glyphMap;
   size?: number;
   iconSize?: number;
-  color?: string;
-  backgroundColor?: string;
+  color?: string; // The primary theme color
+  backgroundColor?: string; // Optional override
   borderColor?: string;
   borderWidth?: number;
   shape?: 'circle' | 'square' | 'rounded';
   shadow?: boolean;
   outline?: boolean;
+  variant?: 'solid' | 'transparent';
   style?: ViewStyle;
 }
 
 /**
- * A reusable icon container component that supports various shapes, 
- * borders, and shadow styles. Ideal for section headers, timeline dots,
- * and menu buttons.
+ * A reusable icon container component that supports Solid and Transparent states.
+ * Solid: Solid background color with a contrasting icon (white/black).
+ * Transparent: Transparent background with a colored icon.
  */
 export const IconContainer: React.FC<IconContainerProps> = ({
   name,
   size = 44,
   iconSize,
   color = colors.blue,
-  backgroundColor = colors.white,
+  backgroundColor,
   borderColor,
-  borderWidth = 1,
+  borderWidth = 0,
   shape = 'circle',
-  shadow = true,
+  shadow = false,
   outline = false,
+  variant,
   style,
 }) => {
   const calculatedIconSize = iconSize || size * 0.5;
   const iconName = outline && !name.includes('-outline') ? `${name}-outline` : name;
   
+  // Determine if it's truly solid or transparent
+  // If variant is not provided, we infer from backgroundColor
+  const finalVariant = variant || (backgroundColor === 'transparent' ? 'transparent' : 'solid');
+  
+  let finalBgColor = backgroundColor;
+  let finalIconColor = color;
+
+  if (finalVariant === 'solid') {
+    finalBgColor = backgroundColor || color;
+    // Contrast logic: use black for yellow, white for others
+    if (finalBgColor === colors.yellow) {
+      finalIconColor = colors.black;
+    } else {
+      finalIconColor = colors.white;
+    }
+  } else {
+    finalBgColor = 'transparent';
+    finalIconColor = color;
+  }
+
   const getBorderRadius = () => {
-    if (backgroundColor === 'transparent' && borderWidth === 0) return 0;
+    if (finalBgColor === 'transparent' && borderWidth === 0) return 0;
     switch (shape) {
       case 'circle': return size / 2;
       case 'rounded': return radii.lg;
@@ -56,15 +78,15 @@ export const IconContainer: React.FC<IconContainerProps> = ({
           width: size,
           height: size,
           borderRadius: getBorderRadius(),
-          backgroundColor,
-          borderColor: borderColor || colors.border,
-          borderWidth: backgroundColor === 'transparent' && !borderColor ? 0 : borderWidth,
+          backgroundColor: finalBgColor,
+          borderColor: borderColor || (variant === 'transparent' ? color : 'transparent'),
+          borderWidth: borderWidth,
         },
-        shadow && backgroundColor !== 'transparent' && shadows.sm,
+        shadow && finalBgColor !== 'transparent' && shadows.sm,
         style,
       ]}
     >
-      <Ionicons name={iconName as any} size={calculatedIconSize} color={color} />
+      <Ionicons name={iconName as any} size={calculatedIconSize} color={finalIconColor} />
     </View>
   );
 };

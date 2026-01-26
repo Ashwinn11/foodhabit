@@ -190,6 +190,10 @@ interface GutStore {
     };
     setNotificationSettings: (settings: Partial<{ enabled: boolean; reminderTime: { hour: number; minute: number } }>) => void;
 
+    // Alert Management
+    dismissedAlerts: Record<string, string>; // type -> timestamp string of the latest log that was dimissed (or dismissal time for state-based)
+    dismissAlert: (type: string) => void;
+
     // Quick log helpers
     quickLogPoop: (bristolType?: BristolType) => void;
 }
@@ -1233,11 +1237,17 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         });
 
         if (recentBlood.length > 0) {
-            alerts.push({
-                type: 'blood',
-                message: 'Blood in stool detected in the last 7 days. This may indicate a medical condition. Please consult a healthcare provider.',
-                severity: 'critical'
-            });
+            const latestLog = recentBlood[0]; // Assumes sorted new->old
+            const dismissedAt = get().dismissedAlerts['blood'];
+
+            // Show if never dismissed OR latest log is newer than dismissal reference
+            if (!dismissedAt || new Date(latestLog.timestamp) > new Date(dismissedAt)) {
+                alerts.push({
+                    type: 'blood',
+                    message: 'Blood in stool detected in the last 7 days. This may indicate a medical condition. Please consult a healthcare provider.',
+                    severity: 'critical'
+                });
+            }
         }
 
         // Check for persistent mucus
@@ -1247,11 +1257,16 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         });
 
         if (recentMucus.length >= 5) {
-            alerts.push({
-                type: 'mucus',
-                message: 'Frequent mucus in stool detected. Consider consulting a healthcare provider.',
-                severity: 'warning'
-            });
+            const latestLog = recentMucus[0];
+            const dismissedAt = get().dismissedAlerts['mucus'];
+
+            if (!dismissedAt || new Date(latestLog.timestamp) > new Date(dismissedAt)) {
+                alerts.push({
+                    type: 'mucus',
+                    message: 'Frequent mucus in stool detected. Consider consulting a healthcare provider.',
+                    severity: 'warning'
+                });
+            }
         }
 
         // Check for severe constipation (no BM in 3+ days)
@@ -1261,11 +1276,17 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         });
 
         if (last3Days.length === 0 && gutMoments.length > 0) {
-            alerts.push({
-                type: 'constipation',
-                message: 'No bowel movements in 3+ days. If this persists or causes discomfort, consult a healthcare provider.',
-                severity: 'warning'
-            });
+            const dismissedAt = get().dismissedAlerts['constipation'];
+            // For constipation (state-based), we rely on a 24h snooze window from the dismissal timestamp
+            const isSnoozed = dismissedAt && (Date.now() - new Date(dismissedAt).getTime()) < (24 * 60 * 60 * 1000);
+
+            if (!isSnoozed) {
+                alerts.push({
+                    type: 'constipation',
+                    message: 'No bowel movements in 3+ days. If this persists or causes discomfort, consult a healthcare provider.',
+                    severity: 'warning'
+                });
+            }
         }
 
         // Check for persistent diarrhea (Bristol 6-7 for 3+ days)
@@ -1274,13 +1295,18 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             return daysSince <= 7;
         });
 
-        const diarrheaDays = last7Days.filter(m => m.bristolType && [6, 7].includes(m.bristolType)).length;
-        if (diarrheaDays >= 5) {
-            alerts.push({
-                type: 'diarrhea',
-                message: 'Persistent diarrhea detected. Stay hydrated and consider consulting a healthcare provider if it continues.',
-                severity: 'warning'
-            });
+        const diarrheaDays = last7Days.filter(m => m.bristolType && [6, 7].includes(m.bristolType));
+        if (diarrheaDays.length >= 5) { // Logic from previous code was length comparison
+            const latestLog = diarrheaDays[0];
+            const dismissedAt = get().dismissedAlerts['diarrhea'];
+
+            if (!dismissedAt || new Date(latestLog.timestamp) > new Date(dismissedAt)) {
+                alerts.push({
+                    type: 'diarrhea',
+                    message: 'Persistent diarrhea detected. Stay hydrated and consider consulting a healthcare provider if it continues.',
+                    severity: 'warning'
+                });
+            }
         }
 
         return {
@@ -1288,6 +1314,33 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             alerts
         };
     },
+
+    dismissedAlerts: {},
+    dismissAlert: (type: string) => set((state) => {
+        const { gutMoments } = state;
+        let referenceTime = new Date().toISOString();
+
+        // For event-based alerts (Blood, Mucus, Diarrhea), we anchor to the LATEST relevant log timestamp.
+        // This ensures the alert stays dismissed until a NEWER log appears.
+        if (type === 'blood') {
+            const last = gutMoments.find(m => m.tags?.includes('blood'));
+            if (last) referenceTime = new Date(last.timestamp).toISOString();
+        } else if (type === 'mucus') {
+            const last = gutMoments.find(m => m.tags?.includes('mucus'));
+            if (last) referenceTime = new Date(last.timestamp).toISOString();
+        } else if (type === 'diarrhea') {
+            const last = gutMoments.find(m => m.bristolType && [6, 7].includes(m.bristolType));
+            if (last) referenceTime = new Date(last.timestamp).toISOString();
+        }
+        // For state-based alerts (Constipation), we just use current time (snooze)
+
+        return {
+            dismissedAlerts: {
+                ...state.dismissedAlerts,
+                [type]: referenceTime
+            }
+        };
+    }),
 
     getPoopHistoryData: () => {
         const moments = get().gutMoments;

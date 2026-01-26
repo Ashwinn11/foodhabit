@@ -45,9 +45,8 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ item, style }) => 
           <IconContainer 
             name={iconName as any} 
             size={44} 
-            color={saturatedColor === colors.yellow ? colors.black : colors.white} 
-            backgroundColor={saturatedColor}
-            borderColor={saturatedColor}
+            color={saturatedColor} 
+            variant="solid"
             shape="circle"
           />
         </View>
@@ -84,9 +83,8 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ item, style }) => 
         <IconContainer 
           name="happy-outline" 
           size={44} 
-          color={colors.white} 
-          backgroundColor={colors.pink}
-          borderColor={colors.pink}
+          color={colors.pink} 
+          variant="solid"
           shape="circle"
         />
       </View>
@@ -95,7 +93,7 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ item, style }) => 
         <View style={styles.header}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
             <Typography variant="h3">Poop Log</Typography>
-            <IconContainer name="water" size={20} iconSize={14} color={colors.pink} backgroundColor="transparent" borderWidth={0} shadow={false} />
+            <IconContainer name="water" size={20} iconSize={14} color={colors.pink} variant="transparent" shadow={false} />
           </View>
           <Typography variant="bodyXS" color={colors.pink} style={{ fontFamily: 'Chewy' }}>
             {formatTime(item.timestamp)}

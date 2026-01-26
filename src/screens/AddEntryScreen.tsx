@@ -180,8 +180,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               size={32} 
               iconSize={20}
               color={mode === 'poop' ? colors.white : colors.pink} 
-              backgroundColor="transparent"
-              borderWidth={0}
+              variant={mode === 'poop' ? 'solid' : 'transparent'}
               shadow={false}
             />
             <Typography variant="bodyBold" color={mode === 'poop' ? colors.white : colors.black}>
@@ -197,8 +196,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               size={32} 
               iconSize={20}
               color={mode === 'meal' ? colors.white : colors.blue} 
-              backgroundColor="transparent"
-              borderWidth={0}
+              variant={mode === 'meal' ? 'solid' : 'transparent'}
               shadow={false}
             />
             <Typography variant="bodyBold" color={mode === 'meal' ? colors.white : colors.black}>
@@ -365,8 +363,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                       size={20}
                       iconSize={14}
                       color={colors.white}
-                      backgroundColor="transparent"
-                      borderWidth={0}
+                      variant="transparent"
                       shadow={false}
                     />
                   )}
@@ -401,9 +398,8 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                       <IconContainer
                         name={meal.icon as any}
                         size={48}
-                        color={meal.color === colors.yellow ? colors.black : meal.color}
-                        backgroundColor={meal.color === colors.yellow ? colors.yellow : colors.white}
-                        borderColor={meal.color}
+                        color={meal.color}
+                        variant="solid"
                         shape="circle"
                         style={{ marginBottom: spacing.sm }}
                       />
@@ -440,9 +436,8 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                     name="add"
                     size={40}
                     iconSize={24}
-                    color={colors.white}
-                    backgroundColor="transparent"
-                    borderWidth={0}
+                    color={colors.blue}
+                    variant="solid"
                     shadow={false}
                   />
                 </Pressable>
@@ -462,8 +457,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
                       size={20}
                       iconSize={16}
                       color={colors.pink}
-                      backgroundColor="transparent"
-                      borderWidth={0}
+                      variant="transparent"
                       shadow={false}
                     />
                   </Pressable>

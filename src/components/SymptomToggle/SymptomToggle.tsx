@@ -73,9 +73,8 @@ export const SymptomToggle: React.FC<SymptomToggleProps> = ({
           name={iconName}
           size={32}
           iconSize={18}
-          color={active ? colors.black : (color === colors.yellow ? colors.black + '66' : color)}
-          backgroundColor={!active && color === colors.yellow ? colors.yellow + '30' : 'transparent'}
-          borderWidth={0}
+          color={color}
+          variant={active ? 'solid' : 'transparent'}
           shadow={false}
           style={styles.icon}
         />

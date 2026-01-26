@@ -3,15 +3,14 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { OnboardingScreen } from '../../components/Onboarding';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useNavigation } from '@react-navigation/native';
-import { Typography, GutAvatar, Card } from '../../components';
+import { Typography, GutAvatar, Card, IconContainer } from '../../components';
 import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
 
 const PAIN_POINTS = [
   { icon: 'thunderstorm', text: 'Embarrassing gas & smells', color: colors.yellow },
   { icon: 'cloud', text: 'Constant bloating', color: colors.blue },
-  { icon: 'battery-dead', text: 'Constant fatigue & brain fog', color: colors.black },
+  { icon: 'battery-dead', text: 'Constant fatigue & brain fog', color: colors.blue },
   { icon: 'alert-circle', text: 'Breakouts & skin issues', color: colors.pink },
   { icon: 'speedometer', text: 'Stubborn weight', color: colors.pink },
 ];
@@ -45,11 +44,17 @@ export const OnboardingHookScreen = () => {
 
         <Animated.View entering={FadeInDown.delay(200)} style={{ gap: spacing.md }}>
           {PAIN_POINTS.map((point, index) => (
-            <Card key={index} style={[styles.painCard, { backgroundColor: point.color + '15', borderWidth: 0 }]}>
-              <View style={[styles.iconContainer, { backgroundColor: colors.white }]}>
-                <Ionicons name={point.icon as any} size={28} color={point.color} />
-              </View>
-              <Typography variant="bodyBold" color={colors.black} style={{ flex: 1, fontSize: 17 }}>
+            <Card key={index} style={[styles.painCard, { backgroundColor: point.color, borderWidth: 0 }]}>
+              <IconContainer 
+                name={point.icon as any} 
+                size={48} 
+                iconSize={24} 
+                color={point.color} 
+                variant="solid"
+                backgroundColor={colors.white}
+                style={styles.iconMargin}
+              />
+              <Typography variant="bodyBold" color={point.color === colors.yellow ? colors.black : colors.white} style={{ flex: 1, fontSize: 17 }}>
                 {point.text}
               </Typography>
             </Card>
@@ -83,12 +88,7 @@ const styles = StyleSheet.create({
     borderRadius: 24, 
     // border handled inline for color
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+  iconMargin: {
     marginRight: spacing.md,
   },
 });

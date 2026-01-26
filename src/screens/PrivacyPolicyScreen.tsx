@@ -36,15 +36,14 @@ export const PrivacyPolicyScreen: React.FC = () => {
       >
         <Animated.View entering={FadeInDown.delay(200).springify()}>
           <View style={styles.iconSection}>
-            <IconContainer
-              name="shield-checkmark"
-              size={64}
-              iconSize={36}
-              color={colors.pink}
-              backgroundColor={colors.pink + '15'}
-              borderWidth={0}
-              shadow={false}
-            />
+        <IconContainer
+          name="shield-checkmark"
+          size={56}
+          iconSize={28}
+          color={colors.pink}
+          variant="solid"
+          shadow={false}
+        />
           </View>
 
           <Card variant="white" padding="lg" style={styles.section}>
@@ -154,10 +153,10 @@ export const PrivacyPolicyScreen: React.FC = () => {
               Third-Party Services
             </Typography>
             <Typography variant="body" color={colors.black + '99'}>
-              We use Supabase for authentication and optional cloud backup:{'\\n'}
-              • Privacy Policy: supabase.com/privacy{'\\n'}
-              • Data: Email address, encrypted health logs (if backup enabled){'\\n'}
-              • Location: US-based servers{'\\n'}
+              We use Supabase for authentication and optional cloud backup:{'\n'}
+              • Privacy Policy: supabase.com/privacy{'\n'}
+              • Data: Email address, encrypted health logs (if backup enabled){'\n'}
+              • Location: US-based servers{'\n'}
               • Purpose: Secure authentication and data sync across devices
             </Typography>
           </Card>
@@ -169,9 +168,9 @@ export const PrivacyPolicyScreen: React.FC = () => {
               Data Retention
             </Typography>
             <Typography variant="body" color={colors.black + '99'}>
-              • Health logs: Retained until you delete them{'\\n'}
-              • Account data: Retained while your account is active{'\\n'}
-              • Deleted data: Permanently removed within 30 days{'\\n'}
+              • Health logs: Retained until you delete them{'\n'}
+              • Account data: Retained while your account is active{'\n'}
+              • Deleted data: Permanently removed within 30 days{'\n'}
               • Backup data: Removed from cloud servers within 30 days of deletion
             </Typography>
           </Card>
@@ -194,12 +193,12 @@ export const PrivacyPolicyScreen: React.FC = () => {
               International Privacy Laws
             </Typography>
             <Typography variant="body" color={colors.black + '99'}>
-              We comply with GDPR (EU), CCPA (California), and other applicable privacy laws. You have the right to:{'\\n'}
-              • Access your data{'\\n'}
-              • Correct inaccurate data{'\\n'}
-              • Request data deletion{'\\n'}
-              • Export your data{'\\n'}
-              • Withdraw consent{'\\n'}
+              We comply with GDPR (EU), CCPA (California), and other applicable privacy laws. You have the right to:{'\n'}
+              • Access your data{'\n'}
+              • Correct inaccurate data{'\n'}
+              • Request data deletion{'\n'}
+              • Export your data{'\n'}
+              • Withdraw consent{'\n'}
               • Lodge a complaint with supervisory authorities
             </Typography>
           </Card>

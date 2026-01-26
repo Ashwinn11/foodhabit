@@ -35,7 +35,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
             size={32}
             iconSize={18}
             color={iconColor}
-            borderColor={iconColor}
+            variant="solid"
             shape="circle"
             style={{ marginRight: spacing.sm }}
           />

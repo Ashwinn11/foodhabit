@@ -3,9 +3,8 @@ import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { OnboardingScreen } from '../../components/Onboarding';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useNavigation } from '@react-navigation/native';
-import { Typography } from '../../components';
+import { Typography, IconContainer } from '../../components';
 import { colors, spacing } from '../../theme';
-import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 const INACTIVE_COLOR = colors.black + '40';
@@ -15,7 +14,7 @@ const INACTIVE_COLOR = colors.black + '40';
 const SYMPTOMS = [
     { id: 'gas', label: 'Gas / Smells', icon: 'thunderstorm', color: colors.yellow },
     { id: 'bloating', label: 'Bloating', icon: 'cloud', color: colors.blue },
-    { id: 'fatigue', label: 'Brain Fog / Fatigue', icon: 'battery-dead', color: colors.black },
+    { id: 'fatigue', label: 'Brain Fog / Fatigue', icon: 'battery-dead', color: colors.blue },
     { id: 'acne', label: 'Acne / Skin issues', icon: 'alert-circle', color: colors.pink },
     { id: 'weight', label: 'Stubborn Weight', icon: 'speedometer', color: colors.pink },
     { id: 'constipation', label: 'Constipation', icon: 'cube', color: colors.yellow },
@@ -121,10 +120,17 @@ export const OnboardingQuizScreen = () => {
                         return (
                             <TouchableOpacity 
                                 key={s.id} 
-                                style={[styles.gridItem, isSelected && { borderColor: s.color, backgroundColor: s.color + '10' }]}
+                                style={[styles.gridItem, isSelected && { borderColor: s.color }]}
                                 onPress={() => toggleSymptom(s.id)}
                             >
-                                <Ionicons name={s.icon as any} size={28} color={isSelected ? s.color : INACTIVE_COLOR} />
+                                <IconContainer 
+                                    name={s.icon as any} 
+                                    size={44} 
+                                    iconSize={24} 
+                                    color={isSelected ? s.color : INACTIVE_COLOR} 
+                                    variant={isSelected ? 'solid' : 'transparent'}
+                                    shadow={false}
+                                />
                                 <Typography variant="caption" style={{marginTop: 8, textAlign: 'center', fontSize: 11, lineHeight: 14 }}>{s.label}</Typography>
                             </TouchableOpacity>
                         );
@@ -162,10 +168,17 @@ export const OnboardingQuizScreen = () => {
 
 const SelectableCard = ({ item, isSelected, onSelect }: any) => (
     <TouchableOpacity 
-        style={[styles.smallCard, isSelected && { borderColor: item.color, backgroundColor: item.color + '10' }]}
+        style={[styles.smallCard, isSelected && { borderColor: item.color }]}
         onPress={onSelect}
     >
-        <Ionicons name={item.icon} size={24} color={isSelected ? item.color : INACTIVE_COLOR} />
+        <IconContainer 
+            name={item.icon} 
+            size={40} 
+            iconSize={20} 
+            color={isSelected ? item.color : INACTIVE_COLOR} 
+            variant={isSelected ? 'solid' : 'transparent'}
+            shadow={false}
+        />
         <Typography variant="caption" style={{ marginTop: 4 }}>{item.label}</Typography>
     </TouchableOpacity>
 );
@@ -178,14 +191,20 @@ const QuestionBlock = ({ title, options, selected, onSelect }: any) => (
              return (
                 <TouchableOpacity 
                     key={JSON.stringify(opt.id)}
-                    style={[styles.listOption, isSelected && { borderColor: opt.color, backgroundColor: opt.color + '10' }]}
+                    style={[styles.listOption, isSelected && { borderColor: opt.color }]}
                     onPress={() => onSelect(opt.id)}
                 >
-                     <View style={[styles.iconBox, { backgroundColor: isSelected ? opt.color + '20' : colors.background }]}>
-                        <Ionicons name={opt.icon} size={20} color={isSelected ? opt.color : INACTIVE_COLOR} />
-                     </View>
+                     <IconContainer 
+                        name={opt.icon} 
+                        size={48} 
+                        iconSize={24} 
+                        color={isSelected ? opt.color : INACTIVE_COLOR} 
+                        variant={isSelected ? 'solid' : 'transparent'}
+                        shadow={false}
+                        shape="circle"
+                     />
                      <Typography variant="body" style={{ flex: 1, marginLeft: spacing.md }}>{opt.label}</Typography>
-                     {isSelected && <Ionicons name="checkmark-circle" size={20} color={opt.color} />}
+                     {isSelected && <IconContainer name="checkmark-circle" size={24} color={opt.color} variant="transparent" />}
                 </TouchableOpacity>
              );
         })}

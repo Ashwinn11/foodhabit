@@ -25,10 +25,8 @@ const SettingsItem: React.FC<{
         name={icon}
         size={40}
         iconSize={20}
-        color={color === colors.yellow ? colors.black : color}
-        backgroundColor={color === colors.yellow ? colors.yellow : color + '15'}
-        borderColor={color}
-        borderWidth={1.5}
+        color={color}
+        variant="solid"
         shadow={false}
         style={{ marginRight: spacing.md }}
       />
@@ -363,9 +361,7 @@ export const ProfileScreen: React.FC = () => {
                 size={40}
                 iconSize={20}
                 color={colors.blue}
-                backgroundColor={colors.blue + '15'}
-                borderColor={colors.blue}
-                borderWidth={1.5}
+                variant="solid"
                 shadow={false}
                 style={{ marginRight: spacing.md }}
               />
@@ -388,9 +384,7 @@ export const ProfileScreen: React.FC = () => {
                     size={40}
                     iconSize={20}
                     color={colors.pink}
-                    backgroundColor={colors.pink + '15'}
-                    borderColor={colors.pink}
-                    borderWidth={1.5}
+                    variant="solid"
                     shadow={false}
                     style={{ marginRight: spacing.md }}
                   />

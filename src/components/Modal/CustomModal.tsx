@@ -94,15 +94,14 @@ export const CustomModal: React.FC<CustomModalProps> = ({
         >
           <Card style={styles.card} shadow="md">
             <View style={styles.iconWrapper}>
-              <IconContainer
-                name={iconConfig.name}
-                size={64}
-                iconSize={32}
-                color={iconConfig.color === colors.yellow ? colors.black : iconConfig.color}
-                backgroundColor={iconConfig.color === colors.yellow ? colors.yellow : iconConfig.color + '15'}
-                borderWidth={2}
-                borderColor={iconConfig.color}
-              />
+        <IconContainer
+          name={iconConfig.name as any}
+          size={64}
+          iconSize={32}
+          color={iconConfig.color}
+          variant="solid"
+          shadow={true}
+        />
             </View>
 
             <Typography variant="h3" align="center" style={styles.title}>

@@ -3,6 +3,7 @@ import {
   View,
   StyleSheet,
   ScrollView,
+  Pressable,
 } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -27,7 +28,7 @@ type HomeScreenProps = {
 };
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const { user, getStats, getDynamicTasks, addWater, addFiber, addProbiotic, addExercise, getGutHealthScore, checkMedicalAlerts } = useGutStore();
+  const { user, getStats, getDynamicTasks, addWater, addFiber, addProbiotic, addExercise, getGutHealthScore, checkMedicalAlerts, dismissAlert } = useGutStore();
   
   const dynamicTasks = getDynamicTasks();
   const incompleteTasks = dynamicTasks.filter(t => !t.completed).length;
@@ -130,8 +131,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     size={40}
                     iconSize={24}
                     color={alert.severity === 'critical' ? colors.pink : '#FFA500'}
-                    backgroundColor={alert.severity === 'critical' ? colors.pink + '15' : '#FFA50015'}
-                    borderWidth={0}
+                    variant="solid"
                     shadow={false}
                   />
                   <View style={styles.alertText}>
@@ -142,6 +142,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                       {alert.message}
                     </Typography>
                   </View>
+                  <Pressable 
+                    onPress={() => dismissAlert(alert.type)}
+                    style={{ padding: 4 }}
+                    hitSlop={8}
+                  >
+                    <IconContainer
+                      name="close"
+                      size={24}
+                      iconSize={16}
+                      color={colors.black + '40'}
+                      backgroundColor="transparent"
+                      borderWidth={0}
+                      shadow={false}
+                    />
+                  </Pressable>
                 </View>
               </Card>
             ))}

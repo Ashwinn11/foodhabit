@@ -4,12 +4,12 @@
  */
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, shadows } from '../../theme';
 import { Typography } from '../Typography';
+import { IconContainer } from '../IconContainer/IconContainer';
 
 interface FeatureCardProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: any; // Using any for Ionicons name to avoid type mismatches during transition
   title: string;
   description: string;
   color?: string;
@@ -23,9 +23,15 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
-        <Ionicons name={icon} size={28} color={color} />
-      </View>
+      <IconContainer
+        name={icon}
+        size={56}
+        iconSize={28}
+        color={color}
+        variant="solid"
+        shape="rounded"
+        style={styles.iconMargin}
+      />
       <View style={styles.content}>
         <Typography variant="bodyBold" style={styles.title}>
           {title}
@@ -48,12 +54,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     ...shadows.sm,
   },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
+  iconMargin: {
     marginRight: spacing.lg,
   },
   content: {

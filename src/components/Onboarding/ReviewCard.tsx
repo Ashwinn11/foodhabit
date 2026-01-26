@@ -33,13 +33,19 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
         </View>
         <View style={styles.headerContent}>
           <Typography variant="bodyBold">{name}</Typography>
+import { IconContainer } from '../IconContainer/IconContainer';
+
+// ...
           <View style={styles.stars}>
             {stars.map((filled, index) => (
-              <Ionicons
+              <IconContainer
                 key={index}
                 name={filled ? 'star' : 'star-outline'}
-                size={14}
+                size={18}
+                iconSize={14}
                 color={colors.yellow}
+                variant="transparent"
+                shadow={false}
                 style={styles.star}
               />
             ))}

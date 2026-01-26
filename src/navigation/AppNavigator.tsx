@@ -50,8 +50,7 @@ const TabIcon: React.FC<TabIconProps> = ({ iconName, label, focused }) => {
         size={32}
         iconSize={24}
         color={color}
-        backgroundColor="transparent"
-        borderWidth={0}
+        variant="transparent"
         shadow={false}
       />
       <Typography 
@@ -96,8 +95,7 @@ const CenterAddButton: React.FC<{ onPress: () => void }> = ({ onPress }) => {
           size={55}
           iconSize={28}
           color={colors.black}
-          backgroundColor="transparent"
-          borderWidth={0}
+          variant="transparent"
           shadow={false}
         />
       </Animated.View>

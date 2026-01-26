@@ -9,8 +9,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radii, shadows } from '../../theme';
 import { Typography } from '../Typography';
 
+import { IconContainer } from '../IconContainer/IconContainer';
+
 interface QuizOptionProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: any;
   label: string;
   description?: string;
   selected: boolean;
@@ -52,13 +54,15 @@ export const QuizOption: React.FC<QuizOptionProps> = ({
       ]}
     >
       <View style={styles.content}>
-        <View style={[styles.iconContainer, selected && styles.iconSelected]}>
-          <Ionicons
-            name={icon}
-            size={24}
-            color={selected ? colors.white : colors.pink}
-          />
-        </View>
+        <IconContainer
+          name={icon}
+          size={48}
+          iconSize={24}
+          color={colors.pink}
+          variant={selected ? 'solid' : 'transparent'}
+          shape="rounded"
+          style={styles.iconMargin}
+        />
         <View style={styles.textContainer}>
           <Typography
             variant="bodyBold"
@@ -109,17 +113,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.lg,
-    backgroundColor: colors.pink + '15',
-    alignItems: 'center',
-    justifyContent: 'center',
+  iconMargin: {
     marginRight: spacing.md,
-  },
-  iconSelected: {
-    backgroundColor: colors.pink,
   },
   textContainer: {
     flex: 1,

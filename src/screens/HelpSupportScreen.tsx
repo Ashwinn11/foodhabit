@@ -51,15 +51,14 @@ export const HelpSupportScreen: React.FC = () => {
       >
         <Animated.View entering={FadeInDown.delay(200).springify()}>
           <View style={styles.iconSection}>
-            <IconContainer
-              name="help-buoy"
-              size={64}
-              iconSize={36}
-              color={colors.blue}
-              backgroundColor={colors.blue + '15'}
-              borderWidth={0}
-              shadow={false}
-            />
+        <IconContainer
+          name="chatbubbles"
+          size={56}
+          iconSize={28}
+          color={colors.blue}
+          variant="solid"
+          shadow={false}
+        />
           </View>
 
           <Typography variant="h3" style={{ marginBottom: spacing.md, marginLeft: spacing.xs }}>

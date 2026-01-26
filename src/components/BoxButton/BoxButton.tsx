@@ -13,6 +13,7 @@ interface BoxButtonProps {
   color?: string;
   style?: ViewStyle;
   badgeCount?: number;
+  variant?: 'solid' | 'transparent';
   borderColor?: string;
 }
 
@@ -23,6 +24,7 @@ export const BoxButton: React.FC<BoxButtonProps> = ({
   color = colors.pink,
   style,
   badgeCount,
+  variant = 'solid',
   borderColor
 }) => {
   const scale = useSharedValue(1);
@@ -53,6 +55,7 @@ export const BoxButton: React.FC<BoxButtonProps> = ({
           size={size}
           iconSize={size * 0.5}
           color={color}
+          variant={variant}
           borderColor={borderColor || color}
           shape="circle"
         />

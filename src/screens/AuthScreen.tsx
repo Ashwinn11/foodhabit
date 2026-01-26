@@ -28,17 +28,14 @@ const FeatureItem = ({ icon, text, color, delay }: { icon: string, text: string,
     entering={FadeInDown.delay(delay).springify()}
     style={styles.featureItem}
   >
-    <View style={[styles.featureIcon, { backgroundColor: color + '20' }]}>
-      <IconContainer 
-        name={icon as any} 
-        size={32} 
-        iconSize={18} 
-        color={color} 
-        backgroundColor="transparent" 
-        borderWidth={0} 
-        shadow={false} 
-      />
-    </View>
+    <IconContainer 
+      name={icon as any} 
+      size={56} 
+      iconSize={24} 
+      color={color} 
+      variant="solid"
+      shape="rounded"
+    />
     <Typography variant="body" style={{ fontSize: 13, fontWeight: '500' }}>{text}</Typography>
   </Animated.View>
 );
@@ -250,13 +247,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     gap: spacing.sm,
-  },
-  featureIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   authContainer: {
     width: '100%',

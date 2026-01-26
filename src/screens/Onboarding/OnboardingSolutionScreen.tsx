@@ -3,10 +3,10 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { OnboardingScreen } from '../../components/Onboarding';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useNavigation } from '@react-navigation/native';
-import { Typography, GutAvatar, Card } from '../../components';
+import { Typography, GutAvatar, Card, IconContainer } from '../../components';
 import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+
 
 export const OnboardingSolutionScreen = () => {
   const navigation = useNavigation<any>();
@@ -74,9 +74,14 @@ export const OnboardingSolutionScreen = () => {
 
 const FeatureBlock = ({ icon, title, description, color }: any) => (
   <Card style={styles.featureCard}>
-      <View style={[styles.iconBox, { backgroundColor: color + '15' }]}>
-        <Ionicons name={icon} size={28} color={color} />
-      </View>
+      <IconContainer
+        name={icon}
+        size={56}
+        iconSize={28}
+        color={color}
+        variant="solid"
+        style={styles.iconMargin}
+      />
       <View style={{ flex: 1 }}>
         <Typography variant="bodyBold" style={{ marginBottom: 4 }}>{title}</Typography>
         <Typography variant="bodySmall" color={colors.mediumGray}>{description}</Typography>
@@ -114,12 +119,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     // No border
   },
-  iconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
+  iconMargin: {
     marginRight: spacing.md,
   },
   extraFeatures: {

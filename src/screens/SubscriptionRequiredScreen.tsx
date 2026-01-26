@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { Typography, Card, ScreenWrapper } from '../components';
+import { Typography, Card, ScreenWrapper, IconContainer } from '../components';
 import { colors, spacing, radii, shadows } from '../theme';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -277,37 +277,48 @@ export const SubscriptionRequiredScreen: React.FC = () => {
 };
 
 const StatItem: React.FC<{
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: any;
   value: string;
   label: string;
   color: string;
   delay: number;
 }> = ({ icon, value, label, color, delay }) => (
   <Animated.View entering={FadeInDown.delay(delay).springify()} style={styles.statItem}>
-    <View style={[styles.statIconContainer, { backgroundColor: color + '15', borderColor: color }]}>
-      <Ionicons name={icon} size={24} color={color} />
-    </View>
+    <IconContainer
+      name={icon}
+      size={56}
+      iconSize={24}
+      color={color}
+      variant="solid"
+      style={styles.statIconMargin}
+    />
     <Typography variant="h2" style={styles.statValue}>{value}</Typography>
     <Typography variant="caption" color={colors.black + '66'}>{label}</Typography>
   </Animated.View>
 );
 
 const FeatureItem: React.FC<{
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: any;
   text: string;
   delay: number;
 }> = ({ icon, text, delay }) => (
   <Animated.View entering={FadeInDown.delay(delay).springify()} style={styles.featureItem}>
-    <View style={styles.featureIconContainer}>
-      <Ionicons name={icon} size={20} color={colors.black} />
-    </View>
+    <IconContainer
+      name={icon}
+      size={32}
+      iconSize={18}
+      color={colors.black}
+      variant="solid"
+      backgroundColor={colors.white}
+      style={styles.featureIconMargin}
+    />
     <Typography variant="bodySmall" style={styles.featureText}>{text}</Typography>
     <Ionicons name="checkmark-circle" size={20} color={colors.black + '40'} />
   </Animated.View>
 );
 
 const InsightItem: React.FC<{
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: any;
   label: string;
   value: string;
   subtext: string;
@@ -315,9 +326,14 @@ const InsightItem: React.FC<{
   delay: number;
 }> = ({ icon, label, value, subtext, color, delay }) => (
   <Animated.View entering={FadeInDown.delay(delay).springify()} style={styles.insightItem}>
-    <View style={[styles.insightIconContainer, { backgroundColor: color + '20', borderColor: color }]}>
-      <Ionicons name={icon} size={20} color={color} />
-    </View>
+    <IconContainer
+      name={icon}
+      size={40}
+      iconSize={20}
+      color={color}
+      variant="solid"
+      style={styles.insightIconMargin}
+    />
     <View style={styles.insightContent}>
       <Typography variant="caption" color={colors.black + '66'}>{label}</Typography>
       <Typography variant="bodyBold">{value}</Typography>
@@ -375,14 +391,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.md,
   },
-  statIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
+  statIconMargin: {
     marginBottom: spacing.sm,
-    borderWidth: 2,
   },
   statValue: {
     marginBottom: spacing.xs,
@@ -405,13 +415,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.black + '10',
   },
-  featureIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
+  featureIconMargin: {
     marginRight: spacing.sm,
   },
   featureText: {
@@ -466,14 +470,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.black + '10',
   },
-  insightIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+  insightIconMargin: {
     marginRight: spacing.md,
-    borderWidth: 2,
   },
   insightContent: {
     flex: 1,

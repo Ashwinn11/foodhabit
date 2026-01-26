@@ -72,9 +72,8 @@ export const FoodBlobCard: React.FC<FoodBlobCardProps> = ({
                   name="checkmark"
                   size={24}
                   iconSize={12}
-                  color={config.accent === colors.yellow ? colors.black : colors.white}
-                  backgroundColor={config.accent}
-                  borderWidth={0}
+                  color={config.accent}
+                  variant="solid"
                   shadow={false}
                 />
               )}
@@ -85,8 +84,8 @@ export const FoodBlobCard: React.FC<FoodBlobCardProps> = ({
             name={config.icon}
             size={70}
             iconSize={32}
-            color={config.accent === colors.yellow ? colors.black : config.accent}
-            borderColor={config.accent}
+            color={config.accent}
+            variant="solid"
             shape="circle"
             style={{ marginTop: spacing.md }}
           />

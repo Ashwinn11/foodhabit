@@ -340,8 +340,7 @@ export const InsightsScreen: React.FC = () => {
                 size={48} 
                 iconSize={24} 
                 color={colors.blue} 
-                backgroundColor={colors.blue + '15'}
-                borderWidth={0}
+                variant="solid"
                 shadow={false}
               />
               <View style={{ flex: 1, marginHorizontal: spacing.md }}>
