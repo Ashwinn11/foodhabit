@@ -828,8 +828,11 @@ export const useGutStore = create<GutStore>()((set, get) => ({
     // Trigger feedback
     triggerFeedback: [],
     addTriggerFeedback: (feedback) => set((state) => {
-        // Remove existing feedback for this food
-        const filtered = state.triggerFeedback.filter(f => f.foodName !== feedback.foodName);
+        const normalizedFoodName = feedback.foodName.toLowerCase().trim();
+        const updatedFeedback = { ...feedback, foodName: normalizedFoodName };
+        
+        // Remove existing feedback for this food (case-insensitive)
+        const filtered = state.triggerFeedback.filter(f => f.foodName.toLowerCase().trim() !== normalizedFoodName);
 
         // Sync to Supabase when user provides feedback
         // Direct DB Write
@@ -837,7 +840,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             if (session?.user?.id) {
                 supabase.from('trigger_foods').upsert({
                     user_id: session.user.id,
-                    food_name: feedback.foodName,
+                    food_name: normalizedFoodName,
                     user_confirmed: feedback.userConfirmed,
                     updated_at: new Date().toISOString(),
                 }, { onConflict: 'user_id,food_name' }).then(({ error }) => {
@@ -847,7 +850,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         });
 
         return {
-            triggerFeedback: [feedback, ...filtered],
+            triggerFeedback: [updatedFeedback, ...filtered],
         };
     }),
     setTriggerFeedback: (feedback) => set({ triggerFeedback: feedback }),

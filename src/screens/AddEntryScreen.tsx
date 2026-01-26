@@ -82,12 +82,28 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
   
   // Active Shield: Check for known confirmed triggers
   const activeTriggers = useMemo(() => {
-    if (foods.length === 0) return [];
-    return foods.filter(food => {
-        const feedback = triggerFeedback.find(f => f.foodName.toLowerCase() === food.toLowerCase().trim());
+    const allInputFoods = [...foods];
+    if (foodInput.trim()) {
+        allInputFoods.push(foodInput.trim());
+    }
+
+    if (allInputFoods.length === 0) return [];
+    
+    return allInputFoods.filter(food => {
+        const normalizedInput = food.toLowerCase().trim();
+        const feedback = triggerFeedback.find(f => f.foodName.toLowerCase().trim() === normalizedInput);
         return feedback?.userConfirmed === true;
     });
-  }, [foods, triggerFeedback]);
+  }, [foods, foodInput, triggerFeedback]);
+
+  // Debugging Active Shield
+  React.useEffect(() => {
+    // console.log('--- Active Shield Debug ---');
+    // console.log('Current Foods List:', foods);
+    // console.log('Current TextInput:', foodInput);
+    // console.log('Confirmed Triggers in Store:', triggerFeedback.map(f => f.foodName));
+    // console.log('Detected Active Triggers:', activeTriggers);
+  }, [foods, foodInput, triggerFeedback, activeTriggers]);
   
   
   const handleSubmit = () => {
@@ -187,7 +203,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               name="happy" 
               size={32} 
               iconSize={20}
-              color={mode === 'poop' ? colors.white : colors.pink} 
+              color={colors.pink} 
               variant={mode === 'poop' ? 'solid' : 'transparent'}
               shadow={false}
             />
@@ -203,7 +219,7 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
               name="restaurant" 
               size={32} 
               iconSize={20}
-              color={mode === 'meal' ? colors.white : colors.blue} 
+              color={colors.blue} 
               variant={mode === 'meal' ? 'solid' : 'transparent'}
               shadow={false}
             />
