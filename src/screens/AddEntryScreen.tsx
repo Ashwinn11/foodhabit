@@ -37,7 +37,7 @@ type EntryMode = 'poop' | 'meal';
 const MEAL_TYPES: { type: MealType; label: string; icon: keyof typeof Ionicons.glyphMap; color: string }[] = [
   { type: 'breakfast', label: 'Breakfast', icon: 'sunny', color: colors.blue },
   { type: 'lunch', label: 'Lunch', icon: 'leaf', color: colors.yellow },
-  { type: 'dinner', label: 'Dinner', icon: 'moon', color: colors.pink },
+  { type: 'dinner', label: 'Dinner', icon: 'moon', color: colors.green },
   { type: 'snack', label: 'Snack', icon: 'pizza', color: colors.pink },
 ];
 

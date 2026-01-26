@@ -36,8 +36,8 @@ const GutBuddyTheme = {
   },
 };
 
-function AppContent() {
-  const { session, loading } = useAuth();
+export default function App() {
+  const { session, loading: authLoading } = useAuth();
   
   const [fontsLoaded] = useFonts({
     'Chewy': Chewy_400Regular,
@@ -54,10 +54,9 @@ function AppContent() {
   const [hadPreviousAccess, setHadPreviousAccess] = React.useState(false);
   const [refreshKey, setRefreshKey] = React.useState(0);
 
+  // Initialize Services
   React.useEffect(() => {
     RevenueCatService.initialize();
-    
-
     
     // Listen for custom event to refresh onboarding status
     const handleRefresh = () => {
@@ -84,113 +83,78 @@ function AppContent() {
     if (currentUserId && currentUserId !== prevUserId) {
       RevenueCatService.logIn(currentUserId);
       prevSessionRef.current = currentUserId;
-    } else if (!currentUserId && prevUserId && !loading) {
+    } else if (!currentUserId && prevUserId && !authLoading) {
       RevenueCatService.logOut();
       prevSessionRef.current = null;
     }
-  }, [session, loading]);
+  }, [session, authLoading]);
 
-  // Periodic premium status check (every 5 minutes) to enforce hard paywall
+  // Periodic premium status check
   React.useEffect(() => {
     if (!session?.user?.id) return;
 
     const checkPremiumPeriodically = async () => {
       const premiumStatus = await RevenueCatService.isPremium(true);
-      console.log('🔄 Periodic premium check:', premiumStatus);
       
       if (!premiumStatus && isPremium) {
-        // User was premium but is no longer - force refresh to show paywall
         console.log('⚠️ Premium status lost - forcing refresh');
         setIsPremium(false);
         setRefreshKey(prev => prev + 1);
       }
     };
 
-    // Check immediately
     checkPremiumPeriodically();
-
-    // Then check every 5 minutes
     const interval = setInterval(checkPremiumPeriodically, 5 * 60 * 1000);
-
     return () => clearInterval(interval);
   }, [session?.user?.id, isPremium]);
 
-  // Load user data and onboarding status from database
+  // Load user data and onboarding status
   React.useEffect(() => {
     const loadData = async () => {
-      if (!loading && fontsLoaded && session?.user?.id) {
-        const { supabase } = await import('./src/config/supabase');
-        
-        // Check onboarding status from database
-        const { data: userProfile } = await supabase
-          .from('users')
-          .select('onboarding_completed')
-          .eq('id', session.user.id)
-          .single();
-        
-        console.log('📊 Onboarding status from DB:', userProfile?.onboarding_completed);
-        
-        // Check premium status (force refresh to get latest subscription state)
-        const premiumStatus = await RevenueCatService.isPremium(true);
-        console.log('💎 Premium status:', premiumStatus);
-        setIsPremium(premiumStatus);
-        
-        // Hard paywall enforcement: If user completed onboarding but is no longer premium,
-        // mark them as having previous access (so we show subscription screen, not onboarding)
-        if (userProfile?.onboarding_completed && !premiumStatus) {
-          console.log('⚠️ User completed onboarding but is not premium - showing subscription required screen');
-          setHadPreviousAccess(true);
-          setOnboardingComplete(false);
-        } else {
-          setHadPreviousAccess(false);
-          setOnboardingComplete(userProfile?.onboarding_completed || false);
+      // Wait for Auth and Fonts
+      if (authLoading || !fontsLoaded) return;
+
+      if (session?.user?.id) {
+        try {
+          const { supabase } = await import('./src/config/supabase');
+          
+          // Check onboarding
+          const { data: userProfile } = await supabase
+            .from('users')
+            .select('onboarding_completed')
+            .eq('id', session.user.id)
+            .single();
+          
+          // Check premium
+          const premiumStatus = await RevenueCatService.isPremium(true);
+          setIsPremium(premiumStatus);
+          
+          // Hard paywall enforcement
+          if (userProfile?.onboarding_completed && !premiumStatus) {
+            setHadPreviousAccess(true);
+            setOnboardingComplete(false);
+          } else {
+            setHadPreviousAccess(false);
+            setOnboardingComplete(userProfile?.onboarding_completed || false);
+          }
+          
+          // Load other user data
+          const { loadUserDataFromDatabase } = await import('./src/utils/loadUserData');
+          await loadUserDataFromDatabase();
+          
+          setDataLoaded(true);
+        } catch (e) {
+          console.error("Error loading initial data:", e);
         }
-        
-        // Load other user data
-        const { loadUserDataFromDatabase } = await import('./src/utils/loadUserData');
-        await loadUserDataFromDatabase();
-        
-        setDataLoaded(true);
-        setIsReady(true);
-        ExpoSplashScreen.hideAsync();
-      } else if (!loading && fontsLoaded && !session) {
-        setIsReady(true);
-        ExpoSplashScreen.hideAsync();
       }
+      
+      // We are ready to show the app (either Auth screen or Main app)
+      setIsReady(true);
+      await ExpoSplashScreen.hideAsync();
     };
+
     loadData();
-  }, [loading, fontsLoaded, session?.user?.id, refreshKey]); // Re-run when refreshKey changes
-
-  if (loading || !isReady || (session && !dataLoaded)) {
-    return (
-      <ScreenWrapper>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.pink} />
-        </View>
-      </ScreenWrapper>
-    );
-  }
-
-  // Show auth screen if not logged in
-  if (!session) {
-    return <AuthNavigator />;
-  }
-
-  // Show subscription required screen if user had access before but lost premium
-  if (hadPreviousAccess && !isPremium) {
-    return <SubscriptionRequiredScreen />;
-  }
-
-  // Show onboarding if not complete (database is source of truth)
-  if (!onboardingComplete) {
-    return <OnboardingNavigator />;
-  }
-
-  // Show main app
-  return <AppNavigator />;
-}
-
-export default function App() {
+  }, [authLoading, fontsLoaded, session?.user?.id, refreshKey]);
 
   const linking: any = {
     prefixes: ['foodhabit://'],
@@ -209,11 +173,35 @@ export default function App() {
     },
   };
 
+  // 1. Show Loading until everything is ready
+  if (!isReady || (session && !dataLoaded)) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.pink} />
+      </View>
+    );
+  }
+
+  // 2. Determine which Navigator to show
+  const getRootComponent = () => {
+    if (!session) {
+      return <AuthNavigator />;
+    }
+    if (hadPreviousAccess && !isPremium) {
+      return <SubscriptionRequiredScreen />;
+    }
+    if (!onboardingComplete) {
+      return <OnboardingNavigator />;
+    }
+    return <AppNavigator />;
+  };
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
         <NavigationContainer theme={GutBuddyTheme} linking={linking}>
-          <AppContent />
+          {getRootComponent()}
+          
           <NotificationManager />
           <GlobalModal />
           <GlobalToast />

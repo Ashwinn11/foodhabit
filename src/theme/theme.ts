@@ -23,7 +23,7 @@ export const colors = {
     mediumGray: '#666666',
     lightGray: '#F5F5F5',
     red: '#FF4444',
-    green: '#4CAF50',
+    green: '#059669',
 } as const;
 
 export const fonts = {
@@ -95,7 +95,7 @@ export const bristolColors = {
 export const foodCategories = {
     breakfast: { icon: 'sunny', color: '#70CFFF' }, // Blue
     lunch: { icon: 'leaf', color: '#FCE762' },      // Using yellow for lunch in strict system
-    dinner: { icon: 'moon', color: '#FF7495' },     // Pink
+    dinner: { icon: 'moon', color: '#059669' },     // Green
     snack: { icon: 'pizza', color: '#FF7495' },     // Pink
     drink: { icon: 'water', color: '#70CFFF' },     // Blue
 } as const;

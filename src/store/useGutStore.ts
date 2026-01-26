@@ -1424,10 +1424,16 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             }
         });
 
-        return Object.entries(last7Days).map(([date, count]) => ({
-            date: date.split('-').slice(1).join('/'), // MM/DD
-            count
-        }));
+        return Object.entries(last7Days).map(([date, count]) => {
+            const [y, m, d] = date.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+            const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+            return {
+                date: date.split('-').slice(1).join('/'), // MM/DD
+                count,
+                label: days[dateObj.getDay()]
+            };
+        });
     },
 
     exportData: async () => {
@@ -1505,8 +1511,8 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             const healthScore = getGutHealthScore();
             const stats = getStats();
 
-            // Format last poop time
-            let lastPoopTime = "No data";
+            // Format last poop time and message to match HomeScreen
+            let lastPoopTime = "Never";
             let statusMessage = "Log your first poop!";
 
             if (stats.lastPoopTime) {
@@ -1516,12 +1522,22 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                 const diffHours = Math.floor(diffMinutes / 60);
                 const diffDays = Math.floor(diffHours / 24);
 
-                if (diffMinutes < 1) lastPoopTime = "Just now";
-                else if (diffMinutes < 60) lastPoopTime = `${diffMinutes}m ago`;
-                else if (diffHours < 24) lastPoopTime = `${diffHours}h ago`;
-                else lastPoopTime = `${diffDays}d ago`;
-
-                statusMessage = diffDays > 3 ? "Time for a check-in?" : "All good!";
+                if (diffMinutes < 1) {
+                    lastPoopTime = "Just now";
+                    statusMessage = "Fresh!";
+                } else if (diffMinutes < 60) {
+                    lastPoopTime = `${diffMinutes}m ago`;
+                    statusMessage = "Fresh!";
+                } else if (diffHours < 24) {
+                    lastPoopTime = `${diffHours}h ago`;
+                    statusMessage = "All good";
+                } else if (diffHours < 48) {
+                    lastPoopTime = "1 day ago";
+                    statusMessage = "Time soon?";
+                } else {
+                    lastPoopTime = `${diffDays}d ago`;
+                    statusMessage = diffDays > 3 ? "Stalled!" : "Check in!";
+                }
             }
 
             const widgetData = {
@@ -1534,7 +1550,6 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             };
 
             await SharedGroupPreferences.setItem('gut_health_data', JSON.stringify(widgetData), APP_GROUP_IDENTIFIER);
-            // console.log('Widget data synced:', widgetData);
         } catch (error) {
             console.error('Widget Sync Failed:', error);
         }

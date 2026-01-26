@@ -31,7 +31,7 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ item, style }) => 
     switch (item.mealType) {
       case 'breakfast': saturatedColor = colors.blue; break;
       case 'lunch': saturatedColor = colors.yellow; break;
-      case 'dinner': saturatedColor = colors.pink; break;
+      case 'dinner': saturatedColor = colors.green; break;
       case 'snack': saturatedColor = colors.pink; break;
       case 'drink': saturatedColor = colors.blue; break;
     }
