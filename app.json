@@ -20,11 +20,15 @@
       "bundleIdentifier": "com.foodhabit.app",
       "usesAppleSignIn": true,
       "associatedDomains": [
-        "applinks:foodhabit.com",
         "applinks:foodhabit.com"
       ],
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.foodhabit.app"
+        ]
       }
     },
     "web": {
@@ -37,7 +41,8 @@
     },
     "plugins": [
       "expo-apple-authentication",
-      "react-native-purchases"
+      "react-native-purchases",
+      "@bacons/apple-targets"
     ],
     "extra": {
       "eas": {
