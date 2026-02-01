@@ -177,6 +177,16 @@ export const loadUserDataFromDatabase = async () => {
             console.error('Failed to load dismissed alerts:', error);
         }
 
+        // Sync widget after all data is loaded (fixes widget showing 0/no data)
+        // This ensures the widget shows correct gut score and poop history
+        // even for new users (default score of 50) or after app restart
+        try {
+            const gutStore = useGutStore.getState();
+            await gutStore.syncWidget();
+        } catch (error) {
+            console.error('Failed to sync widget after data load:', error);
+        }
+
         console.log('✅ User data loaded from database successfully');
         return true;
     } catch (error) {

@@ -443,6 +443,9 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             }
         });
 
+        // Trigger widget sync after state update
+        setTimeout(() => get().syncWidget(), 0);
+
         return {
             gutMoments: newMoments,
             user: {
@@ -1174,10 +1177,11 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                 const occurrences = stats.total;
                 const symptomOccurrences = stats.symptomOccurrences;
 
-                // Confidence based on occurrences
+                // Confidence based on occurrences (aligned with clinical FODMAP reintroduction protocols)
+                // Clinical standard: 3 challenges minimum, well-tested at 5+
                 let confidence: 'Low' | 'Medium' | 'High' = 'Low';
-                if (occurrences >= 10) confidence = 'High';
-                else if (occurrences >= 5) confidence = 'Medium';
+                if (occurrences >= 5) confidence = 'High';      // Well-tested (5+ exposures)
+                else if (occurrences >= 3) confidence = 'Medium'; // Clinical minimum (3 challenges)
 
                 // Frequency text
                 const frequencyText = `${symptomOccurrences} out of ${occurrences} times`;
@@ -1210,7 +1214,8 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     alternatives: alternatives.length > 0 ? alternatives : undefined
                 };
             })
-            .filter(item => item.occurrences >= 5 && item.symptomOccurrences >= 2)
+            // Clinical threshold: 3 exposures minimum (FODMAP reintroduction standard), 2+ symptom events
+            .filter(item => item.occurrences >= 3 && item.symptomOccurrences >= 2)
             .sort((a, b) => (b.symptomOccurrences / b.occurrences) - (a.symptomOccurrences / a.occurrences))
             .slice(0, 5);
     },
@@ -1266,9 +1271,10 @@ export const useGutStore = create<GutStore>()((set, get) => ({
 
         return Object.values(comboStats)
             .map(stats => {
+                // Confidence aligned with clinical FODMAP protocols
                 let confidence: 'Low' | 'Medium' | 'High' = 'Low';
-                if (stats.total >= 10) confidence = 'High';
-                else if (stats.total >= 5) confidence = 'Medium';
+                if (stats.total >= 5) confidence = 'High';
+                else if (stats.total >= 3) confidence = 'Medium';
 
                 return {
                     foods: stats.foods,
@@ -1278,7 +1284,8 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     frequencyText: `${stats.symptomOccurrences} out of ${stats.total} times`
                 };
             })
-            .filter(item => item.occurrences >= 5 && item.symptomOccurrences >= 3)
+            // Clinical threshold: 3 exposures minimum, 2+ symptom events
+            .filter(item => item.occurrences >= 3 && item.symptomOccurrences >= 2)
             .sort((a, b) => (b.symptomOccurrences / b.occurrences) - (a.symptomOccurrences / a.occurrences))
             .slice(0, 3);
     },

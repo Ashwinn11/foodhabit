@@ -38,7 +38,7 @@ struct Provider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        let data = loadData() ?? GutHealthData(score: 0, grade: "-", lastPoopTime: "No data", statusMessage: "Open app to sync", breakdown: nil, weeklyHistory: nil)
+        let data = loadData() ?? GutHealthData(score: 50, grade: "Fair", lastPoopTime: "No data", statusMessage: "Open app to sync", breakdown: nil, weeklyHistory: nil)
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
         completion(Timeline(entries: [Entry(date: Date(), data: data)], policy: .after(nextUpdate)))
     }
