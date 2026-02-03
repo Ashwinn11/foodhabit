@@ -1,5 +1,6 @@
 import { Alert, Platform } from 'react-native';
 import SharedGroupPreferences from 'react-native-shared-group-preferences';
+import { ExtensionStorage } from '@bacons/apple-targets';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import * as FileSystem from 'expo-file-system';
@@ -91,6 +92,10 @@ interface GutStore {
     user: UserProfile;
     setUser: (user: Partial<UserProfile>) => void;
 
+    // Baseline score from onboarding (used for blended scoring)
+    baselineScore: number;
+    setBaselineScore: (score: number) => void;
+
     // Gut moments (poop logs)
     gutMoments: GutMoment[];
     addGutMoment: (moment: Omit<GutMoment, 'id'>) => void;
@@ -132,9 +137,16 @@ interface GutStore {
     getTodayExercise: () => number;
 
     // Standalone symptom logs
-    symptomLogs: SymptomLog[];
+    symptomLogs: SymptomLog[]; // Standalone symptom logs
     addSymptomLog: (log: Omit<SymptomLog, 'id'>) => void;
     deleteSymptomLog: (id: string) => void;
+    setSymptomLogs: (logs: SymptomLog[]) => void;
+
+    // Setters for health logs
+    setWaterLogs: (logs: WaterLog[]) => void;
+    setFiberLogs: (logs: { date: string; grams: number }[]) => void;
+    setProbioticLogs: (logs: { date: string; servings: number }[]) => void;
+    setExerciseLogs: (logs: { date: string; minutes: number }[]) => void;
 
     // Trigger feedback
     triggerFeedback: TriggerFeedback[];
@@ -375,6 +387,10 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         totalLogs: 0,
     },
     setUser: (userData) => set((state) => ({ user: { ...state.user, ...userData } })),
+
+    // Baseline score from onboarding (default 50, updated when user completes onboarding)
+    baselineScore: 50,
+    setBaselineScore: (score) => set({ baselineScore: score }),
 
     // Notifications
     notificationSettings: {
@@ -840,14 +856,41 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         return get().exerciseLogs.find(e => e.date === todayStr)?.minutes || 0;
     },
 
+    // Bulk setters for health logs
+    setWaterLogs: (waterLogs) => set({ waterLogs }),
+    setFiberLogs: (fiberLogs) => set({ fiberLogs }),
+    setProbioticLogs: (probioticLogs) => set({ probioticLogs }),
+    setExerciseLogs: (exerciseLogs) => set({ exerciseLogs }),
+
     // Standalone symptom logs
     symptomLogs: [],
-    addSymptomLog: (log) => set((state) => ({
-        symptomLogs: [{ ...log, id: generateId() }, ...state.symptomLogs],
-    })),
+    addSymptomLog: (log) => set((state) => {
+        const newLog = { ...log, id: generateId() };
+
+        // Standalone symptoms are saved to gut_logs with no bristolType
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user?.id) {
+                supabase.from('gut_logs').insert({
+                    user_id: session.user.id,
+                    timestamp: newLog.timestamp.toISOString(),
+                    symptoms: { [newLog.type]: true }, // Wrap single symptom in expected JSONB format
+                    notes: newLog.notes,
+                    pain_score: newLog.severity, // Map severity to pain_score
+                    // Standalone logs don't have bristol_type
+                }).then(({ error }) => {
+                    if (error) console.error('Standalone Symptom DB Write Failed:', error.message, error.details || '');
+                });
+            }
+        });
+
+        return {
+            symptomLogs: [newLog, ...state.symptomLogs],
+        };
+    }),
     deleteSymptomLog: (id) => set((state) => ({
         symptomLogs: state.symptomLogs.filter((s) => s.id !== id),
     })),
+    setSymptomLogs: (symptomLogs) => set({ symptomLogs }),
 
     // Trigger feedback
     triggerFeedback: [],
@@ -931,13 +974,9 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         };
     },
 
-    // Gut Health Score (0-100) based on medical indicators
+    // Gut Health Score (0-100) based on medical indicators with blended scoring
     getGutHealthScore: () => {
-        const { gutMoments } = get();
-
-        if (gutMoments.length === 0) {
-            return { score: 50, grade: 'No Data' };
-        }
+        const { gutMoments, baselineScore } = get();
 
         // Get last 7 days of data
         const sevenDaysAgo = new Date();
@@ -947,11 +986,19 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             new Date(m.timestamp) >= sevenDaysAgo
         );
 
+        // If no recent data, return baseline score from onboarding
         if (recentMoments.length === 0) {
-            return { score: 50, grade: 'No Recent Data' };
+            let grade: string;
+            if (baselineScore >= 90) grade = 'Excellent';
+            else if (baselineScore >= 70) grade = 'Good';
+            else if (baselineScore >= 50) grade = 'Fair';
+            else grade = 'Poor';
+
+            return { score: baselineScore, grade };
         }
 
-        let totalScore = 0;
+        // Calculate the raw score based on logged data
+        let calculatedScore = 0;
 
         // 1. Bristol Scale Score (40 points)
         const bristolScores = recentMoments
@@ -967,7 +1014,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             ? bristolScores.reduce((a, b) => a + b, 0) / bristolScores.length
             : 20; // Default if no Bristol data
 
-        totalScore += avgBristolScore;
+        calculatedScore += avgBristolScore;
 
         // 2. Symptom Frequency Score (30 points)
         const symptomCount = recentMoments.filter(m =>
@@ -980,7 +1027,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         else if (symptomCount <= 4) symptomScore = 10;
         else symptomScore = 0;
 
-        totalScore += symptomScore;
+        calculatedScore += symptomScore;
 
         // 3. Regularity Score (20 points)
         const avgPerDay = recentMoments.length / 7;
@@ -989,7 +1036,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         else if (avgPerDay >= 0.5) regularityScore = 15; // Every 2 days
         else regularityScore = 5; // Less frequent
 
-        totalScore += regularityScore;
+        calculatedScore += regularityScore;
 
         // 4. Medical Flags Score (10 points)
         const hasRedFlags = recentMoments.some(m =>
@@ -997,23 +1044,45 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         );
 
         const medicalScore = hasRedFlags ? 0 : 10;
-        totalScore += medicalScore;
+        calculatedScore += medicalScore;
 
-        // Determine grade based on score
+        // BLENDED SCORING: Weight shifts from baseline to calculated as data accumulates
+        // 0 logs: 100% baseline (handled above)
+        // 1-2 logs: 70% baseline, 30% calculated
+        // 3-4 logs: 50% baseline, 50% calculated
+        // 5-6 logs: 30% baseline, 70% calculated
+        // 7+ logs: 10% baseline, 90% calculated
+        let baselineWeight: number;
+        const logCount = recentMoments.length;
+
+        if (logCount <= 2) {
+            baselineWeight = 0.7;
+        } else if (logCount <= 4) {
+            baselineWeight = 0.5;
+        } else if (logCount <= 6) {
+            baselineWeight = 0.3;
+        } else {
+            baselineWeight = 0.1;
+        }
+
+        const calculatedWeight = 1 - baselineWeight;
+        const blendedScore = (baselineScore * baselineWeight) + (calculatedScore * calculatedWeight);
+
+        // Determine grade based on blended score
         let grade: string;
 
-        if (totalScore >= 90) {
+        if (blendedScore >= 90) {
             grade = 'Excellent';
-        } else if (totalScore >= 70) {
+        } else if (blendedScore >= 70) {
             grade = 'Good';
-        } else if (totalScore >= 50) {
+        } else if (blendedScore >= 50) {
             grade = 'Fair';
         } else {
             grade = 'Poor';
         }
 
         return {
-            score: Math.round(totalScore),
+            score: Math.round(blendedScore),
             grade,
             breakdown: {
                 bristol: Math.round(avgBristolScore),
@@ -1557,6 +1626,9 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             };
 
             await SharedGroupPreferences.setItem('gut_health_data', JSON.stringify(widgetData), APP_GROUP_IDENTIFIER);
+
+            // Force immediate widget refresh (don't wait for 15-min timeline)
+            ExtensionStorage.reloadWidget('GutHealthWidget');
         } catch (error) {
             console.error('Widget Sync Failed:', error);
         }

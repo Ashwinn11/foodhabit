@@ -100,14 +100,21 @@ struct FoodHabitWidgetEntryView : View {
             }
         }
         .widgetURL(URL(string: "foodhabit://home"))
+        .applyWidgetBackground(
+            Group {
+                switch family {
+                case .systemSmall:
+                    yellow
+                default:
+                    scoreColor
+                }
+            }
+        )
     }
     
     // MARK: - Small Layout (Whimsical Card)
     var smallLayout: some View {
         ZStack {
-            // Background
-            yellow
-            
             VStack(alignment: .leading, spacing: 0) {
                 // Header
                 HStack {
@@ -171,9 +178,9 @@ struct FoodHabitWidgetEntryView : View {
     // MARK: - Medium Layout (Split Card)
     var mediumLayout: some View {
         HStack(spacing: 0) {
-            // LEFT: Solid Color Block
+            // LEFT: Solid Color Block (Uses Container Background)
             ZStack {
-                scoreColor // Full solid color
+                Color.clear // Transparent to show containerBackground
                 
                 VStack {
                     HStack {
@@ -214,7 +221,7 @@ struct FoodHabitWidgetEntryView : View {
                     
                     // Stats Row
                     HStack(spacing: 20) {
-                        statItem(label: "LAST", value: entry.data.lastPoopTime)
+                        statItem(label: "LAST POOP", value: entry.data.lastPoopTime)
                         statItem(label: "GRADE", value: entry.data.grade)
                     }
                 }
@@ -237,8 +244,8 @@ struct FoodHabitWidgetEntryView : View {
     // MARK: - Large Layout (Playful Dashboard)
     var largeLayout: some View {
         ZStack {
-            // Full Background Base
-            scoreColor
+            // Transparent base to show containerBackground
+            Color.clear
             
             VStack(spacing: 0) {
                  // Header Area (Top 30%)
@@ -315,7 +322,7 @@ struct FoodHabitWidgetEntryView : View {
                         
                          // Footer Stats
                         HStack {
-                            statItem(label: "LAST LOG", value: entry.data.lastPoopTime)
+                            statItem(label: "LAST POOP", value: entry.data.lastPoopTime)
                             Spacer()
                             statItem(label: "GRADE", value: entry.data.grade)
                             Spacer() 
@@ -345,7 +352,7 @@ struct FoodHabitWidgetEntryView : View {
         if lastPoop.contains("ago") || lastPoop == "Just now" { 
             // If we have a time, imply they pooped
             if score >= 80 { return "You're on a roll! (Literally) 🧻" }
-            if score >= 50 { return "One down, maybe one more? 🚽" }
+            if score >= 50 { return "One poop down, maybe one more? 🚽" }
             return "You pooped! That's a start! 💩"
         } else {
              // "No data" or similar
@@ -387,6 +394,31 @@ struct SafeMascotImage: View {
                 .fill(Color.gray.opacity(0.3))
                 .overlay(Text("?").font(.caption))
         }
+    }
+}
+
+// MARK: - Compatibility Helpers
+extension View {
+    @ViewBuilder
+    func applyWidgetBackground(_ backgroundView: some View) -> some View {
+        if #available(iOS 17.0, *) {
+            self.containerBackground(for: .widget) {
+                backgroundView
+            }
+        } else {
+            self.background(backgroundView)
+        }
+    }
+}
+
+extension WidgetConfiguration {
+    func disableContentMargins() -> some WidgetConfiguration {
+        #if compiler(>=5.9)
+        if #available(iOS 17.0, *) {
+            return self.contentMarginsDisabled()
+        }
+        #endif
+        return self
     }
 }
 
@@ -434,6 +466,6 @@ struct GutHealthWidget: Widget {
         .configurationDisplayName("Gut Buddy")
         .description("Keep your gut happy!")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
-        .contentMarginsDisabled() // Important for full bleed
+        .disableContentMargins()
     }
 }

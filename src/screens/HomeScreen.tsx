@@ -201,7 +201,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           
           <Button
             title="I just pooped!"
-            onPress={() => navigation.navigate('AddEntry')}
+            onPress={() => navigation.navigate('AddEntry', { initialMode: 'poop' })}
             color={colors.pink}
             icon="happy"
             size="lg"
@@ -241,9 +241,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                       addProbiotic(); // Add 1 serving
                     } else if (task.type === 'exercise') {
                       addExercise(10); // Add 10 minutes per tap
+                    } else if (task.type === 'meal') {
+                      navigation.navigate('AddEntry', { 
+                        initialMode: 'meal',
+                        initialMealType: task.id // breakfast, lunch, dinner
+                      });
                     } else {
-                      // Poop and meal tasks navigate to Add screen
-                      navigation.navigate('AddEntry');
+                      // Poop task
+                      navigation.navigate('AddEntry', { initialMode: 'poop' });
                     }
                   }}
                   type={task.type}

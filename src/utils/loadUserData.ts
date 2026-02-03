@@ -21,24 +21,56 @@ export const loadUserDataFromDatabase = async () => {
         const userId = session.user.id;
 
         // Load user profile and onboarding status
-        const { data: userProfile, error: profileError } = await supabase
+        // Use maybeSingle() to avoid PGRST116 error if user is new
+        let { data: userProfile, error: profileError } = await supabase
             .from('users')
             .select('*')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
 
         if (profileError) {
             console.error('Failed to load user profile:', profileError);
             return false;
         }
 
-        // Set onboarding status
+        // If no profile exists, create a default one
+        if (!userProfile) {
+            console.log('No user profile found, creating default...');
+            const { data: newProfile, error: insertError } = await supabase
+                .from('users')
+                .insert([
+                    {
+                        id: userId,
+                        onboarding_completed: false,
+                        onboarding_data: { score: 50 },
+                        created_at: new Date().toISOString()
+                    }
+                ])
+                .select()
+                .maybeSingle();
+
+            if (insertError) {
+                console.error('Failed to create default user profile:', insertError);
+                // Continue anyway so the user isn't stuck, they'll just have default local state
+            } else {
+                userProfile = newProfile;
+            }
+        }
+
+        // Set onboarding status and baseline score
         if (userProfile) {
             const onboardingStore = useOnboardingStore.getState();
+            const gutStore = useGutStore.getState();
+
             if (userProfile.onboarding_completed) {
-                onboardingStore.completeOnboarding();
+                onboardingStore.setIsOnboardingComplete(true);
             }
-            // Note: We don't restore quiz answers since onboarding is one-time
+
+            // Load onboarding score as baseline for blended scoring
+            const onboardingData = userProfile.onboarding_data as { score?: number } | null;
+            if (onboardingData?.score) {
+                gutStore.setBaselineScore(onboardingData.score);
+            }
         }
 
         // Load recent gut logs (last 30 days of significant logs)
@@ -58,22 +90,42 @@ export const loadUserDataFromDatabase = async () => {
         } else if (gutLogs && gutLogs.length > 0) {
             // Convert database format to app format
             const gutStore = useGutStore.getState();
-            const moments = gutLogs.map((log) => ({
-                id: log.id,
-                timestamp: new Date(log.timestamp),
-                bristolType: log.bristol_type,
-                symptoms: log.symptoms || {
-                    bloating: false,
-                    gas: false,
-                    cramping: false,
-                    nausea: false,
-                },
-                tags: log.tags || [],
-                urgency: log.urgency,
-                painScore: log.pain_score,
-                notes: log.notes,
-            }));
-            gutStore.setGutMoments(moments);
+
+            // Separate bowel movements from standalone symptom logs
+            const bowelMovements = gutLogs
+                .filter(log => log.bristol_type !== null)
+                .map((log) => ({
+                    id: log.id,
+                    timestamp: new Date(log.timestamp),
+                    bristolType: log.bristol_type,
+                    symptoms: log.symptoms || {
+                        bloating: false,
+                        gas: false,
+                        cramping: false,
+                        nausea: false,
+                    },
+                    tags: log.tags || [],
+                    urgency: log.urgency,
+                    painScore: log.pain_score,
+                    notes: log.notes,
+                }));
+
+            const standaloneSymptoms = gutLogs
+                .filter(log => log.bristol_type === null)
+                .map((log) => {
+                    // Extract the primary symptom from JSONB
+                    const symptomTypes = Object.keys(log.symptoms || {}) as any[];
+                    return {
+                        id: log.id,
+                        timestamp: new Date(log.timestamp),
+                        type: symptomTypes[0] || 'bloating', // Default fallback
+                        severity: log.pain_score || 0,
+                        notes: log.notes,
+                    };
+                });
+
+            gutStore.setGutMoments(bowelMovements);
+            gutStore.setSymptomLogs(standaloneSymptoms);
         }
 
         // Load recent meals (last 30 days)
@@ -119,6 +171,7 @@ export const loadUserDataFromDatabase = async () => {
             gutStore.setTriggerFeedback(triggers);
         }
 
+
         // Load health logs (water, fiber, probiotic, exercise) - last 30 days
         const { data: healthLogs, error: healthLogsError } = await supabase
             .from('health_logs')
@@ -159,10 +212,10 @@ export const loadUserDataFromDatabase = async () => {
             });
 
             // Update store with loaded data
-            gutStore.waterLogs = waterLogs;
-            gutStore.fiberLogs = fiberLogs;
-            gutStore.probioticLogs = probioticLogs;
-            gutStore.exerciseLogs = exerciseLogs;
+            gutStore.setWaterLogs(waterLogs);
+            gutStore.setFiberLogs(fiberLogs);
+            gutStore.setProbioticLogs(probioticLogs);
+            gutStore.setExerciseLogs(exerciseLogs);
         }
 
         // Load dismissed alerts from AsyncStorage

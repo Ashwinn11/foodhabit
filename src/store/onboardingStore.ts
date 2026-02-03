@@ -3,6 +3,7 @@
  * Manages quiz answers and onboarding completion state
  */
 import { create } from 'zustand';
+import { useGutStore } from './useGutStore';
 
 export interface GutCheckAnswers {
     stoolConsistency?: number; // 0-2 (Hard, Normal, Loose) -> Mapped to score
@@ -23,6 +24,7 @@ interface OnboardingState {
     calculateScore: () => void;
     setCurrentStep: (step: number) => void;
     completeOnboarding: () => Promise<void>;
+    setIsOnboardingComplete: (complete: boolean) => void;
     resetOnboarding: () => void;
 }
 
@@ -80,20 +82,29 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
         if (session?.user?.id) {
             const { error } = await supabase
                 .from('users')
-                .update({
+                .upsert({
+                    id: session.user.id,
                     onboarding_completed: true,
                     onboarding_data: {
                         answers: state.gutCheckAnswers,
                         score: state.calculatedScore
                     }
-                })
-                .eq('id', session.user.id);
+                });
 
             if (error) {
                 console.error('❌ Database update error:', error);
+            } else {
+                // Update baseline score in gut store immediately
+                useGutStore.getState().setBaselineScore(state.calculatedScore);
             }
+        } else {
+            // Even if not logged in, update local state for consistency
+            useGutStore.getState().setBaselineScore(state.calculatedScore);
         }
     },
+
+    setIsOnboardingComplete: (complete: boolean) =>
+        set({ isOnboardingComplete: complete }),
 
     resetOnboarding: () =>
         set({

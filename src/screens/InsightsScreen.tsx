@@ -451,7 +451,7 @@ export const InsightsScreen: React.FC = () => {
                 variant="white"
                 style={styles.emptyCard}
               >
-                <GutAvatar score={50} size={100} />
+                <GutAvatar score={healthScore.score} size={100} />
                 <Typography variant="h3" style={{ marginTop: spacing.lg, marginBottom: spacing.sm }}>
                   Start Tracking!
                 </Typography>

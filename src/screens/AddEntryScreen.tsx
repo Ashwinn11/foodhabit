@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useRoute } from '@react-navigation/native';
 import {
   View,
   StyleSheet,
@@ -42,10 +43,14 @@ const MEAL_TYPES: { type: MealType; label: string; icon: keyof typeof Ionicons.g
 ];
 
 export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) => {
+  const route = useRoute<any>();
   const { addGutMoment, addMeal, triggerFeedback } = useGutStore();
   
+  // Extract initial params
+  const { initialMode = 'poop', initialMealType } = route.params || {};
+
   // Mode toggle
-  const [mode, setMode] = useState<EntryMode>('poop');
+  const [mode, setMode] = useState<EntryMode>(initialMode);
   
   // Poop state
   const [bristolType, setBristolType] = useState<BristolType | undefined>(undefined);
@@ -60,9 +65,9 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
   const [urgency, setUrgency] = useState<'none' | 'mild' | 'severe'>('none');
   const [painScore, setPainScore] = useState(0);
   const [incompleteEvacuation, setIncompleteEvacuation] = useState(false);
-  
+
   // Meal state
-  const [mealType, setMealType] = useState<MealType>('breakfast');
+  const [mealType, setMealType] = useState<MealType>(initialMealType || 'breakfast');
   const [mealName, setMealName] = useState('');
   const [foods, setFoods] = useState<string[]>([]);
   const [foodInput, setFoodInput] = useState('');
