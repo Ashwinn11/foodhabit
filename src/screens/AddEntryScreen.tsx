@@ -356,7 +356,9 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.lightGray,
+    backgroundColor: '#E0E0E0', // Darker gray for better visibility
+    borderWidth: 1,
+    borderColor: '#D0D0D0',
   },
   painDotActive: {
     // handled inline

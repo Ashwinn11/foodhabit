@@ -224,8 +224,8 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                color={
                  safetyStatus === 'safe' ? colors.green : 
                  safetyStatus === 'warning' ? colors.yellow : 
-                 safetyStatus === 'unknown' ? colors.lightGray :
-                 safetyStatus === 'neutral' ? colors.lightGray :
+                 safetyStatus === 'unknown' ? colors.mediumGray :
+                 safetyStatus === 'neutral' ? colors.mediumGray :
                  colors.pink
                } 
                padding="xl"
@@ -434,7 +434,9 @@ const styles = StyleSheet.create({
   suggestionChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.lightGray,
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
     borderRadius: radii.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -453,7 +455,9 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: colors.lightGray,
+    backgroundColor: '#E0E0E0', 
+    borderWidth: 1,
+    borderColor: '#D0D0D0',
   },
   resultCard: {
     width: '100%',

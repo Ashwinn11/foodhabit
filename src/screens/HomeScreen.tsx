@@ -174,41 +174,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           entering={FadeInDown.delay(250).springify()}
           style={styles.actionGrid}
         >
-           {/* Scan Food Action */}
+           {/* Safe to Eat? (Scan Food) */}
            <Pressable 
-              style={[styles.actionButton, { backgroundColor: colors.white, borderColor: colors.border }]}
+              style={[styles.actionButton, { backgroundColor: colors.blue, borderWidth: 0 }]}
               onPress={() => navigation.navigate('ScanFood')}
            >
-              <IconContainer 
-                name="search" 
-                size={56} 
-                iconSize={28} 
-                color={colors.blue} 
-                variant="solid"
-                shape="circle" 
-                style={{ marginBottom: spacing.md }}
-              />
-              <Typography variant="h3">Scan Food</Typography>
-              <Typography variant="bodySmall" color={colors.black + '60'}>Safe to eat?</Typography>
+              <IconContainer name="fast-food" size={24} iconSize={24} color={colors.white} variant="transparent" shadow={false} />
+              <Typography variant="bodyBold" color={colors.white}>Safe to Eat?</Typography>
            </Pressable>
 
-           {/* Log Poop Action */}
+           {/* I Just Pooped! */}
            <Pressable 
-              style={[styles.actionButton, { backgroundColor: colors.pink }]}
+              style={[styles.actionButton, { backgroundColor: colors.pink, borderWidth: 0 }]}
               onPress={() => navigation.navigate('AddEntry')}
            >
-              <IconContainer 
-                name="happy" 
-                size={56} 
-                iconSize={28} 
-                color={colors.black} 
-                variant="solid"
-                backgroundColor={colors.white}
-                shape="circle" 
-                style={{ marginBottom: spacing.md }}
-              />
-              <Typography variant="h3" color={colors.white}>I Just Pooped!</Typography>
-              <Typography variant="bodySmall" color={colors.white + '90'}>Log the moment</Typography>
+              <IconContainer name="happy" size={24} iconSize={24} color={colors.white} variant="transparent" shadow={false} />
+              <Typography variant="bodyBold" color={colors.white}>I Just Pooped!</Typography>
            </Pressable>
         </Animated.View>
 
@@ -362,13 +343,16 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    borderRadius: radii['2xl'],
-    padding: spacing.lg,
+    borderRadius: radii.full,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
-    minHeight: 160,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    minHeight: 60,
   },
   alertCard: {
     marginBottom: spacing.sm,

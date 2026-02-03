@@ -93,9 +93,9 @@ const CenterAddButton: React.FC<{ onPress: () => void }> = ({ onPress }) => {
     >
       <Animated.View style={[styles.centerButton, animatedStyle]}>
         <IconContainer
-          name="pizza"
+          name="add"
           size={55}
-          iconSize={28}
+          iconSize={32}
           color={colors.black}
           variant="transparent"
           shadow={false}
