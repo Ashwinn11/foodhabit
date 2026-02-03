@@ -8,7 +8,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppNavigator, AuthNavigator, OnboardingNavigator } from './src/navigation';
 import { SubscriptionRequiredScreen } from './src/screens/SubscriptionRequiredScreen';
 import { colors } from './src/theme';
-import { ScreenWrapper } from './src/components';
 import { useAuth } from './src/hooks/useAuth';
 import { GlobalModal } from './src/components/Modal/GlobalModal';
 import { GlobalToast } from './src/components/Toast/GlobalToast';
@@ -141,6 +140,10 @@ export default function App() {
           // Load other user data
           const { loadUserDataFromDatabase } = await import('./src/utils/loadUserData');
           await loadUserDataFromDatabase();
+          
+          // Load completed tasks from local storage
+          const { useGutStore } = await import('./src/store');
+          await useGutStore.getState().loadCompletedTasks();
           
           setDataLoaded(true);
         } catch (e) {

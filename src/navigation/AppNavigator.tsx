@@ -20,6 +20,7 @@ import {
   AuthScreen,
   HelpSupportScreen,
   NotificationsScreen,
+  ScanFoodScreen,
 } from '../screens';
 
 const Tab = createBottomTabNavigator();
@@ -208,6 +209,14 @@ export const AppNavigator = () => {
       <Stack.Screen
         name="Notifications"
         component={NotificationsScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="ScanFood"
+        component={ScanFoodScreen}
         options={{
           headerShown: false,
           animation: 'slide_from_right',

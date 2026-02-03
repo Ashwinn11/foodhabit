@@ -150,21 +150,22 @@ export const SubscriptionRequiredScreen: React.FC = () => {
               padding="xl"
             >
               <Typography variant="h3" style={styles.cardTitle}>
-                Your Insights 💡
+                We Found the Villain 🕵️‍♀️
               </Typography>
               <Typography variant="bodySmall" color={colors.black + '80'} style={styles.cardSubtitle}>
-                Personalized data you've collected
+                One food is causing most of your issues:
               </Typography>
 
               <View style={styles.insightsList}>
                 {topTrigger && (
                   <InsightItem 
                     icon="warning"
-                    label="Top Trigger Food"
+                    label="Primary Trigger Detected"
                     value={topTrigger.food}
-                    subtext={`${topTrigger.count} occurrences`}
+                    subtext={`Caused symptoms ${topTrigger.frequencyText}`} // "4 out of 5 times"
                     color={colors.pink}
                     delay={430}
+                    locked={true} // THE WHODUNNIT
                   />
                 )}
                 {mostCommonBristol && (
@@ -172,17 +173,18 @@ export const SubscriptionRequiredScreen: React.FC = () => {
                     icon="analytics"
                     label="Most Common Type"
                     value={`Bristol Type ${mostCommonBristol[0]}`}
-                    subtext={`${mostCommonBristol[1]} times`}
+                    subtext={`${mostCommonBristol[1]} logs total`}
                     color={colors.blue}
                     delay={440}
+                    locked={false} // Give them a freebie
                   />
                 )}
                 {totalMeals > 0 && (
                   <InsightItem 
                     icon="restaurant"
-                    label="Meals Tracked"
+                    label="Dietary Analysis"
                     value={`${totalMeals} meals`}
-                    subtext="Complete food history"
+                    subtext="Ready for correlation analysis"
                     color={colors.yellow}
                     delay={450}
                   />
@@ -256,7 +258,7 @@ export const SubscriptionRequiredScreen: React.FC = () => {
             >
               <Ionicons name="star" size={24} color={colors.white} style={{ marginRight: spacing.sm }} />
               <Typography variant="h3" color={colors.white}>
-                {isLoading ? 'Loading...' : 'Resubscribe Now'}
+                {isLoading ? 'Loading...' : 'Reveal the Villain'}
               </Typography>
             </LinearGradient>
           </Pressable>
@@ -324,7 +326,8 @@ const InsightItem: React.FC<{
   subtext: string;
   color: string;
   delay: number;
-}> = ({ icon, label, value, subtext, color, delay }) => (
+  locked?: boolean;
+}> = ({ icon, label, value, subtext, color, delay, locked }) => (
   <Animated.View entering={FadeInDown.delay(delay).springify()} style={styles.insightItem}>
     <IconContainer
       name={icon}
@@ -336,8 +339,21 @@ const InsightItem: React.FC<{
     />
     <View style={styles.insightContent}>
       <Typography variant="caption" color={colors.black + '66'}>{label}</Typography>
-      <Typography variant="bodyBold">{value}</Typography>
-      <Typography variant="bodyXS" color={colors.black + '60'}>{subtext}</Typography>
+      
+      {locked ? (
+         <View style={styles.lockedRow}>
+             <View style={styles.redactedContainer}>
+                <Typography variant="bodyBold" color={colors.black + '40'}>••••••••••</Typography>
+             </View>
+             <Ionicons name="lock-closed" size={14} color={colors.black + '40'} style={{ marginLeft: 6 }} />
+         </View>
+      ) : (
+        <Typography variant="bodyBold">{value}</Typography>
+      )}
+      
+      <Typography variant="bodyXS" color={colors.black + '60'}>
+        {locked ? 'Unlock to see frequency' : subtext}
+      </Typography>
     </View>
   </Animated.View>
 );
@@ -476,4 +492,13 @@ const styles = StyleSheet.create({
   insightContent: {
     flex: 1,
   },
+  lockedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  redactedContainer: {
+    backgroundColor: colors.black + '10', // Slight grey background for the redaction
+    borderRadius: 4,
+    paddingHorizontal: 4,
+  }
 });

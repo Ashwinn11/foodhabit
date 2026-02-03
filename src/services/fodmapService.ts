@@ -28,14 +28,13 @@ export const getFODMAPInfo = (food: string): FODMAPTag | null => {
 
 /**
  * AI-Powered Analysis (Remote)
- * Falls back to local lookup if API fails or returns null
+ * Always uses AI for analysis - no local DB fallback
  */
-export const analyzeFoodWithAI = async (food: string): Promise<FODMAPTag & { alternatives?: string[] } | null> => {
-    // 1. Check local first (Fastest)
-    const localResult = getFODMAPInfo(food);
-    if (localResult) return localResult;
-
-    // 2. Call Supabase Edge Function (Infinite DB)
+export const analyzeFoodWithAI = async (food: string): Promise<FODMAPTag & {
+    alternatives?: string[];
+    normalizedName?: string;
+    baseIngredients?: string[];
+} | null> => {
     try {
         const { data, error } = await supabase.functions.invoke('analyze-food', {
             body: { food }
@@ -46,14 +45,21 @@ export const analyzeFoodWithAI = async (food: string): Promise<FODMAPTag & { alt
             return null;
         }
 
-        // Return standardized format
+        // Check if AI returned "not_food" error (gibberish/non-food input)
+        if (data.error === 'not_food') {
+            console.log('AI rejected input as non-food:', food);
+            return null;
+        }
+
+        // Return full AI response including normalization fields
         return {
             level: data.level,
             categories: data.categories,
             culprits: data.culprits,
-            // We append the AI alternatives to the result object
-            alternatives: data.alternatives
-        } as any; // Cast to bypass strict type checking for the extra 'alternatives' field if needed
+            alternatives: data.alternatives,
+            normalizedName: data.normalizedName,
+            baseIngredients: data.baseIngredients
+        } as any;
     } catch (e) {
         console.error('Edge Function Error:', e);
         return null;

@@ -9,7 +9,7 @@ import Animated, {
   FadeInDown,
 } from 'react-native-reanimated';
 import { colors, spacing, radii } from '../theme';
-import { useGutStore, useNotificationStore } from '../store';
+import { useGutStore, useNotificationStore, useUIStore } from '../store';
 import {
   MissionCard,
   ScreenWrapper,
@@ -17,7 +17,6 @@ import {
   IconContainer,
   Typography,
   Card,
-  Button,
   SectionHeader,
   GutAvatar,
 } from '../components';
@@ -28,39 +27,15 @@ type HomeScreenProps = {
 };
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const { user, getStats, getDynamicTasks, addWater, addFiber, addProbiotic, addExercise, getGutHealthScore, checkMedicalAlerts, dismissAlert } = useGutStore();
+  const { user, getDynamicTasks, addWater, addFiber, addProbiotic, toggleTask, getGutHealthScore, checkMedicalAlerts, dismissAlert } = useGutStore();
   const { unreadCount } = useNotificationStore();
   
   const dynamicTasks = getDynamicTasks();
   const incompleteTasks = dynamicTasks.filter(t => !t.completed).length;
-  const stats = getStats();
+  // stats and lastPoopInfo logic preserved but simplified in UI
   const healthScore = getGutHealthScore();
   const medicalAlerts = checkMedicalAlerts();
 
-  const lastPoopInfo = (() => {
-    const lastTime = stats.lastPoopTime;
-    if (!lastTime) return { time: 'Never', message: 'Log your first poop!', color: colors.pink, urgency: 'high' };
-    
-    const now = new Date();
-    const last = new Date(lastTime);
-    const diffHours = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60));
-    
-    const diffMinutes = Math.floor((now.getTime() - last.getTime()) / (1000 * 60));
-    
-    if (diffMinutes < 1) return { time: 'Just now', message: 'Fresh!', color: colors.blue, urgency: 'low' };
-    if (diffMinutes < 60) return { time: `${diffMinutes}m ago`, message: 'Fresh!', color: colors.blue, urgency: 'low' };
-    if (diffHours < 24) return { time: `${diffHours}h ago`, message: 'All good', color: colors.blue, urgency: 'low' };
-    if (diffHours < 48) return { time: '1 day ago', message: 'Time soon?', color: colors.yellow, urgency: 'medium' };
-    
-    const diffDays = Math.floor(diffHours / 24);
-    return { 
-      time: `${diffDays}d ago`, 
-      message: diffDays > 3 ? 'Stalled!' : 'Check in!', 
-      color: diffDays > 3 ? colors.pink : colors.yellow, 
-      urgency: diffDays > 3 ? 'urgent' : 'warning' 
-    };
-  })();
-  
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning!';
@@ -164,49 +139,77 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </Animated.View>
         )}
         
-        {/* Consolidated: Gut Health Score + Last Poop */}
+        {/* HERO: Gut Health Score Ring */}
         <Animated.View 
           entering={FadeInDown.delay(200).springify()}
-          style={styles.section}
+          style={styles.heroSection}
         >
-          <Card variant="colored" color={colors.blue} padding="xl">
-            <View style={styles.healthCard}>
-              {/* Left: Avatar + Score */}
-              <View style={styles.healthLeft}>
-                <GutAvatar score={healthScore.score} size={70} />
-                <View style={styles.scoreInfo}>
-                  <Typography variant="h1" color={colors.black} style={{ fontSize: 36 }}>
-                    {healthScore.score}
-                  </Typography>
-                  <Typography variant="bodySmall" color={colors.black + 'CC'}>
-                    {healthScore.grade}
-                  </Typography>
+          <Card variant="colored" color={colors.blue} padding="xl" style={styles.heroCard}>
+            <View style={styles.heroContent}>
+              <View style={styles.heroLeft}>
+                <GutAvatar score={healthScore.score} size={80} />
+                <View style={styles.heroScoreText}>
+                    <Typography variant="h1" color={colors.black} style={{ fontSize: 48, lineHeight: 56 }}>
+                      {healthScore.score}
+                    </Typography>
+                    <Typography variant="bodyBold" color={colors.black + '99'}>
+                      {healthScore.grade}
+                    </Typography>
                 </View>
               </View>
-              
-              {/* Right: Last Poop Info */}
-              <View style={styles.healthRight}>
-                <Typography variant="caption" color={colors.black + '99'}>
-                  LAST POOP
-                </Typography>
-                <Typography variant="h3" color={colors.black}>
-                  {lastPoopInfo.time}
-                </Typography>
-                <Typography variant="bodySmall" color={colors.black + 'CC'}>
-                  {lastPoopInfo.message}
-                </Typography>
+
+              {/* Stats / Streak Badge */}
+              <View style={styles.streakBadge}>
+                 <IconContainer name="flame" size={24} color={colors.pink} variant="transparent" shadow={false} />
+                 <Typography variant="bodyBold" color={colors.black}>
+                    {user.streak} Day{user.streak !== 1 ? 's' : ''} Streak
+                 </Typography>
               </View>
             </View>
           </Card>
-          
-          <Button
-            title="I just pooped!"
-            onPress={() => navigation.navigate('AddEntry', { initialMode: 'poop' })}
-            color={colors.pink}
-            icon="happy"
-            size="lg"
-            style={{ marginTop: spacing.md }}
-          />
+        </Animated.View>
+
+        {/* PRIMARY ACTIONS: 2-Column Grid */}
+        <Animated.View 
+          entering={FadeInDown.delay(250).springify()}
+          style={styles.actionGrid}
+        >
+           {/* Scan Food Action */}
+           <Pressable 
+              style={[styles.actionButton, { backgroundColor: colors.white, borderColor: colors.border }]}
+              onPress={() => navigation.navigate('ScanFood')}
+           >
+              <IconContainer 
+                name="search" 
+                size={56} 
+                iconSize={28} 
+                color={colors.blue} 
+                variant="solid"
+                shape="circle" 
+                style={{ marginBottom: spacing.md }}
+              />
+              <Typography variant="h3">Scan Food</Typography>
+              <Typography variant="bodySmall" color={colors.black + '60'}>Safe to eat?</Typography>
+           </Pressable>
+
+           {/* Log Poop Action */}
+           <Pressable 
+              style={[styles.actionButton, { backgroundColor: colors.pink }]}
+              onPress={() => navigation.navigate('AddEntry')}
+           >
+              <IconContainer 
+                name="happy" 
+                size={56} 
+                iconSize={28} 
+                color={colors.black} 
+                variant="solid"
+                backgroundColor={colors.white}
+                shape="circle" 
+                style={{ marginBottom: spacing.md }}
+              />
+              <Typography variant="h3" color={colors.white}>I Just Pooped!</Typography>
+              <Typography variant="bodySmall" color={colors.white + '90'}>Log the moment</Typography>
+           </Pressable>
         </Animated.View>
 
         
@@ -216,45 +219,77 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           style={styles.section}
         >
           <SectionHeader 
-            title="Today's Missions" 
-            icon="list" 
+            title="Gut Action Plan" 
+            icon="flash" 
             iconColor={colors.pink}
             count={incompleteTasks}
           />
           
           <View style={styles.missionsContainer}>
-            {dynamicTasks.map((task, index) => (
-              <Animated.View
-                key={task.id}
-                entering={FadeInDown.delay(400 + index * 100).springify()}
-              >
-                <MissionCard
-                  title={task.title}
-                  subtitle={task.subtitle}
-                  completed={task.completed}
-                  onToggle={() => {
-                    if (task.type === 'water') {
-                      addWater();
-                    } else if (task.type === 'fiber') {
-                      addFiber(5); // Add 5g per tap
-                    } else if (task.type === 'probiotic') {
-                      addProbiotic(); // Add 1 serving
-                    } else if (task.type === 'exercise') {
-                      addExercise(10); // Add 10 minutes per tap
-                    } else if (task.type === 'meal') {
-                      navigation.navigate('AddEntry', { 
-                        initialMode: 'meal',
-                        initialMealType: task.id // breakfast, lunch, dinner
-                      });
-                    } else {
-                      // Poop task
-                      navigation.navigate('AddEntry', { initialMode: 'poop' });
-                    }
-                  }}
-                  type={task.type}
-                />
-              </Animated.View>
-            ))}
+            {dynamicTasks.length === 1 && dynamicTasks[0].id === 'poop' && dynamicTasks[0].completed ? (
+               /* ALL CLEAR STATE: Only Poop task exists and is done */
+               <Card variant="white" padding="xl" style={{ alignItems: 'center' }}>
+                  <IconContainer name="sparkles" size={48} color={colors.yellow} variant="transparent" shadow={false} />
+                  <Typography variant="h3" color={colors.black} style={{ marginTop: spacing.sm }}>All Clear! ✨</Typography>
+                  <Typography variant="body" color={colors.black + '60'} style={{ textAlign: 'center', marginTop: 4 }}>
+                     Your gut is happy. No extra missions for today.
+                  </Typography>
+               </Card>
+            ) : (
+                dynamicTasks.map((task, index) => (
+                  <Animated.View
+                    key={task.id}
+                    entering={FadeInDown.delay(400 + index * 100).springify()}
+                  >
+                    <MissionCard
+                      title={task.title}
+                      subtitle={task.subtitle}
+                      completed={task.completed}
+                      onToggle={() => {
+                        // 1. Handle "Poop" Task (Navigation)
+                        if (task.id === 'poop') {
+                           navigation.navigate('AddEntry');
+                           return;
+                        }
+
+                        // 2. Handle "Tea" (Custom Action)
+                        if (task.id === 'tea') {
+                           addWater(false); // Silent
+                           useUIStore.getState().showToast({
+                             message: 'Peppermint power! 🍵',
+                             icon: 'water',
+                             iconColor: colors.green
+                           });
+                           toggleTask(task.id);
+                        } 
+                        // 3. Handle "Kiwi" (Custom Action)
+                        else if (task.id === 'kiwi') {
+                           addFiber(5, false); // Silent
+                           useUIStore.getState().showToast({
+                             message: 'Kiwi yummy! 🥝',
+                             icon: 'leaf',
+                             iconColor: colors.green
+                           });
+                           toggleTask(task.id);
+                        }
+                        // 4. Handle BRAT (Custom Action)
+                        else if (task.id === 'brat') {
+                            navigation.navigate('ScanFood');
+                        }
+                        // 5. Handle Generic Fallsbacks
+                        else if (task.type === 'water') {
+                          addWater();
+                        } else if (task.type === 'fiber') {
+                          addFiber(5); 
+                        } else if (task.type === 'probiotic') {
+                          addProbiotic(); // Keeping for future if restored
+                        }
+                      }}
+                      type={task.type}
+                    />
+                  </Animated.View>
+                ))
+            )}
           </View>
         </Animated.View>
         <View style={styles.bottomPadding} />
@@ -278,7 +313,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingTop: spacing.md,
-    marginBottom: spacing['2xl'],
+    marginBottom: spacing.xl,
   },
   greetingRow: {
     flexDirection: 'row',
@@ -291,129 +326,49 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: spacing.lg,
   },
-  bristolScroll: {
-    marginHorizontal: -spacing.lg,
-    paddingHorizontal: spacing.lg,
+  heroSection: {
+    marginBottom: spacing.lg,
   },
-  bristolScrollContent: {
-    paddingRight: spacing.xl,
-    paddingBottom: spacing.sm,
+  heroCard: {
+    overflow: 'hidden',
   },
-  bristolItem: {
-    alignItems: 'center',
-    marginRight: spacing.md,
-    width: 70,
-  },
-  bristolCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  healthCard: {
+  heroContent: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  healthLeft: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
   },
-  scoreInfo: {
-    alignItems: 'flex-start',
-  },
-  healthRight: {
-    alignItems: 'flex-end',
-  },
-  scoreCard: {
+  heroLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
   },
-  scoreDetails: {
-    flex: 1,
-    alignItems: 'flex-start',
+  heroScoreText: {
+    justifyContent: 'center',
   },
-  avatarsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: spacing.lg,
-  },
-  avatarWrapper: {
-    alignItems: 'center',
-    marginRight: spacing.xl,
-  },
-  avatarContainer: {
-    alignItems: 'center',
-  },
-  activeLabel: {
-    marginTop: -10,
-    backgroundColor: colors.blue,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    zIndex: 10,
-  },
-  addButtonMargin: {
-    // marginBottom: spacing.sm,
-  },
-  missionsContainer: {
-    // Missions stack vertically
-  },
-  mealsRow: {
-    flexDirection: 'row',
-    paddingRight: spacing.lg,
-  },
-  mealCardMargin: {
-    marginRight: spacing.md,
-  },
-  quickStats: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  quickStatCard: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  bottomPadding: {
-    height: 100,
-  },
-  lastPoopCard: {
-    marginBottom: spacing.md,
-  },
-  lastPoopPressable: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  lastPoopLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  quickPoopButton: {
-    // Style handled by component
-  },
-  addMealPrompt: {
+  streakBadge: {
     backgroundColor: colors.white,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    transform: [{ rotate: '3deg' }],
+  },
+  actionGrid: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.xl,
+  },
+  actionButton: {
+    flex: 1,
     borderRadius: radii['2xl'],
-    padding: spacing.xl,
+    padding: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: colors.blue,
-    borderStyle: 'dashed',
-    minWidth: 140,
+    borderColor: 'transparent',
     minHeight: 160,
-    gap: spacing.sm,
-  },
-  emptyGutState: {
-    alignItems: 'center',
-    marginRight: spacing.md,
   },
   alertCard: {
     marginBottom: spacing.sm,
@@ -425,5 +380,11 @@ const styles = StyleSheet.create({
   },
   alertText: {
     flex: 1,
+  },
+  missionsContainer: {
+    // Missions stack vertically
+  },
+  bottomPadding: {
+    height: 100,
   },
 });

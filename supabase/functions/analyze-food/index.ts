@@ -21,14 +21,23 @@ serve(async (req) => {
 
     const prompt = `
       Analyze the food item "${food}" for IBS/FODMAP friendliness.
-      Return ONLY a raw JSON object (no markdown, no backticks) with this exact schema:
+      
+      IMPORTANT RULES:
+      1. If the input is NOT a real food item (gibberish, random characters, made up words, non-food objects), return EXACTLY: {"error": "not_food"}
+      2. Only analyze actual foods, dishes, or ingredients.
+      
+      For valid foods, return ONLY a raw JSON object (no markdown, no backticks) with this exact schema:
       {
         "level": "high" | "moderate" | "low",
         "categories": string[], (e.g. ["fructans", "lactose", "gos", "polyols", "excess-fructose"])
         "culprits": string[], (specific ingredients causing the issue, e.g. ["onion", "garlic"])
-        "alternatives": string[] (3-5 specific low-FODMAP alternatives)
+        "alternatives": string[], (3-5 specific low-FODMAP alternatives)
+        "normalizedName": string, (correct spelling in lowercase, e.g. "biryani" for "biiryani" or "biriyani")
+        "baseIngredients": string[] (main ingredient components, e.g. ["chicken", "biryani", "rice"] for "chicken biryani")
       }
-      If the food is safe, "categories" and "culprits" can be empty.
+      If the food is safe (low FODMAP), "categories" and "culprits" should be empty arrays.
+      The "normalizedName" should be the correctly spelled, standardized name.
+      The "baseIngredients" should extract individual components so "mutton biryani" gives ["mutton", "biryani"].
     `
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey, {

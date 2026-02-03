@@ -48,6 +48,8 @@ export interface MealEntry {
     // Enhanced fields
     portionSize?: PortionSize;
     foodTags?: string[]; // spicy, dairy, gluten, fried, caffeine, alcohol, high-fat
+    // AI-normalized foods for trigger detection (corrected spelling + base ingredients)
+    normalizedFoods?: string[];
 }
 
 // Standalone symptom logging (not tied to bowel movements)
@@ -112,18 +114,17 @@ interface GutStore {
 
     // Daily tasks
     dailyTasks: DailyTask[];
-    toggleTask: (id: string) => void;
     resetDailyTasks: () => void;
     getDynamicTasks: () => DailyTask[];
 
     // Water tracking
     waterLogs: WaterLog[];
-    addWater: () => void;
+    addWater: (showToast?: boolean) => void;
     getTodayWater: () => number;
 
     // Fiber tracking
     fiberLogs: { date: string; grams: number }[];
-    addFiber: (grams: number) => void;
+    addFiber: (grams: number, showToast?: boolean) => void;
     getTodayFiber: () => number;
 
     // Probiotic tracking
@@ -141,6 +142,11 @@ interface GutStore {
     addSymptomLog: (log: Omit<SymptomLog, 'id'>) => void;
     deleteSymptomLog: (id: string) => void;
     setSymptomLogs: (logs: SymptomLog[]) => void;
+
+    // Mission Tracking
+    completedTasks: string[]; // IDs of daily missions completed by user
+    toggleTask: (id: string) => void;
+    loadCompletedTasks: () => Promise<void>;
 
     // Setters for health logs
     setWaterLogs: (logs: WaterLog[]) => void;
@@ -164,7 +170,13 @@ interface GutStore {
         totalPoops: number;
     };
     // Pattern detection
-    getPotentialTriggers: () => { food: string; count: number; symptoms: string[] }[];
+    getPotentialTriggers: () => {
+        food: string;
+        count: number;
+        probability: number;
+        symptoms: string[];
+        frequencyText: string;
+    }[];
     getEnhancedTriggers: () => {
         food: string;
         occurrences: number;
@@ -266,115 +278,102 @@ const createDailyTasks = (state: {
     fiberLogs?: { date: string; grams: number }[];
     probioticLogs?: { date: string; servings: number }[];
     exerciseLogs?: { date: string; minutes: number }[];
+    healthScore: number;
+    completedTasks?: string[];
 }): DailyTask[] => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const completedIds = state.completedTasks || [];
+
+    // 1. Check for recent symptoms (Last 24 hours)
+    const recentMoments = state.gutMoments.filter(m => {
+        const diff = Date.now() - new Date(m.timestamp).getTime();
+        return diff < 24 * 60 * 60 * 1000;
+    });
+
+    const isBloated = recentMoments.some(m => m.symptoms.bloating || m.symptoms.gas);
+    const isConstipated = recentMoments.some(m => m.bristolType === 1 || m.bristolType === 2);
+    const isDiarrhea = recentMoments.some(m => m.bristolType === 6 || m.bristolType === 7);
+    const isLowScore = state.healthScore < 70;
 
     // Check if user has logged poop today
-    const hasPoopToday = state.gutMoments.some(m => {
+    const hasPoopToday = recentMoments.some(m => {
         const mDate = new Date(m.timestamp);
         mDate.setHours(0, 0, 0, 0);
         return mDate.getTime() === today.getTime();
     });
 
-    // Check today's meals
-    const todayMeals = state.meals.filter(m => {
-        const mDate = new Date(m.timestamp);
-        mDate.setHours(0, 0, 0, 0);
-        return mDate.getTime() === today.getTime();
-    });
-    const hasBreakfast = todayMeals.some(m => m.mealType === 'breakfast');
-    const hasLunch = todayMeals.some(m => m.mealType === 'lunch');
-    const hasDinner = todayMeals.some(m => m.mealType === 'dinner');
+    const tasks: DailyTask[] = [];
 
-    // Get today's water count
-    const todayWater = state.waterLogs.find(w => w.date === getTodayString())?.glasses || 0;
-    const waterGoal = 8;
+    // --- PRIORITY 1: RECOVERY MISSIONS (Triggered by Symptoms) ---
 
-    const hour = new Date().getHours();
-
-    const tasks: DailyTask[] = [
-        {
-            id: 'poop',
-            title: 'Log Poop',
-            subtitle: hasPoopToday ? 'Mission Accomplished!' : 'Track your gut',
-            completed: hasPoopToday,
-            type: 'poop',
-        },
-    ];
-
-    // Add meal tasks based on time of day
-    if (hour >= 6) {
+    if (isBloated) {
         tasks.push({
-            id: 'breakfast',
-            title: 'Log Breakfast',
-            subtitle: hasBreakfast ? 'Fueled up!' : 'Morning fuel',
-            completed: hasBreakfast,
+            id: 'tea',
+            title: 'Drink Peppermint Tea',
+            subtitle: 'Soothe that bloat 🍵',
+            completed: completedIds.includes('tea'),
+            type: 'water',
+        });
+    }
+
+    if (isConstipated) {
+        tasks.push({
+            id: 'kiwi',
+            title: 'Eat a Kiwi 🥝',
+            subtitle: "Nature's laxative",
+            completed: completedIds.includes('kiwi'),
+            type: 'fiber',
+        });
+    }
+
+    if (isDiarrhea) {
+        tasks.push({
+            id: 'brat',
+            title: 'Eat Plain Rice/Toast',
+            subtitle: 'Go easy on the gut',
+            completed: false,
             type: 'meal',
         });
     }
 
-    if (hour >= 11) {
+    // --- PRIORITY 2: CORE MAINTENANCE (Triggered by Needs) ---
+
+    // Anchor Habit: Always track poop (unless already done? No, keep it as a button to log *another* one if needed, but maybe not as a 'todo' if done)
+    // Actually, for strict personalization: "Log Poop" is always relevant.
+    tasks.push({
+        id: 'poop',
+        title: 'Log Poop',
+        subtitle: hasPoopToday ? 'Mission Accomplished!' : 'Track your gut',
+        completed: hasPoopToday,
+        type: 'poop',
+    });
+
+    // Hydration: Only if issues or low score
+    if (isConstipated || isDiarrhea || isLowScore) {
+        const todayWater = state.waterLogs.find(w => w.date === getTodayString())?.glasses || 0;
+        const waterGoal = 8;
         tasks.push({
-            id: 'lunch',
-            title: 'Log Lunch',
-            subtitle: hasLunch ? 'Yum! Lunch done' : 'Midday meal',
-            completed: hasLunch,
-            type: 'meal',
+            id: 'water',
+            title: 'Hydrate (Recovery)',
+            subtitle: todayWater >= waterGoal ? 'Hydrated!' : `${todayWater}/${waterGoal} glasses`,
+            completed: todayWater >= waterGoal,
+            type: 'water',
         });
     }
 
-    if (hour >= 17) {
+    // Fiber: Only if constipated or low score
+    if (isConstipated || isLowScore) {
+        const fiberGoal = 25;
+        const todayFiber = state.fiberLogs?.find(f => f.date === getTodayString())?.grams || 0;
         tasks.push({
-            id: 'dinner',
-            title: 'Log Dinner',
-            subtitle: hasDinner ? 'Dinner logged!' : 'Evening meal',
-            completed: hasDinner,
-            type: 'meal',
+            id: 'fiber',
+            title: 'Boost Fiber',
+            subtitle: todayFiber >= fiberGoal ? 'Fiber Power!' : `${todayFiber}/${fiberGoal}g needed`,
+            completed: todayFiber >= fiberGoal,
+            type: 'fiber',
         });
     }
-
-    // Water task
-    tasks.push({
-        id: 'water',
-        title: 'Drink Water',
-        subtitle: todayWater >= waterGoal ? `Hydrated! ${todayWater}/${waterGoal}` : `${todayWater}/${waterGoal} glasses`,
-        completed: todayWater >= waterGoal,
-        type: 'water',
-    });
-
-    // Fiber task
-    const fiberGoal = 25; // grams
-    const todayFiber = state.fiberLogs?.find(f => f.date === getTodayString())?.grams || 0;
-    tasks.push({
-        id: 'fiber',
-        title: 'Log Fiber',
-        subtitle: todayFiber >= fiberGoal ? `Fiber Power! ${todayFiber}g` : `${todayFiber}/${fiberGoal}g`,
-        completed: todayFiber >= fiberGoal,
-        type: 'fiber',
-    });
-
-    // Probiotic task
-    const probioticGoal = 1; // servings
-    const todayProbiotics = state.probioticLogs?.find(p => p.date === getTodayString())?.servings || 0;
-    tasks.push({
-        id: 'probiotic',
-        title: 'Take Probiotic',
-        subtitle: todayProbiotics >= probioticGoal ? 'Gut buddies active!' : 'Good bacteria',
-        completed: todayProbiotics >= probioticGoal,
-        type: 'probiotic',
-    });
-
-    // Exercise task
-    const exerciseGoal = 30; // minutes
-    const todayExercise = state.exerciseLogs?.find(e => e.date === getTodayString())?.minutes || 0;
-    tasks.push({
-        id: 'exercise',
-        title: 'Exercise',
-        subtitle: todayExercise >= exerciseGoal ? `Strong & Healthy! ${todayExercise}m` : `${todayExercise}/${exerciseGoal} min`,
-        completed: todayExercise >= exerciseGoal,
-        type: 'exercise',
-    });
 
     return tasks;
 };
@@ -630,34 +629,36 @@ export const useGutStore = create<GutStore>()((set, get) => ({
 
     // Water tracking
     waterLogs: [],
-    addWater: () => set((state) => {
+    addWater: (showToast = true) => set((state) => {
         const todayStr = getTodayString();
         const existingLog = state.waterLogs.find(w => w.date === todayStr);
         const waterGoal = 8;
         const currentGlasses = existingLog ? existingLog.glasses + 1 : 1;
 
-        // Show toast
-        let icon: any = 'water';
-        let message = `${currentGlasses}/${waterGoal} glasses. Gulp!`;
+        if (showToast) {
+            // Show toast
+            let icon: any = 'water';
+            let message = `${currentGlasses}/${waterGoal} glasses. Gulp!`;
 
-        if (currentGlasses === waterGoal) {
-            icon = 'trophy';
-            message = `Goal reached! Hydrated!`;
-            useNotificationStore.getState().addNotification({
-                title: 'Hydration Hero! 💧',
-                body: "You've reached your water goal for today. Your gut will thank you!",
-                type: 'achievement'
+            if (currentGlasses === waterGoal) {
+                icon = 'trophy';
+                message = `Goal reached! Hydrated!`;
+                useNotificationStore.getState().addNotification({
+                    title: 'Hydration Hero! 💧',
+                    body: "You've reached your water goal for today. Your gut will thank you!",
+                    type: 'achievement'
+                });
+            } else if (currentGlasses > waterGoal) {
+                icon = 'water';
+                message = `Extra hydration logged!`;
+            }
+
+            useUIStore.getState().showToast({
+                message,
+                icon,
+                iconColor: colors.blue
             });
-        } else if (currentGlasses > waterGoal) {
-            icon = 'water';
-            message = `Extra hydration logged!`;
         }
-
-        useUIStore.getState().showToast({
-            message,
-            icon,
-            iconColor: colors.blue
-        });
 
         // Sync to Supabase
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -692,35 +693,37 @@ export const useGutStore = create<GutStore>()((set, get) => ({
 
     // Fiber tracking
     fiberLogs: [],
-    addFiber: (grams) => set((state) => {
+    addFiber: (grams, showToast = true) => set((state) => {
         const todayStr = getTodayString();
         const existingLog = state.fiberLogs.find(f => f.date === todayStr);
         const fiberGoal = 25;
         const currentFiber = (existingLog ? existingLog.grams : 0) + grams;
 
-        useUIStore.getState().showToast({
-            message: `+${grams}g Fiber logged!`,
-            icon: 'leaf',
-            iconColor: colors.yellow
-        });
+        if (showToast) {
+            useUIStore.getState().showToast({
+                message: `+${grams}g Fiber logged!`,
+                icon: 'leaf',
+                iconColor: colors.yellow
+            });
 
-        if (currentFiber >= fiberGoal && (existingLog ? existingLog.grams : 0) < fiberGoal) {
-            useUIStore.getState().showToast({
-                message: `Fiber goal met! Rockstar!`,
-                icon: 'happy',
-                iconColor: colors.yellow
-            });
-            useNotificationStore.getState().addNotification({
-                title: 'Fiber Power! 🌾',
-                body: "Fiber goal reached! You're giving your gut the fuel it needs.",
-                type: 'achievement'
-            });
-        } else if (currentFiber > fiberGoal) {
-            useUIStore.getState().showToast({
-                message: `Fiber powerhouse!`,
-                icon: 'sparkles',
-                iconColor: colors.yellow
-            });
+            if (currentFiber >= fiberGoal && (existingLog ? existingLog.grams : 0) < fiberGoal) {
+                useUIStore.getState().showToast({
+                    message: `Fiber goal met! Rockstar!`,
+                    icon: 'happy',
+                    iconColor: colors.yellow
+                });
+                useNotificationStore.getState().addNotification({
+                    title: 'Fiber Power! 🌾',
+                    body: "Fiber goal reached! You're giving your gut the fuel it needs.",
+                    type: 'achievement'
+                });
+            } else if (currentFiber > fiberGoal) {
+                useUIStore.getState().showToast({
+                    message: `Fiber powerhouse!`,
+                    icon: 'sparkles',
+                    iconColor: colors.yellow
+                });
+            }
         }
 
         // Sync to Supabase
@@ -927,6 +930,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
 
     // Daily tasks (dynamically generated)
     dailyTasks: [],
+    completedTasks: [],
     getDynamicTasks: () => createDailyTasks({
         gutMoments: get().gutMoments,
         meals: get().meals,
@@ -934,17 +938,36 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         fiberLogs: get().fiberLogs,
         probioticLogs: get().probioticLogs,
         exerciseLogs: get().exerciseLogs,
+        healthScore: get().getGutHealthScore().score,
+        completedTasks: get().completedTasks,
     }),
     toggleTask: (id) => {
-        // Tasks are now dynamically generated, so toggling is handled by the actual actions
-        // This is kept for backwards compatibility but redirects to actual actions
-        const state = get();
-        if (id === 'poop') {
-            state.quickLogPoop();
-        } else if (id === 'water') {
-            state.addWater();
+        const todayStr = getTodayString();
+        set((state) => {
+            const isCompleted = state.completedTasks.includes(id);
+            const newCompletedTasks = isCompleted
+                ? state.completedTasks.filter(tId => tId !== id)
+                : [...state.completedTasks, id];
+
+            // Persist to AsyncStorage (with date prefix for daily reset)
+            AsyncStorage.setItem(`completedTasks_${todayStr}`, JSON.stringify(newCompletedTasks));
+
+            return { completedTasks: newCompletedTasks };
+        });
+    },
+    loadCompletedTasks: async () => {
+        const todayStr = getTodayString();
+        try {
+            const stored = await AsyncStorage.getItem(`completedTasks_${todayStr}`);
+            if (stored) {
+                set({ completedTasks: JSON.parse(stored) });
+            } else {
+                // New day, reset tasks
+                set({ completedTasks: [] });
+            }
+        } catch (e) {
+            console.error('Failed to load completed tasks:', e);
         }
-        // Meal tasks should navigate to add entry screen
     },
     resetDailyTasks: () => {
         // Tasks are now dynamically generated based on state, no manual reset needed
@@ -1101,6 +1124,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         const foodStats: {
             [food: string]: {
                 total: number,
+                symptomCount: number,
                 weightedSymptomScore: number,
                 associatedSymptoms: Set<string>
             }
@@ -1110,32 +1134,37 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         meals.forEach(meal => {
             const mealTime = new Date(meal.timestamp).getTime();
 
-            meal.foods.forEach(food => {
+            // 2. Check if a symptomatic moment occurred 2-24 hours AFTER this specific meal
+            // Optimization: Calculate windows once per meal, not per food
+            const symptomWindows = gutMoments.filter(moment => {
+                const momentTime = new Date(moment.timestamp).getTime();
+                const diffHours = (momentTime - mealTime) / (1000 * 60 * 60);
+
+                const hasManualSymptoms = Object.values(moment.symptoms).some(v => v);
+                const isUnhealthyStool = moment.bristolType && [1, 2, 6, 7].includes(moment.bristolType);
+                const hasRedFlags = moment.tags?.some(t => ['blood', 'mucus'].includes(t));
+
+                return (hasManualSymptoms || isUnhealthyStool || hasRedFlags) && diffHours >= 2 && diffHours <= 24;
+            });
+
+            // Use AI-normalized foods if available, otherwise fallback to raw foods
+            const foodsToAnalyze = meal.normalizedFoods?.length ? meal.normalizedFoods : meal.foods;
+
+            foodsToAnalyze.forEach(food => {
                 const normalizedFood = food.toLowerCase().trim();
                 if (!foodStats[normalizedFood]) {
                     foodStats[normalizedFood] = {
                         total: 0,
+                        symptomCount: 0,
                         weightedSymptomScore: 0,
                         associatedSymptoms: new Set()
                     };
                 }
                 foodStats[normalizedFood].total++;
 
-                // 2. Check if a symptomatic moment occurred 2-24 hours AFTER this specific meal
-                const symptomWindows = gutMoments.filter(moment => {
-                    const momentTime = new Date(moment.timestamp).getTime();
-                    const diffHours = (momentTime - mealTime) / (1000 * 60 * 60);
-
-                    // A "Symptomatic Moment" is defined by:
-                    // a) Manual checkboxes (bloating, gas, etc.)
-                    const hasManualSymptoms = Object.values(moment.symptoms).some(v => v);
-                    // b) Unhealthy Bristol Type (1, 2 = Constipation; 6, 7 = Diarrhea)
-                    const isUnhealthyStool = moment.bristolType && [1, 2, 6, 7].includes(moment.bristolType);
-                    // c) Medical Red Flags (Blood, Mucus)
-                    const hasRedFlags = moment.tags?.some(t => ['blood', 'mucus'].includes(t));
-
-                    return (hasManualSymptoms || isUnhealthyStool || hasRedFlags) && diffHours >= 2 && diffHours <= 24;
-                });
+                if (symptomWindows.length > 0) {
+                    foodStats[normalizedFood].symptomCount++;
+                }
 
                 // 3. Apply weights based on time proximity
                 symptomWindows.forEach(moment => {
@@ -1167,10 +1196,10 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             .map(([food, stats]) => ({
                 food: food.charAt(0).toUpperCase() + food.slice(1),
                 // Likelihood = (Weighted Symptom Count) / (Total times eaten)
-                // A score of 1.0 means it almost always leads to symptoms
                 count: stats.total,
                 probability: stats.total > 0 ? (stats.weightedSymptomScore / stats.total) : 0,
-                symptoms: Array.from(stats.associatedSymptoms)
+                symptoms: Array.from(stats.associatedSymptoms),
+                frequencyText: `${stats.symptomCount} out of ${stats.total} times`
             }))
             // Only show foods eaten at least twice to avoid one-off noise
             // Filter for foods that have at least some symptomatic link
