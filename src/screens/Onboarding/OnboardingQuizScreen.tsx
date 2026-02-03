@@ -72,7 +72,7 @@ export const OnboardingQuizScreen = () => {
           setGutCheckAnswer('medicalFlags', selectedMedical);
           
           calculateScore();
-          setCurrentStep(2);
+          setCurrentStep(1);
           navigation.navigate('OnboardingResults');
       }
   };
@@ -105,6 +105,7 @@ export const OnboardingQuizScreen = () => {
       subtitle={currentQuizPage === 0 ? "Select all that apply & frequency" : "Let's look at your gut signs"}
       onNext={handleNext}
       onBack={handleBack}
+      showBackButton={currentQuizPage === 1}
       nextLabel={currentQuizPage === 0 ? "Next: Gut Check" : "Analyze My Gut"}
       nextDisabled={currentQuizPage === 0 ? !isPage1Valid : !isPage2Valid}
     >

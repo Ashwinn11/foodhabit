@@ -42,10 +42,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   track: {
-    height: 6,
-    backgroundColor: colors.white + '40',
+    height: 8,
+    backgroundColor: colors.black + '08',
     borderRadius: radii.full,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.black + '05',
   },
   fill: {
     height: '100%',

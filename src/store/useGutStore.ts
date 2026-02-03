@@ -1020,54 +1020,58 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             return { score: baselineScore, grade };
         }
 
-        // Calculate the raw score based on logged data
-        let calculatedScore = 0;
+        // Calculate the raw score based on logged data (Reductive System)
+        let calculatedScore = 100;
 
-        // 1. Bristol Scale Score (40 points)
-        const bristolScores = recentMoments
+        // 1. Bristol Scale Penalties (40 points)
+        const bristolPenalties = recentMoments
             .filter(m => m.bristolType)
             .map(m => {
                 const type = m.bristolType!;
-                if (type === 3 || type === 4) return 40; // Ideal
-                if (type === 2 || type === 5) return 30; // Acceptable
-                return 10; // Concerning (1, 6, 7)
+                if (type === 3 || type === 4) return 0;  // Ideal
+                if (type === 2 || type === 5) return 10; // Acceptable
+                return 30; // Concerning (1, 6, 7)
             });
 
-        const avgBristolScore = bristolScores.length > 0
-            ? bristolScores.reduce((a, b) => a + b, 0) / bristolScores.length
-            : 20; // Default if no Bristol data
+        const avgBristolPenalty = bristolPenalties.length > 0
+            ? (bristolPenalties as number[]).reduce((a, b) => a + b, 0) / bristolPenalties.length
+            : 15; // Default if no data
 
-        calculatedScore += avgBristolScore;
+        calculatedScore -= avgBristolPenalty;
 
-        // 2. Symptom Frequency Score (30 points)
-        const symptomCount = recentMoments.filter(m =>
+        // 2. Symptom Frequency Penalties (30 points)
+        const momentsWithSymptoms = recentMoments.filter(m =>
             Object.values(m.symptoms).some(v => v)
         ).length;
 
-        let symptomScore = 30;
-        if (symptomCount === 0) symptomScore = 30;
-        else if (symptomCount <= 2) symptomScore = 20;
-        else if (symptomCount <= 4) symptomScore = 10;
-        else symptomScore = 0;
+        let symptomPenalty = 0;
+        if (momentsWithSymptoms === 0) symptomPenalty = 0;
+        else if (momentsWithSymptoms <= 2) symptomPenalty = 10;
+        else if (momentsWithSymptoms <= 4) symptomPenalty = 20;
+        else symptomPenalty = 30;
 
-        calculatedScore += symptomScore;
+        calculatedScore -= symptomPenalty;
 
-        // 3. Regularity Score (20 points)
+        // 3. Regularity Penalty (20 points)
         const avgPerDay = recentMoments.length / 7;
-        let regularityScore = 20;
-        if (avgPerDay >= 1 && avgPerDay <= 3) regularityScore = 20; // Ideal
-        else if (avgPerDay >= 0.5) regularityScore = 15; // Every 2 days
-        else regularityScore = 5; // Less frequent
+        let regularityPenalty = 0;
+        if (avgPerDay >= 1 && avgPerDay <= 3) regularityPenalty = 0; // Ideal
+        else if (avgPerDay >= 0.5) regularityPenalty = 10; // Every 2 days
+        else regularityPenalty = 20; // Less frequent
 
-        calculatedScore += regularityScore;
+        calculatedScore -= regularityPenalty;
 
-        // 4. Medical Flags Score (10 points)
+        // 4. THE RED FLAG (Medical Penalties)
         const hasRedFlags = recentMoments.some(m =>
             m.tags?.includes('blood') || m.tags?.includes('mucus')
         );
 
-        const medicalScore = hasRedFlags ? 0 : 10;
-        calculatedScore += medicalScore;
+        if (hasRedFlags) {
+            calculatedScore -= 60; // Major health penalty
+        }
+
+        // Final calculatedScore boundary check before blending
+        calculatedScore = Math.max(5, Math.min(100, calculatedScore));
 
         // BLENDED SCORING: Weight shifts from baseline to calculated as data accumulates
         // 0 logs: 100% baseline (handled above)
@@ -1108,10 +1112,10 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             score: Math.round(blendedScore),
             grade,
             breakdown: {
-                bristol: Math.round(avgBristolScore),
-                symptoms: symptomScore,
-                regularity: regularityScore,
-                medical: medicalScore,
+                bristol: Math.round(40 - avgBristolPenalty),
+                symptoms: Math.round(30 - symptomPenalty),
+                regularity: Math.round(20 - regularityPenalty),
+                medical: hasRedFlags ? 0 : 10,
             }
         };
     },

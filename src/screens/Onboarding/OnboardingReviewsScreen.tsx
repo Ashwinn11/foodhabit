@@ -13,7 +13,7 @@ export const OnboardingReviewsScreen = () => {
   
   const handleNext = () => {
     setCurrentStep(5);
-    navigation.navigate('OnboardingCustomPlan');
+    navigation.navigate('OnboardingFeatures');
   };
 
   const handleBack = () => {

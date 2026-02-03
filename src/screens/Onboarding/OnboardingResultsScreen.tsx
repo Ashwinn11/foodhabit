@@ -12,35 +12,52 @@ export const OnboardingResultsScreen = () => {
   const navigation = useNavigation<any>();
   const { calculatedScore, setCurrentStep, totalSteps, gutCheckAnswers } = useOnboardingStore();
   const [isAnalyzing, setIsAnalyzing] = useState(true);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const loadingMessages = [
+    "Analyzing stool architecture...",
+    "Cross-referencing symptom frequency against peer data...",
+    "Evaluating Bristol Scale consistency metrics...",
+    "Correlating regularity patterns with clinical baselines...",
+    "Finalizing Gut Health Score..."
+  ];
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setInterval(() => {
+        setLoadingStep(prev => (prev < loadingMessages.length - 1 ? prev + 1 : prev));
+    }, 600);
+    
+    const analysisTimer = setTimeout(() => {
       setIsAnalyzing(false);
-    }, 2000);
-    return () => clearTimeout(timer);
+    }, 3200);
+    
+    return () => {
+        clearInterval(timer);
+        clearTimeout(analysisTimer);
+    };
   }, []);
 
   const handleNext = () => {
-    setCurrentStep(3);
-    navigation.navigate('OnboardingSolution');
+    setCurrentStep(2);
+    navigation.navigate('OnboardingSymptoms');
   };
 
   const handleBack = () => {
      navigation.goBack();
-     setCurrentStep(1);
+     setCurrentStep(0);
   };
 
   if (isAnalyzing) {
       return (
           <ScreenWrapper useGradient={true} contentContainerStyle={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.pink} />
-              <Typography variant="h3" style={styles.loadingText}>Analyzing Gut Health...</Typography>
-              <View style={styles.checkList}>
-                  <CheckItem text="Checking stool consistency" delay={0} />
-                  <CheckItem text="Evaluating symptom patterns" delay={500} />
-                  <CheckItem text="Measuring regularity" delay={1000} />
-                  <CheckItem text="Assessing warning signs" delay={1500} />
-              </View>
+              <Animated.View entering={FadeIn} style={{ alignItems: 'center' }}>
+                <ActivityIndicator size="large" color={colors.pink} />
+                <Typography variant="h3" style={[styles.loadingText, { textAlign: 'center' }]}>
+                    {loadingMessages[loadingStep]}
+                </Typography>
+                <Typography variant="caption" color={colors.mediumGray}>
+                    {Math.round(((loadingStep + 1) / loadingMessages.length) * 100)}% Complete
+                </Typography>
+              </Animated.View>
           </ScreenWrapper>
       );
   }
@@ -87,37 +104,32 @@ export const OnboardingResultsScreen = () => {
             <Typography variant="bodyBold" style={{ marginBottom: spacing.md }}>Here's what we found:</Typography>
             
             <ScoreBar label="Stool Health" score={stoolScore} max={40} color={stoolScore >= 30 ? colors.green : stoolScore >= 20 ? colors.red : colors.pink} />
-            <ScoreBar label="Symptom Burden" score={symptomScore} max={30} color={symptomScore >= 20 ? colors.green : symptomScore >= 10 ? colors.yellow : colors.pink} />
+            <ScoreBar label="Symptom Relief" score={symptomScore} max={30} color={symptomScore >= 20 ? colors.green : symptomScore >= 10 ? colors.yellow : colors.pink} />
             <ScoreBar label="Regularity" score={regularityScore} max={20} color={regularityScore >= 15 ? colors.green : colors.yellow} />
-            <ScoreBar label="Medical Flags" score={medicalScore} max={10} color={medicalScore === 10 ? colors.green : colors.pink} />
+            <ScoreBar label="Clinical Safety" score={medicalScore} max={10} color={medicalScore === 10 ? colors.green : colors.pink} />
 
-            <Card style={styles.warningCard}>
-                 <Ionicons name="warning" size={24} color={colors.black} style={{ marginBottom: spacing.sm }} />
-                 <Typography variant="caption" color={colors.black}>
-                    Without intervention, symptoms can worsen.
-                 </Typography>
-            </Card>
+            {gutCheckAnswers.medicalFlags ? (
+              <Card style={[styles.warningCard, { borderColor: colors.pink, backgroundColor: colors.pink + '10' }]}>
+                  <Ionicons name="alert-circle" size={24} color={colors.pink} style={{ marginBottom: spacing.sm }} />
+                  <Typography variant="bodyBold" color={colors.pink}>Red Flag Detected</Typography>
+                  <Typography variant="caption" color={colors.black} style={{ textAlign: 'center' }}>
+                     Blood or mucus in stool requires medical attention. Please consult a doctor alongside using this app.
+                  </Typography>
+              </Card>
+            ) : (
+              <Card style={styles.warningCard}>
+                  <Ionicons name="shield-checkmark" size={24} color={colors.green} style={{ marginBottom: spacing.sm }} />
+                  <Typography variant="caption" color={colors.black}>
+                     Your gut signs show no immediate medical red flags.
+                  </Typography>
+              </Card>
+            )}
 
         </Animated.View>
       </ScrollView>
     </OnboardingScreen>
   );
 };
-
-const CheckItem = ({ text, delay }: { text: string, delay: number }) => {
-    const [visible, setVisible] = useState(false);
-    useEffect(() => {
-        setTimeout(() => setVisible(true), delay);
-    }, []);
-
-    if (!visible) return null;
-    return (
-        <Animated.View entering={FadeIn} style={styles.checkItem}>
-            <Ionicons name="checkmark-circle" size={20} color={colors.green} />
-            <Typography variant="body" style={{ marginLeft: spacing.sm }}>{text}</Typography>
-        </Animated.View>
-    );
-}
 
 const ScoreBar = ({ label, score, max, color }: { label: string, score: number, max: number, color: string }) => (
     <View style={styles.scoreBarContainer}>

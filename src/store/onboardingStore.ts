@@ -33,7 +33,7 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
     gutCheckAnswers: {},
     calculatedScore: 0,
     currentStep: 0,
-    totalSteps: 6, // Hook + Quiz + Results + Solution + Reviews + Plan
+    totalSteps: 8, // Quiz + Results + Symptoms + Solution + Reviews + Features + Commitment + Plan
 
     setGutCheckAnswer: (key, value) => {
         set((state) => ({
@@ -43,26 +43,38 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
 
     calculateScore: () => {
         const { gutCheckAnswers } = get();
-        let totalScore = 0;
+        let totalScore = 100; // Start with a perfect Gut Score
 
-        // 1. Bristol/Stool Consistency (40pts)
-        // Mapped from UI: 0=Hard(10), 1=SlightHard(25), 2=Normal(40), 3=Loose(25), 4=Watery(10)
-        const stoolScores = [10, 25, 40, 25, 10];
-        totalScore += stoolScores[gutCheckAnswers.stoolConsistency ?? 2] || 20;
+        // 1. Consistency Penalties (Bristol Scale)
+        // 0=Hard, 1=SlightHard, 2=Normal(0 penalty), 3=Loose, 4=Watery
+        const consistencyPenalties = [25, 10, 0, 15, 30];
+        totalScore -= consistencyPenalties[gutCheckAnswers.stoolConsistency ?? 2] || 15;
 
-        // 2. Symptom Frequency (30pts)
-        // 0=Rarely(30), 1=1-2x(20), 2=3-5x(10), 3=Daily(0)
-        const symptomScores = [30, 20, 10, 0];
-        totalScore += symptomScores[gutCheckAnswers.symptomFrequency ?? 1] || 15;
+        // 2. Frequency Penalties
+        // 0=Rarely(0 penalty), 1=Weekly, 2=Daily
+        const frequencyPenalties = [0, 15, 30];
+        totalScore -= frequencyPenalties[gutCheckAnswers.symptomFrequency ?? 1] || 15;
 
-        // 3. Regularity (20pts)
-        // 0=Regular(20), 1=So-so(15), 2=Unpredictable(5)
-        const regularityScores = [20, 15, 5];
-        totalScore += regularityScores[gutCheckAnswers.bowelRegularity ?? 1] || 10;
+        // 3. Regularity Penalties
+        // 0=Regular(0 penalty), 1=So-so, 2=Unpredictable
+        const regularityPenalties = [0, 10, 20];
+        totalScore -= regularityPenalties[gutCheckAnswers.bowelRegularity ?? 1] || 10;
 
-        // 4. Medical Flags (10pts)
-        // false=10, true=0
-        totalScore += gutCheckAnswers.medicalFlags ? 0 : 10;
+        // 4. THE RED FLAG (Alarm Symptoms)
+        // Medically, blood/mucus is a massive clinical penalty.
+        if (gutCheckAnswers.medicalFlags) {
+            totalScore -= 60; // Huge drop for blood/mucus
+
+            // 5. SEVERITY CORRELATION
+            // If blood is present AND consistency is watery/hard, health risk doubles.
+            if ((gutCheckAnswers.stoolConsistency ?? 2) === 4 || (gutCheckAnswers.stoolConsistency ?? 2) === 0) {
+                totalScore -= 10; // Extra clinical urgency
+            }
+        }
+
+        // Final Floor: Cannot be less than 5 (to show it's "critical" but not 0)
+        // Ceiling: Cannot be more than 100
+        totalScore = Math.max(5, Math.min(100, totalScore));
 
         set({ calculatedScore: totalScore });
     },

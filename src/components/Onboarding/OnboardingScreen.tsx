@@ -124,8 +124,15 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: spacing.sm,
-    backgroundColor: colors.white + '80',
+    backgroundColor: colors.white,
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.black + '10',
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   backButtonPlaceholder: {
     width: 44, // Same width as back button to maintain alignment

@@ -117,7 +117,7 @@ export class RevenueCatService {
     }
 
     static async manageSubscription() {
-        if (!this.checkAvailability() || !this.initialized) {
+        if (!this.checkAvailability() || this.initialized) {
             if (Platform.OS === 'ios') return 'https://apps.apple.com/account/subscriptions';
             return null;
         }
@@ -135,6 +135,42 @@ export class RevenueCatService {
         } catch (e) {
             console.error('Error getting management URL', e);
             return null;
+        }
+    }
+
+    static async purchasePackage(packageType: 'Monthly' | 'Yearly') {
+        if (!this.checkAvailability() || !this.initialized) return false;
+
+        try {
+            const offerings = await Purchases.getOfferings();
+            const currentOffering = offerings.current;
+            if (!currentOffering) return false;
+
+            const pkg = packageType === 'Yearly'
+                ? currentOffering.annual
+                : currentOffering.monthly;
+
+            if (!pkg) return false;
+
+            const { customerInfo } = await Purchases.purchasePackage(pkg);
+            return customerInfo.entitlements.active[REVENUECAT_PAYWALL_ID] !== undefined;
+        } catch (e: any) {
+            if (!e.userCancelled) {
+                console.error('Error purchasing package', e);
+            }
+            return false;
+        }
+    }
+
+    static async restorePurchases() {
+        if (!this.checkAvailability() || !this.initialized) return false;
+
+        try {
+            const customerInfo = await Purchases.restorePurchases();
+            return customerInfo.entitlements.active[REVENUECAT_PAYWALL_ID] !== undefined;
+        } catch (e) {
+            console.error('Error restoring purchases', e);
+            return false;
         }
     }
 }

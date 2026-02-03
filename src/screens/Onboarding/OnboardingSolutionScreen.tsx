@@ -15,7 +15,7 @@ export const OnboardingSolutionScreen = () => {
   
   const handleNext = () => {
     setCurrentStep(4);
-    navigation.navigate('OnboardingCustomPlan'); 
+    navigation.navigate('OnboardingReviews'); 
   };
 
   const handleBack = () => {

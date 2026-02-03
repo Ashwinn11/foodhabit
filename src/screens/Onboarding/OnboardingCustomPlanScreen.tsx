@@ -7,40 +7,54 @@ import { Typography, Card, ScreenWrapper } from '../../components';
 import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeIn, Layout } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { RevenueCatService } from '../../services/revenueCatService';
 import * as StoreReview from 'expo-store-review';
+import { RevenueCatService } from '../../services/revenueCatService';
 
 export const OnboardingCustomPlanScreen = () => {
   const navigation = useNavigation<any>();
-  const { calculatedScore, totalSteps, setCurrentStep, completeOnboarding } = useOnboardingStore();
+  const { calculatedScore, totalSteps, setCurrentStep, completeOnboarding } = useOnboardingStore(); 
   const [isGenerating, setIsGenerating] = useState(true);
-  
+  const [loadingStep, setLoadingStep] = useState(0);
+  const loadingMessages = [
+    "Synthesizing gut profile data...",
+    "Matching dietary patterns with recovery protocols...",
+    "Optimizing fermentation mitigation strategy...",
+    "Mapping 90-day biological reset timeline...",
+    "Generating personalized trigger alerts..."
+  ];
+
   useEffect(() => {
-    const timer = setTimeout(async () => {
+    const timer = setInterval(() => {
+        setLoadingStep(prev => (prev < loadingMessages.length - 1 ? prev + 1 : prev));
+    }, 600);
+
+    const timer2 = setTimeout(async () => {
       setIsGenerating(false);
-      // Prompt for review earlier? or later. Leaving as is from original.
       if (await StoreReview.hasAction()) {
         StoreReview.requestReview();
       }
-    }, 2500);
-    return () => clearTimeout(timer);
+    }, 3500);
+    return () => {
+        clearInterval(timer);
+        clearTimeout(timer2);
+    };
   }, []);
 
   const handleNext = async () => {
-    // Show paywall
+    // Show native RevenueCat Paywall
     try {
       const paywallResult = await RevenueCatService.presentPaywall();
       const isPremium = await RevenueCatService.isPremium(true);
       const purchasedOrRestored = paywallResult === 'PURCHASED' || paywallResult === 'RESTORED';
       
       if (!isPremium && !purchasedOrRestored) {
-        return; // Exit early
+        return; // Exit if they didn't buy anything
       }
       
-      // User purchased!
+      // User purchased! Mark complete
       await completeOnboarding();
       
-      // Trigger update
+      // Trigger update in App.tsx
       // @ts-ignore
       if (global.refreshOnboardingStatus) {
          // @ts-ignore
@@ -49,13 +63,12 @@ export const OnboardingCustomPlanScreen = () => {
 
     } catch (error) {
       console.error('❌ Paywall error:', error);
-      return;
     }
   };
 
   const handleBack = () => {
     navigation.goBack();
-    setCurrentStep(2);
+    setCurrentStep(6);
   };
 
   if (isGenerating) {
@@ -63,8 +76,12 @@ export const OnboardingCustomPlanScreen = () => {
       <ScreenWrapper useGradient={true}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.pink} />
-          <Typography variant="h3" style={styles.loadingText}>Building Your Protocol...</Typography>
-          <Typography variant="body" color={colors.black + '66'}>Analyzing gut profile</Typography>
+          <Typography variant="h3" style={[styles.loadingText, { textAlign: 'center' }]}>
+            {loadingMessages[loadingStep]}
+          </Typography>
+          <Typography variant="caption" color={colors.mediumGray}>
+            Step {loadingStep + 1} of {loadingMessages.length}: Profile Optimization
+          </Typography>
         </View>
       </ScreenWrapper>
     );
@@ -72,7 +89,7 @@ export const OnboardingCustomPlanScreen = () => {
 
   return (
     <OnboardingScreen
-      currentStep={5}
+      currentStep={7}
       totalSteps={totalSteps}
       title="Your Personalized Protocol"
       subtitle=""
@@ -89,6 +106,18 @@ export const OnboardingCustomPlanScreen = () => {
               <View style={styles.bulletItem}><Ionicons name="ellipse" size={8} color={colors.pink} /><Typography variant="bodySmall" style={{marginLeft: 8}}>Optimized for sensitive digestion</Typography></View>
               <View style={styles.bulletItem}><Ionicons name="ellipse" size={8} color={colors.pink} /><Typography variant="bodySmall" style={{marginLeft: 8}}>Focus on symptom reduction</Typography></View>
           </Card>
+
+          {/* Trigger 2: Price Anchoring (Cost of Inaction) */}
+          <View style={styles.anchorContainer}>
+            <Typography variant="caption" color={colors.mediumGray} align="center" style={{ marginBottom: spacing.md }}>
+              THE COST OF INACTION
+            </Typography>
+            <View style={styles.anchorGrid}>
+                <AnchorItem label="GI Specialist" cost="$350+" color={colors.mediumGray} />
+                <AnchorItem label="Trial & Error" cost="Years" color={colors.mediumGray} />
+                <AnchorItem label="GutBuddy" cost="$1.15/wk" color={colors.green} highlighted />
+            </View>
+          </View>
 
           <Card style={styles.planCard}>
             <View style={styles.planHeader}>
@@ -116,20 +145,6 @@ export const OnboardingCustomPlanScreen = () => {
                    </View>
                </View>
           </View>
-
-          <View style={{ marginTop: spacing.xl }}>
-              <Typography variant="h3" style={{ marginBottom: spacing.md }}>Success Stories</Typography>
-              <ReviewItem 
-                name="Sarah M." 
-                text="The bloating is GONE! I used to look 6 months pregnant... now I can wear my jeans without pain." 
-                stars={5}
-              />
-              <ReviewItem 
-                name="Michael T." 
-                text="My skin cleared up in 3 weeks. I had no idea my acne was connected to my gut." 
-                stars={5}
-              />
-          </View>
         </Animated.View>
       </ScrollView>
     </OnboardingScreen>
@@ -149,16 +164,11 @@ const TimelineItem = ({ title, duration, desc, color, isLast }: any) => (
   </View>
 );
 
-const ReviewItem = ({ name, text, stars }: any) => (
-    <View style={{ padding: spacing.md, backgroundColor: colors.white, borderRadius: 24, marginBottom: spacing.md, shadowColor: colors.black, shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-            <Typography variant="bodyBold">{name}</Typography>
-            <View style={{ flexDirection: 'row' }}>
-                {[...Array(stars)].map((_, i) => <Ionicons key={i} name="star" size={14} color={colors.yellow} />)}
-            </View>
-        </View>
-        <Typography variant="caption" color={colors.black + '80'}>"{text}"</Typography>
-    </View>
+const AnchorItem = ({ label, cost, color, highlighted = false }: any) => (
+  <View style={[styles.anchorItem, highlighted && styles.anchorHighlighted]}>
+    <Typography variant="bodyXS" color={highlighted ? colors.white : colors.mediumGray}>{label}</Typography>
+    <Typography variant="bodyBold" color={highlighted ? colors.white : color} style={{ fontSize: 16 }}>{cost}</Typography>
+  </View>
 );
 
 const styles = StyleSheet.create({
@@ -182,6 +192,30 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       marginTop: 4,
   },
+  anchorContainer: {
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.white + '80',
+    borderRadius: 24,
+    marginBottom: spacing.xl,
+  },
+  anchorGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  anchorItem: {
+    flex: 1,
+    padding: spacing.sm,
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  anchorHighlighted: {
+    backgroundColor: colors.green,
+    borderColor: colors.green,
+  },
   planCard: {
     padding: spacing.lg,
     backgroundColor: colors.white,
@@ -191,7 +225,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
-    // Removed border
   },
   planHeader: {
     marginBottom: spacing.lg,
