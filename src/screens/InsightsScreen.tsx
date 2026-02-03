@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { colors, spacing } from '../theme';
@@ -13,14 +13,90 @@ import {
   Button
 } from '../components';
 import { useGutStore } from '../store';
+import { useGutData } from '../presentation/hooks';
 import { analyzeFoodWithAI } from '../services/fodmapService';
+import { container } from '../infrastructure/di';
+import { Meal as DomainMeal, MealType } from '../domain';
 
 export const InsightsScreen: React.FC = () => {
-  const { gutMoments, getEnhancedTriggers, getCombinationTriggers, getPoopHistoryData, exportData, getGutHealthScore, getStats, addTriggerFeedback } = useGutStore();
+  // Use new architecture for computed values
+  const { healthScore, domainMoments } = useGutData();
+  
+  // Still using store for data and some actions
+  const { 
+    gutMoments, 
+    meals,
+    getPoopHistoryData, 
+    exportData, 
+    getStats, 
+    addTriggerFeedback,
+    triggerFeedback
+  } = useGutStore();
+  
   const stats = getStats();
-  const enhancedTriggers = getEnhancedTriggers();
-  const combinationTriggers = getCombinationTriggers();
   const historyData = getPoopHistoryData();
+
+  // Get services from DI container
+  const triggerService = container.triggerDetectionService;
+
+  // Convert meals to domain entities
+  const domainMeals = useMemo(() => {
+    return meals.map((m: any) => DomainMeal.reconstitute({
+      id: m.id,
+      timestamp: new Date(m.timestamp),
+      mealType: MealType.create(m.mealType || 'snack'),
+      name: m.name || '',
+      foods: m.foods || [],
+      description: m.description,
+      normalizedFoods: m.normalizedFoods,
+      foodTags: m.foodTags || [],
+    }));
+  }, [meals]);
+
+  // Convert trigger feedback to domain format
+  const domainFeedback = useMemo(() => {
+    return (triggerFeedback || []).map((f: any) => ({
+      foodName: f.foodName,
+      userConfirmed: f.userConfirmed,
+      timestamp: new Date(f.timestamp),
+      notes: f.notes,
+    }));
+  }, [triggerFeedback]);
+
+  // Use new trigger detection service
+  const enhancedTriggers = useMemo(() => {
+    const triggers = triggerService.detectTriggers({
+      moments: domainMoments,
+      meals: domainMeals,
+      feedback: domainFeedback as any,
+    });
+
+    // Convert to the format expected by the UI
+    return triggers.map(t => ({
+      food: t.food.charAt(0).toUpperCase() + t.food.slice(1),
+      occurrences: t.occurrences,
+      symptomOccurrences: t.symptomOccurrences,
+      confidence: t.confidence,
+      frequencyText: `${t.symptomOccurrences} of ${t.occurrences} times`,
+      avgLatencyHours: t.avgLatencyHours,
+      symptoms: t.symptoms,
+      userFeedback: t.userFeedback,
+      fodmapIssues: t.fodmapIssues,
+      alternatives: t.alternatives,
+    }));
+  }, [domainMoments, domainMeals, domainFeedback, triggerService]);
+
+  // Get combination triggers
+  const combinationTriggers = useMemo(() => {
+    const combos = triggerService.detectCombinationTriggers(domainMoments, domainMeals);
+    return combos.map(c => ({
+      foods: c.foods,
+      occurrences: c.occurrences,
+      symptomOccurrences: c.symptomOccurrences,
+      confidence: c.confidence,
+      frequencyText: `${c.symptomOccurrences} of ${c.occurrences} times`,
+    }));
+  }, [domainMoments, domainMeals, triggerService]);
 
   // State for AI-enriched insights
   const [aiInsights, setAiInsights] = useState<Record<string, { fodmapIssues?: any; culprits?: string[]; alternatives?: string[] }>>({});
@@ -49,8 +125,6 @@ export const InsightsScreen: React.FC = () => {
 
     fetchMissingInsights();
   }, [enhancedTriggers]);
-  
-  // Calculate weekly logs for Insights focus
   
   // Calculate weekly logs for Insights focus
   const weekAgo = new Date();
@@ -82,7 +156,6 @@ export const InsightsScreen: React.FC = () => {
   };
   
   const symptomStats = getSymptomStats();
-  const healthScore = getGutHealthScore();
 
     // Get last poop time formatted
   const getLastPoopTime = () => {
@@ -124,6 +197,7 @@ export const InsightsScreen: React.FC = () => {
         </Animated.View>
         
         <View style={styles.content}>
+          {/* Overview Card - Using new architecture */}
           <Card 
             variant="white"
             style={styles.overviewCard}
@@ -199,6 +273,7 @@ export const InsightsScreen: React.FC = () => {
             </Card>
           </Animated.View>
 
+          {/* Enhanced Triggers - Now using new architecture */}
           {enhancedTriggers.length > 0 && (
             <Animated.View 
               entering={FadeInDown.delay(350).springify()}
@@ -317,7 +392,7 @@ export const InsightsScreen: React.FC = () => {
             </Animated.View>
           )}
           
-          {/* Combination Triggers */}
+          {/* Combination Triggers - Now using new architecture */}
           {combinationTriggers.length > 0 && (
             <Animated.View 
               entering={FadeInDown.delay(400).springify()}

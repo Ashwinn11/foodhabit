@@ -52,14 +52,21 @@ export const analyzeFoodWithAI = async (food: string): Promise<FODMAPTag & {
         }
 
         // Return full AI response including normalization fields
-        return {
+        const finalResult = {
             level: data.level,
             categories: data.categories,
             culprits: data.culprits,
             alternatives: data.alternatives,
             normalizedName: data.normalizedName,
             baseIngredients: data.baseIngredients
-        } as any;
+        };
+
+        console.log('--- AI ANALYSIS DEBUG ---');
+        console.log('Food Input:', food);
+        console.log('Raw AI Response:', JSON.stringify(finalResult, null, 2));
+        console.log('-------------------------');
+
+        return finalResult as any;
     } catch (e) {
         console.error('Edge Function Error:', e);
         return null;

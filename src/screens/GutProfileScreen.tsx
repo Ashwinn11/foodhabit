@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { colors, spacing, radii, shadows, fonts } from '../theme';
 import { useGutStore } from '../store';
+import { useGutData } from '../presentation/hooks';
 import {
   GutAvatar,
   TimelineEntry,
@@ -28,9 +29,12 @@ type GutProfileScreenProps = {
 };
 
 export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }) => {
-  const { gutMoments, meals, getStats, getGutHealthScore } = useGutStore();
+  // Use new architecture for computed values
+  const { healthScore } = useGutData();
+  
+  // Keep some store access for data
+  const { gutMoments, meals, getStats } = useGutStore();
   const stats = getStats();
-  const healthScore = getGutHealthScore();
   
   // Helper to get relative date label (Today, Yesterday, or Date string)
   const formatRelativeDate = (date: Date) => {
@@ -97,7 +101,7 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Main Avatar Section - The "Mascot Job" */}
+        {/* Main Avatar Section - The "Mascot Job" - Now using new architecture */}
         <Animated.View 
           entering={FadeInDown.delay(200).springify()}
           style={styles.avatarSection}

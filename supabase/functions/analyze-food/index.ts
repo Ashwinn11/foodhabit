@@ -23,21 +23,19 @@ serve(async (req) => {
       Analyze the food item "${food}" for IBS/FODMAP friendliness.
       
       IMPORTANT RULES:
-      1. If the input is NOT a real food item (gibberish, random characters, made up words, non-food objects), return EXACTLY: {"error": "not_food"}
-      2. Only analyze actual foods, dishes, or ingredients.
+      1. If the input is completely meaningless gibberish (e.g. "asdfgh") or a non-food object (e.g. "iPhone", "Chair"), return EXACTLY: {"error": "not_food"}
+      2. If the input is a food item but misspelled (e.g. "blubberries", "biiryani"), DO NOT return an error. Instead, correct the spelling in the "normalizedName" field and proceed with the analysis.
       
       For valid foods, return ONLY a raw JSON object (no markdown, no backticks) with this exact schema:
       {
         "level": "high" | "moderate" | "low",
         "categories": string[], (e.g. ["fructans", "lactose", "gos", "polyols", "excess-fructose"])
-        "culprits": string[], (specific ingredients causing the issue, e.g. ["onion", "garlic"])
+        "culprits": string[], (specific ingredients causing the issue)
         "alternatives": string[], (3-5 specific low-FODMAP alternatives)
-        "normalizedName": string, (correct spelling in lowercase, e.g. "biryani" for "biiryani" or "biriyani")
-        "baseIngredients": string[] (main ingredient components, e.g. ["chicken", "biryani", "rice"] for "chicken biryani")
+        "normalizedName": string, (correct spelling in lowercase, e.g. "blueberries")
+        "baseIngredients": string[] (main ingredient components)
       }
-      If the food is safe (low FODMAP), "categories" and "culprits" should be empty arrays.
-      The "normalizedName" should be the correctly spelled, standardized name.
-      The "baseIngredients" should extract individual components so "mutton biryani" gives ["mutton", "biryani"].
+      The "normalizedName" should be the standardized, correctly spelled name.
     `
 
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey, {

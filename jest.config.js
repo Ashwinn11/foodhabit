@@ -1,10 +1,9 @@
 /**
  * Jest Configuration
- * Test runner for Food Habit app
+ * Test runner for GutBuddy app (domain and application layers)
  */
 
 module.exports = {
-  preset: 'react-native',
   testEnvironment: 'node',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   transform: {
@@ -14,6 +13,7 @@ module.exports = {
         esModuleInterop: true,
         allowSyntheticDefaultImports: true,
         declaration: false,
+        strict: false,
       },
     }],
   },
@@ -24,8 +24,12 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  // Skip setup file for now since we're testing pure domain/application code
+  // setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/.expo/'],
   collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
+    'src/domain/**/*.{ts,tsx}',
+    'src/application/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/**/index.ts',
   ],
@@ -34,6 +38,4 @@ module.exports = {
     '/build/',
     '/.expo/',
   ],
-  setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
-  testPathIgnorePatterns: ['/node_modules/', '/.expo/'],
 };

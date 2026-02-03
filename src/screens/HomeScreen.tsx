@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { colors, spacing, radii } from '../theme';
 import { useGutStore, useNotificationStore, useUIStore } from '../store';
+import { useGutData } from '../presentation/hooks';
 import {
   MissionCard,
   ScreenWrapper,
@@ -27,14 +28,28 @@ type HomeScreenProps = {
 };
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const { user, getDynamicTasks, addWater, addFiber, addProbiotic, toggleTask, getGutHealthScore, checkMedicalAlerts, dismissAlert } = useGutStore();
+  // Use new architecture for computed values
+  const { 
+    healthScore, 
+    medicalAlerts, 
+    streak,
+  } = useGutData();
+  
+  // Still use old store for actions (will migrate later)
+  const { 
+    user,
+    getDynamicTasks, 
+    addWater, 
+    addFiber, 
+    addProbiotic, 
+    toggleTask, 
+    dismissAlert 
+  } = useGutStore();
+  
   const { unreadCount } = useNotificationStore();
   
   const dynamicTasks = getDynamicTasks();
   const incompleteTasks = dynamicTasks.filter(t => !t.completed).length;
-  // stats and lastPoopInfo logic preserved but simplified in UI
-  const healthScore = getGutHealthScore();
-  const medicalAlerts = checkMedicalAlerts();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -72,7 +87,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               </Typography>
             </View>
             <Typography variant="h1">
-              {user.name} <Typography variant="h1" color={colors.pink}>& Co.</Typography>
+              {user.name} <Typography variant="h1" color={colors.pink}>&amp; Co.</Typography>
             </Typography>
           </View>
           
@@ -85,7 +100,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           />
         </Animated.View>
         
-        {/* Medical Alerts Banner */}
+        {/* Medical Alerts Banner - Now using new architecture */}
         {medicalAlerts.hasAlerts && (
           <Animated.View 
             entering={FadeInDown.delay(150).springify()}
@@ -139,7 +154,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </Animated.View>
         )}
         
-        {/* HERO: Gut Health Score Ring */}
+        {/* HERO: Gut Health Score Ring - Now using new architecture */}
         <Animated.View 
           entering={FadeInDown.delay(200).springify()}
           style={styles.heroSection}
@@ -158,11 +173,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 </View>
               </View>
 
-              {/* Stats / Streak Badge */}
+              {/* Stats / Streak Badge - Now using new architecture */}
               <View style={styles.streakBadge}>
                  <IconContainer name="flame" size={24} color={colors.pink} variant="transparent" shadow={false} />
                  <Typography variant="bodyBold" color={colors.black}>
-                    {user.streak} Day{user.streak !== 1 ? 's' : ''} Streak
+                    {streak} Day{streak !== 1 ? 's' : ''} Streak
                  </Typography>
               </View>
             </View>

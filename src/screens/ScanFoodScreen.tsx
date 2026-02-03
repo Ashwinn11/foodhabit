@@ -21,8 +21,9 @@ import {
 } from '../components';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { checkFODMAPStacking, getLowFODMAPAlternatives, analyzeFoodWithAI } from '../services/fodmapService';
+import { analyzeFoodWithAI } from '../services/fodmapService';
 import { useGutStore } from '../store';
+import { useGutActions } from '../presentation/hooks';
 import { FODMAPTag } from '../types/fodmap';
 
 type ScanFoodScreenProps = {
@@ -33,53 +34,154 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [searchText, setSearchText] = useState('');
   const [selectedFoods, setSelectedFoods] = useState<string[]>([]);
-  const [aiResults, setAiResults] = useState<Record<string, (FODMAPTag & { alternatives?: string[] }) | null>>({});
+  const [aiResults, setAiResults] = useState<Record<string, (FODMAPTag & { 
+    alternatives?: string[];
+    normalizedName?: string;
+    baseIngredients?: string[];
+  }) | null>>({});
   const [loadingFoods, setLoadingFoods] = useState<string[]>([]);
-  const { addMeal, triggerFeedback } = useGutStore();
+  
+  // Use new actions for logging
+  const { logMeal } = useGutActions();
+  // Still need store for trigger feedback lookup
+  const { triggerFeedback } = useGutStore();
+  
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('snack');
 
   // Quick suggestions
   const SUGGESTIONS = ['Coffee', 'Pizza', 'Garlic', 'Onion', 'Apple', 'Milk', 'Bread', 'Pasta', 'Rice', 'Chicken'];
 
-  // Real-time analysis of selected foods (includes AI results)
-  const analysis = useMemo(() => {
+  // AI-based analysis solely derived from AI results (no local DB lookup)
+  const aiAnalysis = useMemo(() => {
     if (selectedFoods.length === 0) return null;
-    return checkFODMAPStacking(selectedFoods);
-  }, [selectedFoods, aiResults]); // Re-run when AI results update
+    
+    // Get results for all selected foods that have been analyzed
+    const results = selectedFoods
+      .map(food => aiResults[food])
+      .filter((r): r is NonNullable<typeof r> => r !== null && r !== undefined);
+      
+    if (results.length === 0) return null;
 
-  const activeTriggers = useMemo(() => {
-    return selectedFoods.filter(food => {
-      const normalizedInput = food.toLowerCase().trim();
-      const feedback = triggerFeedback.find(f => f.foodName.toLowerCase().trim() === normalizedInput);
-      return feedback?.userConfirmed === true;
+    let totalLoad = 0;
+    const categoryCounts: Record<string, number> = {};
+    const highFODMAPs: any[] = [];
+    const moderateFODMAPs: any[] = [];
+    
+    results.forEach(res => {
+      if (res.level === 'high') {
+        totalLoad += 3;
+        highFODMAPs.push(res);
+      } else if (res.level === 'moderate') {
+        totalLoad += 1.5;
+        moderateFODMAPs.push(res);
+      }
+      
+      res.categories?.forEach(cat => {
+        categoryCounts[cat] = (categoryCounts[cat] || 0) + (res.level === 'high' ? 1 : 0.5);
+      });
     });
-  }, [selectedFoods, triggerFeedback]);
+    
+    const stackedCategories = Object.entries(categoryCounts)
+      .filter(([_, count]) => count >= 2)
+      .map(([cat]) => cat);
+      
+    let riskLevel: 'low' | 'moderate' | 'high' = 'low';
+    if (highFODMAPs.length > 0 || totalLoad >= 9 || stackedCategories.length >= 2) {
+      riskLevel = 'high';
+    } else if (moderateFODMAPs.length > 0 || totalLoad >= 4.5) {
+      riskLevel = 'moderate';
+    }
+    
+    return { riskLevel, totalLoad, stackedCategories, highFODMAPs, moderateFODMAPs };
+  }, [selectedFoods, aiResults]); 
 
-  // Handle adding a food item - always use AI
+
+  // Use trigger feedback from store to check for personal triggers
+  // Enhanced to check both the full food name AND its base ingredients
+  const activeTriggers = useMemo(() => {
+    const foundTriggers: string[] = [];
+    
+    selectedFoods.forEach(food => {
+      const normalizedInput = food.toLowerCase().trim();
+      const aiResult = aiResults[food];
+      
+      // 1. Check if the food itself is a confirmed trigger
+      const directFeedback = triggerFeedback.find(f => 
+        f.foodName.toLowerCase().trim() === normalizedInput && f.userConfirmed === true
+      );
+      
+      if (directFeedback) {
+        foundTriggers.push(food);
+        return;
+      }
+      
+      // 2. Check if any base ingredients are known triggers
+      if (aiResult?.baseIngredients) {
+        const matchingIngredient = aiResult.baseIngredients.find(ing => 
+          triggerFeedback.some(f => 
+            f.foodName.toLowerCase().trim() === ing.toLowerCase().trim() && f.userConfirmed === true
+          )
+        );
+        
+        if (matchingIngredient) {
+          // If the ingredient is the trigger, flag it
+          foundTriggers.push(`${food} (contains ${matchingIngredient})`);
+        }
+      }
+    });
+    
+    return [...new Set(foundTriggers)];
+  }, [selectedFoods, triggerFeedback, aiResults]);
+
+  // Handle adding a food item - always use AI for normalization and analysis
   const addFood = useCallback(async (food: string) => {
-    const normalizedFood = food.trim();
-    if (!normalizedFood || selectedFoods.includes(normalizedFood)) {
+    const rawInput = food.trim();
+    if (!rawInput || selectedFoods.includes(rawInput)) {
       setSearchText('');
       Keyboard.dismiss();
       return;
     }
 
-    setSelectedFoods(prev => [...prev, normalizedFood]);
+    // Add to selected foods immediately for responsiveness (using raw input for now)
+    setSelectedFoods(prev => [...prev, rawInput]);
     setSearchText('');
     Keyboard.dismiss();
 
-    // Always call AI for analysis
-    setLoadingFoods(prev => [...prev, normalizedFood]);
+    // Always call AI for analysis and normalization
+    setLoadingFoods(prev => [...prev, rawInput]);
     try {
-      const aiResult = await analyzeFoodWithAI(normalizedFood);
-      setAiResults(prev => ({ ...prev, [normalizedFood]: aiResult }));
+      const aiResult = await analyzeFoodWithAI(rawInput);
+      
+      if (aiResult?.normalizedName) {
+        // AI found a canonical name (fixed spelling, standardized casing, etc.)
+        const canonicalName = aiResult.normalizedName;
+        
+        setSelectedFoods(prev => {
+          // If we already added this canonical name, just remove the raw input
+          if (prev.filter(f => f !== rawInput).includes(canonicalName)) {
+            return prev.filter(f => f !== rawInput);
+          }
+          // Otherwise, replace raw input with canonical name
+          return prev.map(f => f === rawInput ? canonicalName : f);
+        });
+        
+        setAiResults(prev => {
+          const newState = { ...prev };
+          delete newState[rawInput];
+          newState[canonicalName] = aiResult;
+          return newState;
+        });
+      } else {
+        // No normalization found, keep raw input
+        setAiResults(prev => ({ ...prev, [rawInput]: aiResult }));
+      }
     } catch (e) {
       console.error('AI lookup failed:', e);
-      setAiResults(prev => ({ ...prev, [normalizedFood]: null }));
+      setAiResults(prev => ({ ...prev, [rawInput]: null }));
     } finally {
-      setLoadingFoods(prev => prev.filter(f => f !== normalizedFood));
+      setLoadingFoods(prev => prev.filter(f => f !== rawInput));
     }
-  }, [selectedFoods]);
+  }, [selectedFoods, aiResults]);
 
   const removeFood = (foodToRemove: string) => {
     setSelectedFoods(prev => prev.filter(f => f !== foodToRemove));
@@ -93,29 +195,21 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
   const handleLogMeal = () => {
     if (selectedFoods.length === 0) return;
 
-    // Extract normalized foods from AI results for trigger detection
-    const normalizedFoods: string[] = [];
-    selectedFoods.forEach(food => {
-      const aiResult = aiResults[food] as any;
-      if (aiResult?.baseIngredients?.length > 0) {
-        // Use AI-extracted base ingredients (handles "chicken biryani" → ["chicken", "biryani"])
-        normalizedFoods.push(...aiResult.baseIngredients);
-      } else if (aiResult?.normalizedName) {
-        // Use corrected spelling (handles "biiryani" → "biryani")
-        normalizedFoods.push(aiResult.normalizedName);
-      } else {
-        // Fallback to original input
-        normalizedFoods.push(food.toLowerCase().trim());
-      }
+    // Use AI-normalized names for trigger detection
+    // Note: We no longer split compound foods like "garlic bread" into "garlic" and "bread"
+    // as it creates false correlations. The AI handled normalization in addFood.
+    const normalizedFoods = selectedFoods.map(food => {
+      const aiResult = aiResults[food];
+      return aiResult?.normalizedName ? aiResult.normalizedName.toLowerCase().trim() : food.toLowerCase().trim();
     });
 
     // Dedupe normalized foods
     const uniqueNormalizedFoods = [...new Set(normalizedFoods)];
 
-    addMeal({
-      timestamp: new Date(),
+    // Use the logMeal action from our new architecture hooks
+    logMeal({
       mealType,
-      name: selectedFoods.join(', '),
+      name: selectedFoods.join(', '), // Already normalized by AI in addFood
       foods: selectedFoods,
       normalizedFoods: uniqueNormalizedFoods,
       portionSize: 'medium',
@@ -131,20 +225,16 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     // 1. Personal Triggers (Highest Priority - RED)
     if (activeTriggers.length > 0) return 'danger';
     
-    // 2. Check AI results for high-FODMAP unknowns
-    const aiHighFodmap = Object.entries(aiResults).some(([_, result]) => result?.level === 'high');
-    const aiModerateFodmap = Object.entries(aiResults).some(([_, result]) => result?.level === 'moderate');
+    // 2. High FODMAP from AI (RED)
+    if (aiAnalysis?.riskLevel === 'high') return 'danger';
     
-    // 3. High FODMAP from local DB or AI (RED)
-    if ((analysis && analysis.riskLevel === 'high') || aiHighFodmap) return 'danger';
+    // 3. Moderate FODMAP (YELLOW)
+    if (aiAnalysis?.riskLevel === 'moderate') return 'warning';
     
-    // 4. Moderate FODMAP (YELLOW)
-    if ((analysis && analysis.riskLevel === 'moderate') || aiModerateFodmap) return 'warning';
-    
-    // 5. Still loading AI? Show neutral until we know
+    // 4. Still loading AI? Show neutral until we know
     if (loadingFoods.length > 0) return 'neutral';
     
-    // 6. Check if any foods are unrecognized (AI returned null)
+    // 5. Check if any foods are unrecognized (AI returned null)
     const hasUnrecognizedFoods = selectedFoods.some(food => {
       const aiInfo = aiResults[food];
       // If AI analyzed it but returned null = unrecognized (gibberish/non-food)
@@ -152,9 +242,9 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     });
     if (hasUnrecognizedFoods) return 'unknown';
     
-    // 7. Safe (GREEN)
+    // 6. Safe (GREEN)
     return 'safe';
-  }, [selectedFoods, activeTriggers, analysis, aiResults, loadingFoods]);
+  }, [selectedFoods, activeTriggers, aiAnalysis, aiResults, loadingFoods]);
 
   return (
     <ScreenWrapper edges={['top']} style={styles.container}>
@@ -265,7 +355,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                           Analyzing unknown foods...
                        </Typography>
                     </View>
-                  ) : safetyStatus === 'unknown' ? (
+                   ) : safetyStatus === 'unknown' ? (
                     <Typography variant="body" color={colors.black}>
                        We couldn't recognize some items. Please check spelling or try a different term.
                     </Typography>
@@ -273,29 +363,24 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                     <Typography variant="body" color={colors.black}>
                       You previously marked <Typography variant="bodyBold">{activeTriggers.join(', ')}</Typography> as a trigger.
                     </Typography>
-                  ) : Object.keys(aiResults).length > 0 && Object.values(aiResults).some(r => r?.level === 'high' || r?.level === 'moderate') ? (
+                  ) : aiAnalysis ? (
                     <Typography variant="body" color={colors.black}>
-                       AI Analysis: {Object.entries(aiResults).filter(([_, r]) => r?.level === 'high' || r?.level === 'moderate').map(([food, r]) => 
-                          `${food} is ${r?.level} FODMAP`
-                       ).join(', ')}.
-                    </Typography>
-                  ) : analysis ? (
-                    <Typography variant="body" color={colors.black}>
-                       {analysis.explanation}
+                       {aiAnalysis.riskLevel === 'high' ? 'High FODMAP load detected. AI Analysis identifies problematic ingredients.' :
+                        aiAnalysis.riskLevel === 'moderate' ? 'Moderate FODMAP load. Multiple moderate foods may stack effects.' :
+                        'Low FODMAP meal according to AI analysis. Should be well-tolerated.'}
                     </Typography>
                   ) : null}
                </View>
 
                {/* Alternatives (if Danger/Warning AND we have alternatives to show) */}
                {(safetyStatus === 'danger' || safetyStatus === 'warning') && (() => {
-                  // Get alternatives from local DB
-                  const localAlternatives = selectedFoods.flatMap(food => getLowFODMAPAlternatives(food).slice(0, 3));
-                  // Get alternatives from AI results
+                  // Get alternatives exclusively from AI results
                   const aiAlternatives = Object.values(aiResults)
                      .filter(r => r?.alternatives)
                      .flatMap(r => r?.alternatives || []);
-                  // Combine and dedupe
-                  const allAlternatives = [...new Set([...localAlternatives, ...aiAlternatives])].slice(0, 6);
+                  
+                  // Dedupe
+                  const allAlternatives = [...new Set(aiAlternatives)].slice(0, 6);
                   
                   if (allAlternatives.length === 0) return null;
                   return (

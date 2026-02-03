@@ -10,7 +10,8 @@ import Animated, {
   FadeIn,
 } from 'react-native-reanimated';
 import { colors, spacing, radii, fontSizes, fonts } from '../theme/theme';
-import { useGutStore, BristolType } from '../store';
+import { BristolType } from '../store';
+import { useGutActions } from '../presentation/hooks';
 import {
   BristolPicker,
   SymptomToggle,
@@ -28,7 +29,8 @@ type AddEntryScreenProps = {
 };
 
 export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) => {
-  const { addGutMoment } = useGutStore();
+  // Use new architecture for actions
+  const { logGutMoment } = useGutActions();
   
   // Poop state
   const [bristolType, setBristolType] = useState<BristolType | undefined>(undefined);
@@ -43,12 +45,11 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
   const [painScore, setPainScore] = useState(0);
   const [incompleteEvacuation, setIncompleteEvacuation] = useState(false);
   
-  const handleSubmit = () => {
-    addGutMoment({
-      timestamp: new Date(),
+  const handleSubmit = async () => {
+    await logGutMoment({
       bristolType,
       symptoms,
-      tags: selectedTags as any,
+      tags: selectedTags,
       urgency,
       painScore: painScore > 0 ? painScore : undefined,
       incompleteEvacuation: incompleteEvacuation || undefined,

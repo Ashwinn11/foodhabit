@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, fontSizes, radii, shadows, fonts } from '../theme/theme';
 import { GutAvatar, ScreenWrapper, IconContainer, Typography, Card } from '../components';
 import { useGutStore, useUIStore } from '../store';
+import { useGutData } from '../presentation/hooks';
 import { useAuth } from '../hooks/useAuth';
 import { deleteAccount } from '../services/accountService';
 import { requestNotificationPermissions, scheduleDailyReminder, cancelAllNotifications } from '../services/notificationService';
@@ -51,12 +52,15 @@ const SettingsItem: React.FC<{
 );
 
 export const ProfileScreen: React.FC = () => {
-  const { user: gutUser, getGutHealthScore, getStats } = useGutStore();
-  const healthScore = getGutHealthScore();
+  // Use new architecture for computed values
+  const { healthScore, streak } = useGutData();
+  
+  // Keep some store access for actions and data not yet migrated
+  const { user: gutUser, getStats, notificationSettings, setNotificationSettings } = useGutStore();
   const stats = getStats();
+  
   const navigation = useNavigation<any>();
   const { showAlert, showConfirm } = useUIStore();
-  const { notificationSettings, setNotificationSettings } = useGutStore();
   const { user, signOut } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
@@ -182,7 +186,7 @@ export const ProfileScreen: React.FC = () => {
                   <Typography variant="bodySmall" color={colors.black + '66'}>{user.email}</Typography>
                 )}
                 <Typography variant="body" color={colors.black + '99'} style={{ marginTop: spacing.xs }}>
-                  {stats.totalPoops} logs • {stats.longestStreak} day streak
+                  {stats.totalPoops} logs • {streak} day streak
                 </Typography>
               </View>
             </>
@@ -192,7 +196,7 @@ export const ProfileScreen: React.FC = () => {
               <View style={styles.profileInfo}>
                 <Typography variant="h3">{gutUser.name}</Typography>
                 <Typography variant="body" color={colors.black + '99'} style={{ marginTop: spacing.xs }}>
-                  {stats.totalPoops} logs • {stats.longestStreak} day streak
+                  {stats.totalPoops} logs • {streak} day streak
                 </Typography>
               </View>
             </>
