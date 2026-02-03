@@ -215,7 +215,11 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
       portionSize: 'medium',
     });
 
-    navigation.goBack();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Main');
+    }
   };
 
   // derived state for "Safe to Eat?" result
@@ -252,7 +256,13 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
       <View style={styles.header}>
         <BoxButton 
           icon="close" 
-          onPress={() => navigation.goBack()} 
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('Main');
+            }
+          }}
           size={44}
           style={{ backgroundColor: colors.white }}
         />

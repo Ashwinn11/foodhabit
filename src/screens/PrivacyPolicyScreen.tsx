@@ -6,7 +6,7 @@ import { ScreenWrapper, Typography, Card, IconContainer, BoxButton } from '../co
 import { colors, spacing } from '../theme';
 
 export const PrivacyPolicyScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   return (
     <ScreenWrapper edges={['top']} style={styles.container}>
@@ -16,7 +16,13 @@ export const PrivacyPolicyScreen: React.FC = () => {
       >
         <BoxButton 
           icon="chevron-back" 
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('Main');
+            }
+          }}
           size={44}
           color={colors.blue}
         />

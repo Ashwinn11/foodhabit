@@ -81,7 +81,10 @@ export const OnboardingQuizScreen = () => {
       if (currentQuizPage === 1) {
           setCurrentQuizPage(0);
       } else {
-          navigation.goBack();
+          if (navigation.canGoBack()) {
+              navigation.goBack();
+          }
+          // If we can't go back, we just stay on step 0 of the quiz
           setCurrentStep(0);
       }
   };

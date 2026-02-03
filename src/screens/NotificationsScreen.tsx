@@ -52,7 +52,13 @@ export const NotificationsScreen = () => {
             <View style={styles.header}>
                 <BoxButton 
                     icon="arrow-back" 
-                    onPress={() => navigation.goBack()} 
+                    onPress={() => {
+                        if (navigation.canGoBack()) {
+                            navigation.goBack();
+                        } else {
+                            navigation.navigate('Main');
+                        }
+                    }} 
                     size={44}
                 />
                 <Typography variant="h2" style={styles.title}>Notifications</Typography>

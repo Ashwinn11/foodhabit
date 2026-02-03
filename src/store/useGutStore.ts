@@ -145,6 +145,7 @@ interface GutStore {
 
     // Mission Tracking
     completedTasks: string[]; // IDs of daily missions completed by user
+    lastTasksUpdateDate: string; // YYYY-MM-DD
     toggleTask: (id: string) => void;
     loadCompletedTasks: () => Promise<void>;
 
@@ -931,39 +932,65 @@ export const useGutStore = create<GutStore>()((set, get) => ({
     // Daily tasks (dynamically generated)
     dailyTasks: [],
     completedTasks: [],
-    getDynamicTasks: () => createDailyTasks({
-        gutMoments: get().gutMoments,
-        meals: get().meals,
-        waterLogs: get().waterLogs,
-        fiberLogs: get().fiberLogs,
-        probioticLogs: get().probioticLogs,
-        exerciseLogs: get().exerciseLogs,
-        healthScore: get().getGutHealthScore().score,
-        completedTasks: get().completedTasks,
-    }),
+    lastTasksUpdateDate: '',
+    getDynamicTasks: () => {
+        const todayStr = getTodayString();
+        const state = get();
+
+        // AUTO-RESET IF DATE CHANGED:
+        // If the in-memory state is from a previous day, clear it before generating tasks
+        if (state.lastTasksUpdateDate && state.lastTasksUpdateDate !== todayStr) {
+            console.log('🌅 New day detected in getDynamicTasks, auto-resetting missions.');
+            // We set it immediately to prevent multiple resets
+            set({ completedTasks: [], lastTasksUpdateDate: todayStr });
+        }
+
+        return createDailyTasks({
+            gutMoments: state.gutMoments,
+            meals: state.meals,
+            waterLogs: state.waterLogs,
+            fiberLogs: state.fiberLogs,
+            probioticLogs: state.probioticLogs,
+            exerciseLogs: state.exerciseLogs,
+            healthScore: state.getGutHealthScore().score,
+            completedTasks: get().completedTasks,
+        });
+    },
     toggleTask: (id) => {
         const todayStr = getTodayString();
         set((state) => {
-            const isCompleted = state.completedTasks.includes(id);
-            const newCompletedTasks = isCompleted
-                ? state.completedTasks.filter(tId => tId !== id)
-                : [...state.completedTasks, id];
+            // Check if date has changed during toggle
+            if (state.lastTasksUpdateDate && state.lastTasksUpdateDate !== todayStr) {
+                // It's a new day, clear and then add this task
+                const newCompletedTasks = [id];
+                AsyncStorage.setItem(`completedTasks_${todayStr}`, JSON.stringify(newCompletedTasks))
+                    .catch(err => console.error('Failed to save tasks:', err));
+                return { completedTasks: newCompletedTasks, lastTasksUpdateDate: todayStr };
+            }
+
+            // Normal toggle (one-way only)
+            if (state.completedTasks.includes(id)) {
+                return state; // One-way: Only mark as completed, never unmark
+            }
+
+            const newCompletedTasks = [...state.completedTasks, id];
 
             // Persist to AsyncStorage (with date prefix for daily reset)
-            AsyncStorage.setItem(`completedTasks_${todayStr}`, JSON.stringify(newCompletedTasks));
+            AsyncStorage.setItem(`completedTasks_${todayStr}`, JSON.stringify(newCompletedTasks))
+                .catch(err => console.error('Failed to save tasks:', err));
 
-            return { completedTasks: newCompletedTasks };
+            return { completedTasks: newCompletedTasks, lastTasksUpdateDate: todayStr };
         });
     },
     loadCompletedTasks: async () => {
         const todayStr = getTodayString();
         try {
             const stored = await AsyncStorage.getItem(`completedTasks_${todayStr}`);
+
             if (stored) {
-                set({ completedTasks: JSON.parse(stored) });
+                set({ completedTasks: JSON.parse(stored), lastTasksUpdateDate: todayStr });
             } else {
-                // New day, reset tasks
-                set({ completedTasks: [] });
+                set({ completedTasks: [], lastTasksUpdateDate: todayStr });
             }
         } catch (e) {
             console.error('Failed to load completed tasks:', e);
@@ -999,7 +1026,12 @@ export const useGutStore = create<GutStore>()((set, get) => ({
 
     // Gut Health Score (0-100) based on medical indicators with blended scoring
     getGutHealthScore: () => {
-        const { gutMoments, baselineScore } = get();
+        const { gutMoments, symptomLogs, baselineScore } = get();
+
+        // Single Source of Truth: HealthScoreService
+        const { container } = require('../infrastructure/di');
+        const healthScoreService = container.healthScoreService;
+        const { GutMoment, BristolType, createSymptoms, SymptomLog, Severity } = require('../domain');
 
         // Get last 7 days of data
         const sevenDaysAgo = new Date();
@@ -1009,114 +1041,46 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             new Date(m.timestamp) >= sevenDaysAgo
         );
 
-        // If no recent data, return baseline score from onboarding
-        if (recentMoments.length === 0) {
+        const recentSymptomLogs = (symptomLogs || []).filter(s =>
+            new Date(s.timestamp) >= sevenDaysAgo
+        );
+
+        if (recentMoments.length === 0 && recentSymptomLogs.length === 0) {
             let grade: string;
             if (baselineScore >= 90) grade = 'Excellent';
             else if (baselineScore >= 70) grade = 'Good';
             else if (baselineScore >= 50) grade = 'Fair';
             else grade = 'Poor';
-
-            return { score: baselineScore, grade };
+            return { score: baselineScore || 50, grade };
         }
 
-        // Calculate the raw score based on logged data (Reductive System)
-        let calculatedScore = 100;
+        const domainMoments = recentMoments.map(m => GutMoment.reconstitute({
+            id: m.id,
+            timestamp: new Date(m.timestamp),
+            bristolType: m.bristolType ? BristolType.create(m.bristolType) : undefined,
+            symptoms: createSymptoms(m.symptoms),
+            tags: m.tags || [],
+        }));
 
-        // 1. Bristol Scale Penalties (40 points)
-        const bristolPenalties = recentMoments
-            .filter(m => m.bristolType)
-            .map(m => {
-                const type = m.bristolType!;
-                if (type === 3 || type === 4) return 0;  // Ideal
-                if (type === 2 || type === 5) return 10; // Acceptable
-                return 30; // Concerning (1, 6, 7)
-            });
+        const domainSymptomLogs = recentSymptomLogs.map(s => SymptomLog.reconstitute({
+            id: s.id,
+            timestamp: new Date(s.timestamp),
+            type: s.type,
+            severity: Severity.create(s.severity),
+            duration: s.duration,
+            notes: s.notes,
+        }));
 
-        const avgBristolPenalty = bristolPenalties.length > 0
-            ? (bristolPenalties as number[]).reduce((a, b) => a + b, 0) / bristolPenalties.length
-            : 15; // Default if no data
-
-        calculatedScore -= avgBristolPenalty;
-
-        // 2. Symptom Frequency Penalties (30 points)
-        const momentsWithSymptoms = recentMoments.filter(m =>
-            Object.values(m.symptoms).some(v => v)
-        ).length;
-
-        let symptomPenalty = 0;
-        if (momentsWithSymptoms === 0) symptomPenalty = 0;
-        else if (momentsWithSymptoms <= 2) symptomPenalty = 10;
-        else if (momentsWithSymptoms <= 4) symptomPenalty = 20;
-        else symptomPenalty = 30;
-
-        calculatedScore -= symptomPenalty;
-
-        // 3. Regularity Penalty (20 points)
-        const avgPerDay = recentMoments.length / 7;
-        let regularityPenalty = 0;
-        if (avgPerDay >= 1 && avgPerDay <= 3) regularityPenalty = 0; // Ideal
-        else if (avgPerDay >= 0.5) regularityPenalty = 10; // Every 2 days
-        else regularityPenalty = 20; // Less frequent
-
-        calculatedScore -= regularityPenalty;
-
-        // 4. THE RED FLAG (Medical Penalties)
-        const hasRedFlags = recentMoments.some(m =>
-            m.tags?.includes('blood') || m.tags?.includes('mucus')
-        );
-
-        if (hasRedFlags) {
-            calculatedScore -= 60; // Major health penalty
-        }
-
-        // Final calculatedScore boundary check before blending
-        calculatedScore = Math.max(5, Math.min(100, calculatedScore));
-
-        // BLENDED SCORING: Weight shifts from baseline to calculated as data accumulates
-        // 0 logs: 100% baseline (handled above)
-        // 1-2 logs: 70% baseline, 30% calculated
-        // 3-4 logs: 50% baseline, 50% calculated
-        // 5-6 logs: 30% baseline, 70% calculated
-        // 7+ logs: 10% baseline, 90% calculated
-        let baselineWeight: number;
-        const logCount = recentMoments.length;
-
-        if (logCount <= 2) {
-            baselineWeight = 0.7;
-        } else if (logCount <= 4) {
-            baselineWeight = 0.5;
-        } else if (logCount <= 6) {
-            baselineWeight = 0.3;
-        } else {
-            baselineWeight = 0.1;
-        }
-
-        const calculatedWeight = 1 - baselineWeight;
-        const blendedScore = (baselineScore * baselineWeight) + (calculatedScore * calculatedWeight);
-
-        // Determine grade based on blended score
-        let grade: string;
-
-        if (blendedScore >= 90) {
-            grade = 'Excellent';
-        } else if (blendedScore >= 70) {
-            grade = 'Good';
-        } else if (blendedScore >= 50) {
-            grade = 'Fair';
-        } else {
-            grade = 'Poor';
-        }
+        const healthScore = healthScoreService.calculateScore({
+            moments: domainMoments,
+            symptomLogs: domainSymptomLogs,
+            baselineScore: baselineScore || 50
+        });
 
         return {
-            score: Math.round(blendedScore),
-            grade,
-            breakdown: {
-                bristol: Math.round(40 - avgBristolPenalty),
-                symptoms: Math.round(30 - symptomPenalty),
-                regularity: Math.round(20 - regularityPenalty),
-                medical: hasRedFlags ? 0 : 10,
-            }
+            score: healthScore.value,
+            grade: healthScore.grade,
+            breakdown: healthScore.breakdown
         };
     },
 

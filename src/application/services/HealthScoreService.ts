@@ -2,10 +2,11 @@
  * HealthScoreService
  * Calculates gut health score based on various health indicators
  */
-import { GutMoment, HealthScore, HealthScoreBreakdown } from '../../domain';
+import { GutMoment, HealthScore, HealthScoreBreakdown, SymptomLog } from '../../domain';
 
 export interface HealthScoreInput {
     moments: GutMoment[];
+    symptomLogs?: SymptomLog[];
     baselineScore: number;
 }
 
@@ -19,99 +20,94 @@ export class HealthScoreService {
      * Calculate the gut health score
      */
     calculateScore(input: HealthScoreInput): HealthScore {
-        const { moments, baselineScore } = input;
+        const { moments, symptomLogs = [], baselineScore } = input;
 
         // Get last 7 days of data
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-        const recentMoments = moments.filter(m =>
-            m.timestamp >= sevenDaysAgo
-        );
+        const recentMoments = moments.filter(m => m.timestamp >= sevenDaysAgo);
+        const recentSymptomLogs = symptomLogs.filter(s => s.timestamp >= sevenDaysAgo);
 
         // If no recent data, return baseline score from onboarding
-        if (recentMoments.length === 0) {
+        if (recentMoments.length === 0 && recentSymptomLogs.length === 0) {
             return HealthScore.fromBaseline(baselineScore);
         }
 
-        // Calculate component scores
-        const bristolScore = this.calculateBristolScore(recentMoments);
-        const symptomScore = this.calculateSymptomScore(recentMoments);
-        const regularityScore = this.calculateRegularityScore(recentMoments);
-        const medicalScore = this.calculateMedicalScore(recentMoments);
+        // --- Reductive System (Clinical Penalties) ---
+        let calculatedScore = 100;
 
-        const calculatedScore = bristolScore + symptomScore + regularityScore + medicalScore;
+        // 1. Bristol Scale Penalties (40 points max impact)
+        const bristolMoments = recentMoments.filter(m => m.bristolType);
+        const bristolPenalties = bristolMoments.map(m => {
+            const type = m.bristolType!.getValue();
+            if (type === 3 || type === 4) return 0;   // Ideal
+            if (type === 2 || type === 5) return 10;  // Acceptable
+            return 30; // Concerning (1, 6, 7)
+        });
+
+        const avgBristolPenalty = bristolPenalties.length > 0
+            ? (bristolPenalties as number[]).reduce((a, b) => a + b, 0) / bristolPenalties.length
+            : 0; // Don't penalize poops if none tracked yet
+
+        calculatedScore -= avgBristolPenalty;
+
+        // 2. Symptom Frequency Penalties (30 points max impact)
+        // Count symptoms from both stool logs and dedicated symptom logs
+        const momentsWithSymptoms = recentMoments.filter(m => m.hasSymptoms).length;
+        const totalSymptomEvents = momentsWithSymptoms + recentSymptomLogs.length;
+
+        let symptomPenalty = 0;
+        if (totalSymptomEvents === 0) symptomPenalty = 0;
+        else if (totalSymptomEvents <= 2) symptomPenalty = 10;
+        else if (totalSymptomEvents <= 4) symptomPenalty = 20;
+        else symptomPenalty = 30;
+
+        calculatedScore -= symptomPenalty;
+
+        // 3. Regularity Penalties (20 points max impact)
+        // SMART LOGIC: Don't penalize for an "empty week" if the user is active TODAY
+        // This prevents the "Sudden Drop" from 92 to 72 when the 7-day window shifts.
+        const logCount = recentMoments.length;
+        let regularityPenalty = 0;
+
+        if (logCount >= 4) {
+            regularityPenalty = 0; // Solid consistency
+        } else if (logCount >= 2) {
+            regularityPenalty = 5; // Good enough for early logs
+        } else if (logCount === 1) {
+            // Check if this log is very recent (within 24h)
+            const hoursSinceLog = (Date.now() - recentMoments[0].timestamp.getTime()) / (1000 * 60 * 60);
+            regularityPenalty = hoursSinceLog < 24 ? 5 : 15; // Give grace to a fresh log
+        } else {
+            regularityPenalty = 20; // Sparse
+        }
+
+        calculatedScore -= regularityPenalty;
+
+        // 4. THE RED FLAG (Medical Penalties)
+        const hasRedFlags = recentMoments.some(m => m.hasRedFlags);
+        if (hasRedFlags) {
+            calculatedScore -= 60; // Major health penalty
+        }
+
+        // Final Floor/Ceiling
+        calculatedScore = Math.max(5, Math.min(100, calculatedScore));
 
         const breakdown: HealthScoreBreakdown = {
-            bristol: Math.round(bristolScore),
-            symptoms: symptomScore,
-            regularity: regularityScore,
-            medical: medicalScore,
+            bristol: Math.round(40 - avgBristolPenalty),
+            symptoms: Math.round(30 - symptomPenalty),
+            regularity: Math.round(20 - regularityPenalty),
+            medical: hasRedFlags ? 0 : 10,
         };
 
         // Use blended scoring
         return HealthScore.blend(
             calculatedScore,
             baselineScore,
-            recentMoments.length,
+            logCount + recentSymptomLogs.length,
             breakdown
         );
-    }
-
-    /**
-     * Calculate Bristol scale score (40 points max)
-     * Based on stool consistency - ideal is Type 3-4
-     */
-    private calculateBristolScore(moments: GutMoment[]): number {
-        const momentsWithBristol = moments.filter(m => m.bristolType);
-
-        if (momentsWithBristol.length === 0) {
-            return HealthScoreService.BRISTOL_MAX_POINTS * 0.5; // Default 50%
-        }
-
-        const totalScore = momentsWithBristol.reduce((sum, m) => {
-            return sum + m.bristolType!.getHealthScoreContribution(HealthScoreService.BRISTOL_MAX_POINTS);
-        }, 0);
-
-        return totalScore / momentsWithBristol.length;
-    }
-
-    /**
-     * Calculate symptom frequency score (30 points max)
-     * Lower symptom frequency = higher score
-     */
-    private calculateSymptomScore(moments: GutMoment[]): number {
-        const symptomCount = moments.filter(m => m.hasSymptoms).length;
-
-        if (symptomCount === 0) return HealthScoreService.SYMPTOM_MAX_POINTS;
-        if (symptomCount <= 2) return 20;
-        if (symptomCount <= 4) return 10;
-        return 0;
-    }
-
-    /**
-     * Calculate regularity score (20 points max)
-     * Ideal is 1-3 bowel movements per day
-     */
-    private calculateRegularityScore(moments: GutMoment[]): number {
-        const avgPerDay = moments.length / 7;
-
-        if (avgPerDay >= 1 && avgPerDay <= 3) {
-            return HealthScoreService.REGULARITY_MAX_POINTS; // Ideal
-        }
-        if (avgPerDay >= 0.5) {
-            return 15; // Every 2 days
-        }
-        return 5; // Less frequent
-    }
-
-    /**
-     * Calculate medical flags score (10 points max)
-     * Presence of blood or mucus = 0 points
-     */
-    private calculateMedicalScore(moments: GutMoment[]): number {
-        const hasRedFlags = moments.some(m => m.hasRedFlags);
-        return hasRedFlags ? 0 : HealthScoreService.MEDICAL_MAX_POINTS;
     }
 
     /**

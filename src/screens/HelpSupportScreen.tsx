@@ -17,7 +17,7 @@ const FAQItem: React.FC<{ question: string; answer: string }> = ({ question, ans
 );
 
 export const HelpSupportScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   const handleEmailSupport = () => {
     Linking.openURL('mailto:support@gutbuddy.app');
@@ -31,7 +31,13 @@ export const HelpSupportScreen: React.FC = () => {
       >
         <BoxButton 
           icon="chevron-back" 
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('Main');
+            }
+          }}
           size={44}
           color={colors.blue}
         />

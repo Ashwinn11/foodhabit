@@ -37,27 +37,35 @@ export const REVENUECAT_PAYWALL_ID = 'GutScan Pro';
 
 export class RevenueCatService {
     private static initialized = false;
+    private static configuring = false;
 
     static checkAvailability() {
         return isAvailable && !!Purchases && !!PurchasesUI;
     }
 
     static async initialize() {
-        if (!this.checkAvailability() || this.initialized || !APPLE_API_KEY) {
-            if (!APPLE_API_KEY && this.checkAvailability()) {
-                console.error('RevenueCat API Key (EXPO_PUBLIC_REVENUECAT_IOS_API_KEY) is missing.');
-            }
+        if (!this.checkAvailability() || this.initialized || this.configuring || !APPLE_API_KEY) {
             return;
         }
 
+        this.configuring = true;
         try {
+            // Check if native SDK is already configured (prevents warnings on reload)
+            const isConfigured = await Purchases.isConfigured();
+            if (isConfigured) {
+                this.initialized = true;
+                return;
+            }
+
             if (Platform.OS === 'ios') {
                 await Purchases.configure({ apiKey: APPLE_API_KEY });
                 this.initialized = true;
-
+                console.log('✅ RevenueCat initialized successfully');
             }
         } catch (e) {
             console.error('RevenueCat initialization failed', e);
+        } finally {
+            this.configuring = false;
         }
     }
 
@@ -172,5 +180,22 @@ export class RevenueCatService {
             console.error('Error restoring purchases', e);
             return false;
         }
+    }
+
+    static addCustomerInfoUpdateListener(callback: (customerInfo: any) => void) {
+        if (!this.checkAvailability()) return () => { };
+
+        const listenerToken = Purchases.addCustomerInfoUpdateListener(callback);
+
+        return () => {
+            // Cleanup: remove the listener
+            // In modern react-native-purchases, the listenerToken is an object with a remove() method
+            // or we use the specific removal method depending on the version.
+            if (listenerToken && typeof listenerToken.remove === 'function') {
+                listenerToken.remove();
+            } else if (Purchases.removeCustomerInfoUpdateListener) {
+                Purchases.removeCustomerInfoUpdateListener(listenerToken);
+            }
+        };
     }
 }

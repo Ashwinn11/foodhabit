@@ -55,7 +55,11 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
       incompleteEvacuation: incompleteEvacuation || undefined,
     });
     
-    navigation.goBack();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Main');
+    }
   };
   
   const toggleSymptom = (symptom: keyof typeof symptoms) => {
@@ -79,7 +83,13 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
       >
         <BoxButton 
           icon="close" 
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('Main');
+            }
+          }}
           size={44}
           style={{ backgroundColor: colors.white }}
         />

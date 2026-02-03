@@ -7,7 +7,13 @@ import { useMemo } from 'react';
 import { useGutStore } from '../../store';
 import { useAuth } from '../../hooks/useAuth';
 import { container } from '../../infrastructure/di';
-import { GutMoment as DomainGutMoment, BristolType, createSymptoms } from '../../domain';
+import {
+    GutMoment as DomainGutMoment,
+    BristolType,
+    createSymptoms,
+    SymptomLog as DomainSymptomLog,
+    Severity
+} from '../../domain';
 
 /**
  * Hook that provides computed values using the new architecture services
@@ -20,6 +26,7 @@ export function useGutData() {
     // Get data from existing store
     const {
         gutMoments,
+        symptomLogs, // Standalone logs
         meals,
         baselineScore,
         user,
@@ -56,13 +63,26 @@ export function useGutData() {
         }));
     }, [gutMoments]);
 
+    // Convert standalone symptom logs to domain entities
+    const domainSymptomLogs = useMemo(() => {
+        return (symptomLogs || []).map(s => DomainSymptomLog.reconstitute({
+            id: s.id,
+            timestamp: new Date(s.timestamp),
+            type: s.type,
+            severity: Severity.create(s.severity),
+            duration: s.duration,
+            notes: s.notes,
+        }));
+    }, [symptomLogs]);
+
     // Calculate health score using new service
     const healthScore = useMemo(() => {
         return healthScoreService.calculateScore({
             moments: domainMoments,
+            symptomLogs: domainSymptomLogs,
             baselineScore: baselineScore || 50,
         });
-    }, [domainMoments, baselineScore, healthScoreService]);
+    }, [domainMoments, domainSymptomLogs, baselineScore, healthScoreService]);
 
     // Calculate streak using new service
     const streak = useMemo(() => {

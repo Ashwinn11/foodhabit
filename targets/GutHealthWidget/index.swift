@@ -69,9 +69,9 @@ struct FoodHabitWidgetEntryView : View {
     let white = Color.white
     
     var scoreColor: Color {
-        if entry.data.score >= 80 { return Color(hex: "059669") } // Theme Green for Excellent
-        if entry.data.score >= 60 { return yellow }
-        return blue // Theme Blue for Poor
+        if entry.data.score >= 90 { return Color(hex: "059669") } // Excellent (Green)
+        if entry.data.score >= 70 { return yellow }              // Good (Yellow)
+        return blue                                              // Fair/Poor (Blue)
     }
     
     // 🔤 Font Helpers
@@ -100,16 +100,7 @@ struct FoodHabitWidgetEntryView : View {
             }
         }
         .widgetURL(URL(string: "foodhabit://home"))
-        .applyWidgetBackground(
-            Group {
-                switch family {
-                case .systemSmall:
-                    yellow
-                default:
-                    scoreColor
-                }
-            }
-        )
+        .applyWidgetBackground(scoreColor)
     }
     
     // MARK: - Small Layout (Whimsical Card)
@@ -120,7 +111,7 @@ struct FoodHabitWidgetEntryView : View {
                 HStack {
                     Text("GUT SCORE")
                         .font(cheeryFont(size: 16))
-                        .foregroundColor(black.opacity(0.4))
+                        .foregroundColor(black.opacity(0.6))
                         .tracking(1)
                     Spacer()
                 }
@@ -238,7 +229,6 @@ struct FoodHabitWidgetEntryView : View {
             )
             .zIndex(2) // Above left side
         }
-        .background(white)
     }
     
     // MARK: - Large Layout (Playful Dashboard)
@@ -247,10 +237,10 @@ struct FoodHabitWidgetEntryView : View {
             // Transparent base to show containerBackground
             Color.clear
             
-            VStack(spacing: 0) {
-                 // Header Area (Top 30%)
+                VStack(spacing: 0) {
+                 // Header Area (Compact Top)
                 HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("HELLO!")
                             .font(bodyFont(size: 12, weight: .bold))
                             .foregroundColor(black.opacity(0.4))
@@ -263,33 +253,34 @@ struct FoodHabitWidgetEntryView : View {
                     Spacer()
                     
                     // Score with Mascot
-                    HStack(spacing: 6) {
+                    HStack(spacing: 8) {
                         Text("\(entry.data.score)")
                             .font(cheeryFont(size: 42))
                             .foregroundColor(black)
                         
                         SafeMascotImage(score: entry.data.score)
-                            .frame(width: 50, height: 50)
+                            .frame(width: 48, height: 48)
                     }
                 }
-                .padding(20)
-                .frame(maxHeight: .infinity) // Pushes white card down
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 16)
                 
-                // White Card Body (Bottom 65% approx)
-                ZStack {
+                // White Card Body (Fills remaining space)
+                ZStack(alignment: .top) {
                     white
-                    VStack(spacing: 20) {
+                        .cornerRadius(24) // Rounds all, but bottom is hidden
+                    
+                    VStack(alignment: .leading, spacing: 18) {
                         // Insight Text
-                        HStack {
-                            Text(funInsightMessage(score: entry.data.score, lastPoop: entry.data.lastPoopTime))
-                                .font(cheeryFont(size: 20)) // Bigger font
-                                .foregroundColor(black)
-                                .fixedSize(horizontal: false, vertical: true)
-                            Spacer()
-                        }
+                        Text(funInsightMessage(score: entry.data.score, lastPoop: entry.data.lastPoopTime))
+                            .font(cheeryFont(size: 18))
+                            .foregroundColor(black)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
                         
                          // Stats & Chart
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 10) {
                             Text("THIS WEEK")
                                 .font(bodyFont(size: 10, weight: .bold))
                                 .foregroundColor(black.opacity(0.4))
@@ -301,24 +292,20 @@ struct FoodHabitWidgetEntryView : View {
                                         VStack(spacing: 4) {
                                             RoundedRectangle(cornerRadius: 6)
                                                 .fill(point.count > 0 ? pink : black.opacity(0.05))
-                                                .frame(height: max(CGFloat(point.count) * 12, 6))
+                                                .frame(height: min(CGFloat(point.count) * 10 + 6, 54)) // Cap bar height to prevent overlap
                                             
-                                            Text(point.label ?? String(point.date.suffix(1)))
+                                            Text(point.label ?? "S")
                                                 .font(cheeryFont(size: 10))
                                                 .foregroundColor(black.opacity(0.4))
                                         }
                                         .frame(maxWidth: .infinity)
                                     }
-                                } else {
-                                    Text("Start tracking to see history!")
-                                        .font(bodyFont(size: 12))
-                                        .foregroundColor(black.opacity(0.4))
-                                        .frame(maxWidth: .infinity, alignment: .center)
                                 }
                             }
-                            .frame(height: 60)
+                            .frame(height: 66)
                         }
-                        .padding(.bottom, 20) // Moderate spacing instead of Spacer()
+                        
+                        Spacer()
                         
                          // Footer Stats
                         HStack {
@@ -326,13 +313,10 @@ struct FoodHabitWidgetEntryView : View {
                             Spacer()
                             statItem(label: "GRADE", value: entry.data.grade)
                             Spacer() 
-                            // Removed redundant "Status" item
                         }
                     }
                     .padding(24)
                 }
-                .cornerRadius(24) // Round top corners of white card
-                .padding(.bottom, 0) // Flush with bottom
                 .edgesIgnoringSafeArea(.bottom)
             }
         }

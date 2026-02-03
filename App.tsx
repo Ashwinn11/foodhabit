@@ -35,11 +35,14 @@ const GutBuddyTheme = {
   },
 };
 
+// Initialize RevenueCat as early as possible
+RevenueCatService.initialize();
+
 export default function App() {
   const { session, loading: authLoading } = useAuth();
   
   const [fontsLoaded] = useFonts({
-    'Chewy': Chewy_400Regular,
+    'Chewy': Fredoka_400Regular,
     'Fredoka-Regular': Fredoka_400Regular,
     'Fredoka-Medium': Fredoka_500Medium,
     'Fredoka-SemiBold': Fredoka_600SemiBold,
@@ -55,8 +58,6 @@ export default function App() {
 
   // Initialize Services
   React.useEffect(() => {
-    RevenueCatService.initialize();
-    
     // Listen for custom event to refresh onboarding status
     const handleRefresh = () => {
       console.log('🔄 Refreshing onboarding status...');
@@ -88,23 +89,25 @@ export default function App() {
     }
   }, [session, authLoading]);
 
-  // Periodic premium status check
+  // Reactive premium status check (No more polling!)
   React.useEffect(() => {
     if (!session?.user?.id) return;
 
-    const checkPremiumPeriodically = async () => {
-      const premiumStatus = await RevenueCatService.isPremium(true);
+    // Listen for real-time changes from RevenueCat (Webhooks-style)
+    const unsubscribe = RevenueCatService.addCustomerInfoUpdateListener((customerInfo: any) => {
+      console.log('💎 RevenueCat: CustomerInfo updated');
+      const { REVENUECAT_PAYWALL_ID } = require('./src/services/revenueCatService');
+      const hasPremium = customerInfo.entitlements.active[REVENUECAT_PAYWALL_ID] !== undefined;
       
-      if (!premiumStatus && isPremium) {
-        console.log('⚠️ Premium status lost - forcing refresh');
-        setIsPremium(false);
+      if (hasPremium !== isPremium) {
+        console.log(`💎 Premium status changed: ${hasPremium}`);
+        setIsPremium(hasPremium);
+        // Force a data reload to update the navigation state
         setRefreshKey(prev => prev + 1);
       }
-    };
+    });
 
-    checkPremiumPeriodically();
-    const interval = setInterval(checkPremiumPeriodically, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    return () => unsubscribe();
   }, [session?.user?.id, isPremium]);
 
   // Load user data and onboarding status
@@ -124,8 +127,8 @@ export default function App() {
             .eq('id', session.user.id)
             .single();
           
-          // Check premium
-          const premiumStatus = await RevenueCatService.isPremium(true);
+          // Check premium (CACHED - way faster)
+          const premiumStatus = await RevenueCatService.isPremium(false);
           setIsPremium(premiumStatus);
           
           // Hard paywall enforcement
@@ -146,6 +149,10 @@ export default function App() {
           await useGutStore.getState().loadCompletedTasks();
           
           setDataLoaded(true);
+
+          // NOTE: We do NOT force a network refresh here anymore. 
+          // It's handled by the 5-min interval or the Specific Paywall screens.
+
         } catch (e) {
           console.error("Error loading initial data:", e);
         }
