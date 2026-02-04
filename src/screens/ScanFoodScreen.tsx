@@ -25,6 +25,7 @@ import { analyzeFoodWithAI } from '../services/fodmapService';
 import { useGutStore } from '../store';
 import { useGutActions } from '../presentation/hooks';
 import { FODMAPTag } from '../types/fodmap';
+import { getSafetyMessage, getRandomMessage, ANALYZING_MESSAGES } from '../utils/funnyMessages';
 
 type ScanFoodScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -347,11 +348,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                  />
                  <View style={{ flex: 1 }}>
                    <Typography variant="h2" color={colors.black}>
-                      {safetyStatus === 'safe' ? 'Safe to Eat! ✅' :
-                       safetyStatus === 'warning' ? 'Proceed with Caution ⚠️' :
-                       safetyStatus === 'unknown' ? 'Not Recognized 🤷' :
-                       safetyStatus === 'neutral' ? 'Analyzing...' :
-                       'Risk Detected 🚨'}
+                      {getSafetyMessage(safetyStatus, activeTriggers)}
                    </Typography>
                  </View>
                </View>
@@ -362,22 +359,22 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                        <ActivityIndicator size="small" color={colors.blue} />
                        <Typography variant="body" color={colors.black}>
-                          Analyzing unknown foods...
+                          {getRandomMessage(ANALYZING_MESSAGES)}
                        </Typography>
                     </View>
                    ) : safetyStatus === 'unknown' ? (
                     <Typography variant="body" color={colors.black}>
-                       We couldn't recognize some items. Please check spelling or try a different term.
+                       Is this even food? 🤔 Try typing it again or check for typos!
                     </Typography>
                   ) : activeTriggers.length > 0 ? (
                     <Typography variant="body" color={colors.black}>
-                      You previously marked <Typography variant="bodyBold">{activeTriggers.join(', ')}</Typography> as a trigger.
+                      You told us <Typography variant="bodyBold">{activeTriggers.join(', ')}</Typography> hurts you. Your past self was trying to protect you! 😤
                     </Typography>
                   ) : aiAnalysis ? (
                     <Typography variant="body" color={colors.black}>
-                       {aiAnalysis.riskLevel === 'high' ? 'High FODMAP load detected. AI Analysis identifies problematic ingredients.' :
-                        aiAnalysis.riskLevel === 'moderate' ? 'Moderate FODMAP load. Multiple moderate foods may stack effects.' :
-                        'Low FODMAP meal according to AI analysis. Should be well-tolerated.'}
+                       {aiAnalysis.riskLevel === 'high' ? "This meal is packed with FODMAPs. Your gut is already drafting a complaint letter 📝" :
+                        aiAnalysis.riskLevel === 'moderate' ? "Some iffy ingredients detected. Could go either way – roll the dice? 🎲" :
+                        "Your gut just gave this a thumbs up! Low FODMAP vibes only ✌️"}
                     </Typography>
                   ) : null}
                </View>

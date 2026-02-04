@@ -3,7 +3,7 @@
     "name": "Gut Buddy",
     "slug": "foodhabit",
     "owner": "foodhabit",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -42,7 +42,8 @@
     "plugins": [
       "expo-apple-authentication",
       "react-native-purchases",
-      "@bacons/apple-targets"
+      "@bacons/apple-targets",
+      "./plugins/withWidgetVersionSync"
     ],
     "extra": {
       "eas": {

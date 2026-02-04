@@ -22,6 +22,7 @@ import {
   GutAvatar,
 } from '../components';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { getFunGrade } from '../utils/funnyMessages';
 
 type HomeScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -164,11 +165,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               <View style={styles.heroLeft}>
                 <GutAvatar score={healthScore.score} size={80} />
                 <View style={styles.heroScoreText}>
+                    <Typography variant="bodyXS" color={colors.black + '60'} style={{ letterSpacing: 1 }}>
+                      GUT SCORE
+                    </Typography>
                     <Typography variant="h1" color={colors.black} style={{ fontSize: 48, lineHeight: 56 }}>
                       {healthScore.score}
                     </Typography>
                     <Typography variant="bodyBold" color={colors.black + '99'}>
-                      {healthScore.grade}
+                      {getFunGrade(healthScore.score)}
                     </Typography>
                 </View>
               </View>

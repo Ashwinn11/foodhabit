@@ -17,6 +17,7 @@ import { useGutData } from '../presentation/hooks';
 import { analyzeFoodWithAI } from '../services/fodmapService';
 import { container } from '../infrastructure/di';
 import { Meal as DomainMeal, MealType } from '../domain';
+import { getTriggerInsightMessage, getTriggerFrequencyMessage, getComboTriggerMessage, getFunGrade } from '../utils/funnyMessages';
 
 export const InsightsScreen: React.FC = () => {
   // Use new architecture for computed values
@@ -216,7 +217,7 @@ export const InsightsScreen: React.FC = () => {
               </View>
               <View style={styles.overviewDivider} />
               <View style={styles.overviewStat}>
-                <Typography variant="h3" color={colors.blue}>{healthScore.grade}</Typography>
+                <Typography variant="h3" color={colors.blue}>{getFunGrade(healthScore.score)}</Typography>
                 <Typography variant="bodyXS" color={colors.black + '66'}>Gut Status</Typography>
               </View>
             </View>
@@ -311,14 +312,14 @@ export const InsightsScreen: React.FC = () => {
                         </View>
                       </View>
                       
-                      {/* Frequency */}
+                      {/* Funny insight based on confidence */}
                       <Typography variant="bodySmall" color={colors.black + '99'} style={{ marginBottom: 2 }}>
-                        Triggers {enriched.frequencyText}
+                        {getTriggerInsightMessage(enriched.confidence as 'High' | 'Medium' | 'Low')}
                       </Typography>
                       
-                      {/* Latency */}
+                      {/* Funny frequency message */}
                       <Typography variant="bodyXS" color={colors.black + '66'} style={{ marginBottom: 4 }}>
-                        Typically in {enriched.avgLatencyHours}h • {enriched.symptoms.join(', ')}
+                        {enriched.food} {getTriggerFrequencyMessage(enriched.symptomOccurrences, enriched.occurrences)} • {enriched.symptoms.join(', ')}
                       </Typography>
 
                       {/* Smart Insights: FODMAP & Alternatives */}
@@ -405,7 +406,7 @@ export const InsightsScreen: React.FC = () => {
               />
               <Card variant="colored" color={colors.blue} padding="md">
                 <Typography variant="bodySmall" color={colors.blue} style={{ marginBottom: spacing.sm }}>
-                  These food combos trigger more than individually:
+                  {getComboTriggerMessage()}
                 </Typography>
                 {combinationTriggers.map((combo, i) => (
                   <View key={i} style={styles.triggerItem}>

@@ -67,11 +67,27 @@ struct FoodHabitWidgetEntryView : View {
     let blue = Color(hex: "70CFFF")
     let black = Color(hex: "2D2D2D")
     let white = Color.white
+    let green = Color(hex: "059669")
     
     var scoreColor: Color {
-        if entry.data.score >= 90 { return Color(hex: "059669") } // Excellent (Green)
-        if entry.data.score >= 70 { return yellow }              // Good (Yellow)
-        return blue                                              // Fair/Poor (Blue)
+        if entry.data.score >= 90 { return green }  // Thriving (Green)
+        if entry.data.score >= 70 { return yellow } // Vibing (Yellow)
+        return blue                                 // Sus/SOS (Blue)
+    }
+    
+    // Fix contrast: use white text on green background
+    var gradeTextColor: Color {
+        if entry.data.score >= 90 { return white }
+        return pink
+    }
+    
+    // 🔥 Fun grade based on score (TikTok-viral)
+    var funGrade: String {
+        if entry.data.score >= 90 { return "Thriving 🌟" }
+        if entry.data.score >= 80 { return "Vibing ✨" }
+        if entry.data.score >= 70 { return "Mid 😐" }
+        if entry.data.score >= 50 { return "Sus 👀" }
+        return "SOS 🆘"
     }
     
     // 🔤 Font Helpers
@@ -127,9 +143,9 @@ struct FoodHabitWidgetEntryView : View {
                         .foregroundColor(black)
                         .shadow(color: black.opacity(0.05), radius: 0, x: 2, y: 2)
                     
-                    Text(entry.data.grade)
-                        .font(cheeryFont(size: 24))
-                        .foregroundColor(pink)
+                    Text(funGrade)
+                        .font(cheeryFont(size: 18))
+                        .foregroundColor(gradeTextColor)
                         .rotationEffect(.degrees(-10))
                 }
                 .padding(.leading, 14)
@@ -140,7 +156,7 @@ struct FoodHabitWidgetEntryView : View {
                 // Footer
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("LAST POOP")
+                        Text("LAST 💩")
                             .font(bodyFont(size: 10, weight: .bold))
                             .foregroundColor(black.opacity(0.4))
                         Text(entry.data.lastPoopTime)
@@ -212,8 +228,8 @@ struct FoodHabitWidgetEntryView : View {
                     
                     // Stats Row
                     HStack(spacing: 20) {
-                        statItem(label: "LAST POOP", value: entry.data.lastPoopTime)
-                        statItem(label: "GRADE", value: entry.data.grade)
+                        statItem(label: "LAST 💩", value: entry.data.lastPoopTime)
+                        statItem(label: "VIBE", value: funGrade)
                     }
                 }
                 .padding(18)
@@ -309,9 +325,9 @@ struct FoodHabitWidgetEntryView : View {
                         
                          // Footer Stats
                         HStack {
-                            statItem(label: "LAST POOP", value: entry.data.lastPoopTime)
+                            statItem(label: "LAST 💩", value: entry.data.lastPoopTime)
                             Spacer()
-                            statItem(label: "GRADE", value: entry.data.grade)
+                            statItem(label: "VIBE", value: funGrade)
                             Spacer() 
                         }
                     }
@@ -332,16 +348,57 @@ struct FoodHabitWidgetEntryView : View {
     }
     
     func funInsightMessage(score: Int, lastPoop: String) -> String {
-        // Simple logic for fun messages
-        if lastPoop.contains("ago") || lastPoop == "Just now" { 
-            // If we have a time, imply they pooped
-            if score >= 80 { return "You're on a roll! (Literally) 🧻" }
-            if score >= 50 { return "One poop down, maybe one more? 🚽" }
-            return "You pooped! That's a start! 💩"
-        } else {
-             // "No data" or similar
-            return "No poop yet? Coffee time? ☕️"
+        // 🔥 TikTok-viral insight messages
+        let hasRecentPoop = lastPoop.contains("ago") || lastPoop == "Just now" || lastPoop.contains("h") || lastPoop.contains("m")
+        
+        if score >= 90 {
+            let messages = [
+                "Your gut is giving main character energy ✨",
+                "Microbiome said: slay! 💅",
+                "Your intestines deserve an award 🏆",
+                "Gut health? More like gut WEALTH 💰"
+            ]
+            return messages[abs(score.hashValue) % messages.count]
         }
+        
+        if score >= 80 {
+            let messages = [
+                "Your gut is vibing fr fr 🎵",
+                "Solid performance! (Literally) 🧻",
+                "Your microbiome is in its happy era 🌈",
+                "Keep this energy going! 🚀"
+            ]
+            return messages[abs(score.hashValue) % messages.count]
+        }
+        
+        if score >= 70 {
+            let messages = [
+                "Not bad, not amazing. Very mid 😐",
+                "Your gut is in its chill era 🧘",
+                "Room for improvement, bestie 📈",
+                "Average but make it digestive 🤷"
+            ]
+            return messages[abs(score.hashValue) % messages.count]
+        }
+        
+        if score >= 50 {
+            let messages = [
+                "Something's sus in there 👀",
+                "Your gut is plotting something...",
+                "The vibes are... off today 😬",
+                "Your colon is writing a complaint letter �"
+            ]
+            return messages[abs(score.hashValue) % messages.count]
+        }
+        
+        // SOS tier
+        let messages = [
+            "Houston, we have a problem 🚨",
+            "Your gut is NOT having it today 😤",
+            "Emergency vibes only! Code brown! 🆘",
+            "Your intestines just rage quit 💀"
+        ]
+        return messages[abs(score.hashValue) % messages.count]
     }
 
     func statItem(label: String, value: String) -> some View {

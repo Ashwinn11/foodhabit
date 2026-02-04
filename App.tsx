@@ -42,7 +42,7 @@ export default function App() {
   const { session, loading: authLoading } = useAuth();
   
   const [fontsLoaded] = useFonts({
-    'Chewy': Fredoka_400Regular,
+    'Chewy': Chewy_400Regular,
     'Fredoka-Regular': Fredoka_400Regular,
     'Fredoka-Medium': Fredoka_500Medium,
     'Fredoka-SemiBold': Fredoka_600SemiBold,
