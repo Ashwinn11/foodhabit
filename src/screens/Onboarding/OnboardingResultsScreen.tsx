@@ -7,6 +7,7 @@ import { Typography, Card, ScreenWrapper, GutAvatar } from '../../components';
 import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { getFunGrade } from '../../utils/funnyMessages';
 
 export const OnboardingResultsScreen = () => {
   const navigation = useNavigation<any>();
@@ -69,12 +70,15 @@ export const OnboardingResultsScreen = () => {
   const medicalScore = gutCheckAnswers.medicalFlags ? 0 : 10;
   
   const getScoreColor = (score: number) => {
-      if (score >= 80) return colors.green;
-      if (score >= 50) return colors.blue;
-      return colors.pink;
+      if (score >= 90) return colors.green;
+      if (score >= 80) return colors.yellow;
+      if (score >= 70) return colors.blue;
+      if (score >= 50) return colors.pink;
+      return colors.red;
   };
 
   const scoreColor = getScoreColor(calculatedScore);
+  const funGrade = getFunGrade(calculatedScore);
 
   return (
     <OnboardingScreen
@@ -96,7 +100,7 @@ export const OnboardingResultsScreen = () => {
                 <Typography variant="caption" color={colors.mediumGray}>GUT SCORE</Typography>
             </View>
             <Typography variant="h3" color={scoreColor} style={{ marginTop: spacing.xs }}>
-                {calculatedScore >= 80 ? 'Doing Great!' : calculatedScore >= 50 ? 'Needs Improvement' : 'Needs Work'}
+                {funGrade}
             </Typography>
         </Animated.View>
 

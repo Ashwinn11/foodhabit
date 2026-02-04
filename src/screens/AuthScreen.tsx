@@ -20,6 +20,7 @@ import { useAuth } from '../hooks/useAuth';
 import { colors, spacing } from '../theme/theme';
 import { useUIStore } from '../store/useUIStore';
 import { GutAvatar, ScreenWrapper, IconContainer, Typography, Button } from '../components';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -77,19 +78,23 @@ export default function AuthScreen() {
   const [appleAvailable, setAppleAvailable] = useState(false);
   
   const avatarScale = useSharedValue(1);
+  const avatarRotation = useSharedValue(0);
   
   React.useEffect(() => {
     checkAppleAuth();
-    // Subtle breathing animation
+    
     avatarScale.value = withRepeat(
-      withSequence(
-        withTiming(1.05, { duration: 2000 }),
-        withTiming(1, { duration: 2000 })
-      ),
+      withSequence(withTiming(1.05, { duration: 2000 }), withTiming(1, { duration: 2000 })),
       -1,
       true
     );
-  }, [avatarScale]);
+
+    avatarRotation.value = withRepeat(
+      withSequence(withTiming(3, { duration: 1500 }), withTiming(-3, { duration: 1500 })),
+      -1,
+      true
+    );
+  }, [avatarScale, avatarRotation]);
 
   const checkAppleAuth = async () => {
     const available = await isAppleAuthAvailable();
@@ -119,90 +124,104 @@ export default function AuthScreen() {
   };
   
   const avatarStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: avatarScale.value }],
+    transform: [
+      { scale: avatarScale.value },
+      { rotate: `${avatarRotation.value}deg` }
+    ],
   }));
 
   return (
     <ScreenWrapper style={styles.container} useGradient={true}>
-      {/* Background Decorations */}
       <View style={StyleSheet.absoluteFill}>
-        <FloatingShape color={colors.blue} size={120} top={-20} left={-40} delay={0} />
-        <FloatingShape color={colors.pink} size={80} top={height * 0.2} left={width - 40} delay={1000} />
-        <FloatingShape color={colors.yellow} size={60} top={height * 0.6} left={-20} delay={2000} />
+        <FloatingShape color={colors.blue} size={150} top={-30} left={-50} delay={0} />
+        <FloatingShape color={colors.pink} size={120} top={height * 0.15} left={width - 60} delay={800} />
+        <FloatingShape color={colors.yellow} size={90} top={height * 0.55} left={-30} delay={1500} />
+        <FloatingShape color={colors.blue} size={100} top={height * 0.8} left={width * 0.7} delay={2200} />
       </View>
       
       <View style={styles.content}>
-        {/* Header Section */}
-        <Animated.View 
-          entering={FadeIn.duration(1000)}
-          style={styles.header}
-        >
-          <Animated.View style={[avatarStyle, styles.avatarContainer]}>
-            <GutAvatar score={100} size={160} showBadge badgeIcon="thumbs-up" badgeText="Very Happy!" ringColor={colors.blue + '40'} />
+        <View style={styles.headerSection}>
+          <Animated.View entering={FadeIn.duration(1000)} style={styles.header}>
+            <Animated.View style={[avatarStyle, styles.avatarContainer]}>
+              <GutAvatar 
+                score={100} 
+                size={width * 0.45} 
+                showBadge 
+                badgeIcon="heart" 
+                badgeText="Feel light again" 
+                ringColor={colors.blue + '30'} 
+              />
+            </Animated.View>
+            
+            <Animated.View entering={FadeInDown.delay(300).springify()}>
+              <Typography variant="h1" align="center" style={styles.title}>GutBuddy</Typography>
+              <Typography variant="body" align="center" color={colors.black + '99'} style={styles.subtitle}>
+                Transform your gut. Transform your life. Join <Typography variant="bodyBold" color={colors.pink}>50,000+</Typography> others.
+              </Typography>
+            </Animated.View>
           </Animated.View>
-          
-          <Animated.View entering={FadeInDown.delay(300).springify()}>
-            <Typography variant="h1" align="center" style={styles.title}>Gut Buddy</Typography>
-            <Typography variant="body" align="center" color={colors.black + '99'} style={styles.subtitle}>
-              Your journey to a happier gut starts here.
-            </Typography>
-          </Animated.View>
-        </Animated.View>
-        
-        {/* Features Section */}
-        <View style={styles.featuresRow}>
-          <FeatureItem icon="restaurant" text="Track Meals" color={colors.blue} delay={500} />
-          <FeatureItem icon="stats-chart" text="Deep Insights" color={colors.pink} delay={600} />
-          <FeatureItem icon="leaf" text="Eat Better" color={colors.yellow} delay={700} />
+
+          <View style={styles.featuresRow}>
+            <FeatureItem icon="flash" text="Beat Bloat" color={colors.pink} delay={500} />
+            <FeatureItem icon="analytics" text="Find Triggers" color={colors.blue} delay={600} />
+            <FeatureItem icon="sunny" text="Glow Daily" color={colors.green} delay={700} />
+          </View>
         </View>
 
-        {/* Auth Buttons */}
         <Animated.View 
           entering={FadeInDown.delay(800).springify()}
-          style={styles.authContainer}
+          style={styles.authSection}
         >
-          <Typography variant="bodyXS" color={colors.black + '66'} align="center" style={{ marginBottom: spacing.md }}>
-            Secure sign in with your favorite account
-          </Typography>
-          
-          <View style={styles.buttonWrapper}>
-            {appleAvailable && Platform.OS === 'ios' && (
+          <View style={styles.trustBadge}>
+             <View style={styles.stars}>
+                {[1,2,3,4,5].map(i => <Ionicons key={i} name="star" size={14} color={colors.yellow} />)}
+             </View>
+             <Typography variant="bodyXS" color={colors.mediumGray} style={{ marginLeft: 8 }}>
+                The #1 Personalized Gut Protocol
+             </Typography>
+          </View>
+
+          <View style={styles.authCard}>
+            <Typography variant="bodyXS" color={colors.black + '66'} align="center" style={{ marginBottom: spacing.lg }}>
+              Your 90-day reset starts with a secure account
+            </Typography>
+            
+            <View style={styles.buttonWrapper}>
+              {appleAvailable && Platform.OS === 'ios' && (
+                <Button
+                  title="Continue with Apple"
+                  onPress={handleAppleSignIn}
+                  disabled={loading !== null}
+                  loading={loading === 'apple'}
+                  icon="logo-apple"
+                  variant="primary"
+                  color={colors.black}
+                  size="lg"
+                  style={styles.authButton}
+                />
+              )}
+
               <Button
-                title="Continue with Apple"
-                onPress={handleAppleSignIn}
+                title="Continue with Google"
+                onPress={handleGoogleSignIn}
                 disabled={loading !== null}
-                loading={loading === 'apple'}
-                icon="logo-apple"
-                variant="primary"
-                color={colors.black}
+                loading={loading === 'google'}
+                icon="logo-google"
+                variant="white"
                 size="lg"
                 style={styles.authButton}
               />
-            )}
-
-            <Button
-              title="Continue with Google"
-              onPress={handleGoogleSignIn}
-              disabled={loading !== null}
-              loading={loading === 'google'}
-              icon="logo-google"
-              variant="white"
-              size="lg"
-              style={styles.authButton}
-            />
+            </View>
           </View>
-        </Animated.View>
-        
-        {/* Footer */}
-        <Animated.View 
-          entering={FadeIn.delay(1200)}
-          style={styles.footer}
-        >
-          <Pressable onPress={() => navigation.navigate('PrivacyPolicy')}>
-            <Typography variant="bodyXS" color={colors.black + '66'} align="center">
-              By joining, you agree to our <Typography variant="bodyXS" color={colors.pink} style={{ fontWeight: 'bold' }}>Terms & Privacy Policy</Typography>
-            </Typography>
-          </Pressable>
+
+          <Animated.View entering={FadeIn.delay(1200)} style={styles.footer}>
+            <Pressable onPress={() => navigation.navigate('PrivacyPolicy')}>
+              <Typography variant="bodyXS" color={colors.black + '40'} align="center">
+                By joining, you agree to our {'\n'}
+                <Typography variant="bodyXS" color={colors.black + '80'} style={{ fontWeight: '600' }}>Terms</Typography> & <Typography variant="bodyXS" color={colors.black + '80'} style={{ fontWeight: '600' }}>Privacy Policy</Typography>
+              </Typography>
+            </Pressable>
+          </Animated.View>
         </Animated.View>
       </View>
     </ScreenWrapper>
@@ -212,54 +231,97 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   content: {
     flex: 1,
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: height * 0.08,
-    paddingBottom: spacing['4xl'],
+    paddingTop: height * 0.04,
+    paddingBottom: spacing['2xl'],
+    justifyContent: 'space-between',
+  },
+  headerSection: {
+    alignItems: 'center',
   },
   header: {
     alignItems: 'center',
+    marginBottom: spacing.xl,
   },
   avatarContainer: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
     zIndex: 10,
+    shadowColor: colors.pink,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
   },
   title: {
-    fontSize: 48,
-    lineHeight: 52,
+    fontSize: 52,
+    lineHeight: 56,
     marginBottom: spacing.xs,
+    color: colors.black,
   },
   subtitle: {
-    fontSize: 18,
-    maxWidth: 280,
+    fontSize: 17,
+    maxWidth: 300,
+    lineHeight: 24,
   },
   featuresRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: spacing['2xl'],
-    paddingHorizontal: spacing.sm,
+    justifyContent: 'space-around',
+    width: '100%',
+    marginVertical: spacing.lg,
+    backgroundColor: colors.white + '40',
+    padding: spacing.md,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.white + '60',
   },
   featureItem: {
     alignItems: 'center',
-    flex: 1,
-    gap: spacing.sm,
+    gap: 6,
   },
-  authContainer: {
+  authSection: {
     width: '100%',
+    alignItems: 'center',
+  },
+  trustBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+    backgroundColor: colors.white + '80',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border + '40',
+  },
+  stars: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  authCard: {
+    width: '100%',
+    backgroundColor: colors.white,
+    padding: spacing.xl,
+    borderRadius: 32,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: colors.border + '20',
   },
   buttonWrapper: {
     gap: spacing.md,
   },
   authButton: {
-    height: 56,
-    borderRadius: 16,
+    height: 60,
+    borderRadius: 18,
   },
   footer: {
-    alignItems: 'center',
+    marginTop: spacing.xl,
+    paddingBottom: Platform.OS === 'ios' ? 0 : spacing.md,
   },
   floatingShape: {
     position: 'absolute',

@@ -71,14 +71,16 @@ struct FoodHabitWidgetEntryView : View {
     
     var scoreColor: Color {
         if entry.data.score >= 90 { return green }  // Thriving (Green)
-        if entry.data.score >= 70 { return yellow } // Vibing (Yellow)
-        return blue                                 // Sus/SOS (Blue)
+        if entry.data.score >= 80 { return yellow } // Vibing (Yellow)
+        if entry.data.score >= 70 { return blue }   // Mid (Blue)
+        if entry.data.score >= 50 { return pink }   // Sus (Pink)
+        return Color(hex: "FF4444")                 // SOS (Red)
     }
     
-    // Fix contrast: use white text on green background
+    // Fix contrast: use black text on lighter backgrounds, white on green
     var gradeTextColor: Color {
         if entry.data.score >= 90 { return white }
-        return pink
+        return black.opacity(0.7)
     }
     
     // 🔥 Fun grade based on score (TikTok-viral)

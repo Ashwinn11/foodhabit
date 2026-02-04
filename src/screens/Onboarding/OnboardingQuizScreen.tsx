@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Typography, IconContainer } from '../../components';
 import { colors, spacing } from '../../theme';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 
 const INACTIVE_COLOR = colors.black + '40';
 
@@ -57,6 +58,7 @@ export const OnboardingQuizScreen = () => {
   const [selectedStool, setSelectedStool] = useState<number | null>(null);
   const [selectedReg, setSelectedReg] = useState<number | null>(null);
   const [selectedMedical, setSelectedMedical] = useState<boolean | null>(null);
+  const [showValidation, setShowValidation] = useState(false);
 
   const handleNext = () => {
       if (currentQuizPage === 0) {
@@ -94,6 +96,10 @@ export const OnboardingQuizScreen = () => {
           setSelectedSymptoms(prev => prev.filter(s => s !== id));
       } else {
           setSelectedSymptoms(prev => [...prev, id]);
+          if (!selectedSymptoms.length) {
+              setShowValidation(true);
+              setTimeout(() => setShowValidation(false), 3000);
+          }
       }
   };
 
@@ -140,6 +146,15 @@ export const OnboardingQuizScreen = () => {
                         );
                     })}
                 </View>
+
+                {showValidation && (
+                    <Animated.View entering={FadeIn} style={styles.validationBadge}>
+                        <Ionicons name="information-circle" size={16} color={colors.black} />
+                        <Typography variant="caption" color={colors.black} style={{ marginLeft: 6 }}>
+                            This is common! More than 65% of our users report this.
+                        </Typography>
+                    </Animated.View>
+                )}
 
                 <Typography variant="bodyBold" style={[styles.sectionTitle, { marginTop: spacing.lg }]}>How often do you feel this?</Typography>
                 <View style={styles.row}>
@@ -233,6 +248,15 @@ const styles = StyleSheet.create({
       borderWidth: 1,
       borderColor: 'transparent',
       paddingHorizontal: 4,
+  },
+  validationBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.blue + '10',
+      padding: spacing.sm,
+      borderRadius: 12,
+      marginTop: spacing.md,
+      alignSelf: 'flex-start',
   },
   row: { flexDirection: 'row', gap: 12 },
   smallCard: {

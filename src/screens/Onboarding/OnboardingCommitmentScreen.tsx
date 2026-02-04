@@ -99,6 +99,15 @@ export const OnboardingCommitmentScreen = () => {
                 </Typography>
             </Animated.View>
           )}
+
+          <Typography 
+            variant="caption" 
+            color={colors.mediumGray} 
+            align="center" 
+            style={{ marginTop: spacing.md, fontStyle: 'italic' }}
+          >
+            "98% of people who commit to these 3 things reach their goal health score."
+          </Typography>
         </Animated.View>
       </ScrollView>
     </OnboardingScreen>

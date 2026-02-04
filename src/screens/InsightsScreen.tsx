@@ -207,7 +207,7 @@ export const InsightsScreen: React.FC = () => {
             <GutAvatar score={healthScore.score} size={80} />
             <View style={styles.overviewStats}>
               <View style={styles.overviewStat}>
-                <Typography variant="h3" color={colors.pink}>{healthScore.score}</Typography>
+                <Typography variant="h3" color={healthScore.color}>{healthScore.score}</Typography>
                 <Typography variant="bodyXS" color={colors.black + '66'}>Gut Score</Typography>
               </View>
               <View style={styles.overviewDivider} />
@@ -217,7 +217,7 @@ export const InsightsScreen: React.FC = () => {
               </View>
               <View style={styles.overviewDivider} />
               <View style={styles.overviewStat}>
-                <Typography variant="h3" color={colors.blue}>{getFunGrade(healthScore.score)}</Typography>
+                <Typography variant="h3" color={healthScore.color}>{getFunGrade(healthScore.score)}</Typography>
                 <Typography variant="bodyXS" color={colors.black + '66'}>Gut Status</Typography>
               </View>
             </View>
@@ -405,7 +405,7 @@ export const InsightsScreen: React.FC = () => {
                 iconColor={colors.blue}
               />
               <Card variant="colored" color={colors.blue} padding="md">
-                <Typography variant="bodySmall" color={colors.blue} style={{ marginBottom: spacing.sm }}>
+                <Typography variant="bodySmall" color={colors.black} style={{ marginBottom: spacing.sm }}>
                   {getComboTriggerMessage()}
                 </Typography>
                 {combinationTriggers.map((combo, i) => (

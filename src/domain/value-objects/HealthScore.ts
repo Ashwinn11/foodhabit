@@ -3,7 +3,7 @@
  * Represents a gut health score with breakdown and grade
  */
 
-export type HealthGrade = 'Excellent' | 'Good' | 'Fair' | 'Poor';
+export type HealthGrade = 'Excellent' | 'Good' | 'Fair' | 'Sus' | 'Poor';
 
 export interface HealthScoreBreakdown {
     bristol: number;      // 0-40 points
@@ -75,8 +75,9 @@ export class HealthScore {
 
     private static calculateGrade(score: number): HealthGrade {
         if (score >= 90) return 'Excellent';
-        if (score >= 70) return 'Good';
-        if (score >= 50) return 'Fair';
+        if (score >= 80) return 'Good';
+        if (score >= 70) return 'Fair';
+        if (score >= 50) return 'Sus';
         return 'Poor';
     }
 
@@ -108,10 +109,11 @@ export class HealthScore {
      */
     getColor(): string {
         switch (this._grade) {
-            case 'Excellent': return '#22c55e'; // green
-            case 'Good': return '#84cc16';      // lime
-            case 'Fair': return '#f59e0b';      // amber
-            case 'Poor': return '#ef4444';      // red
+            case 'Excellent': return '#22c55e'; // green (Thriving)
+            case 'Good': return '#84cc16';      // lime (Vibing)
+            case 'Fair': return '#f59e0b';      // amber (Mid)
+            case 'Sus': return '#f97316';       // orange (Sus)
+            case 'Poor': return '#ef4444';      // red (SOS)
         }
     }
 
@@ -121,9 +123,10 @@ export class HealthScore {
     getEmoji(): string {
         switch (this._grade) {
             case 'Excellent': return '🌟';
-            case 'Good': return '😊';
+            case 'Good': return '✨';
             case 'Fair': return '😐';
-            case 'Poor': return '😟';
+            case 'Sus': return '👀';
+            case 'Poor': return '🆘';
         }
     }
 

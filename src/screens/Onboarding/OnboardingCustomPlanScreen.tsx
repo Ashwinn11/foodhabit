@@ -127,7 +127,7 @@ export const OnboardingCustomPlanScreen = () => {
             <View style={styles.divider} />
             
             <TimelineItem title="Phase 1: CALM" duration="Week 1-2" desc="Reduce inflammation & find triggers." color={colors.pink} />
-            <TimelineItem title="Phase 2: RESTORE" duration="Week 3-6" desc="Rebuild bacteria & optimize hydration." color={colors.yellow} />
+            <TimelineItem title="Phase 2: RESTORE" duration="Week 3-6" desc="Rebuild bacteria & optimize hydration." color={colors.green} />
             <TimelineItem title="Phase 3: THRIVE" duration="Week 7-12" desc="Maintain progress & fine-tune diet." color={colors.blue} isLast />
           </Card>
 

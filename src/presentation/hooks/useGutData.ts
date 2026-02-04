@@ -127,6 +127,8 @@ export function useGutData() {
             score: healthScore.value,
             grade: healthScore.grade,
             breakdown: healthScore.breakdown,
+            color: healthScore.getColor(),
+            emoji: healthScore.getEmoji(),
         },
 
         // Streak (from new service)
