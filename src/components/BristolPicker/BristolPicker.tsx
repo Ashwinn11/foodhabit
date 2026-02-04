@@ -106,24 +106,24 @@ export const BristolPicker: React.FC<BristolPickerProps> = ({
 };
 
 const styles = StyleSheet.create({
+  bristolImage: {
+    height: 70,
+    width: 70,
+  },
   container: {
     marginVertical: spacing.lg,
+  },
+  option: {
+    alignItems: 'center',
+    marginRight: spacing.md,
+    width: 90,
   },
   scrollContent: {
     paddingRight: spacing.lg,
   },
-  option: {
-    width: 90,
-    marginRight: spacing.md,
-    alignItems: 'center',
-  },
-  bristolImage: {
-    width: 70,
-    height: 70,
-  },
   selectedBadge: {
     position: 'absolute',
-    top: -6,
     right: -6,
+    top: -6,
   },
 });

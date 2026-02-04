@@ -97,7 +97,7 @@ export const IconContainer: React.FC<IconContainerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
 });

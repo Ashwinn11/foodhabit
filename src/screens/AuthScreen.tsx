@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   Platform,
-  Pressable,
   Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -215,12 +214,26 @@ export default function AuthScreen() {
           </View>
 
           <Animated.View entering={FadeIn.delay(1200)} style={styles.footer}>
-            <Pressable onPress={() => navigation.navigate('PrivacyPolicy')}>
-              <Typography variant="bodyXS" color={colors.black + '40'} align="center">
-                By joining, you agree to our {'\n'}
-                <Typography variant="bodyXS" color={colors.black + '80'} style={{ fontWeight: '600' }}>Terms</Typography> & <Typography variant="bodyXS" color={colors.black + '80'} style={{ fontWeight: '600' }}>Privacy Policy</Typography>
+            <Typography variant="bodyXS" color={colors.black + '40'} align="center">
+              By joining, you agree to our{' '}
+              <Typography 
+                variant="bodyXS" 
+                color={colors.black + '80'} 
+                style={{ fontWeight: '600', textDecorationLine: 'underline' }}
+                onPress={() => navigation.navigate('PrivacyPolicy')}
+              >
+                Terms
               </Typography>
-            </Pressable>
+              {' & '}
+              <Typography 
+                variant="bodyXS" 
+                color={colors.black + '80'} 
+                style={{ fontWeight: '600', textDecorationLine: 'underline' }}
+                onPress={() => navigation.navigate('PrivacyPolicy')}
+              >
+                Privacy Policy
+              </Typography>
+            </Typography>
           </Animated.View>
         </Animated.View>
       </View>
@@ -229,102 +242,104 @@ export default function AuthScreen() {
 }
 
 const styles = StyleSheet.create({
+  authButton: {
+    borderRadius: 18,
+    height: 60,
+  },
+  authCard: {
+    backgroundColor: colors.white,
+    borderColor: colors.border + '20',
+    borderRadius: 32,
+    borderWidth: 1,
+    elevation: 8,
+    padding: spacing.xl,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    width: '100%',
+  },
+  authSection: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  avatarContainer: {
+    marginBottom: spacing.lg,
+    shadowColor: colors.pink,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    zIndex: 10,
+  },
+  buttonWrapper: {
+    gap: spacing.md,
+  },
   container: {
     flex: 1,
   },
   content: {
     flex: 1,
+    justifyContent: 'space-between',
+    paddingBottom: spacing['2xl'],
     paddingHorizontal: spacing.xl,
     paddingTop: height * 0.04,
-    paddingBottom: spacing['2xl'],
-    justifyContent: 'space-between',
-  },
-  headerSection: {
-    alignItems: 'center',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  avatarContainer: {
-    marginBottom: spacing.lg,
-    zIndex: 10,
-    shadowColor: colors.pink,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-  },
-  title: {
-    fontSize: 52,
-    lineHeight: 56,
-    marginBottom: spacing.xs,
-    color: colors.black,
-  },
-  subtitle: {
-    fontSize: 17,
-    maxWidth: 300,
-    lineHeight: 24,
-  },
-  featuresRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginVertical: spacing.lg,
-    backgroundColor: colors.white + '40',
-    padding: spacing.md,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.white + '60',
   },
   featureItem: {
     alignItems: 'center',
     gap: 6,
   },
-  authSection: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  trustBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-    backgroundColor: colors.white + '80',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+  featuresRow: {
+    backgroundColor: colors.white + '40',
+    borderColor: colors.white + '60',
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: colors.border + '40',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: spacing.lg,
+    padding: spacing.md,
+    width: '100%',
+  },
+  floatingShape: {
+    position: 'absolute',
+    zIndex: 0,
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    paddingBottom: Platform.OS === 'ios' ? spacing.md : spacing.lg,
+    width: '100%',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+  },
+  headerSection: {
+    alignItems: 'center',
   },
   stars: {
     flexDirection: 'row',
     gap: 2,
   },
-  authCard: {
-    width: '100%',
-    backgroundColor: colors.white,
-    padding: spacing.xl,
-    borderRadius: 32,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 8,
+  subtitle: {
+    fontSize: 17,
+    lineHeight: 24,
+    maxWidth: 300,
+  },
+  title: {
+    color: colors.black,
+    fontSize: 52,
+    lineHeight: 56,
+    marginBottom: spacing.xs,
+  },
+  trustBadge: {
+    alignItems: 'center',
+    backgroundColor: colors.white + '80',
+    borderColor: colors.border + '40',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border + '20',
-  },
-  buttonWrapper: {
-    gap: spacing.md,
-  },
-  authButton: {
-    height: 60,
-    borderRadius: 18,
-  },
-  footer: {
-    marginTop: spacing.xl,
-    paddingBottom: Platform.OS === 'ios' ? 0 : spacing.md,
-  },
-  floatingShape: {
-    position: 'absolute',
-    zIndex: 0,
+    flexDirection: 'row',
+    marginBottom: spacing.lg,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
 });

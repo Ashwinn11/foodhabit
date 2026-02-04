@@ -46,19 +46,19 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.white,
     borderRadius: radii.xl,
-    padding: spacing.lg,
+    flexDirection: 'row',
     marginBottom: spacing.md,
+    padding: spacing.lg,
     ...shadows.sm,
-  },
-  iconMargin: {
-    marginRight: spacing.lg,
   },
   content: {
     flex: 1,
+  },
+  iconMargin: {
+    marginRight: spacing.lg,
   },
   title: {
     marginBottom: spacing.xs,

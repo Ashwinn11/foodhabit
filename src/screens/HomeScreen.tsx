@@ -299,95 +299,95 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingTop: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  greetingRow: {
-    flexDirection: 'row',
+  actionButton: {
     alignItems: 'center',
-    marginBottom: 4,
-  },
-  waveIcon: {
-    marginRight: spacing.xs,
-  },
-  section: {
-    marginBottom: spacing.lg,
-  },
-  heroSection: {
-    marginBottom: spacing.lg,
-  },
-  heroCard: {
-    overflow: 'hidden',
-  },
-  heroContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  heroLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-  },
-  heroScoreText: {
-    justifyContent: 'center',
-  },
-  streakBadge: {
-    backgroundColor: colors.white,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    borderColor: 'transparent',
     borderRadius: radii.full,
+    borderWidth: 2,
+    flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    transform: [{ rotate: '3deg' }],
+    gap: spacing.sm,
+    justifyContent: 'center',
+    minHeight: 60,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
   },
   actionGrid: {
     flexDirection: 'row',
     gap: spacing.md,
     marginBottom: spacing.xl,
   },
-  actionButton: {
-    flex: 1,
-    borderRadius: radii.full,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    flexDirection: 'row',
-    gap: spacing.sm,
-    minHeight: 60,
-  },
   alertCard: {
     marginBottom: spacing.sm,
   },
   alertContent: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
     gap: spacing.md,
   },
   alertText: {
     flex: 1,
   },
+  bottomPadding: {
+    height: 100,
+  },
+  container: {
+    flex: 1,
+  },
+  greetingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  header: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xl,
+    paddingTop: spacing.md,
+  },
+  heroCard: {
+    overflow: 'hidden',
+  },
+  heroContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  heroLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.lg,
+  },
+  heroScoreText: {
+    justifyContent: 'center',
+  },
+  heroSection: {
+    marginBottom: spacing.lg,
+  },
   missionsContainer: {
     // Missions stack vertically
   },
-  bottomPadding: {
-    height: 100,
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  section: {
+    marginBottom: spacing.lg,
+  },
+  streakBadge: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: radii.full,
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    transform: [{ rotate: '3deg' }],
+  },
+  waveIcon: {
+    marginRight: spacing.xs,
   },
 });

@@ -41,17 +41,17 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: 'transparent',
   },
-  track: {
-    height: 8,
-    backgroundColor: colors.black + '08',
-    borderRadius: radii.full,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.black + '05',
-  },
   fill: {
-    height: '100%',
     backgroundColor: colors.pink,
     borderRadius: radii.full,
+    height: '100%',
+  },
+  track: {
+    backgroundColor: colors.black + '08',
+    borderColor: colors.black + '05',
+    borderRadius: radii.full,
+    borderWidth: 1,
+    height: 8,
+    overflow: 'hidden',
   },
 });

@@ -60,26 +60,6 @@ export const Typography: React.FC<TypographyProps> = ({
 };
 
 const styles = StyleSheet.create({
-  h1: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes['4xl'],
-    lineHeight: 40,
-  },
-  h2: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes['3xl'],
-    lineHeight: 34,
-  },
-  h3: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes['2xl'],
-    lineHeight: 28,
-  },
-  h4: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.lg,
-    lineHeight: 24,
-  },
   body: {
     fontFamily: fonts.body,
     fontSize: fontSizes.md,
@@ -101,8 +81,28 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   caption: {
+    color: colors.black + '66',
     fontFamily: fonts.body,
     fontSize: fontSizes.xs,
-    color: colors.black + '66',
+  },
+  h1: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes['4xl'],
+    lineHeight: 40,
+  },
+  h2: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes['3xl'],
+    lineHeight: 34,
+  },
+  h3: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes['2xl'],
+    lineHeight: 28,
+  },
+  h4: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.lg,
+    lineHeight: 24,
   },
 });

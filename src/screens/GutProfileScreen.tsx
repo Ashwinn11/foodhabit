@@ -191,68 +191,68 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-  },
   avatarSection: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
   },
-  mainAvatarContainer: {
-    marginBottom: spacing.md,
+  bottomPadding: {
+    height: 120, // Enough room for tab bar
   },
-  statsSection: {
-    marginBottom: spacing['2xl'],
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  statCard: {
+  container: {
     flex: 1,
   },
-  timelineSection: {
-    marginBottom: spacing['2xl'],
-  },
-  timelineContainer: {
-    paddingTop: spacing.md,
-  },
   dateHeader: {
+    alignSelf: 'flex-start',
     backgroundColor: colors.black,
+    borderRadius: radii.sm,
+    marginBottom: spacing.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
-    borderRadius: radii.sm,
-    alignSelf: 'flex-start',
-    marginBottom: spacing.md,
     ...shadows.sm,
   },
   dateHeaderText: {
-    letterSpacing: 1.5,
-    fontSize: 10,
     fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    letterSpacing: 1.5,
+  },
+  emptyIcon: {
+    marginBottom: spacing.md,
   },
   emptyTimeline: {
     alignItems: 'center',
     paddingVertical: spacing['3xl'],
   },
-  emptyIcon: {
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
+  mainAvatarContainer: {
     marginBottom: spacing.md,
   },
-  bottomPadding: {
-    height: 120, // Enough room for tab bar
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  statCard: {
+    flex: 1,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  statsSection: {
+    marginBottom: spacing['2xl'],
+  },
+  timelineContainer: {
+    paddingTop: spacing.md,
+  },
+  timelineSection: {
+    marginBottom: spacing['2xl'],
   },
 });

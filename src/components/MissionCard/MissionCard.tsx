@@ -98,25 +98,15 @@ export const MissionCard: React.FC<MissionCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   checkboxContainer: {
     marginRight: spacing.md,
   },
+  container: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
   content: {
     flex: 1,
-  },
-  titleCompleted: {
-    textDecorationLine: 'line-through',
-    textDecorationStyle: 'solid',
-  },
-  yaySticker: {
-    position: 'absolute',
-    top: -8,
-    right: -5,
-    zIndex: 10,
   },
   stickerBody: {
     backgroundColor: colors.yellow,
@@ -131,8 +121,18 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  titleCompleted: {
+    textDecorationLine: 'line-through',
+    textDecorationStyle: 'solid',
+  },
+  yaySticker: {
+    position: 'absolute',
+    right: -5,
+    top: -8,
+    zIndex: 10,
+  },
   yayText: {
-    fontSize: 12,
     color: colors.black,
+    fontSize: 12,
   },
 });

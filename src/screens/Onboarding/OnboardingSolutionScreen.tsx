@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { OnboardingScreen } from '../../components/Onboarding';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useNavigation } from '@react-navigation/native';
@@ -33,9 +33,9 @@ export const OnboardingSolutionScreen = () => {
       onBack={handleBack}
       nextLabel="Get My Protocol"
     >
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
+      <View style={styles.container}>
         <Animated.View entering={FadeInDown.delay(100)} style={styles.mascotContainer}>
-          <GutAvatar score={90} size={140} />
+          <GutAvatar score={90} size={110} />
           <View style={styles.speechBubble}>
             <Typography variant="bodyBold" color={colors.white}>We've got this! 🚀</Typography> 
           </View>
@@ -45,25 +45,25 @@ export const OnboardingSolutionScreen = () => {
           <FeatureGridItem 
             icon="search" 
             title="Stop Bloating" 
-            desc="AI Pinpoints what's causing pain."
+            desc="AI Pinpoints pain."
             color={colors.blue}
           />
           <FeatureGridItem 
             icon="checkbox" 
             title="Heal Daily" 
-            desc="Easy habits to fix your digestion."
+            desc="Easy daily habits."
             color={colors.pink}
           />
           <FeatureGridItem 
             icon="stats-chart" 
             title="See Progress" 
-            desc="Weekly reports on your healing."
+            desc="Weekly reports."
             color={colors.yellow}
           />
           <FeatureGridItem 
             icon="grid" 
             title="Quick Track" 
-            desc="Widgets for 1-tap logging."
+            desc="Widgets for logging."
             color={colors.blue}
           />
         </Animated.View>
@@ -88,12 +88,12 @@ export const OnboardingSolutionScreen = () => {
                     <Typography variant="bodyXS" style={{ marginLeft: 4 }}>AI-Powered</Typography>
                 </View>
             </View>
-            <Typography variant="caption" align="center" color={colors.mediumGray} style={{ marginTop: spacing.md }}>
+            <Typography variant="caption" align="center" color={colors.mediumGray} style={{ marginTop: spacing.xs }}>
                 Also includes: FODMAP Alerts • Smart Logging • Medical Insights • Home Widgets
             </Typography>
         </Animated.View>
 
-      </ScrollView>
+      </View>
     </OnboardingScreen>
   );
 };
@@ -102,77 +102,82 @@ const FeatureGridItem = ({ icon, title, desc, color }: any) => (
   <Card style={styles.gridCard} variant="white">
       <IconContainer
         name={icon}
-        size={52}
-        iconSize={26}
+        size={40}
+        iconSize={20}
         color={color}
         variant="solid"
-        style={{ marginBottom: spacing.sm }}
+        style={{ marginBottom: spacing.xs }}
       />
-      <Typography variant="bodyBold" style={{ fontSize: 15 }}>{title}</Typography>
-      <Typography variant="bodyXS" color={colors.mediumGray} style={{ textAlign: 'center', marginTop: 4 }}>{desc}</Typography>
+      <Typography variant="bodyBold" style={{ fontSize: 13 }}>{title}</Typography>
+      <Typography variant="bodyXS" color={colors.mediumGray} style={{ textAlign: 'center', marginTop: 2, fontSize: 10 }}>{desc}</Typography>
   </Card>
 );
 
 const styles = StyleSheet.create({
-  mascotContainer: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-    marginTop: spacing.sm,
+  badgeRow: {
+      flexDirection: 'row',
+      gap: spacing.md,
+      justifyContent: 'center',
   },
-  speechBubble: {
-    backgroundColor: colors.black,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.xl,
-    marginTop: -spacing.md,
-    borderBottomLeftRadius: 0,
-    transform: [{ rotate: '-5deg' }, { translateX: 35 }],
-    zIndex: 10,
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
+  container: {
+    flex: 1,
     justifyContent: 'space-between',
+    paddingBottom: spacing.sm,
+  },
+  extraSection: {
+      backgroundColor: colors.white + '80',
+      borderColor: colors.border,
+      borderRadius: radii.xl,
+      borderWidth: 1,
+      marginTop: spacing.md,
+      padding: spacing.md,
+  },
+  goalCard: {
+    alignItems: 'center',
+    borderRadius: 24,
+    marginTop: spacing.md,
+    padding: spacing.md,
   },
   gridCard: {
-    width: '47.5%', // Slightly less than 50% to account for gap
-    padding: spacing.md,
-    alignItems: 'center',
-    borderRadius: 28,
+    alignItems: 'center', 
+    borderRadius: 20,
+    elevation: 2,
+    padding: spacing.sm,
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
-    elevation: 2,
+    width: '48%',
   },
-  goalCard: {
-    marginTop: spacing.xl,
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+  },
+  mascotContainer: {
     alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: 24,
-  },
-  extraSection: {
-      marginTop: spacing.xl,
-      padding: spacing.lg,
-      backgroundColor: colors.white + '80',
-      borderRadius: radii.xl,
-      borderWidth: 1,
-      borderColor: colors.border,
-  },
-  badgeRow: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      gap: spacing.md,
+    marginBottom: spacing.md,
+    marginTop: 0,
   },
   miniBadge: {
-      flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: colors.white,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 4,
+      borderColor: colors.border,
       borderRadius: radii.full,
       borderWidth: 1,
-      borderColor: colors.border,
+      flexDirection: 'row',
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 4,
+  },
+  speechBubble: {
+    backgroundColor: colors.black,
+    borderBottomLeftRadius: 0,
+    borderRadius: radii.xl,
+    marginTop: -spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    transform: [{ rotate: '-5deg' }, { translateX: 35 }],
+    zIndex: 10,
   }
 });

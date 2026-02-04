@@ -68,13 +68,13 @@ export const OnboardingFeaturesScreen = () => {
 
 const styles = StyleSheet.create({
   featureCard: {
-    flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.lg,
-    borderRadius: 32,
     backgroundColor: colors.white,
-    borderWidth: 1,
     borderColor: colors.border,
+    borderRadius: 32,
+    borderWidth: 1,
+    flexDirection: 'row',
+    padding: spacing.lg,
   },
   iconMargin: {
     marginRight: spacing.lg,

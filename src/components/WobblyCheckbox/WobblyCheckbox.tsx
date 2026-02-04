@@ -143,45 +143,45 @@ export const WobblyCheckbox: React.FC<WobblyCheckboxProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  checkboxOuter: {
-    width: 28,
-    height: 28,
-    borderRadius: radii.lg,
-    borderWidth: 2.5,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.sm,
-  },
   checkboxChecked: {
     backgroundColor: colors.blue,
     borderColor: colors.blue,
   },
-  checkmarkContainer: {
-    justifyContent: 'center',
+  checkboxOuter: {
     alignItems: 'center',
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    borderWidth: 2.5,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
+    ...shadows.sm,
   },
-  labelContainer: {
-    marginLeft: spacing.md,
-    flex: 1,
+  checkmarkContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  container: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    paddingVertical: spacing.sm,
   },
   labelChecked: {
     textDecorationLine: 'line-through',
   },
+  labelContainer: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
   yayBadge: {
+    backgroundColor: colors.yellow,
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     position: 'absolute',
     right: 0,
     top: 0,
-    backgroundColor: colors.yellow,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.full,
     ...shadows.sm,
   },
 });

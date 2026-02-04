@@ -24,7 +24,7 @@ export const PrivacyPolicyScreen: React.FC = () => {
             }
           }}
           size={44}
-          color={colors.blue}
+          color={colors.black}
         />
         <View style={styles.headerTitleContainer}>
           <Typography variant="h2">Privacy Policy</Typography>
@@ -229,7 +229,7 @@ export const PrivacyPolicyScreen: React.FC = () => {
             <Typography variant="body" color={colors.black + '99'}>
               If you have questions about this Privacy Policy or your data, please contact us at:
             </Typography>
-            <Typography variant="bodyBold" color={colors.blue} style={{ marginTop: spacing.sm }}>
+            <Typography variant="bodyBold" color={colors.black} style={{ marginTop: spacing.sm }}>
               privacy@gutbuddy.app
             </Typography>
           </Card>
@@ -249,31 +249,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  content: {
+    paddingBottom: spacing['4xl'],
+    paddingHorizontal: spacing.lg,
+  },
+  footer: {
+    opacity: 0.6,
+    paddingVertical: spacing['3xl'],
+  },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingBottom: spacing.lg,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
   },
   headerTitleContainer: {
     alignItems: 'center',
   },
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing['4xl'],
-  },
   iconSection: {
     alignItems: 'center',
-    paddingVertical: spacing.xl,
     marginBottom: spacing.md,
+    paddingVertical: spacing.xl,
   },
   section: {
     marginBottom: spacing.md,
-  },
-  footer: {
-    paddingVertical: spacing['3xl'],
-    opacity: 0.6,
   },
 });

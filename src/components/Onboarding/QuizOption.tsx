@@ -92,6 +92,20 @@ export const QuizOption: React.FC<QuizOptionProps> = ({
 };
 
 const styles = StyleSheet.create({
+  checkbox: {
+    alignItems: 'center',
+    borderColor: colors.border,
+    borderRadius: radii.full,
+    borderWidth: 2,
+    height: 24,
+    justifyContent: 'center',
+    marginLeft: spacing.md,
+    width: 24,
+  },
+  checkboxSelected: {
+    backgroundColor: colors.pink,
+    borderColor: colors.pink,
+  },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -104,36 +118,22 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     ...shadows.sm,
   },
-  selected: {
-    borderColor: colors.pink,
-    backgroundColor: colors.pink + '08',
-  },
   content: {
-    flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-  },
-  iconMargin: {
-    marginRight: spacing.md,
-  },
-  textContainer: {
+    flexDirection: 'row',
     flex: 1,
   },
   description: {
     marginTop: spacing.xs,
   },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: radii.full,
-    borderWidth: 2,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: spacing.md,
+  iconMargin: {
+    marginRight: spacing.md,
   },
-  checkboxSelected: {
-    backgroundColor: colors.pink,
+  selected: {
+    backgroundColor: colors.pink + '08',
     borderColor: colors.pink,
+  },
+  textContainer: {
+    flex: 1,
   },
 });

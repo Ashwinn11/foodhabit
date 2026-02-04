@@ -118,49 +118,49 @@ export const HelpSupportScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  contactCard: {
+    marginBottom: spacing.md,
+    marginTop: spacing.lg,
+  },
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-  },
-  headerTitleContainer: {
-    alignItems: 'center',
-  },
   content: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing['4xl'],
-  },
-  iconSection: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-    marginBottom: spacing.md,
-  },
-  section: {
-    marginBottom: spacing.sm,
-  },
-  contactCard: {
-    marginTop: spacing.lg,
-    marginBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   emailButton: {
-    backgroundColor: colors.pink,
-    paddingVertical: spacing.md,
-    borderRadius: 12,
     alignItems: 'center',
+    backgroundColor: colors.pink,
+    borderRadius: 12,
+    elevation: 4,
+    paddingVertical: spacing.md,
     shadowColor: colors.pink,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 4,
   },
   footer: {
-    paddingVertical: spacing['3xl'],
     opacity: 0.6,
+    paddingVertical: spacing['3xl'],
+  },
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
+  headerTitleContainer: {
+    alignItems: 'center',
+  },
+  iconSection: {
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    paddingVertical: spacing.xl,
+  },
+  section: {
+    marginBottom: spacing.sm,
   },
 });

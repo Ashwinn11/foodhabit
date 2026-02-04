@@ -248,15 +248,33 @@ export const AuthNavigator = () => {
 };
 
 const styles = StyleSheet.create({
+  centerButton: {
+    alignItems: 'center',
+    backgroundColor: colors.yellow,
+    borderRadius: 32.5,
+    height: 65,
+    justifyContent: 'center',
+    width: 65,
+    ...shadows.md,
+    borderColor: colors.white,
+    borderWidth: 4,
+    shadowColor: colors.black,
+    shadowOpacity: 0.15,
+  },
+  centerButtonWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    top: -15,
+  },
   tabBar: {
     backgroundColor: colors.white,
-    borderTopWidth: 1,
     borderTopColor: colors.border,
-    height: 70,
-    paddingTop: 8,
-    paddingBottom: 8,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    borderTopWidth: 1,
+    height: 70,
+    paddingBottom: 8,
+    paddingTop: 8,
   },
   tabIconContainer: {
     alignItems: 'center',
@@ -265,23 +283,5 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 12,
-  },
-  centerButtonWrapper: {
-    top: -15,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  centerButton: {
-    width: 65,
-    height: 65,
-    borderRadius: 32.5,
-    backgroundColor: colors.yellow,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.md,
-    shadowColor: colors.black,
-    shadowOpacity: 0.15,
-    borderWidth: 4,
-    borderColor: colors.white,
   },
 });

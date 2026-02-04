@@ -65,29 +65,29 @@ export const OnboardingHookScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  iconMargin: {
+    marginRight: spacing.md,
+  },
   mascotContainer: {
     alignItems: 'center',
     marginBottom: spacing.xl,
     marginTop: spacing.md,
   },
-  speechBubble: {
-    backgroundColor: colors.black,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.xl,
-    marginTop: -spacing.md,
-    borderBottomLeftRadius: 0,
-    transform: [{ rotate: '-5deg' }, { translateX: 40 }],
-    zIndex: 10,
-  },
   painCard: {
-    flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: 24, 
+    borderRadius: 24,
+    flexDirection: 'row',
+    padding: spacing.md, 
     // border handled inline for color
   },
-  iconMargin: {
-    marginRight: spacing.md,
+  speechBubble: {
+    backgroundColor: colors.black,
+    borderBottomLeftRadius: 0,
+    borderRadius: radii.xl,
+    marginTop: -spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    transform: [{ rotate: '-5deg' }, { translateX: 40 }],
+    zIndex: 10,
   },
 });

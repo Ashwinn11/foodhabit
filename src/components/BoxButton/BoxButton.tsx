@@ -77,17 +77,17 @@ export const BoxButton: React.FC<BoxButtonProps> = ({
 
 const styles = StyleSheet.create({
   badge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: colors.pink,
-    borderWidth: 1.5,
-    borderColor: colors.white,
-    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.pink,
+    borderColor: colors.white,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    height: 16,
+    justifyContent: 'center',
+    minWidth: 16,
     paddingHorizontal: 2,
+    position: 'absolute',
+    right: -2,
+    top: -2,
   },
 });

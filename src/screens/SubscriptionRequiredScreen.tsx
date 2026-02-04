@@ -359,83 +359,11 @@ const InsightItem: React.FC<{
 );
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    padding: spacing.lg,
-    paddingBottom: spacing['3xl'],
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-    paddingTop: spacing.xl,
-  },
-  lockIconContainer: {
-    marginBottom: spacing.lg,
-  },
-  lockGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.md,
-  },
-  title: {
-    textAlign: 'center',
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    textAlign: 'center',
-    maxWidth: '80%',
-  },
-  progressCard: {
+  cardSubtitle: {
     marginBottom: spacing.lg,
   },
   cardTitle: {
     marginBottom: spacing.xs,
-  },
-  cardSubtitle: {
-    marginBottom: spacing.lg,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -spacing.xs,
-  },
-  statItem: {
-    width: '50%',
-    padding: spacing.xs,
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  statIconMargin: {
-    marginBottom: spacing.sm,
-  },
-  statValue: {
-    marginBottom: spacing.xs,
-  },
-  missingCard: {
-    marginBottom: spacing.lg,
-    backgroundColor: colors.yellow + '40',
-    borderWidth: 2,
-  },
-  featuresList: {
-    marginTop: spacing.sm,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.white + '60',
-    padding: spacing.md,
-    borderRadius: radii.lg,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.black + '10',
-  },
-  featureIconMargin: {
-    marginRight: spacing.sm,
-  },
-  featureText: {
-    flex: 1,
   },
   ctaButton: {
     borderRadius: radii.xl,
@@ -443,62 +371,134 @@ const styles = StyleSheet.create({
     ...shadows.md,
     marginBottom: spacing.lg,
   },
+  ctaButtonDisabled: {
+    opacity: 0.6,
+  },
   ctaButtonPressed: {
     opacity: 0.9,
     transform: [{ scale: 0.98 }],
   },
-  ctaButtonDisabled: {
-    opacity: 0.6,
-  },
   ctaGradient: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'center',
-    paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+  },
+  featureIconMargin: {
+    marginRight: spacing.sm,
+  },
+  featureItem: {
+    alignItems: 'center',
+    backgroundColor: colors.white + '60',
+    borderColor: colors.black + '10',
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    flexDirection: 'row',
+    marginBottom: spacing.sm,
+    padding: spacing.md,
+  },
+  featureText: {
+    flex: 1,
+  },
+  featuresList: {
+    marginTop: spacing.sm,
   },
   footer: {
     alignItems: 'center',
     marginTop: spacing.lg,
   },
-  footerText: {
-    textAlign: 'center',
-    marginBottom: spacing.xs,
-  },
   footerSubtext: {
     textAlign: 'center',
   },
-  insightsCard: {
-    marginBottom: spacing.lg,
-    backgroundColor: colors.pink + '20',
-    borderWidth: 2,
+  footerText: {
+    marginBottom: spacing.xs,
+    textAlign: 'center',
   },
-  insightsList: {
-    marginTop: spacing.sm,
-  },
-  insightItem: {
-    flexDirection: 'row',
+  header: {
     alignItems: 'center',
-    backgroundColor: colors.white + '80',
-    padding: spacing.md,
-    borderRadius: radii.lg,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.black + '10',
-  },
-  insightIconMargin: {
-    marginRight: spacing.md,
+    marginBottom: spacing.xl,
+    paddingTop: spacing.xl,
   },
   insightContent: {
     flex: 1,
   },
-  lockedRow: {
-    flexDirection: 'row',
+  insightIconMargin: {
+    marginRight: spacing.md,
+  },
+  insightItem: {
     alignItems: 'center',
+    backgroundColor: colors.white + '80',
+    borderColor: colors.black + '10',
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    flexDirection: 'row',
+    marginBottom: spacing.sm,
+    padding: spacing.md,
+  },
+  insightsCard: {
+    backgroundColor: colors.pink + '20',
+    borderWidth: 2,
+    marginBottom: spacing.lg,
+  },
+  insightsList: {
+    marginTop: spacing.sm,
+  },
+  lockGradient: {
+    alignItems: 'center',
+    borderRadius: 40,
+    height: 80,
+    justifyContent: 'center',
+    width: 80,
+    ...shadows.md,
+  },
+  lockIconContainer: {
+    marginBottom: spacing.lg,
+  },
+  lockedRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  missingCard: {
+    backgroundColor: colors.yellow + '40',
+    borderWidth: 2,
+    marginBottom: spacing.lg,
+  },
+  progressCard: {
+    marginBottom: spacing.lg,
   },
   redactedContainer: {
     backgroundColor: colors.black + '10', // Slight grey background for the redaction
     borderRadius: 4,
     paddingHorizontal: 4,
+  },
+  scrollContent: {
+    padding: spacing.lg,
+    paddingBottom: spacing['3xl'],
+  },
+  statIconMargin: {
+    marginBottom: spacing.sm,
+  },
+  statItem: {
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    padding: spacing.xs,
+    width: '50%',
+  },
+  statValue: {
+    marginBottom: spacing.xs,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -spacing.xs,
+  },
+  subtitle: {
+    maxWidth: '80%',
+    textAlign: 'center',
+  },
+  title: {
+    marginBottom: spacing.xs,
+    textAlign: 'center',
   }
 });

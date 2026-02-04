@@ -62,39 +62,39 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
 };
 
 const styles = StyleSheet.create({
+  avatar: {
+    alignItems: 'center',
+    backgroundColor: colors.pink,
+    borderRadius: radii.full,
+    height: 40,
+    justifyContent: 'center',
+    marginRight: spacing.md,
+    width: 40,
+  },
   container: {
     backgroundColor: colors.white,
     borderRadius: radii.xl,
-    padding: spacing.lg,
     marginBottom: spacing.md,
+    padding: spacing.lg,
     ...shadows.sm,
   },
   header: {
+    alignItems: 'center',
     flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: spacing.md,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: radii.full,
-    backgroundColor: colors.pink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
   },
   headerContent: {
     flex: 1,
   },
-  stars: {
-    flexDirection: 'row',
-    marginTop: spacing.xs,
+  review: {
+    fontStyle: 'italic',
+    lineHeight: 22,
   },
   star: {
     marginRight: 2,
   },
-  review: {
-    fontStyle: 'italic',
-    lineHeight: 22,
+  stars: {
+    flexDirection: 'row',
+    marginTop: spacing.xs,
   },
 });

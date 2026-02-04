@@ -144,51 +144,51 @@ export const CustomModal: React.FC<CustomModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
-  modalContainer: {
+  button: {
+    flex: 1,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: spacing.md,
     width: '100%',
-    maxWidth: 400,
-    maxHeight: '80%',
-    zIndex: 1,
   },
   card: {
-    padding: spacing.xl,
     alignItems: 'center',
     maxHeight: '100%',
+    padding: spacing.xl,
   },
   iconWrapper: {
-    marginBottom: spacing.lg,
     alignSelf: 'center',
-  },
-  title: {
-    marginBottom: spacing.sm,
-  },
-  messageContainer: {
-    maxHeight: 300,
-    width: '100%',
-    marginBottom: spacing['2xl'],
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.xs,
+    marginBottom: spacing.lg,
   },
   message: {
     color: colors.black + '99',
   },
-  buttonContainer: {
-    flexDirection: 'row',
+  messageContainer: {
+    marginBottom: spacing['2xl'],
+    maxHeight: 300,
     width: '100%',
-    gap: spacing.md,
   },
-  button: {
+  modalContainer: {
+    maxHeight: '80%',
+    maxWidth: 400,
+    width: '100%',
+    zIndex: 1,
+  },
+  overlay: {
+    alignItems: 'center',
     flex: 1,
+    justifyContent: 'center',
+    padding: spacing.xl,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.xs,
+  },
+  title: {
+    marginBottom: spacing.sm,
   },
 });

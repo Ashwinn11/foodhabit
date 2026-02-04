@@ -27,15 +27,15 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, style }) => 
 
 const styles = StyleSheet.create({
   container: {
-    height: 6,
     backgroundColor: colors.black + '10',
     borderRadius: radii.full,
+    height: 6,
     overflow: 'hidden',
     width: '100%',
   },
   fill: {
-    height: '100%',
     backgroundColor: colors.pink,
     borderRadius: radii.full,
+    height: '100%',
   },
 });

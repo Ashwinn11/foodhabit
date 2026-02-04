@@ -135,31 +135,31 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     borderRadius: radii.xl,
-    paddingVertical: spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'center',
     paddingHorizontal: spacing.xl,
-  },
-  sizeSm: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.lg,
+    paddingVertical: spacing.md,
   },
   sizeLg: {
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing['2xl'],
     borderRadius: radii['2xl'],
+    paddingHorizontal: spacing['2xl'],
+    paddingVertical: spacing.lg,
+  },
+  sizeSm: {
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   text: {
     fontFamily: fonts.bodyBold,
     fontSize: fontSizes.md,
   },
-  textSm: {
-    fontSize: fontSizes.sm,
-  },
   textLg: {
     fontSize: fontSizes.lg,
+  },
+  textSm: {
+    fontSize: fontSizes.sm,
   },
 });

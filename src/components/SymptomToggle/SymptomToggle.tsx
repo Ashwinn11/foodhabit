@@ -93,27 +93,27 @@ export const SymptomToggle: React.FC<SymptomToggleProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    backgroundColor: colors.white,
-    borderRadius: radii.full,
-    borderWidth: 2,
-    borderColor: colors.border,
-    marginRight: spacing.sm,
-    marginBottom: spacing.sm,
-    ...shadows.sm,
-  },
-  icon: {
-    marginRight: spacing.sm,
-  },
   activeDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: colors.white, // White dot for contrast on colored background
     marginLeft: spacing.sm,
+  },
+  container: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderRadius: radii.full,
+    borderWidth: 2,
+    flexDirection: 'row',
+    marginBottom: spacing.sm,
+    marginRight: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    ...shadows.sm,
+  },
+  icon: {
+    marginRight: spacing.sm,
   },
 });

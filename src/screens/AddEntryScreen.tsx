@@ -295,41 +295,47 @@ export const AddEntryScreen: React.FC<AddEntryScreenProps> = ({ navigation }) =>
 };
 
 const styles = StyleSheet.create({
+  bottomPadding: {
+    height: 100,
+  },
+  checkbox: {
+    alignItems: 'center',
+    borderColor: colors.black + '20',
+    borderRadius: 6,
+    borderWidth: 2,
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
+  },
+  checkboxActive: {
+    backgroundColor: colors.pink,
+    borderColor: colors.pink,
+  },
+  checkboxRow: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  checkboxRowActive: {
+    backgroundColor: colors.pink + '05',
+    borderColor: colors.pink,
+  },
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
+  foodTag: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  titleContainer: {
-    alignItems: 'center',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.lg,
-  },
-  symptomsSection: {
-    marginVertical: spacing.lg,
-  },
-  symptomsGrid: {
+    backgroundColor: colors.pink + '15',
+    borderRadius: radii.full,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  notesSection: {
-    marginVertical: spacing.lg,
-  },
-  inputTitle: {
-    fontSize: fontSizes.sm,
-    fontFamily: fonts.bodyBold,
-    color: colors.black,
-    marginBottom: spacing.sm,
-    marginLeft: 4,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
   foodTags: {
     flexDirection: 'row',
@@ -337,31 +343,22 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.md,
   },
-  foodTag: {
-    flexDirection: 'row',
+  header: {
     alignItems: 'center',
-    backgroundColor: colors.pink + '15',
-    borderRadius: radii.full,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    gap: spacing.xs,
-  },
-  urgencyButton: {
-    flex: 1,
-    height: 44,
-    borderRadius: radii.xl,
-    backgroundColor: colors.lightGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  urgencyButtonActive: {
-    // handled inline
-  },
-  painSliderContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  inputTitle: {
+    color: colors.black,
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSizes.sm,
+    marginBottom: spacing.sm,
+    marginLeft: 4,
+  },
+  notesSection: {
+    marginVertical: spacing.lg,
   },
   painDot: {
     width: 24,
@@ -374,43 +371,46 @@ const styles = StyleSheet.create({
   painDotActive: {
     // handled inline
   },
-  checkboxRow: {
+  painSliderContainer: {
+    alignItems: 'center',
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.md,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xs,
   },
-  checkboxRowActive: {
-    borderColor: colors.pink,
-    backgroundColor: colors.pink + '05',
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
   },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: colors.black + '20',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxActive: {
-    backgroundColor: colors.pink,
-    borderColor: colors.pink,
-  },
-  bottomPadding: {
-    height: 100,
+  scrollView: {
+    flex: 1,
   },
   submitContainer: {
-    position: 'absolute',
+    backgroundColor: colors.background,
     bottom: 0,
     left: 0,
-    right: 0,
     padding: spacing.lg,
     paddingBottom: spacing['4xl'],
-    backgroundColor: colors.background, // or transparent with gradient
+    position: 'absolute',
+    right: 0, // or transparent with gradient
+  },
+  symptomsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  symptomsSection: {
+    marginVertical: spacing.lg,
+  },
+  titleContainer: {
+    alignItems: 'center',
+  },
+  urgencyButton: {
+    alignItems: 'center',
+    backgroundColor: colors.lightGray,
+    borderRadius: radii.xl,
+    flex: 1,
+    height: 44,
+    justifyContent: 'center',
+  },
+  urgencyButtonActive: {
+    // handled inline
   },
 });

@@ -146,19 +146,19 @@ export const GlobalToast: React.FC = () => {
 
     container: {
 
-      position: 'absolute',
-
-      top: 0,
-
       alignSelf: 'center',
-
-      paddingVertical: spacing.md,
-
-      paddingHorizontal: spacing.lg,
 
       borderRadius: radii.xl,
 
       borderWidth: 2,
+
+      paddingHorizontal: spacing.lg,
+
+      paddingVertical: spacing.md,
+
+      position: 'absolute',
+
+      top: 0,
 
       zIndex: 9999,
 
@@ -168,9 +168,9 @@ export const GlobalToast: React.FC = () => {
 
     content: {
 
-      flexDirection: 'row',
-
       alignItems: 'center',
+
+      flexDirection: 'row',
 
       justifyContent: 'center',
 
@@ -184,11 +184,11 @@ export const GlobalToast: React.FC = () => {
 
     message: {
 
+      color: colors.white,
+
       fontFamily: fonts.bodyBold,
 
       fontSize: fontSizes.md,
-
-      color: colors.white,
 
       textAlign: 'center',
 

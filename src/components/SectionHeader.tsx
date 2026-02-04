@@ -62,27 +62,27 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
 };
 
 const styles = StyleSheet.create({
+  actionText: {
+    fontFamily: fonts.bodyBold,
+  },
+  badge: {
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginLeft: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+  },
   container: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: spacing.lg,
   },
   left: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     flex: 1,
-  },
-  badge: {
-    backgroundColor: colors.white,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginLeft: spacing.sm,
-  },
-  actionText: {
-    fontFamily: fonts.bodyBold,
   },
 });

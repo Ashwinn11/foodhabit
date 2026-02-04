@@ -50,11 +50,11 @@ export const StatCard: React.FC<StatCardProps> = ({ label, value, unit, color, i
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: radii['2xl'],
-    padding: spacing.md,
     alignItems: 'center',
+    borderRadius: radii['2xl'],
     justifyContent: 'center',
     minHeight: 95,
+    padding: spacing.md,
     ...shadows.sm,
     borderWidth: 2.5, // Increased for more 'pop'
   },
@@ -62,21 +62,21 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   label: {
-    textTransform: 'uppercase',
     letterSpacing: 1,
-    textAlign: 'center',
     marginBottom: 2,
     opacity: 0.9,
-  },
-  valueRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginTop: spacing.xs,
+    textAlign: 'center',
+    textTransform: 'uppercase',
   },
   unit: {
-    fontSize: 11,
-    marginLeft: 2,
     alignSelf: 'flex-end',
+    fontSize: 11,
     marginBottom: 4,
+    marginLeft: 2,
+  },
+  valueRow: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    marginTop: spacing.xs,
   },
 });

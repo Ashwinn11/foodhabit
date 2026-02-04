@@ -111,8 +111,8 @@ export class HealthScore {
         switch (this._grade) {
             case 'Excellent': return '#22c55e'; // green (Thriving)
             case 'Good': return '#84cc16';      // lime (Vibing)
-            case 'Fair': return '#f59e0b';      // amber (Mid)
-            case 'Sus': return '#f97316';       // orange (Sus)
+            case 'Fair': return '#D97706';      // darker amber
+            case 'Sus': return '#EA580C';       // darker orange
             case 'Poor': return '#ef4444';      // red (SOS)
         }
     }

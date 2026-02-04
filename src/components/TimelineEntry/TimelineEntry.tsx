@@ -129,41 +129,45 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ item, style }) => 
 };
 
 const styles = StyleSheet.create({
+  bristolBadge: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
   container: {
     flexDirection: 'row',
     marginBottom: spacing.lg,
-  },
-  timelineColumn: {
-    alignItems: 'center',
-    width: 50,
-  },
-  line: {
-    position: 'absolute',
-    top: -spacing.lg,
-    bottom: -spacing.lg,
-    width: 2,
-    backgroundColor: colors.border,
-    zIndex: 0,
   },
   contentCard: {
     flex: 1,
     marginLeft: spacing.md,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
   detailsRow: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     gap: spacing.sm,
   },
-  bristolBadge: {
-    paddingHorizontal: 8,
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  line: {
+    backgroundColor: colors.border,
+    bottom: -spacing.lg,
+    position: 'absolute',
+    top: -spacing.lg,
+    width: 2,
+    zIndex: 0,
+  },
+  tagBadge: {
+    backgroundColor: colors.pink + '15',
+    borderColor: colors.pink + '30',
+    borderRadius: 4,
+    borderWidth: 0.5,
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 8,
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -171,12 +175,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginTop: spacing.xs,
   },
-  tagBadge: {
-    backgroundColor: colors.pink + '15',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 0.5,
-    borderColor: colors.pink + '30',
+  timelineColumn: {
+    alignItems: 'center',
+    width: 50,
   },
 });

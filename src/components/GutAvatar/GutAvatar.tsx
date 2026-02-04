@@ -90,9 +90,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ring: {
-    position: 'absolute',
-    borderWidth: 3,
     backgroundColor: 'transparent',
+    borderWidth: 3,
     opacity: 0.3,
+    position: 'absolute',
   },
 });

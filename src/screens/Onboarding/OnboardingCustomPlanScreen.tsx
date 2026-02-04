@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { OnboardingScreen } from '../../components/Onboarding';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useNavigation } from '@react-navigation/native';
@@ -97,21 +97,19 @@ export const OnboardingCustomPlanScreen = () => {
       onBack={handleBack}
       nextLabel="Start My Transformation"
     >
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
-        <Animated.View entering={FadeIn} layout={Layout}>
+      <View style={styles.container}>
+        <Animated.View entering={FadeIn} layout={Layout} style={styles.content}>
           
           <Card style={styles.summaryCard}>
-              <Typography variant="bodyBold" style={{marginBottom: spacing.xs}}>Based on your profile:</Typography>
-              <View style={styles.bulletItem}><Ionicons name="ellipse" size={8} color={colors.pink} /><Typography variant="bodySmall" style={{marginLeft: 8}}>Score: {calculatedScore} (Goal: 85+)</Typography></View>
-              <View style={styles.bulletItem}><Ionicons name="ellipse" size={8} color={colors.pink} /><Typography variant="bodySmall" style={{marginLeft: 8}}>Optimized for sensitive digestion</Typography></View>
-              <View style={styles.bulletItem}><Ionicons name="ellipse" size={8} color={colors.pink} /><Typography variant="bodySmall" style={{marginLeft: 8}}>Focus on symptom reduction</Typography></View>
+              <View style={styles.bulletRow}>
+                  <View style={styles.bulletItem}><Ionicons name="ellipse" size={6} color={colors.pink} /><Typography variant="bodySmall" style={styles.bulletText}>Score: {calculatedScore} (Goal: 85+)</Typography></View>
+                  <View style={styles.bulletItem}><Ionicons name="ellipse" size={6} color={colors.pink} /><Typography variant="bodySmall" style={styles.bulletText}>Sensitive digestion</Typography></View>
+                  <View style={styles.bulletItem}><Ionicons name="ellipse" size={6} color={colors.pink} /><Typography variant="bodySmall" style={styles.bulletText}>Symptom reduction</Typography></View>
+              </View>
           </Card>
 
           {/* Trigger 2: Price Anchoring (Cost of Inaction) */}
           <View style={styles.anchorContainer}>
-            <Typography variant="caption" color={colors.mediumGray} align="center" style={{ marginBottom: spacing.md }}>
-              THE COST OF INACTION
-            </Typography>
             <View style={styles.anchorGrid}>
                 <AnchorItem label="GI Specialist" cost="$350+" color={colors.mediumGray} />
                 <AnchorItem label="Trial & Error" cost="Years" color={colors.mediumGray} />
@@ -121,141 +119,160 @@ export const OnboardingCustomPlanScreen = () => {
 
           <Card style={styles.planCard}>
             <View style={styles.planHeader}>
-                <Typography variant="h3" color={colors.black}>90-Day Gut Reset</Typography>
+                <Typography variant="h3" color={colors.black} style={{ fontSize: 20 }}>90-Day Gut Reset</Typography>
             </View>
             
             <View style={styles.divider} />
             
-            <TimelineItem title="Phase 1: CALM" duration="Week 1-2" desc="Reduce inflammation & find triggers." color={colors.pink} />
-            <TimelineItem title="Phase 2: RESTORE" duration="Week 3-6" desc="Rebuild bacteria & optimize hydration." color={colors.green} />
-            <TimelineItem title="Phase 3: THRIVE" duration="Week 7-12" desc="Maintain progress & fine-tune diet." color={colors.blue} isLast />
+            <View style={styles.timeline}>
+                <TimelineItem title="Phase 1: CALM" duration="Week 1-2" desc="Reduce inflammation & find triggers." color={colors.pink} />
+                <TimelineItem title="Phase 2: RESTORE" duration="Week 3-6" desc="Rebuild bacteria & optimize hydration." color={colors.green} />
+                <TimelineItem title="Phase 3: THRIVE" duration="Week 7-12" desc="Maintain progress & fine-tune diet." color={colors.blue} isLast />
+            </View>
           </Card>
 
           <View style={styles.projectionContainer}>
-               <Typography variant="bodyBold" align="center" style={{marginBottom: spacing.sm}}>Expected Improvement</Typography>
+               <Typography variant="bodyBold" align="center" style={{marginBottom: spacing.xs, fontSize: 13}}>Expected Improvement</Typography>
                <View style={styles.projectionBar}>
                    <View style={{alignItems: 'center'}}>
-                       <Typography variant="h3" color={colors.pink}>{calculatedScore}</Typography>
-                       <Typography variant="caption">Today</Typography>
+                       <Typography variant="h3" color={colors.pink} style={{fontSize: 20}}>{calculatedScore}</Typography>
+                       <Typography variant="caption" style={{fontSize: 10}}>Today</Typography>
                    </View>
-                   <Ionicons name="arrow-forward" size={24} color={colors.mediumGray} />
+                   <Ionicons name="arrow-forward" size={16} color={colors.mediumGray} />
                    <View style={{alignItems: 'center'}}>
-                       <Typography variant="h3" color={colors.green}>85+</Typography>
-                       <Typography variant="caption">12 Weeks</Typography>
+                       <Typography variant="h3" color={colors.green} style={{fontSize: 20}}>85+</Typography>
+                       <Typography variant="caption" style={{fontSize: 10}}>12 Weeks</Typography>
                    </View>
                </View>
           </View>
         </Animated.View>
-      </ScrollView>
+      </View>
     </OnboardingScreen>
   );
 };
 
 const TimelineItem = ({ title, duration, desc, color, isLast }: any) => (
-  <View style={{ flexDirection: 'row', marginBottom: isLast ? 0 : spacing.lg }}>
-    <View style={{ alignItems: 'center', width: 24, marginRight: spacing.md }}>
+  <View style={{ flexDirection: 'row', marginBottom: isLast ? 0 : spacing.sm }}>
+    <View style={{ alignItems: 'center', width: 20, marginRight: spacing.sm }}>
       <View style={[styles.timelineDot, { backgroundColor: color }]} />
       {!isLast && <View style={[styles.timelineLine, { backgroundColor: color + '30' }]} />}
     </View>
     <View style={{ flex: 1 }}>
-      <Typography variant="bodyBold">{title} <Typography variant="caption" color={color}>{duration}</Typography></Typography>
-      <Typography variant="caption" color={colors.black + '99'}>{desc}</Typography>
+      <Typography variant="bodyBold" style={{ fontSize: 14 }}>{title} <Typography variant="caption" color={colors.black} style={{ fontSize: 12 }}>{duration}</Typography></Typography>
+      <Typography variant="caption" color={colors.black + '99'} style={{ fontSize: 12 }}>{desc}</Typography>
     </View>
   </View>
 );
 
 const AnchorItem = ({ label, cost, color, highlighted = false }: any) => (
   <View style={[styles.anchorItem, highlighted && styles.anchorHighlighted]}>
-    <Typography variant="bodyXS" color={highlighted ? colors.white : colors.mediumGray}>{label}</Typography>
-    <Typography variant="bodyBold" color={highlighted ? colors.white : color} style={{ fontSize: 16 }}>{cost}</Typography>
+    <Typography variant="bodyXS" color={highlighted ? colors.white : colors.mediumGray} style={{ fontSize: 10 }}>{label}</Typography>
+    <Typography variant="bodyBold" color={highlighted ? colors.white : color} style={{ fontSize: 13 }}>{cost}</Typography>
   </View>
 );
 
 const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  loadingText: {
-    marginTop: spacing.xl,
-    marginBottom: spacing.xs,
-  },
-  summaryCard: {
-      padding: spacing.md,
-      marginBottom: spacing.md,
-      backgroundColor: colors.background,
-  },
-  bulletItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 4,
-  },
   anchorContainer: {
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.md,
     backgroundColor: colors.white + '80',
-    borderRadius: 24,
-    marginBottom: spacing.xl,
+    borderRadius: 16,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    // marginBottom: spacing.sm,
   },
   anchorGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: spacing.sm,
-  },
-  anchorItem: {
-    flex: 1,
-    padding: spacing.sm,
-    alignItems: 'center',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
+    justifyContent: 'space-between',
   },
   anchorHighlighted: {
     backgroundColor: colors.green,
     borderColor: colors.green,
   },
+  anchorItem: {
+    alignItems: 'center',
+    borderColor: colors.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    flex: 1,
+    padding: spacing.xs,
+  },
+  bulletItem: {
+      alignItems: 'center',
+      flexDirection: 'row',
+  },
+  bulletRow: {
+      flexDirection: 'column',
+      gap: 2,
+  },
+  bulletText: {
+      fontSize: 12,
+      marginLeft: 6,
+  },
+  container: {
+      flex: 1,
+  },
+  content: {
+      flex: 1,
+      justifyContent: 'space-between',
+      paddingBottom: spacing.sm,
+  },
+  divider: {
+    backgroundColor: colors.border,
+    height: 1,
+    marginBottom: spacing.md,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    padding: spacing.xl,
+  },
+  loadingText: {
+    marginBottom: spacing.xs,
+    marginTop: spacing.xl,
+  },
   planCard: {
-    padding: spacing.lg,
     backgroundColor: colors.white,
-    borderRadius: 32,
+    borderRadius: 24,
+    elevation: 4,
+    padding: spacing.md,
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
-    elevation: 4,
   },
   planHeader: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm,
   },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginBottom: spacing.lg,
+  projectionBar: {
+      alignItems: 'center',
+      backgroundColor: colors.white,
+      borderRadius: radii.lg,
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      padding: spacing.sm,
+  },
+  projectionContainer: {
+    //   marginTop: spacing.sm,
+  },
+  summaryCard: {
+      backgroundColor: colors.background,
+      padding: spacing.sm,
+  },
+  timeline: {
+    gap: 2,
   },
   timelineDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    borderRadius: 5,
+    height: 10,
+    width: 10,
     zIndex: 1,
   },
   timelineLine: {
+    bottom: -spacing.md,
+    left: 4,
     position: 'absolute',
-    top: 14,
+    top: 10,
     width: 2,
-    bottom: -spacing.lg,
-    left: 6,
-  },
-  projectionContainer: {
-      marginTop: spacing.xl,
-  },
-  projectionBar: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      alignItems: 'center',
-      backgroundColor: colors.white,
-      padding: spacing.md,
-      borderRadius: radii.lg,
   }
 });

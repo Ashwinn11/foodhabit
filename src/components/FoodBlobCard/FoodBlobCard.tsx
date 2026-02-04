@@ -113,37 +113,37 @@ export const FoodBlobCard: React.FC<FoodBlobCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
+    alignItems: 'center',
     height: '100%',
-    alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  statusBadge: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: '100%',
   },
   infoContainer: {
     alignItems: 'center',
-    width: '100%',
     marginBottom: spacing.xs,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
+    width: '100%',
   },
   periodBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    alignItems: 'center',
     borderRadius: 4,
     justifyContent: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  statusBadge: {
     alignItems: 'center',
+    borderRadius: 12,
+    height: 24,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: spacing.md,
+    top: spacing.md,
+    width: 24,
+  },
+  timeRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+    justifyContent: 'center',
   },
 });

@@ -230,7 +230,7 @@ export const InsightsScreen: React.FC = () => {
             <SectionHeader 
               title="This Week's Stats" 
               icon="calendar" 
-              iconColor={colors.blue}
+              iconColor={colors.black}
             />
             <View style={styles.statsRow}>
               <StatCard
@@ -327,7 +327,7 @@ export const InsightsScreen: React.FC = () => {
                         <View style={{ marginTop: spacing.xs, padding: spacing.xs, backgroundColor: colors.blue + '10', borderRadius: spacing.sm }}>
                           {enriched.fodmapIssues && (
                             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                <IconContainer name="flask" size={14} color={colors.blue} variant="transparent" />
+                                <IconContainer name="flask" size={14} color={colors.black} variant="transparent" />
                                 <Typography variant="bodyXS" color={colors.black} style={{ marginLeft: 4, flex: 1 }}>
                                   Likely Cause: <Typography variant="bodyXS" style={{ fontFamily: 'Fredoka-SemiBold' }}>High {enriched.fodmapIssues.categories.join(', ')}</Typography>
                                   {enriched.culprits && enriched.culprits.length > 0 && (
@@ -338,7 +338,7 @@ export const InsightsScreen: React.FC = () => {
                           )}
                           {enriched.alternatives && (
                             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                                <IconContainer name="leaf" size={14} color={colors.green || colors.blue} variant="transparent" />
+                                <IconContainer name="leaf" size={14} color={colors.black} variant="transparent" />
                                 <Typography variant="bodyXS" color={colors.black} style={{ marginLeft: 4, flex: 1 }}>
                                   Try instead: {enriched.alternatives.slice(0, 3).join(', ')}
                                 </Typography>
@@ -546,27 +546,104 @@ export const InsightsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  bottomPadding: {
+    height: 100,
+  },
+  chartBar: {
+    borderRadius: 6,
+    marginBottom: 4,
+    width: 12,
+  },
+  chartColumn: {
+    alignItems: 'center',
+    width: '12%',
+  },
+  chartContainer: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    height: 80,
+    justifyContent: 'space-between',
+    paddingTop: spacing.sm,
+  },
+  confidenceBadge: {
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
   container: {
     flex: 1,
-  },
-  header: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  subtitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.xs,
   },
   content: {
     flex: 1,
     paddingHorizontal: spacing.lg,
   },
-  overviewCard: {
-    flexDirection: 'row',
+  emptyCard: {
     alignItems: 'center',
+    marginBottom: spacing['2xl'],
+    padding: spacing['2xl'],
+  },
+  exportCard: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  exportSection: {
+    marginVertical: spacing.md,
+  },
+  fodmapBadge: {
+    backgroundColor: colors.blue,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  fodmapInfo: {
+    alignItems: 'flex-start',
+    backgroundColor: colors.white + 'CC',
+    borderRadius: spacing.sm,
+    flexDirection: 'row',
+    marginTop: spacing.sm,
+    padding: spacing.sm,
+  },
+  header: {
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
+  moodBar: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: spacing.sm,
+  },
+  moodBarFill: {
+    borderRadius: 6,
+    height: '100%',
+  },
+  moodBarTrack: {
+    backgroundColor: colors.pink + '20',
+    borderRadius: 6,
+    flex: 1,
+    height: 12,
+    marginHorizontal: spacing.sm,
+    overflow: 'hidden',
+  },
+  moodBreakdown: {
+    // Styling handled by Card component
+  },
+  moodLabel: {
+    textTransform: 'capitalize',
+    width: 80,
+  },
+  overviewCard: {
+    alignItems: 'center',
+    flexDirection: 'row',
     marginBottom: spacing.xl,
+  },
+  overviewDivider: {
+    backgroundColor: colors.border,
+    height: 40,
+    width: 1,
+  },
+  overviewStat: {
+    alignItems: 'center',
   },
   overviewStats: {
     flex: 1,
@@ -574,122 +651,45 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginLeft: spacing.lg,
   },
-  overviewStat: {
-    alignItems: 'center',
-  },
-  overviewDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: colors.border,
-  },
   section: {
     marginBottom: spacing.xl,
+  },
+  statCard: {
+    flex: 1,
   },
   statsRow: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  statCard: {
-    flex: 1,
-  },
-  moodBreakdown: {
-    // Styling handled by Card component
-  },
-  moodBar: {
-    flexDirection: 'row',
+  subtitleRow: {
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    flexDirection: 'row',
+    marginTop: spacing.xs,
   },
-  moodLabel: {
-    width: 80,
-    textTransform: 'capitalize',
-  },
-  moodBarTrack: {
-    flex: 1,
-    height: 12,
-    backgroundColor: colors.pink + '20',
-    borderRadius: 6,
-    overflow: 'hidden',
-    marginHorizontal: spacing.sm,
-  },
-  moodBarFill: {
-    height: '100%',
-    borderRadius: 6,
+  symptomCard: {
+    alignItems: 'center',
+    width: '48%',
   },
   symptomGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  symptomCard: {
-    width: '48%',
-    alignItems: 'center',
-  },
-  emptyCard: {
-    padding: spacing['2xl'],
-    alignItems: 'center',
-    marginBottom: spacing['2xl'],
-  },
-  chartContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: 80,
-    paddingTop: spacing.sm,
-  },
-  chartColumn: {
-    alignItems: 'center',
-    width: '12%',
-  },
-  chartBar: {
-    width: 12,
-    borderRadius: 6,
-    marginBottom: 4,
-  },
-  triggerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    padding: spacing.sm,
-    borderRadius: spacing.sm,
-    marginBottom: spacing.xs,
+  triggerBadge: {
+    backgroundColor: colors.pink,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   triggerDetails: {
     flex: 1,
   },
-  triggerBadge: {
-    backgroundColor: colors.pink,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  fodmapBadge: {
-    backgroundColor: colors.blue,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  fodmapInfo: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: colors.white + 'CC',
-    padding: spacing.sm,
-    borderRadius: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  confidenceBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  exportSection: {
-    marginVertical: spacing.md,
-  },
-  exportCard: {
-    flexDirection: 'row',
+  triggerItem: {
     alignItems: 'center',
-  },
-  bottomPadding: {
-    height: 100,
+    backgroundColor: colors.white,
+    borderRadius: spacing.sm,
+    flexDirection: 'row',
+    marginBottom: spacing.xs,
+    padding: spacing.sm,
   },
 });

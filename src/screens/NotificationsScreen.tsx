@@ -73,7 +73,7 @@ export const NotificationsScreen = () => {
 
             {notifications.length > 0 && (
                 <Pressable onPress={markAllAsRead} style={styles.markAll}>
-                    <Typography variant="bodySmall" color={colors.blue}>Mark all as read</Typography>
+                    <Typography variant="bodySmall" color={colors.black}>Mark all as read</Typography>
                 </Pressable>
             )}
 
@@ -143,65 +143,65 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: spacing.lg,
-        paddingTop: spacing.md,
-        paddingBottom: spacing.sm,
-    },
-    title: {
-        flex: 1,
-        textAlign: 'center',
-    },
-    markAll: {
-        alignSelf: 'center',
-        paddingVertical: spacing.xs,
-        marginBottom: spacing.sm,
-    },
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingHorizontal: spacing.lg,
-        paddingBottom: 100,
-    },
-    notificationCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: spacing.md,
-        borderRadius: 24,
-    },
-    unreadCard: {
-        backgroundColor: colors.blue + '05',
-        borderColor: colors.blue + '20',
-    },
-    icon: {
-        marginRight: spacing.md,
-    },
     content: {
         flex: 1,
     },
     contentHeader: {
+        alignItems: 'center',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
         marginBottom: 2,
-    },
-    notiTitle: {
-        fontSize: 15,
-    },
-    unreadDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: colors.blue,
-        marginLeft: spacing.sm,
     },
     emptyState: {
         alignItems: 'center',
         justifyContent: 'center',
         paddingTop: 100,
+    },
+    header: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingBottom: spacing.sm,
+        paddingHorizontal: spacing.lg,
+        paddingTop: spacing.md,
+    },
+    icon: {
+        marginRight: spacing.md,
+    },
+    markAll: {
+        alignSelf: 'center',
+        marginBottom: spacing.sm,
+        paddingVertical: spacing.xs,
+    },
+    notiTitle: {
+        fontSize: 15,
+    },
+    notificationCard: {
+        alignItems: 'center',
+        borderRadius: 24,
+        flexDirection: 'row',
+        marginBottom: spacing.md,
+    },
+    scrollContent: {
+        paddingBottom: 100,
+        paddingHorizontal: spacing.lg,
+    },
+    scrollView: {
+        flex: 1,
+    },
+    title: {
+        flex: 1,
+        textAlign: 'center',
+    },
+    unreadCard: {
+        backgroundColor: colors.blue + '05',
+        borderColor: colors.blue + '20',
+    },
+    unreadDot: {
+        backgroundColor: colors.blue,
+        borderRadius: 4,
+        height: 8,
+        marginLeft: spacing.sm,
+        width: 8,
     }
 });
