@@ -54,7 +54,7 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ item, style }) => 
         <Card variant="white" style={styles.contentCard} padding="lg">
           <View style={styles.header}>
             <Typography variant="h3" style={{ flex: 1 }}>{item.name}</Typography>
-            <Typography variant="bodyXS" color={saturatedColor === colors.yellow ? colors.black : saturatedColor} style={{ fontFamily: 'Chewy' }}>
+            <Typography variant="bodyXS" color={saturatedColor === colors.yellow ? colors.black : saturatedColor} style={{ fontFamily: 'Fredoka-SemiBold' }}>
               {formatTime(item.timestamp)}
             </Typography>
           </View>
@@ -95,7 +95,7 @@ export const TimelineEntry: React.FC<TimelineEntryProps> = ({ item, style }) => 
             <Typography variant="h3">Poop Log</Typography>
             <IconContainer name="water" size={20} iconSize={14} color={colors.pink} variant="transparent" shadow={false} />
           </View>
-          <Typography variant="bodyXS" color={colors.pink} style={{ fontFamily: 'Chewy' }}>
+          <Typography variant="bodyXS" color={colors.pink} style={{ fontFamily: 'Fredoka-SemiBold' }}>
             {formatTime(item.timestamp)}
           </Typography>
         </View>

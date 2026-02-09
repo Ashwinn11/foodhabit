@@ -6,10 +6,11 @@ import { create } from 'zustand';
 import { useGutStore } from './useGutStore';
 
 export interface GutCheckAnswers {
-    stoolConsistency?: number; // 0-2 (Hard, Normal, Loose) -> Mapped to score
-    symptomFrequency?: number; // 0-3 (Rarely...Daily)
-    bowelRegularity?: number;  // 0-2 (Regular...Unpredictable)
-    medicalFlags?: boolean;    // true/false
+    selectedGoal?: string;      // User's #1 gut goal
+    stoolConsistency?: number;  // 0-4 (Hard...Watery) -> Bristol Scale
+    symptomFrequency?: number;  // 0-2 (Rarely...Daily)
+    bowelRegularity?: number;   // 0-2 (Regular...Unpredictable)
+    medicalFlags?: boolean;     // true/false
 }
 
 interface OnboardingState {
@@ -33,7 +34,7 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
     gutCheckAnswers: {},
     calculatedScore: 0,
     currentStep: 0,
-    totalSteps: 8, // Quiz + Results + Symptoms + Solution + Reviews + Features + Commitment + Plan
+    totalSteps: 11, // Welcome + Goal + Symptoms + ValueInterrupt + Stool + Regularity + Medical + Processing + Results + Value + Paywall
 
     setGutCheckAnswer: (key, value) => {
         set((state) => ({

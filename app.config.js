@@ -29,12 +29,21 @@ module.exports = {
       entitlements: {
         "com.apple.security.application-groups": ["group.com.foodhabit.app"]
       },
-      appleTeamId: "PVQK77DQWL"
+      appleTeamId: "PVQK77DQWL",
+      googleServicesFile: "./GoogleService-Info.plist"
     },
     plugins: [
       "expo-apple-authentication",
       "expo-web-browser",
-      "@bacons/apple-targets"
+      "@bacons/apple-targets",
+      "@react-native-firebase/app",
+      ["expo-build-properties", {
+        ios: {
+          useFrameworks: "static",
+          forceStaticLinking: ["RNFBApp", "RNFBAnalytics"]
+        }
+      }],
+      "./plugins/withNodeModulesSymlink"
     ],
     extra: {
       eas: {

@@ -1,14 +1,17 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { 
+import {
+  OnboardingWelcomeScreen,
+  OnboardingGoalScreen,
   OnboardingQuizScreen,
+  OnboardingValueInterruptScreen,
+  OnboardingStoolScreen,
+  OnboardingRegularityScreen,
+  OnboardingMedicalScreen,
+  OnboardingProcessingScreen,
   OnboardingResultsScreen,
-  OnboardingSymptomsScreen,
-  OnboardingSolutionScreen,
-  OnboardingReviewsScreen,
-  OnboardingFeaturesScreen,
-  OnboardingCommitmentScreen,
-  OnboardingCustomPlanScreen,
+  OnboardingValueScreen,
+  OnboardingPaywallScreen,
 } from '../screens/Onboarding';
 import { colors } from '../theme';
 
@@ -17,21 +20,24 @@ const Stack = createNativeStackNavigator();
 export const OnboardingNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName="OnboardingQuiz"
+      initialRouteName="OnboardingWelcome"
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.background },
         animation: 'slide_from_right',
       }}
     >
-      <Stack.Screen name="OnboardingQuiz" component={OnboardingQuizScreen} />
+      <Stack.Screen name="OnboardingWelcome" component={OnboardingWelcomeScreen} />
+      <Stack.Screen name="OnboardingGoal" component={OnboardingGoalScreen} />
+      <Stack.Screen name="OnboardingSymptoms" component={OnboardingQuizScreen} />
+      <Stack.Screen name="OnboardingValueInterrupt" component={OnboardingValueInterruptScreen} />
+      <Stack.Screen name="OnboardingStool" component={OnboardingStoolScreen} />
+      <Stack.Screen name="OnboardingRegularity" component={OnboardingRegularityScreen} />
+      <Stack.Screen name="OnboardingMedical" component={OnboardingMedicalScreen} />
+      <Stack.Screen name="OnboardingProcessing" component={OnboardingProcessingScreen} />
       <Stack.Screen name="OnboardingResults" component={OnboardingResultsScreen} />
-      <Stack.Screen name="OnboardingSymptoms" component={OnboardingSymptomsScreen} />
-      <Stack.Screen name="OnboardingSolution" component={OnboardingSolutionScreen} />
-      <Stack.Screen name="OnboardingReviews" component={OnboardingReviewsScreen} />
-      <Stack.Screen name="OnboardingFeatures" component={OnboardingFeaturesScreen} />
-      <Stack.Screen name="OnboardingCommitment" component={OnboardingCommitmentScreen} />
-      <Stack.Screen name="OnboardingCustomPlan" component={OnboardingCustomPlanScreen} />
+      <Stack.Screen name="OnboardingValue" component={OnboardingValueScreen} />
+      <Stack.Screen name="OnboardingPaywall" component={OnboardingPaywallScreen} />
     </Stack.Navigator>
   );
 };

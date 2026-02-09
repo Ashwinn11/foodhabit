@@ -63,12 +63,12 @@ const styles = StyleSheet.create({
   body: {
     fontFamily: fonts.body,
     fontSize: fontSizes.md,
-    lineHeight: 22,
+    lineHeight: 24,
   },
   bodyBold: {
     fontFamily: fonts.bodyBold,
     fontSize: fontSizes.md,
-    lineHeight: 22,
+    lineHeight: 24,
   },
   bodySmall: {
     fontFamily: fonts.body,
@@ -78,22 +78,23 @@ const styles = StyleSheet.create({
   bodyXS: {
     fontFamily: fonts.body,
     fontSize: fontSizes.xs,
-    lineHeight: 16,
+    lineHeight: 18,
   },
   caption: {
     color: colors.black + '66',
     fontFamily: fonts.body,
     fontSize: fontSizes.xs,
+    lineHeight: 16,
   },
   h1: {
     fontFamily: fonts.heading,
     fontSize: fontSizes['4xl'],
-    lineHeight: 40,
+    lineHeight: 42,
   },
   h2: {
     fontFamily: fonts.heading,
     fontSize: fontSizes['3xl'],
-    lineHeight: 34,
+    lineHeight: 36,
   },
   h3: {
     fontFamily: fonts.heading,

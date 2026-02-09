@@ -351,8 +351,6 @@ struct FoodHabitWidgetEntryView : View {
     
     func funInsightMessage(score: Int, lastPoop: String) -> String {
         // 🔥 TikTok-viral insight messages
-        let hasRecentPoop = lastPoop.contains("ago") || lastPoop == "Just now" || lastPoop.contains("h") || lastPoop.contains("m")
-        
         if score >= 90 {
             let messages = [
                 "Your gut is giving main character energy ✨",

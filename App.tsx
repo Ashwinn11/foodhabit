@@ -14,8 +14,9 @@ import { GlobalToast } from './src/components/Toast/GlobalToast';
 import { NotificationManager } from './src/components/NotificationManager';
 import { RevenueCatService } from './src/services/revenueCatService';
 
-import { useFonts, Chewy_400Regular } from '@expo-google-fonts/chewy';
 import { Fredoka_400Regular, Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
+import { useFonts } from 'expo-font';
+import { analyticsService } from './src/analytics/analyticsService';
 
 // Keep the native splash screen visible while we fetch resources
 ExpoSplashScreen.preventAutoHideAsync();
@@ -42,7 +43,6 @@ export default function App() {
   const { session, loading: authLoading } = useAuth();
   
   const [fontsLoaded] = useFonts({
-    'Chewy': Chewy_400Regular,
     'Fredoka-Regular': Fredoka_400Regular,
     'Fredoka-Medium': Fredoka_500Medium,
     'Fredoka-SemiBold': Fredoka_600SemiBold,
@@ -73,15 +73,16 @@ export default function App() {
     };
   }, []);
 
-  // Sync RevenueCat session
+  // Sync RevenueCat session & Analytics
   const prevSessionRef = React.useRef<string | null>(null);
-  
+
   React.useEffect(() => {
     const currentUserId = session?.user?.id || null;
     const prevUserId = prevSessionRef.current;
-    
+
     if (currentUserId && currentUserId !== prevUserId) {
       RevenueCatService.logIn(currentUserId);
+      analyticsService.setUserId(currentUserId);
       prevSessionRef.current = currentUserId;
     } else if (!currentUserId && prevUserId && !authLoading) {
       RevenueCatService.logOut();

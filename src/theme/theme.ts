@@ -24,10 +24,15 @@ export const colors = {
     lightGray: '#F5F5F5',
     red: '#FF4444',
     green: '#059669',
+
+    // Semantic text color tokens
+    textPrimary: '#2D2D2D',
+    textSecondary: '#666666',
+    textTertiary: '#999999',
 } as const;
 
 export const fonts = {
-    heading: 'Chewy',
+    heading: 'Fredoka-SemiBold',
     body: 'Fredoka-Regular',
     bodyBold: 'Fredoka-SemiBold',
 } as const;
