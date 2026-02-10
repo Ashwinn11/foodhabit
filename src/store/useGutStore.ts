@@ -50,6 +50,16 @@ export interface MealEntry {
     foodTags?: string[]; // spicy, dairy, gluten, fried, caffeine, alcohol, high-fat
     // AI-normalized foods for trigger detection (corrected spelling + base ingredients)
     normalizedFoods?: string[];
+    // Nutrition data from AI analysis
+    nutrition?: {
+        calories?: number;
+        protein?: number;
+        carbs?: number;
+        fat?: number;
+        fiber?: number;
+        sugar?: number;
+        sodium?: number;
+    };
 }
 
 // Standalone symptom logging (not tied to bowel movements)

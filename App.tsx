@@ -6,7 +6,6 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppNavigator, AuthNavigator, OnboardingNavigator } from './src/navigation';
-import { SubscriptionRequiredScreen } from './src/screens/SubscriptionRequiredScreen';
 import { colors } from './src/theme';
 import { useAuth } from './src/hooks/useAuth';
 import { GlobalModal } from './src/components/Modal/GlobalModal';
@@ -52,8 +51,6 @@ export default function App() {
   const [isReady, setIsReady] = React.useState(false);
   const [dataLoaded, setDataLoaded] = React.useState(false);
   const [onboardingComplete, setOnboardingComplete] = React.useState(false);
-  const [isPremium, setIsPremium] = React.useState(false);
-  const [hadPreviousAccess, setHadPreviousAccess] = React.useState(false);
   const [refreshKey, setRefreshKey] = React.useState(0);
 
   // Initialize Services
@@ -90,26 +87,6 @@ export default function App() {
     }
   }, [session, authLoading]);
 
-  // Reactive premium status check (No more polling!)
-  React.useEffect(() => {
-    if (!session?.user?.id) return;
-
-    // Listen for real-time changes from RevenueCat (Webhooks-style)
-    const unsubscribe = RevenueCatService.addCustomerInfoUpdateListener((customerInfo: any) => {
-      console.log('💎 RevenueCat: CustomerInfo updated');
-      const { REVENUECAT_PAYWALL_ID } = require('./src/services/revenueCatService');
-      const hasPremium = customerInfo.entitlements.active[REVENUECAT_PAYWALL_ID] !== undefined;
-      
-      if (hasPremium !== isPremium) {
-        console.log(`💎 Premium status changed: ${hasPremium}`);
-        setIsPremium(hasPremium);
-        // Force a data reload to update the navigation state
-        setRefreshKey(prev => prev + 1);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [session?.user?.id, isPremium]);
 
   // Load user data and onboarding status
   React.useEffect(() => {
@@ -127,19 +104,8 @@ export default function App() {
             .select('onboarding_completed')
             .eq('id', session.user.id)
             .single();
-          
-          // Check premium (CACHED - way faster)
-          const premiumStatus = await RevenueCatService.isPremium(false);
-          setIsPremium(premiumStatus);
-          
-          // Hard paywall enforcement
-          if (userProfile?.onboarding_completed && !premiumStatus) {
-            setHadPreviousAccess(true);
-            setOnboardingComplete(false);
-          } else {
-            setHadPreviousAccess(false);
-            setOnboardingComplete(userProfile?.onboarding_completed || false);
-          }
+
+          setOnboardingComplete(userProfile?.onboarding_completed || false);
           
           // Load other user data
           const { loadUserDataFromDatabase } = await import('./src/utils/loadUserData');
@@ -197,9 +163,6 @@ export default function App() {
   const getRootComponent = () => {
     if (!session) {
       return <AuthNavigator />;
-    }
-    if (hadPreviousAccess && !isPremium) {
-      return <SubscriptionRequiredScreen />;
     }
     if (!onboardingComplete) {
       return <OnboardingNavigator />;

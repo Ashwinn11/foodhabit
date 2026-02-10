@@ -7,7 +7,7 @@ import { Typography, Card, GutAvatar } from '../../components';
 import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { getFunGrade } from '../../utils/funnyMessages';
+import { getFunGrade } from '../../utils/scoreUtils';
 import { analyticsService } from '../../analytics/analyticsService';
 
 const getGoalDate = (): string => {

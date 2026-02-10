@@ -9,4 +9,3 @@ export * from './OnboardingProcessingScreen';
 export * from './OnboardingResultsScreen';
 export * from './OnboardingConditionScreen';
 export * from './OnboardingValueScreen';
-export * from './OnboardingPaywallScreen';

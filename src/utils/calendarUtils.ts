@@ -86,7 +86,7 @@ export function generateCalendarDays(
 
       // Check for bad bristol types (1, 2, 6, 7)
       const hasBadBristol = dayGutMoments.some(moment => {
-        const bristol = (moment.bristol || moment.bristolType) as number;
+        const bristol = moment.bristolType as number;
         return [1, 2, 6, 7].includes(bristol);
       });
 

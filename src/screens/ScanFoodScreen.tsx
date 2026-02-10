@@ -22,8 +22,7 @@ import {
   Button,
   NutritionCard,
   PersonalizedExplanationCard,
-  PersonalHistoryCard,
-  PortionAdviceCard
+  PersonalHistoryCard
 } from '../components';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -33,7 +32,6 @@ import { useGutStore } from '../store';
 import { useGutActions } from '../presentation/hooks';
 import { useUserCondition } from '../presentation/hooks/useUserCondition';
 import { FODMAPTag } from '../types/fodmap';
-import { getSafetyMessage, getRandomMessage, ANALYZING_MESSAGES } from '../utils/funnyMessages';
 
 type ScanFoodScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -67,10 +65,60 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
   // Quick suggestions
   const SUGGESTIONS = ['Coffee', 'Pizza', 'Garlic', 'Onion', 'Apple', 'Milk', 'Bread', 'Pasta', 'Rice', 'Chicken'];
 
+  // Handle adding a food item - always use AI for normalization and analysis
+  const addFood = useCallback(async (food: string) => {
+    const rawInput = food.trim();
+    if (!rawInput || selectedFoods.includes(rawInput)) {
+      setSearchText('');
+      Keyboard.dismiss();
+      return;
+    }
+
+    // Add to selected foods immediately for responsiveness (using raw input for now)
+    setSelectedFoods(prev => [...prev, rawInput]);
+    setSearchText('');
+    Keyboard.dismiss();
+
+    // Always call AI for analysis and normalization
+    setLoadingFoods(prev => [...prev, rawInput]);
+    try {
+      const aiResult = await analyzeFoodWithAI(rawInput);
+
+      if (aiResult?.normalizedName) {
+        // AI found a canonical name (fixed spelling, standardized casing, etc.)
+        const canonicalName = aiResult.normalizedName;
+
+        setSelectedFoods(prev => {
+          // If we already added this canonical name, just remove the raw input
+          if (prev.filter(f => f !== rawInput).includes(canonicalName)) {
+            return prev.filter(f => f !== rawInput);
+          }
+          // Otherwise, replace raw input with canonical name
+          return prev.map(f => f === rawInput ? canonicalName : f);
+        });
+
+        setAiResults(prev => {
+          const newState = { ...prev };
+          delete newState[rawInput];
+          newState[canonicalName] = aiResult;
+          return newState;
+        });
+      } else {
+        // No normalization found, keep raw input
+        setAiResults(prev => ({ ...prev, [rawInput]: aiResult }));
+      }
+    } catch (e) {
+      console.error('AI lookup failed:', e);
+      setAiResults(prev => ({ ...prev, [rawInput]: null }));
+    } finally {
+      setLoadingFoods(prev => prev.filter(f => f !== rawInput));
+    }
+  }, [selectedFoods, aiResults]);
+
   /**
    * Handle menu/food image scanning - extract food items from photo
    */
-  const handleImageScan = useCallback(async (imageUri: string, base64: string) => {
+  const handleImageScan = useCallback(async (base64: string) => {
     setIsProcessingImage(true);
     try {
       // Get Supabase session for auth
@@ -149,7 +197,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
 
       // Launch camera
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: [ImagePicker.MediaType.IMAGE],
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -158,14 +206,14 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        await handleImageScan(asset.uri, asset.base64 || '');
+        await handleImageScan(asset.base64 || '');
       }
     } catch (error) {
       console.error('Camera pick error:', error);
       // Fallback to gallery
       try {
         const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: [ImagePicker.MediaType.IMAGE],
+          mediaTypes: ['images'],
           allowsEditing: true,
           aspect: [4, 3],
           quality: 0.8,
@@ -174,7 +222,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
 
         if (!result.canceled && result.assets[0]) {
           const asset = result.assets[0];
-          await handleImageScan(asset.uri, asset.base64 || '');
+          await handleImageScan(asset.base64 || '');
         }
       } catch (galleryError) {
         console.error('Gallery pick error:', galleryError);
@@ -183,47 +231,28 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
   }, [handleImageScan]);
 
   // AI-based analysis solely derived from AI results (no local DB lookup)
+  // Determine risk level based on selected foods' FODMAP levels
   const aiAnalysis = useMemo(() => {
     if (selectedFoods.length === 0) return null;
-    
-    // Get results for all selected foods that have been analyzed
+
     const results = selectedFoods
       .map(food => aiResults[food])
       .filter((r): r is NonNullable<typeof r> => r !== null && r !== undefined);
-      
+
     if (results.length === 0) return null;
 
-    let totalLoad = 0;
-    const categoryCounts: Record<string, number> = {};
-    const highFODMAPs: any[] = [];
-    const moderateFODMAPs: any[] = [];
-    
-    results.forEach(res => {
-      if (res.level === 'high') {
-        totalLoad += 3;
-        highFODMAPs.push(res);
-      } else if (res.level === 'moderate') {
-        totalLoad += 1.5;
-        moderateFODMAPs.push(res);
-      }
-      
-      res.categories?.forEach(cat => {
-        categoryCounts[cat] = (categoryCounts[cat] || 0) + (res.level === 'high' ? 1 : 0.5);
-      });
-    });
-    
-    const stackedCategories = Object.entries(categoryCounts)
-      .filter(([_, count]) => count >= 2)
-      .map(([cat]) => cat);
-      
+    // Count high and moderate FODMAP foods
+    const highCount = results.filter(r => r.level === 'high').length;
+    const moderateCount = results.filter(r => r.level === 'moderate').length;
+
     let riskLevel: 'low' | 'moderate' | 'high' = 'low';
-    if (highFODMAPs.length > 0 || totalLoad >= 9 || stackedCategories.length >= 2) {
+    if (highCount > 0) {
       riskLevel = 'high';
-    } else if (moderateFODMAPs.length > 0 || totalLoad >= 4.5) {
+    } else if (moderateCount > 0) {
       riskLevel = 'moderate';
     }
-    
-    return { riskLevel, totalLoad, stackedCategories, highFODMAPs, moderateFODMAPs };
+
+    return { riskLevel };
   }, [selectedFoods, aiResults]); 
 
 
@@ -264,56 +293,6 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     return [...new Set(foundTriggers)];
   }, [selectedFoods, triggerFeedback, aiResults]);
 
-  // Handle adding a food item - always use AI for normalization and analysis
-  const addFood = useCallback(async (food: string) => {
-    const rawInput = food.trim();
-    if (!rawInput || selectedFoods.includes(rawInput)) {
-      setSearchText('');
-      Keyboard.dismiss();
-      return;
-    }
-
-    // Add to selected foods immediately for responsiveness (using raw input for now)
-    setSelectedFoods(prev => [...prev, rawInput]);
-    setSearchText('');
-    Keyboard.dismiss();
-
-    // Always call AI for analysis and normalization
-    setLoadingFoods(prev => [...prev, rawInput]);
-    try {
-      const aiResult = await analyzeFoodWithAI(rawInput);
-      
-      if (aiResult?.normalizedName) {
-        // AI found a canonical name (fixed spelling, standardized casing, etc.)
-        const canonicalName = aiResult.normalizedName;
-        
-        setSelectedFoods(prev => {
-          // If we already added this canonical name, just remove the raw input
-          if (prev.filter(f => f !== rawInput).includes(canonicalName)) {
-            return prev.filter(f => f !== rawInput);
-          }
-          // Otherwise, replace raw input with canonical name
-          return prev.map(f => f === rawInput ? canonicalName : f);
-        });
-        
-        setAiResults(prev => {
-          const newState = { ...prev };
-          delete newState[rawInput];
-          newState[canonicalName] = aiResult;
-          return newState;
-        });
-      } else {
-        // No normalization found, keep raw input
-        setAiResults(prev => ({ ...prev, [rawInput]: aiResult }));
-      }
-    } catch (e) {
-      console.error('AI lookup failed:', e);
-      setAiResults(prev => ({ ...prev, [rawInput]: null }));
-    } finally {
-      setLoadingFoods(prev => prev.filter(f => f !== rawInput));
-    }
-  }, [selectedFoods, aiResults]);
-
   const removeFood = (foodToRemove: string) => {
     setSelectedFoods(prev => prev.filter(f => f !== foodToRemove));
     setAiResults(prev => {
@@ -327,8 +306,6 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     if (selectedFoods.length === 0) return;
 
     // Use AI-normalized names for trigger detection
-    // Note: We no longer split compound foods like "garlic bread" into "garlic" and "bread"
-    // as it creates false correlations. The AI handled normalization in addFood.
     const normalizedFoods = selectedFoods.map(food => {
       const aiResult = aiResults[food];
       return aiResult?.normalizedName ? aiResult.normalizedName.toLowerCase().trim() : food.toLowerCase().trim();
@@ -337,13 +314,31 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     // Dedupe normalized foods
     const uniqueNormalizedFoods = [...new Set(normalizedFoods)];
 
+    // Calculate total nutrition from all selected foods
+    const nutrition = selectedFoods.reduce(
+      (acc, food) => {
+        const foodNutrition = aiResults[food]?.nutrition || {};
+        return {
+          calories: acc.calories + (foodNutrition.calories || 0),
+          protein: acc.protein + (foodNutrition.protein || 0),
+          carbs: acc.carbs + (foodNutrition.carbs || 0),
+          fat: acc.fat + (foodNutrition.fat || 0),
+          fiber: acc.fiber + (foodNutrition.fiber || 0),
+          sugar: acc.sugar + (foodNutrition.sugar || 0),
+          sodium: acc.sodium + (foodNutrition.sodium || 0),
+        };
+      },
+      { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0 }
+    );
+
     // Use the logMeal action from our new architecture hooks
     logMeal({
       mealType,
-      name: selectedFoods.join(', '), // Already normalized by AI in addFood
+      name: selectedFoods.join(', '),
       foods: selectedFoods,
       normalizedFoods: uniqueNormalizedFoods,
       portionSize: 'medium',
+      nutrition, // Add nutrition data to meal
     });
 
     if (navigation.canGoBack()) {
@@ -402,7 +397,14 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        
+
+        {/* Instructions */}
+        <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.instructionsContainer}>
+          <Typography variant="bodySmall" color={colors.black + '80'}>
+            📸 Scan a menu or type a food name
+          </Typography>
+        </Animated.View>
+
         {/* Search Input with Camera Button */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <View style={styles.searchContainer}>
@@ -489,7 +491,12 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                  />
                  <View style={{ flex: 1 }}>
                    <Typography variant="h2" color={colors.black}>
-                      {getSafetyMessage(safetyStatus, activeTriggers)}
+                      {safetyStatus === 'safe' ? '✅ Safe to eat' :
+                       safetyStatus === 'warning' ? '⚠️ Moderate' :
+                       safetyStatus === 'danger' && activeTriggers.length > 0 ? '🔴 Personal trigger detected' :
+                       safetyStatus === 'danger' ? '🔴 Not recommended' :
+                       safetyStatus === 'unknown' ? '❓ Food not recognized' :
+                       'Analyzing...'}
                    </Typography>
                  </View>
                </View>
@@ -500,7 +507,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                        <ActivityIndicator size="small" color={colors.blue} />
                        <Typography variant="body" color={colors.black}>
-                          {getRandomMessage(ANALYZING_MESSAGES)}
+                          Analyzing...
                        </Typography>
                     </View>
                    ) : safetyStatus === 'unknown' ? (
@@ -513,39 +520,12 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                     </Typography>
                   ) : aiAnalysis ? (
                     <Typography variant="body" color={colors.black}>
-                       {aiAnalysis.riskLevel === 'high' ? "This meal is packed with FODMAPs. Your gut is already drafting a complaint letter 📝" :
-                        aiAnalysis.riskLevel === 'moderate' ? "Some iffy ingredients detected. Could go either way – roll the dice? 🎲" :
-                        "Your gut just gave this a thumbs up! Low FODMAP vibes only ✌️"}
+                       {aiAnalysis.riskLevel === 'high' ? "High FODMAP content detected." :
+                        aiAnalysis.riskLevel === 'moderate' ? "Moderate FODMAP content. May cause symptoms." :
+                        "Low FODMAP. Safe option."}
                     </Typography>
                   ) : null}
                </View>
-
-               {/* Alternatives (if Danger/Warning AND we have alternatives to show) */}
-               {(safetyStatus === 'danger' || safetyStatus === 'warning') && (() => {
-                  // Get alternatives exclusively from AI results
-                  const aiAlternatives = Object.values(aiResults)
-                     .filter(r => r?.alternatives)
-                     .flatMap(r => r?.alternatives || []);
-
-                  // Dedupe
-                  const allAlternatives = [...new Set(aiAlternatives)].slice(0, 6);
-
-                  if (allAlternatives.length === 0) return null;
-                  return (
-                    <View style={styles.alternativesBox}>
-                       <Typography variant="bodySmall" color={colors.black + '80'} style={{ marginBottom: 4 }}>
-                          Try these instead:
-                       </Typography>
-                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                          {allAlternatives.map((alt, idx) => (
-                             <View key={`${alt}-${idx}`} style={styles.altChip}>
-                                <Typography variant="bodyXS" color={colors.black}>{alt}</Typography>
-                             </View>
-                          ))}
-                       </View>
-                    </View>
-                  );
-               })()}
              </Card>
 
              {/* NEW: Enhanced Food Analysis Components */}
@@ -583,9 +563,6 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                         latency={analysis.personalHistory.latency}
                       />
                     )}
-
-                    {/* Portion Advice */}
-                    <PortionAdviceCard advice={analysis.portionAdvice} />
                   </>
                 );
              })()}
@@ -621,9 +598,27 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
           </Animated.View>
 
         ) : (
-          /* Empty State - Suggestions */
+          /* Empty State - Suggestions & Help */
           <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.suggestions}>
-             <Typography variant="bodyBold" color={colors.black + '60'} style={{ marginBottom: spacing.md }}>
+             <View style={styles.emptyStateGuide}>
+                <View style={styles.guideRow}>
+                   <Ionicons name="camera" size={20} color={colors.pink} />
+                   <View style={styles.guideText}>
+                      <Typography variant="bodyBold" color={colors.black}>Scan Menu</Typography>
+                      <Typography variant="bodySmall" color={colors.black + '60'}>Tap the camera icon above to extract foods from a menu photo</Typography>
+                   </View>
+                </View>
+                <View style={styles.guideDivider} />
+                <View style={styles.guideRow}>
+                   <Ionicons name="search" size={20} color={colors.blue} />
+                   <View style={styles.guideText}>
+                      <Typography variant="bodyBold" color={colors.black}>Type a Food</Typography>
+                      <Typography variant="bodySmall" color={colors.black + '60'}>Type any food name in the search box above</Typography>
+                   </View>
+                </View>
+             </View>
+
+             <Typography variant="bodyBold" color={colors.black + '60'} style={{ marginBottom: spacing.md, marginTop: spacing.lg }}>
                 Quick Check:
              </Typography>
              <View style={styles.chipsContainer}>
@@ -650,15 +645,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
   },
-  altChip: {
-    backgroundColor: colors.white,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  alternativesBox: {
-    marginTop: spacing.xs,
-  },
   chip: {
     alignItems: 'center',
     backgroundColor: colors.white,
@@ -684,6 +670,25 @@ const styles = StyleSheet.create({
     paddingBottom: spacing['4xl'],
     paddingHorizontal: spacing.lg,
   },
+  emptyStateGuide: {
+    backgroundColor: colors.blue + '10',
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  guideDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.md,
+  },
+  guideRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    alignItems: 'flex-start',
+  },
+  guideText: {
+    flex: 1,
+  },
   explanationBox: {
     backgroundColor: colors.white + '60',
     borderRadius: radii.lg,
@@ -696,6 +701,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
+  },
+  instructionsContainer: {
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   input: {
     color: colors.black,

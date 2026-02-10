@@ -1,5 +1,5 @@
 import { supabase } from '../config/supabase';
-import { FODMAPCategory, FODMAPLevel, FODMAPTag } from '../types/fodmap';
+import { FODMAPCategory, FODMAPLevel } from '../types/fodmap';
 
 /**
  * FODMAP Service - Analyzes foods for FODMAP content and provides insights
@@ -10,11 +10,7 @@ import { FODMAPCategory, FODMAPLevel, FODMAPTag } from '../types/fodmap';
  * AI-Powered Analysis (Remote)
  * Always uses AI for analysis - no local DB fallback
  */
-export const analyzeFoodWithAI = async (food: string): Promise<FODMAPTag & {
-    alternatives?: string[];
-    normalizedName?: string;
-    baseIngredients?: string[];
-} | null> => {
+export const analyzeFoodWithAI = async (food: string): Promise<any | null> => {
     try {
         const { data, error } = await supabase.functions.invoke('analyze-food', {
             body: { food }
@@ -31,22 +27,37 @@ export const analyzeFoodWithAI = async (food: string): Promise<FODMAPTag & {
             return null;
         }
 
-        // Return full AI response including normalization fields
+        // Return FULL AI response including nutrition, personalization, and analysis
         const finalResult = {
             level: data.level,
             categories: data.categories,
             culprits: data.culprits,
             alternatives: data.alternatives,
             normalizedName: data.normalizedName,
-            baseIngredients: data.baseIngredients
+            baseIngredients: data.baseIngredients,
+            // Add nutrition data
+            nutrition: data.nutrition || {
+                calories: 0,
+                protein: 0,
+                carbs: 0,
+                fat: 0,
+                fiber: 0,
+                sugar: 0,
+                sodium: 0
+            },
+            // Add personalization data
+            personalizedExplanation: data.personalizedExplanation,
+            portionAdvice: data.portionAdvice,
+            personalHistory: data.personalHistory,
+            compoundRiskWarning: data.compoundRiskWarning
         };
 
         console.log('--- AI ANALYSIS DEBUG ---');
         console.log('Food Input:', food);
-        console.log('Raw AI Response:', JSON.stringify(finalResult, null, 2));
+        console.log('Full Response:', JSON.stringify(finalResult, null, 2));
         console.log('-------------------------');
 
-        return finalResult as any;
+        return finalResult;
     } catch (e) {
         console.error('Edge Function Error:', e);
         return null;

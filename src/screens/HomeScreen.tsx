@@ -21,7 +21,7 @@ import {
   DailyIntakeSummary,
 } from '../components';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getFunGrade } from '../utils/funnyMessages';
+import { getFunGrade } from '../utils/scoreUtils';
 
 type HomeScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -29,15 +29,38 @@ type HomeScreenProps = {
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   // Use new architecture for computed values
-  const { 
-    healthScore, 
-    medicalAlerts, 
+  const {
+    healthScore,
+    medicalAlerts,
     streak,
   } = useGutData();
-  
+
   // Still use old store for data
-  const { user, dismissAlert } = useGutStore();
+  const { user, dismissAlert, meals } = useGutStore();
   const { unreadCount } = useNotificationStore();
+
+  // Calculate today's meal totals
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const todaysMeals = meals.filter(meal => {
+    const mealDate = new Date(meal.timestamp);
+    mealDate.setHours(0, 0, 0, 0);
+    return mealDate.getTime() === today.getTime();
+  });
+
+  // Calculate totals from meal nutrition data
+  const dailyTotals = todaysMeals.reduce(
+    (acc, meal: any) => ({
+      calories: acc.calories + (meal.nutrition?.calories || 0),
+      protein: acc.protein + (meal.nutrition?.protein || 0),
+      carbs: acc.carbs + (meal.nutrition?.carbs || 0),
+      fat: acc.fat + (meal.nutrition?.fat || 0),
+      fiber: acc.fiber + (meal.nutrition?.fiber || 0),
+      sugar: acc.sugar + (meal.nutrition?.sugar || 0),
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0 }
+  );
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -211,19 +234,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
            </Pressable>
         </Animated.View>
 
-        {/* NEW: Daily Intake Summary */}
+        {/* Daily Intake Summary */}
         <Animated.View
           entering={FadeInDown.delay(250).springify()}
           style={styles.section}
         >
           <DailyIntakeSummary
-            calories={0}
+            calories={dailyTotals.calories}
             calorieGoal={2000}
-            protein={0}
-            carbs={0}
-            fat={0}
-            fiber={0}
-            sugar={0}
+            protein={dailyTotals.protein}
+            carbs={dailyTotals.carbs}
+            fat={dailyTotals.fat}
+            fiber={dailyTotals.fiber}
+            sugar={dailyTotals.sugar}
           />
         </Animated.View>
 

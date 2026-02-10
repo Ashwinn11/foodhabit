@@ -32,6 +32,15 @@ export interface LogMealInput {
     portionSize?: string;
     foodTags?: string[];
     normalizedFoods?: string[];
+    nutrition?: {
+        calories?: number;
+        protein?: number;
+        carbs?: number;
+        fat?: number;
+        fiber?: number;
+        sugar?: number;
+        sodium?: number;
+    };
 }
 
 export interface UseGutActionsReturn {
@@ -182,6 +191,7 @@ export function useGutActions(): UseGutActionsReturn {
                 portionSize: input.portionSize as any,
                 foodTags: input.foodTags,
                 normalizedFoods: input.normalizedFoods,
+                nutrition: input.nutrition,
             });
 
             // If user is authenticated, also persist via use case

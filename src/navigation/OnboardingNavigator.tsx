@@ -12,7 +12,6 @@ import {
   OnboardingResultsScreen,
   OnboardingConditionScreen,
   OnboardingValueScreen,
-  OnboardingPaywallScreen,
 } from '../screens/Onboarding';
 import { colors } from '../theme';
 
@@ -39,7 +38,6 @@ export const OnboardingNavigator = () => {
       <Stack.Screen name="OnboardingResults" component={OnboardingResultsScreen} />
       <Stack.Screen name="OnboardingCondition" component={OnboardingConditionScreen} />
       <Stack.Screen name="OnboardingValue" component={OnboardingValueScreen} />
-      <Stack.Screen name="OnboardingPaywall" component={OnboardingPaywallScreen} />
     </Stack.Navigator>
   );
 };
