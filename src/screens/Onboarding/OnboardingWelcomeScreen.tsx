@@ -69,7 +69,9 @@ export const OnboardingWelcomeScreen = () => {
               </View>
               <View style={styles.divider} />
               <View style={styles.statItem}>
-                <Typography variant="h3" color={colors.yellow}>4.9 ★</Typography>
+                <Typography variant="h3" color={colors.yellow}>
+                  4.9 <Ionicons name="star" size={24} color={colors.yellow} />
+                </Typography>
                 <Typography variant="caption" color={colors.textSecondary}>App Store</Typography>
               </View>
               <View style={styles.divider} />

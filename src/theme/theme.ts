@@ -97,15 +97,6 @@ export const bristolColors = {
 } as const;
 
 
-export const foodCategories = {
-    breakfast: { icon: 'sunny', color: '#70CFFF' }, // Blue
-    lunch: { icon: 'leaf', color: '#FCE762' },      // Using yellow for lunch in strict system
-    dinner: { icon: 'moon', color: '#059669' },     // Green
-    snack: { icon: 'pizza', color: '#FF7495' },     // Pink
-    drink: { icon: 'water', color: '#70CFFF' },     // Blue
-} as const;
-
-
 export const theme = {
     colors,
     fonts,
@@ -114,7 +105,6 @@ export const theme = {
     radii,
     shadows,
     bristolColors,
-    foodCategories,
 } as const;
 
 export type Theme = typeof theme;

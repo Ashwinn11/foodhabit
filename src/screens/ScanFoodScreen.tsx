@@ -401,7 +401,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
         {/* Instructions */}
         <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.instructionsContainer}>
           <Typography variant="bodySmall" color={colors.black + '80'}>
-            📸 Scan a menu or type a food name
+            <Ionicons name="camera" size={14} color={colors.black + '80'} /> Scan a menu or type a food name
           </Typography>
         </Animated.View>
 
@@ -491,11 +491,11 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                  />
                  <View style={{ flex: 1 }}>
                    <Typography variant="h2" color={colors.black}>
-                      {safetyStatus === 'safe' ? '✅ Safe to eat' :
-                       safetyStatus === 'warning' ? '⚠️ Moderate' :
-                       safetyStatus === 'danger' && activeTriggers.length > 0 ? '🔴 Personal trigger detected' :
-                       safetyStatus === 'danger' ? '🔴 Not recommended' :
-                       safetyStatus === 'unknown' ? '❓ Food not recognized' :
+                      {safetyStatus === 'safe' ? 'Safe to eat' :
+                       safetyStatus === 'warning' ? 'Moderate' :
+                       safetyStatus === 'danger' && activeTriggers.length > 0 ? 'Personal trigger detected' :
+                       safetyStatus === 'danger' ? 'Not recommended' :
+                       safetyStatus === 'unknown' ? 'Food not recognized' :
                        'Analyzing...'}
                    </Typography>
                  </View>
@@ -512,11 +512,11 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                     </View>
                    ) : safetyStatus === 'unknown' ? (
                     <Typography variant="body" color={colors.black}>
-                       Is this even food? 🤔 Try typing it again or check for typos!
+                       Is this even food? <Ionicons name="help-circle-outline" size={16} color={colors.black} /> Try typing it again or check for typos!
                     </Typography>
                   ) : activeTriggers.length > 0 ? (
                     <Typography variant="body" color={colors.black}>
-                      You told us <Typography variant="bodyBold">{activeTriggers.join(', ')}</Typography> hurts you. Your past self was trying to protect you! 😤
+                      You told us <Typography variant="bodyBold">{activeTriggers.join(', ')}</Typography> hurts you. Your past self was trying to protect you! <Ionicons name="shield-checkmark" size={16} color={colors.black} />
                     </Typography>
                   ) : aiAnalysis ? (
                     <Typography variant="body" color={colors.black}>

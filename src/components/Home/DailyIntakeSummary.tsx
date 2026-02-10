@@ -11,6 +11,7 @@ import { Typography } from '../Typography';
 import { Card } from '../Card';
 import { IconContainer } from '../IconContainer/IconContainer';
 import { colors, spacing, radii } from '../../theme';
+import { Ionicons } from '@expo/vector-icons';
 
 interface DailyIntakeSummaryProps {
   calories: number;
@@ -126,7 +127,7 @@ export const DailyIntakeSummary: React.FC<DailyIntakeSummaryProps> = ({
             variant="bodyBold"
             color={fiberHealthy ? colors.green : colors.black}
           >
-            {fiber}g {fiberHealthy ? '✅' : ''}
+            {fiber}g {fiberHealthy ? <Ionicons name="checkmark-circle" size={14} color={colors.green} /> : ''}
           </Typography>
         </View>
         <View style={styles.healthItem}>
@@ -137,7 +138,7 @@ export const DailyIntakeSummary: React.FC<DailyIntakeSummaryProps> = ({
             variant="bodyBold"
             color={sugarHigh ? colors.pink : colors.black}
           >
-            {sugar}g {sugarHigh ? '⚠️' : ''}
+            {sugar}g {sugarHigh ? <Ionicons name="alert-circle" size={14} color={colors.pink} /> : ''}
           </Typography>
         </View>
       </View>

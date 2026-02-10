@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+
 import {
   View,
   StyleSheet,
@@ -16,6 +17,7 @@ import {
   Typography,
   CalendarHeader,
   CalendarGrid,
+  IconContainer,
 } from '../components';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -116,9 +118,10 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
             {/* Meals for selected date */}
             {selectedDateLogs.meals.length > 0 && (
               <View style={styles.section}>
-                <Typography variant="bodyBold" color={colors.black} style={{ marginBottom: spacing.md }}>
-                  🍽️ Meals
-                </Typography>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md, gap: 8 }}>
+                  <IconContainer name="restaurant" size={24} iconSize={14} color={colors.white} backgroundColor={colors.blue} variant="solid" shadow={false} />
+                  <Typography variant="bodyBold" color={colors.black}>Meals</Typography>
+                </View>
                 {selectedDateLogs.meals.map((meal, idx) => (
                   <View key={`${meal.name}-${idx}`} style={styles.logEntry}>
                     <View style={{ flex: 1 }}>
@@ -142,9 +145,10 @@ export const GutProfileScreen: React.FC<GutProfileScreenProps> = ({ navigation }
             {/* Gut moments for selected date */}
             {selectedDateLogs.moments.length > 0 && (
               <View style={styles.section}>
-                <Typography variant="bodyBold" color={colors.black} style={{ marginBottom: spacing.md }}>
-                  💩 Poop Logs
-                </Typography>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md, gap: 8 }}>
+                  <IconContainer name="happy" size={24} iconSize={14} color={colors.white} backgroundColor={colors.pink} variant="solid" shadow={false} />
+                  <Typography variant="bodyBold" color={colors.black}>Poop Logs</Typography>
+                </View>
                 {selectedDateLogs.moments.map((moment, idx) => (
                   <View key={`${moment.id}-${idx}`} style={styles.logEntry}>
                     <View style={{ flex: 1 }}>

@@ -12,6 +12,7 @@ import { Typography } from '../Typography';
 import { Card } from '../Card';
 import { IconContainer } from '../IconContainer/IconContainer';
 import { colors, spacing } from '../../theme';
+import { Ionicons } from '@expo/vector-icons';
 
 interface NutritionCardProps {
   calories: number;
@@ -105,7 +106,7 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
             variant="bodyBold"
             color={fiber >= 3 ? colors.green : colors.black}
           >
-            {fiber}g {fiber >= 3 ? '✅' : ''}
+            {fiber}g {fiber >= 3 ? <Ionicons name="checkmark-circle" size={14} color={colors.green} /> : ''}
           </Typography>
         </View>
         <View style={styles.nutrient}>
@@ -116,7 +117,7 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
             variant="bodyBold"
             color={getNutrientColor(sugar, 10)}
           >
-            {sugar}g {sugar > 10 ? '⚠️' : ''}
+            {sugar}g {sugar > 10 ? <Ionicons name="alert-circle" size={14} color={colors.pink} /> : ''}
           </Typography>
         </View>
         <View style={styles.nutrient}>
@@ -127,7 +128,7 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
             variant="bodyBold"
             color={getNutrientColor(sodium, 400)}
           >
-            {sodium}mg {sodium > 400 ? '⚠️' : ''}
+            {sodium}mg {sodium > 400 ? <Ionicons name="alert-circle" size={14} color={colors.pink} /> : ''}
           </Typography>
         </View>
       </View>

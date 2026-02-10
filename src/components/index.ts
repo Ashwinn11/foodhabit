@@ -5,7 +5,6 @@ export { FoodBlobCard } from './FoodBlobCard';
 export * from './FoodAnalysis';
 export * from './Home';
 export * from './History';
-export { TimelineEntry } from './TimelineEntry';
 export { StatCard } from './StatCard';
 export { AddButton } from './AddButton';
 export { BristolPicker } from './BristolPicker';

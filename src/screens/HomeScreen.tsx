@@ -1,4 +1,5 @@
 import React from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   StyleSheet,
@@ -142,7 +143,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   />
                   <View style={styles.alertText}>
                     <Typography variant="bodyBold" color={colors.black}>
-                      {alert.severity === 'critical' ? '⚠️ Medical Attention Recommended' : '⚡ Health Notice'}
+                      {alert.severity === 'critical' ? 'Medical Attention Recommended' : 'Health Notice'}
                     </Typography>
                     <Typography variant="bodySmall" color={colors.black + '99'} style={{ marginTop: 4 }}>
                       {alert.message}
@@ -193,9 +194,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     <Typography variant="h1" color={healthScore.color} style={{ fontSize: 48, lineHeight: 56 }}>
                       {healthScore.score}
                     </Typography>
-                    <Typography variant="bodyBold" color={healthScore.color}>
-                      {getFunGrade(healthScore.score)}
-                    </Typography>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Ionicons name={getFunGrade(healthScore.score).icon as any} size={16} color={healthScore.color} />
+                        <Typography variant="bodyBold" color={healthScore.color}>
+                          {getFunGrade(healthScore.score).label}
+                        </Typography>
+                      </View>
                 </View>
               </View>
 

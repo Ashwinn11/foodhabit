@@ -72,9 +72,12 @@ export const OnboardingResultsScreen = () => {
             <Typography variant="h1" color={scoreColor} style={{ fontSize: 38 }}>{calculatedScore}</Typography>
             <Typography variant="caption" color={colors.mediumGray}>GUT SCORE</Typography>
           </View>
-          <Typography variant="h3" color={scoreColor} style={{ marginTop: spacing.xs }}>
-            {funGrade}
-          </Typography>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.xs, gap: 6 }}>
+             <Ionicons name={funGrade.icon as any} size={24} color={scoreColor} />
+             <Typography variant="h3" color={scoreColor}>
+               {funGrade.label}
+             </Typography>
+          </View>
         </Animated.View>
 
         {/* Dynamic Goal Date - Noom tactic */}

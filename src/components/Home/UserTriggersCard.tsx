@@ -11,6 +11,7 @@ import { Typography } from '../Typography';
 import { Card } from '../Card';
 import { IconContainer } from '../IconContainer/IconContainer';
 import { colors, spacing } from '../../theme';
+import { Ionicons } from '@expo/vector-icons';
 
 export interface Trigger {
   food: string;
@@ -58,7 +59,7 @@ export const UserTriggersCard: React.FC<UserTriggersCardProps> = ({
         <View key={`${trigger.food}-${index}`} style={styles.triggerItem}>
           <View style={styles.triggerContent}>
             <Typography variant="body" color={colors.black}>
-              🔴 {trigger.food}
+              <Ionicons name="alert-circle" size={14} color={colors.pink} /> {trigger.food}
             </Typography>
             <Typography variant="caption" color={colors.black + '60'}>
               Caused {trigger.symptoms.join(' + ')} ({trigger.count}x)

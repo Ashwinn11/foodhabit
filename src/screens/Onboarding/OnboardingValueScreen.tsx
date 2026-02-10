@@ -57,7 +57,9 @@ export const OnboardingValueScreen = () => {
         <Animated.View entering={FadeInDown.delay(100)} style={styles.mascotContainer}>
           <GutAvatar score={90} size={100} />
           <View style={styles.speechBubble}>
-            <Typography variant="bodyBold" color={colors.white}>We've got this! 🚀</Typography>
+            <Typography variant="bodyBold" color={colors.white}>
+              We've got this! <Ionicons name="rocket" size={16} color={colors.white} />
+            </Typography>
           </View>
         </Animated.View>
 
