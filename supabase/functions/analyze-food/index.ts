@@ -12,33 +12,155 @@ serve(async (req) => {
   }
 
   try {
-    const { food } = await req.json()
+    const { food, imageBase64, extractFoodsOnly, userCondition, personalTriggers, symptomPatterns } = await req.json()
     const apiKey = Deno.env.get('GEMINI_API_KEY')
 
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY is not set')
     }
 
+    // VISION MODE: Extract foods from menu image
+    if (imageBase64 && extractFoodsOnly) {
+      const visionPrompt = `You are analyzing a food menu or meal photograph.
+
+TASK: Extract all food items visible in this image.
+
+Return ONLY valid JSON (no markdown):
+{
+  "foods": ["food1", "food2", "food3", ...],
+  "category": "menu|receipt|photo|unclear"
+}
+
+Examples of valid food items: "pasta carbonara", "grilled chicken", "caesar salad", "pizza margherita"
+Ignore: prices, descriptions, instructions, non-food items
+
+If this is not a food menu/meal photo, return:
+{
+  "foods": [],
+  "category": "unclear"
+}`
+
+      const imageResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=' + apiKey, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: visionPrompt },
+              {
+                inline_data: {
+                  mime_type: 'image/jpeg',
+                  data: imageBase64
+                }
+              }
+            ]
+          }]
+        })
+      })
+
+      if (!imageResponse.ok) {
+        const errorText = await imageResponse.text();
+        console.error('Vision API Error:', errorText);
+        throw new Error(`Gemini Vision API Error: ${imageResponse.status}`);
+      }
+
+      const imageData = await imageResponse.json()
+
+      if (!imageData.candidates || !imageData.candidates[0] || !imageData.candidates[0].content) {
+        console.error('Invalid Vision Response:', JSON.stringify(imageData));
+        throw new Error('Invalid response structure from Vision API')
+      }
+
+      const textResponse = imageData.candidates[0].content.parts[0].text
+      const jsonStr = textResponse.replace(/```json/g, '').replace(/```/g, '').trim()
+      const result = JSON.parse(jsonStr)
+
+      return new Response(JSON.stringify({
+        foods: result.foods || [],
+        category: result.category || 'unclear'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    // TEXT MODE: Analyze food for safety
+    if (!food) {
+      throw new Error('Either food name or image is required')
+    }
+
+    // Build context from user's personal data
+    const personalTriggersContext = personalTriggers
+      ? personalTriggers
+          .map((t: any) => `- ${t.food}: caused ${t.symptoms.join(' + ')} (${t.count}x, appeared ${t.latency} after eating)`)
+          .join('\n')
+      : 'None recorded yet';
+
+    const symptomPatternsContext = symptomPatterns
+      ? symptomPatterns
+          .map((p: any) => `- ${p.symptoms.join(' + ')}: appears together ${(p.frequency * 100).toFixed(0)}% of the time`)
+          .join('\n')
+      : 'None identified yet';
+
     const prompt = `
-      Analyze the food item "${food}" for IBS/FODMAP friendliness.
-      
-      IMPORTANT RULES:
-      1. If the input is completely meaningless gibberish (e.g. "asdfgh") or a non-food object (e.g. "iPhone", "Chair"), return EXACTLY: {"error": "not_food"}
-      2. If the input is a food item but misspelled (e.g. "blubberries", "biiryani"), DO NOT return an error. Instead, correct the spelling in the "normalizedName" field and proceed with the analysis.
-      
-      For valid foods, return ONLY a raw JSON object (no markdown, no backticks) with this exact schema:
+      You are analyzing a food for a user with ${userCondition || 'unknown condition'}.
+
+      USER'S PERSONAL DATA:
+      =====================
+      Condition: ${userCondition || 'Not specified'}
+
+      Foods they've had symptoms after:
+      ${personalTriggersContext}
+
+      Their typical symptom patterns:
+      ${symptomPatternsContext}
+
+      FOOD TO ANALYZE: "${food}"
+
+      =====================
+      INSTRUCTIONS:
+      1. If input is gibberish or non-food (e.g., "asdfgh", "iPhone"), return: {"error": "not_food"}
+      2. If misspelled food (e.g., "blubberries"), correct it in "normalizedName" and proceed
+      3. Analyze considering user's CONDITION and PERSONAL HISTORY
+      4. Trust personal history over general FODMAP rules (if they had diarrhea after apples, mark it risky)
+
+      Return ONLY JSON (no markdown):
       {
         "level": "high" | "moderate" | "low",
-        "categories": string[], (e.g. ["fructans", "lactose", "gos", "polyols", "excess-fructose"])
-        "culprits": string[], (specific ingredients causing the issue)
-        "alternatives": string[], (3-5 specific low-FODMAP alternatives)
-        "normalizedName": string, (correct spelling in lowercase, e.g. "blueberries")
-        "baseIngredients": string[] (main ingredient components)
+        "categories": ["fructans", "lactose", ...],
+        "culprits": ["specific problematic ingredients"],
+        "alternatives": ["3-5 safe alternatives for this user"],
+        "normalizedName": "corrected spelling",
+        "baseIngredients": ["main components"],
+
+        "nutrition": {
+          "calories": number,
+          "protein": number,
+          "carbs": number,
+          "fat": number,
+          "fiber": number,
+          "sugar": number,
+          "sodium": number
+        },
+
+        "personalizedExplanation": "Why this is safe/risky for THIS user (1-2 sentences, simple language)",
+
+        "portionAdvice": "For moderate foods: safe portion size or null",
+
+        "personalHistory": {
+          "everEaten": boolean,
+          "symptoms": ["symptom1", "symptom2"],
+          "occurrenceCount": number,
+          "latency": "time range like 2-4 hours"
+        },
+
+        "compoundRiskWarning": "If food triggers multiple symptoms they experience together, warn them here or null"
       }
-      The "normalizedName" should be the standardized, correctly spelled name.
     `
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey, {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=' + apiKey, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -68,7 +190,43 @@ serve(async (req) => {
     const jsonStr = textResponse.replace(/```json/g, '').replace(/```/g, '').trim()
     const result = JSON.parse(jsonStr)
 
-    return new Response(JSON.stringify(result), {
+    // Validate response structure
+    if (result.error) {
+      return new Response(JSON.stringify({ error: result.error }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    // Ensure all expected fields are present (with defaults for missing ones)
+    const enrichedResult = {
+      level: result.level || 'moderate',
+      categories: result.categories || [],
+      culprits: result.culprits || [],
+      alternatives: result.alternatives || [],
+      normalizedName: result.normalizedName || food.toLowerCase(),
+      baseIngredients: result.baseIngredients || [],
+      nutrition: result.nutrition || {
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+        fiber: 0,
+        sugar: 0,
+        sodium: 0
+      },
+      personalizedExplanation: result.personalizedExplanation || 'Analysis complete',
+      portionAdvice: result.portionAdvice || null,
+      personalHistory: result.personalHistory || {
+        everEaten: false,
+        symptoms: [],
+        occurrenceCount: 0,
+        latency: null
+      },
+      compoundRiskWarning: result.compoundRiskWarning || null
+    }
+
+    return new Response(JSON.stringify(enrichedResult), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })

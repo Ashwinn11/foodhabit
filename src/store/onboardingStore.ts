@@ -11,6 +11,7 @@ export interface GutCheckAnswers {
     symptomFrequency?: number;  // 0-2 (Rarely...Daily)
     bowelRegularity?: number;   // 0-2 (Regular...Unpredictable)
     medicalFlags?: boolean;     // true/false
+    userCondition?: string;     // NEW: ibs-d, ibs-c, ibs-m, ibs-u, bloating
 }
 
 interface OnboardingState {
@@ -34,7 +35,7 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
     gutCheckAnswers: {},
     calculatedScore: 0,
     currentStep: 0,
-    totalSteps: 11, // Welcome + Goal + Symptoms + ValueInterrupt + Stool + Regularity + Medical + Processing + Results + Value + Paywall
+    totalSteps: 12, // Welcome + Goal + Symptoms + ValueInterrupt + Stool + Regularity + Medical + Processing + Results + Condition (NEW) + Value + Paywall
 
     setGutCheckAnswer: (key, value) => {
         set((state) => ({

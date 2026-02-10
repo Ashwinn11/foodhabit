@@ -27,7 +27,7 @@ export const OnboardingResultsScreen = () => {
 
   const handleNext = () => {
     setCurrentStep(9);
-    navigation.navigate('OnboardingValue');
+    navigation.navigate('OnboardingCondition');
   };
 
   const handleBack = () => {

@@ -10,6 +10,7 @@ import {
   OnboardingMedicalScreen,
   OnboardingProcessingScreen,
   OnboardingResultsScreen,
+  OnboardingConditionScreen,
   OnboardingValueScreen,
   OnboardingPaywallScreen,
 } from '../screens/Onboarding';
@@ -36,6 +37,7 @@ export const OnboardingNavigator = () => {
       <Stack.Screen name="OnboardingMedical" component={OnboardingMedicalScreen} />
       <Stack.Screen name="OnboardingProcessing" component={OnboardingProcessingScreen} />
       <Stack.Screen name="OnboardingResults" component={OnboardingResultsScreen} />
+      <Stack.Screen name="OnboardingCondition" component={OnboardingConditionScreen} />
       <Stack.Screen name="OnboardingValue" component={OnboardingValueScreen} />
       <Stack.Screen name="OnboardingPaywall" component={OnboardingPaywallScreen} />
     </Stack.Navigator>

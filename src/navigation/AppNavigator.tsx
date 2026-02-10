@@ -1,11 +1,11 @@
 import React from 'react';
-import { StyleSheet, Pressable } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
   withSpring,
+  useSharedValue,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, shadows } from '../theme';
@@ -14,7 +14,6 @@ import {
   HomeScreen,
   GutProfileScreen,
   AddEntryScreen,
-  InsightsScreen,
   ProfileScreen,
   PrivacyPolicyScreen,
   AuthScreen,
@@ -68,43 +67,6 @@ const TabIcon: React.FC<TabIconProps> = ({ iconName, label, focused }) => {
   );
 };
 
-// Center floating add button
-const CenterAddButton: React.FC<{ onPress: () => void }> = ({ onPress }) => {
-  const scale = useSharedValue(1);
-  
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-  
-  const handlePressIn = () => {
-    scale.value = withSpring(0.9);
-  };
-  
-  const handlePressOut = () => {
-    scale.value = withSpring(1);
-    onPress();
-  };
-  
-  return (
-    <Pressable
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      style={styles.centerButtonWrapper}
-    >
-      <Animated.View style={[styles.centerButton, animatedStyle]}>
-        <IconContainer
-          name="add"
-          size={55}
-          iconSize={32}
-          color={colors.black}
-          variant="transparent"
-          shadow={false}
-        />
-      </Animated.View>
-    </Pressable>
-  );
-};
-
 // Main tab navigator
 const TabNavigator = () => {
   return (
@@ -130,24 +92,6 @@ const TabNavigator = () => {
         options={{
           tabBarIcon: ({ focused }) => (
             <TabIcon iconName="book" label="History" focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="AddTab"
-        component={AddEntryScreen}
-        options={({ navigation }) => ({
-          tabBarButton: () => (
-            <CenterAddButton onPress={() => navigation.navigate('AddEntry')} />
-          ),
-        })}
-      />
-      <Tab.Screen
-        name="InsightsTab"
-        component={InsightsScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon iconName="bar-chart" label="Insights" focused={focused} />
           ),
         }}
       />

@@ -2,6 +2,9 @@
 export { GutAvatar } from './GutAvatar';
 export { WobblyCheckbox } from './WobblyCheckbox';
 export { FoodBlobCard } from './FoodBlobCard';
+export * from './FoodAnalysis';
+export * from './Home';
+export * from './History';
 export { MissionCard } from './MissionCard';
 export { TimelineEntry } from './TimelineEntry';
 export { StatCard } from './StatCard';

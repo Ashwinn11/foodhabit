@@ -54,6 +54,95 @@ export const analyzeFoodWithAI = async (food: string): Promise<FODMAPTag & {
 };
 
 /**
+ * Enhanced AI-Powered Analysis with Personalization
+ * Includes user condition, personal triggers, and symptom patterns
+ *
+ * @param food - Food name to analyze
+ * @param userCondition - User's IBS type (ibs-d, ibs-c, bloating, etc.)
+ * @param personalTriggers - Foods that previously caused symptoms for this user
+ * @param symptomPatterns - User's symptom co-occurrence patterns
+ * @returns Enhanced food analysis with personalized explanation, nutrition, and risk assessment
+ */
+export const analyzeFoodWithPersonalization = async (
+    food: string,
+    userCondition?: string,
+    personalTriggers?: Array<{ food: string; symptoms: string[]; count: number; latency: string }>,
+    symptomPatterns?: Array<{ symptoms: string[]; frequency: number }>
+): Promise<any | null> => {
+    try {
+        const { data, error } = await supabase.functions.invoke('analyze-food', {
+            body: {
+                food,
+                userCondition: userCondition || undefined,
+                personalTriggers: personalTriggers || undefined,
+                symptomPatterns: symptomPatterns || undefined
+            }
+        });
+
+        if (error || !data) {
+            console.warn('Personalized AI Analysis failed:', error);
+            return null;
+        }
+
+        // Check if AI returned "not_food" error
+        if (data.error === 'not_food') {
+            console.log('AI rejected input as non-food:', food);
+            return null;
+        }
+
+        // Enhanced response includes nutrition, personalized explanation, and risk assessment
+        const enhancedResult = {
+            // FODMAP Analysis
+            level: data.level || 'moderate',
+            categories: data.categories || [],
+            culprits: data.culprits || [],
+            alternatives: data.alternatives || [],
+            normalizedName: data.normalizedName || food.toLowerCase(),
+            baseIngredients: data.baseIngredients || [],
+
+            // Nutrition Data
+            nutrition: data.nutrition || {
+                calories: 0,
+                protein: 0,
+                carbs: 0,
+                fat: 0,
+                fiber: 0,
+                sugar: 0,
+                sodium: 0
+            },
+
+            // Personalized Explanation (tied to their condition)
+            personalizedExplanation: data.personalizedExplanation || 'Analysis complete',
+
+            // Portion Advice (for yellow/moderate foods)
+            portionAdvice: data.portionAdvice || null,
+
+            // Personal History (if they've eaten this before)
+            personalHistory: data.personalHistory || {
+                everEaten: false,
+                symptoms: [],
+                occurrenceCount: 0,
+                latency: null
+            },
+
+            // Compound Risk Warning (if triggers multiple symptoms they get together)
+            compoundRiskWarning: data.compoundRiskWarning || null
+        };
+
+        console.log('--- PERSONALIZED ANALYSIS DEBUG ---');
+        console.log('Food Input:', food);
+        console.log('User Condition:', userCondition);
+        console.log('Enhanced Response:', JSON.stringify(enhancedResult, null, 2));
+        console.log('-----------------------------------');
+
+        return enhancedResult;
+    } catch (e) {
+        console.error('Edge Function Error:', e);
+        return null;
+    }
+};
+
+/**
  * Analyze a list of foods and return FODMAP breakdown (AI-powered)
  */
 export const analyzeFODMAPs = async (foods: string[]): Promise<{

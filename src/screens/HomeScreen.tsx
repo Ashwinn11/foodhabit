@@ -9,17 +9,16 @@ import Animated, {
   FadeInDown,
 } from 'react-native-reanimated';
 import { colors, spacing, radii } from '../theme';
-import { useGutStore, useNotificationStore, useUIStore } from '../store';
+import { useGutStore, useNotificationStore } from '../store';
 import { useGutData } from '../presentation/hooks';
 import {
-  MissionCard,
   ScreenWrapper,
   BoxButton,
   IconContainer,
   Typography,
-  Card,
-  SectionHeader,
   GutAvatar,
+  UserTriggersCard,
+  DailyIntakeSummary,
 } from '../components';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getFunGrade } from '../utils/funnyMessages';
@@ -36,21 +35,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     streak,
   } = useGutData();
   
-  // Still use old store for actions (will migrate later)
-  const { 
-    user,
-    getDynamicTasks, 
-    addWater, 
-    addFiber, 
-    addProbiotic, 
-    toggleTask, 
-    dismissAlert 
-  } = useGutStore();
-  
+  // Still use old store for data
+  const { user, dismissAlert } = useGutStore();
   const { unreadCount } = useNotificationStore();
-  
-  const dynamicTasks = getDynamicTasks();
-  const incompleteTasks = dynamicTasks.filter(t => !t.completed).length;
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -108,13 +95,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             style={styles.section}
           >
             {medicalAlerts.alerts.map((alert) => (
-              <Card 
+              <View
                 key={alert.type}
-                variant="white"
-                padding="lg"
                 style={[
                   styles.alertCard,
-                  { borderLeftWidth: 4, borderLeftColor: alert.severity === 'critical' ? colors.pink : '#FFA500' }
+                  {
+                    borderLeftWidth: 4,
+                    borderLeftColor: alert.severity === 'critical' ? colors.pink : '#FFA500',
+                    padding: spacing.lg,
+                    backgroundColor: colors.white,
+                    borderRadius: radii.md,
+                  }
                 ]}
               >
                 <View style={styles.alertContent}>
@@ -150,17 +141,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     />
                   </Pressable>
                 </View>
-              </Card>
+              </View>
             ))}
           </Animated.View>
         )}
         
         {/* HERO: Gut Health Score Ring - Now using new architecture */}
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.delay(200).springify()}
           style={styles.heroSection}
         >
-          <Card variant="colored" color={colors.blue} padding="xl" style={styles.heroCard}>
+          <View
+            style={[
+              styles.heroCard,
+              {
+                backgroundColor: colors.blue,
+                padding: spacing.xl,
+              }
+            ]}
+          >
             <View style={styles.heroContent}>
               <View style={styles.heroLeft}>
                 <GutAvatar score={healthScore.score} size={80} />
@@ -185,7 +184,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                  </Typography>
               </View>
             </View>
-          </Card>
+          </View>
         </Animated.View>
 
         {/* PRIMARY ACTIONS: 2-Column Grid */}
@@ -212,86 +211,30 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
            </Pressable>
         </Animated.View>
 
-        
-        {/* Today's Missions */}
-        <Animated.View 
-          entering={FadeInDown.delay(300).springify()}
+        {/* NEW: Daily Intake Summary */}
+        <Animated.View
+          entering={FadeInDown.delay(250).springify()}
           style={styles.section}
         >
-          <SectionHeader 
-            title="Gut Action Plan" 
-            icon="flash" 
-            iconColor={colors.pink}
-            count={incompleteTasks}
+          <DailyIntakeSummary
+            calories={0}
+            calorieGoal={2000}
+            protein={0}
+            carbs={0}
+            fat={0}
+            fiber={0}
+            sugar={0}
           />
-          
-          <View style={styles.missionsContainer}>
-            {dynamicTasks.length === 1 && dynamicTasks[0].id === 'poop' && dynamicTasks[0].completed ? (
-               /* ALL CLEAR STATE: Only Poop task exists and is done */
-               <Card variant="white" padding="xl" style={{ alignItems: 'center' }}>
-                  <IconContainer name="sparkles" size={48} color={colors.yellow} variant="transparent" shadow={false} />
-                  <Typography variant="h3" color={colors.black} style={{ marginTop: spacing.sm }}>All Clear! ✨</Typography>
-                  <Typography variant="body" color={colors.black + '60'} style={{ textAlign: 'center', marginTop: 4 }}>
-                     Your gut is happy. No extra missions for today.
-                  </Typography>
-               </Card>
-            ) : (
-                dynamicTasks.map((task, index) => (
-                  <Animated.View
-                    key={task.id}
-                    entering={FadeInDown.delay(400 + index * 100).springify()}
-                  >
-                    <MissionCard
-                      title={task.title}
-                      subtitle={task.subtitle}
-                      completed={task.completed}
-                      onToggle={() => {
-                        // 1. Handle "Poop" Task (Navigation)
-                        if (task.id === 'poop') {
-                           navigation.navigate('AddEntry');
-                           return;
-                        }
-
-                        // 2. Handle "Tea" (Custom Action)
-                        if (task.id === 'tea') {
-                           addWater(false); // Silent
-                           useUIStore.getState().showToast({
-                             message: 'Peppermint power! 🍵',
-                             icon: 'water',
-                             iconColor: colors.green
-                           });
-                           toggleTask(task.id);
-                        } 
-                        // 3. Handle "Kiwi" (Custom Action)
-                        else if (task.id === 'kiwi') {
-                           addFiber(5, false); // Silent
-                           useUIStore.getState().showToast({
-                             message: 'Kiwi yummy! 🥝',
-                             icon: 'leaf',
-                             iconColor: colors.green
-                           });
-                           toggleTask(task.id);
-                        }
-                        // 4. Handle BRAT (Custom Action)
-                        else if (task.id === 'brat') {
-                            navigation.navigate('ScanFood');
-                        }
-                        // 5. Handle Generic Fallsbacks
-                        else if (task.type === 'water') {
-                          addWater();
-                        } else if (task.type === 'fiber') {
-                          addFiber(5); 
-                        } else if (task.type === 'probiotic') {
-                          addProbiotic(); // Keeping for future if restored
-                        }
-                      }}
-                      type={task.type}
-                    />
-                  </Animated.View>
-                ))
-            )}
-          </View>
         </Animated.View>
+
+        {/* NEW: User Triggers */}
+        <Animated.View
+          entering={FadeInDown.delay(270).springify()}
+          style={styles.section}
+        >
+          <UserTriggersCard triggers={[]} />
+        </Animated.View>
+
         <View style={styles.bottomPadding} />
       </ScrollView>
     </ScreenWrapper>

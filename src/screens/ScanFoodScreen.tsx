@@ -7,9 +7,11 @@ import {
   ScrollView,
   Keyboard,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons'
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme/theme';
 import {
   ScreenWrapper,
@@ -17,13 +19,19 @@ import {
   Card,
   IconContainer,
   BoxButton,
-  Button
+  Button,
+  NutritionCard,
+  PersonalizedExplanationCard,
+  PersonalHistoryCard,
+  PortionAdviceCard
 } from '../components';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { analyzeFoodWithAI } from '../services/fodmapService';
+import { supabase } from '../config/supabase';
 import { useGutStore } from '../store';
 import { useGutActions } from '../presentation/hooks';
+import { useUserCondition } from '../presentation/hooks/useUserCondition';
 import { FODMAPTag } from '../types/fodmap';
 import { getSafetyMessage, getRandomMessage, ANALYZING_MESSAGES } from '../utils/funnyMessages';
 
@@ -33,24 +41,146 @@ type ScanFoodScreenProps = {
 
 export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const { condition } = useUserCondition(); // Get user's condition for personalization
   const [searchText, setSearchText] = useState('');
   const [selectedFoods, setSelectedFoods] = useState<string[]>([]);
-  const [aiResults, setAiResults] = useState<Record<string, (FODMAPTag & { 
+  const [aiResults, setAiResults] = useState<Record<string, (FODMAPTag & {
     alternatives?: string[];
     normalizedName?: string;
     baseIngredients?: string[];
+    nutrition?: any;
+    personalizedExplanation?: string;
+    personalHistory?: any;
+    portionAdvice?: string;
+    compoundRiskWarning?: string;
   }) | null>>({});
   const [loadingFoods, setLoadingFoods] = useState<string[]>([]);
-  
+
   // Use new actions for logging
   const { logMeal } = useGutActions();
   // Still need store for trigger feedback lookup
   const { triggerFeedback } = useGutStore();
-  
+
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('snack');
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
 
   // Quick suggestions
   const SUGGESTIONS = ['Coffee', 'Pizza', 'Garlic', 'Onion', 'Apple', 'Milk', 'Bread', 'Pasta', 'Rice', 'Chicken'];
+
+  /**
+   * Handle menu/food image scanning - extract food items from photo
+   */
+  const handleImageScan = useCallback(async (imageUri: string, base64: string) => {
+    setIsProcessingImage(true);
+    try {
+      // Get Supabase session for auth
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Call edge function with image to extract food items
+      const supabaseUrl = (supabase as any).supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/analyze-food`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ''}`,
+        },
+        body: JSON.stringify({
+          imageBase64: base64,
+          extractFoodsOnly: true, // Signal edge function to extract foods from menu
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Edge function error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Extract foods array from response
+      const extractedFoods = data.foods || data.extractedFoods || [];
+
+      if (extractedFoods.length === 0) {
+        Alert.alert(
+          'No foods found',
+          'Could not extract any food items from the image. Try a clearer photo of the menu.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Add each extracted food to selected foods
+      for (const food of extractedFoods) {
+        await addFood(food);
+      }
+
+      Alert.alert(
+        'Foods extracted!',
+        `Found ${extractedFoods.length} items: ${extractedFoods.slice(0, 3).join(', ')}${extractedFoods.length > 3 ? '...' : ''}`,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      console.error('Image scan error:', error);
+      Alert.alert(
+        'Scan failed',
+        'Could not process the image. Try a clearer photo or type the food manually.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsProcessingImage(false);
+    }
+  }, [addFood]);
+
+  /**
+   * Launch camera or image picker to scan menu
+   */
+  const pickImage = useCallback(async () => {
+    try {
+      // Request permissions
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert(
+          'Camera Access Needed',
+          'Please allow camera access to scan food menus.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Launch camera
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: [ImagePicker.MediaType.IMAGE],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        await handleImageScan(asset.uri, asset.base64 || '');
+      }
+    } catch (error) {
+      console.error('Camera pick error:', error);
+      // Fallback to gallery
+      try {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: [ImagePicker.MediaType.IMAGE],
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 0.8,
+          base64: true,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+          const asset = result.assets[0];
+          await handleImageScan(asset.uri, asset.base64 || '');
+        }
+      } catch (galleryError) {
+        console.error('Gallery pick error:', galleryError);
+      }
+    }
+  }, [handleImageScan]);
 
   // AI-based analysis solely derived from AI results (no local DB lookup)
   const aiAnalysis = useMemo(() => {
@@ -273,7 +403,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         
-        {/* Search Input */}
+        {/* Search Input with Camera Button */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <View style={styles.searchContainer}>
             <Ionicons name="search" size={24} color={colors.black + '66'} style={styles.searchIcon} />
@@ -286,6 +416,17 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
               onSubmitEditing={() => searchText.trim() && addFood(searchText.trim())}
               autoFocus
             />
+            <Pressable
+              onPress={pickImage}
+              disabled={isProcessingImage}
+              style={[styles.cameraButton, isProcessingImage && { opacity: 0.5 }]}
+            >
+              {isProcessingImage ? (
+                <ActivityIndicator size="small" color={colors.pink} />
+              ) : (
+                <Ionicons name="camera" size={24} color={colors.pink} />
+              )}
+            </Pressable>
             {searchText.length > 0 && (
               <Pressable onPress={() => addFood(searchText.trim())} style={styles.addButton}>
                  <Typography variant="bodyBold" color={colors.white}>Add</Typography>
@@ -385,10 +526,10 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                   const aiAlternatives = Object.values(aiResults)
                      .filter(r => r?.alternatives)
                      .flatMap(r => r?.alternatives || []);
-                  
+
                   // Dedupe
                   const allAlternatives = [...new Set(aiAlternatives)].slice(0, 6);
-                  
+
                   if (allAlternatives.length === 0) return null;
                   return (
                     <View style={styles.alternativesBox}>
@@ -406,6 +547,48 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                   );
                })()}
              </Card>
+
+             {/* NEW: Enhanced Food Analysis Components */}
+             {selectedFoods.length > 0 && (() => {
+                const firstFood = selectedFoods[0];
+                const analysis = aiResults[firstFood];
+                if (!analysis) return null;
+
+                return (
+                  <>
+                    {/* Nutrition Breakdown */}
+                    <NutritionCard
+                      calories={analysis.nutrition?.calories || 0}
+                      protein={analysis.nutrition?.protein || 0}
+                      carbs={analysis.nutrition?.carbs || 0}
+                      fat={analysis.nutrition?.fat || 0}
+                      fiber={analysis.nutrition?.fiber || 0}
+                      sugar={analysis.nutrition?.sugar || 0}
+                      sodium={analysis.nutrition?.sodium || 0}
+                    />
+
+                    {/* Personalized Explanation */}
+                    <PersonalizedExplanationCard
+                      explanation={analysis.personalizedExplanation || ''}
+                      condition={condition?.getDisplayName()}
+                      compoundRiskWarning={analysis.compoundRiskWarning}
+                    />
+
+                    {/* Personal History */}
+                    {analysis.personalHistory && (
+                      <PersonalHistoryCard
+                        everEaten={analysis.personalHistory.everEaten}
+                        symptoms={analysis.personalHistory.symptoms || []}
+                        occurrenceCount={analysis.personalHistory.occurrenceCount || 0}
+                        latency={analysis.personalHistory.latency}
+                      />
+                    )}
+
+                    {/* Portion Advice */}
+                    <PortionAdviceCard advice={analysis.portionAdvice} />
+                  </>
+                );
+             })()}
 
              {/* Log It Button */}
              <View style={styles.logActionContainer}>
@@ -575,6 +758,13 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     marginRight: spacing.sm,
+  },
+  cameraButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.sm,
+    marginRight: spacing.xs,
+    padding: spacing.xs,
   },
   suggestionChip: {
     alignItems: 'center',
