@@ -8,7 +8,7 @@ import * as Sharing from 'expo-sharing';
 import { supabase } from '../config/supabase';
 import { useUIStore } from './useUIStore';
 import { useNotificationStore } from './useNotificationStore';
-import { getFODMAPInfo, getLowFODMAPAlternatives } from '../services/fodmapService';
+import { analyzeFoodWithAI, getLowFODMAPAlternatives } from '../services/fodmapService';
 
 import { colors } from '../theme/theme';
 
@@ -178,7 +178,7 @@ interface GutStore {
         symptoms: string[];
         frequencyText: string;
     }[];
-    getEnhancedTriggers: () => {
+    getEnhancedTriggers: () => Promise<{
         food: string;
         occurrences: number;
         symptomOccurrences: number;
@@ -192,7 +192,7 @@ interface GutStore {
             categories: string[];
         };
         alternatives?: string[];
-    }[];
+    }[]>;
     getCombinationTriggers: () => {
         foods: string[];
         occurrences: number;
@@ -1178,7 +1178,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
     },
 
     // Enhanced trigger detection with confidence and frequency
-    getEnhancedTriggers: () => {
+    getEnhancedTriggers: async () => {
         const { gutMoments, meals, triggerFeedback } = get();
 
         const foodStats: {
@@ -1237,8 +1237,14 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             });
         });
 
+        // Fetch FODMAP info for all foods in parallel
+        const foodList = Object.keys(foodStats);
+        const fodmapResults = await Promise.all(
+            foodList.map(food => analyzeFoodWithAI(food))
+        );
+
         return Object.entries(foodStats)
-            .map(([food, stats]) => {
+            .map(([food, stats], index) => {
                 const capitalizedFood = food.charAt(0).toUpperCase() + food.slice(1);
                 const occurrences = stats.total;
                 const symptomOccurrences = stats.symptomOccurrences;
@@ -1260,8 +1266,8 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                 // User feedback
                 const feedback = triggerFeedback.find(f => f.foodName.toLowerCase() === food);
 
-                // Nutrition/FODMAP Analysis
-                const fodmapInfo = getFODMAPInfo(food);
+                // Nutrition/FODMAP Analysis from AI
+                const fodmapInfo = fodmapResults[index];
                 const alternatives = getLowFODMAPAlternatives(food);
 
                 return {

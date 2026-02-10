@@ -1,30 +1,10 @@
 import { supabase } from '../config/supabase';
-import { FODMAP_FOODS, FODMAPCategory, FODMAPLevel, FODMAPTag } from '../types/fodmap';
+import { FODMAPCategory, FODMAPLevel, FODMAPTag } from '../types/fodmap';
 
 /**
  * FODMAP Service - Analyzes foods for FODMAP content and provides insights
+ * Uses AI-powered analysis exclusively - no local database
  */
-
-/**
- * Get FODMAP information for a specific food (Local Sync Lookup)
- */
-export const getFODMAPInfo = (food: string): FODMAPTag | null => {
-    const normalizedFood = food.toLowerCase().trim();
-
-    // Direct match
-    if (FODMAP_FOODS[normalizedFood]) {
-        return FODMAP_FOODS[normalizedFood];
-    }
-
-    // Partial match - check if food contains any known FODMAP food
-    for (const [key, value] of Object.entries(FODMAP_FOODS)) {
-        if (normalizedFood.includes(key) || key.includes(normalizedFood)) {
-            return value;
-        }
-    }
-
-    return null;
-};
 
 /**
  * AI-Powered Analysis (Remote)
@@ -74,16 +54,16 @@ export const analyzeFoodWithAI = async (food: string): Promise<FODMAPTag & {
 };
 
 /**
- * Analyze a list of foods and return FODMAP breakdown
+ * Analyze a list of foods and return FODMAP breakdown (AI-powered)
  */
-export const analyzeFODMAPs = (foods: string[]): {
+export const analyzeFODMAPs = async (foods: string[]): Promise<{
     highFODMAPs: Array<{ food: string; categories: FODMAPCategory[]; level: FODMAPLevel }>;
     moderateFODMAPs: Array<{ food: string; categories: FODMAPCategory[]; level: FODMAPLevel }>;
     lowFODMAPs: string[];
     unknownFoods: string[];
     totalFODMAPLoad: number;
     categoryBreakdown: Record<FODMAPCategory, number>;
-} => {
+}> => {
     const highFODMAPs: Array<{ food: string; categories: FODMAPCategory[]; level: FODMAPLevel }> = [];
     const moderateFODMAPs: Array<{ food: string; categories: FODMAPCategory[]; level: FODMAPLevel }> = [];
     const lowFODMAPs: string[] = [];
@@ -98,8 +78,11 @@ export const analyzeFODMAPs = (foods: string[]): {
 
     let totalFODMAPLoad = 0;
 
-    foods.forEach(food => {
-        const fodmapInfo = getFODMAPInfo(food);
+    // Fetch all food analyses in parallel using Promise.all()
+    const analysisResults = await Promise.all(foods.map(food => analyzeFoodWithAI(food)));
+
+    foods.forEach((food, index) => {
+        const fodmapInfo = analysisResults[index];
 
         if (!fodmapInfo) {
             unknownFoods.push(food);
@@ -133,13 +116,13 @@ export const analyzeFODMAPs = (foods: string[]): {
 /**
  * Check if a meal has FODMAP stacking (multiple high-FODMAP foods)
  */
-export const checkFODMAPStacking = (foods: string[]): {
+export const checkFODMAPStacking = async (foods: string[]): Promise<{
     hasStacking: boolean;
     stackedCategories: FODMAPCategory[];
     riskLevel: 'low' | 'moderate' | 'high';
     explanation: string;
-} => {
-    const analysis = analyzeFODMAPs(foods);
+}> => {
+    const analysis = await analyzeFODMAPs(foods);
     const stackedCategories: FODMAPCategory[] = [];
 
     // Check which categories have multiple foods

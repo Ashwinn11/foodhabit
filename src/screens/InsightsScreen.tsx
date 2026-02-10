@@ -14,7 +14,6 @@ import {
 } from '../components';
 import { useGutStore } from '../store';
 import { useGutData } from '../presentation/hooks';
-import { analyzeFoodWithAI } from '../services/fodmapService';
 import { container } from '../infrastructure/di';
 import { Meal as DomainMeal, MealType } from '../domain';
 import { getTriggerInsightMessage, getTriggerFrequencyMessage, getComboTriggerMessage, getFunGrade } from '../utils/funnyMessages';
@@ -64,27 +63,45 @@ export const InsightsScreen: React.FC = () => {
     }));
   }, [triggerFeedback]);
 
-  // Use new trigger detection service
-  const enhancedTriggers = useMemo(() => {
-    const triggers = triggerService.detectTriggers({
-      moments: domainMoments,
-      meals: domainMeals,
-      feedback: domainFeedback as any,
-    });
+  // State for triggers and loading
+  const [enhancedTriggers, setEnhancedTriggers] = useState<any[]>([]);
+  const [showAllTriggers, setShowAllTriggers] = useState(false);
 
-    // Convert to the format expected by the UI
-    return triggers.map(t => ({
-      food: t.food.charAt(0).toUpperCase() + t.food.slice(1),
-      occurrences: t.occurrences,
-      symptomOccurrences: t.symptomOccurrences,
-      confidence: t.confidence,
-      frequencyText: `${t.symptomOccurrences} of ${t.occurrences} times`,
-      avgLatencyHours: t.avgLatencyHours,
-      symptoms: t.symptoms,
-      userFeedback: t.userFeedback,
-      fodmapIssues: t.fodmapIssues,
-      alternatives: t.alternatives,
-    }));
+  // Fetch and enrich triggers with AI analysis
+  useEffect(() => {
+    const loadTriggers = async () => {
+      try {
+        const triggers = await triggerService.detectTriggers({
+          moments: domainMoments,
+          meals: domainMeals,
+          feedback: domainFeedback as any,
+        });
+
+        // Convert to the format expected by the UI
+        const enrichedTriggers = triggers.map(t => ({
+          food: t.food.charAt(0).toUpperCase() + t.food.slice(1),
+          occurrences: t.occurrences,
+          symptomOccurrences: t.symptomOccurrences,
+          confidence: t.confidence,
+          frequencyText: `${t.symptomOccurrences} of ${t.occurrences} times`,
+          avgLatencyHours: t.avgLatencyHours,
+          symptoms: t.symptoms,
+          userFeedback: t.userFeedback,
+          fodmapIssues: t.fodmapIssues,
+          alternatives: t.alternatives,
+        }));
+
+        setEnhancedTriggers(enrichedTriggers);
+      } catch (error) {
+        console.error('Error loading triggers:', error);
+      }
+    };
+
+    if (domainMoments.length > 0 || domainMeals.length > 0) {
+      loadTriggers();
+    } else {
+      setEnhancedTriggers([]);
+    }
   }, [domainMoments, domainMeals, domainFeedback, triggerService]);
 
   // Get combination triggers
@@ -98,34 +115,6 @@ export const InsightsScreen: React.FC = () => {
       frequencyText: `${c.symptomOccurrences} of ${c.occurrences} times`,
     }));
   }, [domainMoments, domainMeals, triggerService]);
-
-  // State for AI-enriched insights
-  const [aiInsights, setAiInsights] = useState<Record<string, { fodmapIssues?: any; culprits?: string[]; alternatives?: string[] }>>({});
-  const [showAllTriggers, setShowAllTriggers] = useState(false);
-  
-  // Background enrichment for unknown triggers
-  useEffect(() => {
-    const fetchMissingInsights = async () => {
-      for (const trigger of enhancedTriggers) {
-        // If trigger has no local FODMAP info and we haven't checked AI yet
-        if (!trigger.fodmapIssues && !aiInsights[trigger.food]) {
-          const result = await analyzeFoodWithAI(trigger.food);
-          if (result) {
-            setAiInsights(prev => ({
-              ...prev,
-              [trigger.food]: {
-                fodmapIssues: result.level !== 'low' ? { level: result.level, categories: result.categories } : undefined,
-                culprits: result.culprits,
-                alternatives: result.alternatives
-              }
-            }));
-          }
-        }
-      }
-    };
-
-    fetchMissingInsights();
-  }, [enhancedTriggers]);
   
   // Calculate weekly logs for Insights focus
   const weekAgo = new Date();
@@ -286,13 +275,8 @@ export const InsightsScreen: React.FC = () => {
                 iconColor={colors.pink}
               />
               {enhancedTriggers.slice(0, showAllTriggers ? undefined : 3).map((trigger, i) => {
-                // Merge store data with background AI results
-                const enriched = {
-                  ...trigger,
-                  fodmapIssues: trigger.fodmapIssues || aiInsights[trigger.food]?.fodmapIssues,
-                  culprits: (trigger as any).culprits || aiInsights[trigger.food]?.culprits,
-                  alternatives: trigger.alternatives || aiInsights[trigger.food]?.alternatives
-                };
+                // Triggers are already enriched with AI analysis
+                const enriched = trigger;
 
                 return (
                 <Card key={i} variant="white" padding="md" style={{ marginBottom: spacing.sm }}>

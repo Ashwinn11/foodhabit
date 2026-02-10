@@ -2,7 +2,7 @@
  * useTriggers Hook
  * React hook for trigger detection
  */
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Trigger, CombinationTrigger, GutMoment, Meal, TriggerFeedback } from '../../domain';
 import { container } from '../../infrastructure/di';
 
@@ -83,9 +83,21 @@ export function useTriggersFromData(
     meals: Meal[],
     feedback: TriggerFeedback[] = []
 ): Trigger[] {
+    const [triggers, setTriggers] = useState<Trigger[]>([]);
     const triggerService = container.triggerDetectionService;
 
-    return useMemo(() => {
-        return triggerService.detectTriggers({ moments, meals, feedback });
+    useEffect(() => {
+        const detectTriggers = async () => {
+            try {
+                const detected = await triggerService.detectTriggers({ moments, meals, feedback });
+                setTriggers(detected);
+            } catch (error) {
+                console.error('Failed to detect triggers from data:', error);
+            }
+        };
+
+        detectTriggers();
     }, [moments, meals, feedback, triggerService]);
+
+    return triggers;
 }

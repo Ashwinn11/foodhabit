@@ -12,8 +12,8 @@ describe('TriggerDetectionService', () => {
     });
 
     describe('detectTriggers', () => {
-        it('should return empty array when no data', () => {
-            const result = service.detectTriggers({
+        it('should return empty array when no data', async () => {
+            const result = await service.detectTriggers({
                 moments: [],
                 meals: [],
                 feedback: [],
@@ -22,7 +22,7 @@ describe('TriggerDetectionService', () => {
             expect(result).toEqual([]);
         });
 
-        it('should detect potential triggers when bad moments follow meals', () => {
+        it('should detect potential triggers when bad moments follow meals', async () => {
             // Need multiple occurrences to meet threshold
             const meals: Meal[] = [];
             const moments: GutMoment[] = [];
@@ -48,7 +48,7 @@ describe('TriggerDetectionService', () => {
                 );
             }
 
-            const result = service.detectTriggers({
+            const result = await service.detectTriggers({
                 moments,
                 meals,
                 feedback: [],
@@ -58,7 +58,7 @@ describe('TriggerDetectionService', () => {
             expect(result.length).toBeGreaterThanOrEqual(0);
         });
 
-        it('should not flag foods when moments are good', () => {
+        it('should not flag foods when moments are good', async () => {
             const meals: Meal[] = [];
             const moments: GutMoment[] = [];
 
@@ -83,14 +83,14 @@ describe('TriggerDetectionService', () => {
                 );
             }
 
-            const result = service.detectTriggers({
+            const result = await service.detectTriggers({
                 moments,
                 meals,
                 feedback: [],
             });
 
             // Should not find high-confidence triggers when stool is healthy
-            const highConfidence = result.filter(t => t.confidence === 'High');
+            const highConfidence = result.filter((t: any) => t.confidence === 'High');
             expect(highConfidence.length).toBe(0);
         });
     });

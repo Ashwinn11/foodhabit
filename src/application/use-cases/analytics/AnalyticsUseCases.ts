@@ -69,11 +69,11 @@ export class DetectTriggersUseCase {
     /**
      * Detect from provided data (no DB call)
      */
-    detectFromData(
+    async detectFromData(
         moments: GutMoment[],
         meals: Meal[],
         feedback: TriggerFeedback[]
-    ): Trigger[] {
+    ): Promise<Trigger[]> {
         return this.triggerService.detectTriggers({
             moments,
             meals,

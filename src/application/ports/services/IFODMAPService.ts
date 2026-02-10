@@ -41,11 +41,6 @@ export interface AIFODMAPResult extends FODMAPInfo {
 
 export interface IFODMAPService {
     /**
-     * Get FODMAP info for a specific food (local lookup)
-     */
-    getFODMAPInfo(food: string): FODMAPInfo | null;
-
-    /**
      * Analyze food with AI (remote)
      */
     analyzeFoodWithAI(food: string): Promise<AIFODMAPResult | null>;
@@ -53,12 +48,12 @@ export interface IFODMAPService {
     /**
      * Analyze a list of foods
      */
-    analyzeFODMAPs(foods: string[]): FODMAPAnalysis;
+    analyzeFODMAPs(foods: string[]): Promise<FODMAPAnalysis>;
 
     /**
      * Check for FODMAP stacking in a meal
      */
-    checkFODMAPStacking(foods: string[]): FODMAPStackingResult;
+    checkFODMAPStacking(foods: string[]): Promise<FODMAPStackingResult>;
 
     /**
      * Get low-FODMAP alternatives for a food

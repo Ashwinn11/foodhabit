@@ -32,12 +32,16 @@ export class TriggerDetectionService {
     /**
      * Detect potential food triggers with enhanced analysis
      */
-    detectTriggers(input: TriggerDetectionInput): Trigger[] {
+    async detectTriggers(input: TriggerDetectionInput): Promise<Trigger[]> {
         const { moments, meals, feedback } = input;
         const foodStats = this.buildFoodStatistics(moments, meals);
 
-        return Object.entries(foodStats)
-            .map(([food, stats]) => this.createTrigger(food, stats, feedback))
+        const triggers = await Promise.all(
+            Object.entries(foodStats)
+                .map(([food, stats]) => this.createTrigger(food, stats, feedback))
+        );
+
+        return triggers
             .filter(t => t !== null)
             .filter(trigger =>
                 trigger!.occurrences >= this.MIN_OCCURRENCES &&
@@ -223,23 +227,27 @@ export class TriggerDetectionService {
     /**
      * Create a Trigger entity from statistics
      */
-    private createTrigger(
+    private async createTrigger(
         food: string,
         stats: FoodStatistics,
         feedback: TriggerFeedback[]
-    ): Trigger | null {
+    ): Promise<Trigger | null> {
         if (stats.total === 0) return null;
 
         const userFeedback = feedback.find(f => f.foodName.toLowerCase() === food.toLowerCase());
 
-        // Get FODMAP info if service is available
+        // Get FODMAP info from AI
         let fodmapInfo: FODMAPInfo | undefined;
         let alternatives: string[] | undefined;
 
         if (this.fodmapService) {
-            const info = this.fodmapService.getFODMAPInfo(food);
-            if (info && info.level !== 'low') {
-                fodmapInfo = info;
+            // Use AI analysis through the service if available
+            const aiResult = await this.fodmapService.analyzeFoodWithAI(food);
+            if (aiResult && aiResult.level !== 'low') {
+                fodmapInfo = {
+                    level: aiResult.level,
+                    categories: aiResult.categories,
+                };
             }
             alternatives = this.fodmapService.getLowFODMAPAlternatives(food);
         }
