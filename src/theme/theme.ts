@@ -1,57 +1,58 @@
 /**
- * Gut Buddy STRICT Premium Design System
+ * Gut Buddy Premium Design System
  * 
- * Adheres to a strict 4-color rule for maximum visual consistency.
- * 1. Primary (Brand/Trust) - Teal
- * 2. Secondary (Warmth/Alert) - Coral
- * 3. Ink (Text/Contrast) - Midnight
- * 4. Canvas (Background/Surface) - Paper
+ * 3-color palette with warm coral consistency:
+ * 1. Primary (Health/Trust) - Green
+ * 2. Secondary (Warmth/Energy) - Coral
+ * 3. Accent (Info/Interactive) - Blue
+ * 4. Ink (Text/Contrast) - Midnight
+ * 5. Canvas (Background/Surface) - Paper
  */
 
 const core = {
-    teal: '#3AA7A3',    // Primary: Calm, Professional, Medical
-    coral: '#FF7E67',   // Secondary: Energy, Highlights, Alerts
+    green: '#2ECC71',   // Primary: Health, Trust, Positive
+    coral: '#FF7E67',   // Secondary: Energy, Warmth, Alerts
+    blue: '#4A90D9',    // Accent: Info, Interactive, Selection
     midnight: '#1F2937',// Ink: Text, Icons, Structure
     paper: '#FFFFFF',   // Canvas: Clean backgrounds
 } as const;
 
 export const colors = {
-    // 🎨 The 4 Pillars
-    primary: core.teal,
+    // 🎨 The Pillars
+    primary: core.green,
     secondary: core.coral,
+    accent: core.blue,
     text: core.midnight,
     background: core.paper,
-
-    // 🌑 Semantic Mappings (All derived strictly from the 4 Pillars)
+    backgroundTint: '#F8FAFC', // Soft cool gray for screen backgrounds
 
     // UI Surfaces
     surface: core.paper,
     card: core.paper,
-    border: `${core.midnight}15`, // 15% Opacity Midnight
+    border: `${core.midnight}12`, // 12% Opacity Midnight
 
     // Text Layers
     textPrimary: core.midnight,
     textSecondary: `${core.midnight}99`, // 60% Opacity
     textTertiary: `${core.midnight}66`,  // 40% Opacity
 
-    // Status / Functional (Mapped to dual colors)
-    success: core.teal,  // Success is Primary
-    error: core.coral,   // Error is Secondary
-    warning: core.coral, // Warning is Secondary
-    info: core.teal,     // Info is Primary
+    // Status / Functional
+    success: core.green,
+    error: core.coral,
+    warning: core.coral,
+    info: core.blue,
 
-    // 🔄 Legacy/Backward Compatibility
-    // Forced into the 2-hue system to maintain the 4-color rule
-    blue: core.teal,
-    green: core.teal,
-    yellow: core.coral,
+    // Named Colors (properly distributed)
+    blue: core.blue,
+    green: core.green,
+    yellow: '#F5A623',  // Warm amber, harmonizes with coral
     pink: core.coral,
     red: core.coral,
 
     // Neutrals
     white: core.paper,
     black: core.midnight,
-    lightGray: `${core.midnight}08`, // 5% Opacity
+    lightGray: `${core.midnight}08`,
     mediumGray: `${core.midnight}66`,
     darkGray: core.midnight,
 

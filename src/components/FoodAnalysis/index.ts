@@ -11,3 +11,4 @@ export { PersonalizedExplanationCard } from './PersonalizedExplanationCard';
 export { PersonalHistoryCard } from './PersonalHistoryCard';
 export { FoodListItem } from './FoodListItem';
 export { FoodAnalysisSkeleton } from './FoodAnalysisSkeleton';
+export { ScoreGauge } from './ScoreGauge';

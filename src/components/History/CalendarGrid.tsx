@@ -1,14 +1,11 @@
 /**
- * CalendarGrid Component
- * Visual calendar grid with day indicators
- *
- * Presentation Component - Pure UI, no business logic
+ * CalendarGrid - Clean, modern calendar
+ * Generous spacing, rounded cells, clear color coding
  */
-
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
 import { Typography } from '../Typography';
-import { colors, spacing, radii } from '../../theme';
+import { colors, spacing } from '../../theme';
 
 export type DayIndicator = 'green' | 'yellow' | 'red' | 'empty' | 'gray';
 
@@ -26,81 +23,74 @@ interface CalendarGridProps {
   onDayPress: (date: number) => void;
 }
 
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const indicatorColors: Record<DayIndicator, string> = {
+  green: colors.green,
+  yellow: colors.yellow,
+  red: colors.pink,
+  empty: 'transparent',
+  gray: 'transparent',
+};
+
 export const CalendarGrid: React.FC<CalendarGridProps> = ({
-  days,
-  selectedDate,
-  onDayPress
+  days, selectedDate, onDayPress
 }) => {
-  const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  const getIndicatorColor = (indicator: DayIndicator): string => {
-    switch (indicator) {
-      case 'green':
-        return colors.green;
-      case 'yellow':
-        return colors.yellow;
-      case 'red':
-        return colors.pink;
-      case 'gray':
-        return colors.mediumGray;
-      default:
-        return 'transparent';
-    }
-  };
-
   return (
-    <View style={styles.container}>
-      {/* Day headers */}
-      <View style={styles.weekRow}>
-        {DAYS_OF_WEEK.map(day => (
-          <View key={day} style={styles.dayHeader}>
-            <Typography variant="caption" color={colors.black + '60'}>
-              {day}
+    <View style={styles.grid}>
+      {/* Weekday headers */}
+      <View style={styles.row}>
+        {WEEKDAYS.map((d, i) => (
+          <View key={`h-${i}`} style={styles.cell}>
+            <Typography variant="caption" color={colors.black + '99'} style={styles.headerText}>
+              {d}
             </Typography>
           </View>
         ))}
       </View>
 
-      {/* Calendar grid */}
-      {Array.from({ length: Math.ceil(days.length / 7) }).map((_, weekIndex) => (
-        <View key={weekIndex} style={styles.weekRow}>
-          {days.slice(weekIndex * 7, (weekIndex + 1) * 7).map((day, dayIndex) => {
+      {/* Day rows */}
+      {Array.from({ length: Math.ceil(days.length / 7) }).map((_, week) => (
+        <View key={week} style={styles.row}>
+          {days.slice(week * 7, (week + 1) * 7).map((day, di) => {
+            if (day.date === 0) {
+              return <View key={`e-${di}`} style={styles.cell} />;
+            }
+
             const isSelected = day.date === selectedDate;
-            const hasLogs = day.indicator !== 'empty' && day.indicator !== 'gray';
-            const isEmpty = day.indicator === 'gray' || day.indicator === 'empty';
+            const hasData = day.indicator !== 'empty' && day.indicator !== 'gray';
+            const dotColor = indicatorColors[day.indicator];
+            const isFuture = day.indicator === 'gray';
 
             return (
-              <TouchableOpacity
-                key={`${weekIndex}-${dayIndex}`}
-                style={[
-                  styles.dayCell,
-                  isSelected && styles.selectedDay,
-                  !isSelected && hasLogs && styles.hasLogsCell,
-                  !isSelected && isEmpty && styles.emptyCell
-                ]}
-                onPress={() => day.hasLogs && onDayPress(day.date)}
-                disabled={!day.hasLogs}
-                activeOpacity={0.7}
-              >
-                {day.date !== 0 ? (
-                  <>
-                    <Typography
-                      variant="bodyBold"
-                      color={isSelected ? colors.white : isEmpty ? colors.black + '40' : colors.black}
-                    >
-                      {day.date}
-                    </Typography>
-                    {!isSelected && hasLogs && (
-                      <View
-                        style={[
-                          styles.indicator,
-                          { backgroundColor: getIndicatorColor(day.indicator) }
-                        ]}
-                      />
-                    )}
-                  </>
-                ) : null}
-              </TouchableOpacity>
+              <View key={`d-${di}`} style={styles.cell}>
+                <Pressable
+                  onPress={() => day.hasLogs && onDayPress(day.date)}
+                  disabled={!day.hasLogs}
+                  style={[
+                    styles.dayBtn,
+                    isSelected && styles.selectedBtn,
+                    hasData && !isSelected && styles.hasDataBtn,
+                  ]}
+                >
+                  <Typography
+                    variant="body"
+                    color={
+                      isSelected ? colors.white
+                      : isFuture ? colors.black + '30'
+                      : hasData ? dotColor
+                      : colors.black
+                    }
+                    style={[
+                      styles.dayText,
+                      isSelected && { fontWeight: '700' },
+                      hasData && !isSelected && { fontWeight: '700' },
+                    ]}
+                  >
+                    {day.date}
+                  </Typography>
+                </Pressable>
+              </View>
             );
           })}
         </View>
@@ -109,70 +99,44 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   );
 };
 
+const CELL_SIZE = 40;
+
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+  grid: {
+    paddingHorizontal: spacing.xs,
+    paddingBottom: spacing.sm,
   },
-  weekRow: {
-    flexDirection: 'row',
-    marginBottom: spacing.sm,
-  },
-  dayHeader: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  dayCell: {
-    flex: 1,
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radii.lg,
-    margin: 2,
-    backgroundColor: colors.white,
-  },
-  hasLogsCell: {
-    backgroundColor: colors.white,
-    borderWidth: 2,
-    borderColor: colors.blue,
-  },
-  selectedDay: {
-    backgroundColor: colors.blue,
-    borderWidth: 0,
-    shadowColor: colors.blue,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  emptyCell: {
-    backgroundColor: '#F3F4F6',
-    opacity: 0.6,
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    position: 'absolute',
-    bottom: 4,
-    right: 4,
-  },
-  legend: {
+  row: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingTop: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    marginBottom: 2,
   },
-  legendItem: {
-    flexDirection: 'row',
+  cell: {
+    width: CELL_SIZE,
+    height: CELL_SIZE + 4,
     alignItems: 'center',
-    gap: spacing.xs,
+    justifyContent: 'center',
   },
-  legendColor: {
-    width: 10,
-    height: 10,
-    borderRadius: 2,
+  headerText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  dayBtn: {
+    width: CELL_SIZE,
+    height: CELL_SIZE,
+    borderRadius: CELL_SIZE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedBtn: {
+    backgroundColor: colors.blue,
+  },
+  hasDataBtn: {
+    backgroundColor: colors.black + '04',
+  },
+  dayText: {
+    fontSize: 14,
+    lineHeight: 18,
   },
 });

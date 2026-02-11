@@ -580,7 +580,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                           <Ionicons name="checkmark-circle" size={24} color={colors.white} />
                         </View>
                         <View style={{ flex: 1, marginLeft: spacing.md }}>
-                          <Typography variant="caption" color={colors.green + '80'} style={{ textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: '600' }}>
+                          <Typography variant="caption" color={colors.green} style={{ textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: '600' }}>
                             Healthiest Choice
                           </Typography>
                           <Typography variant="bodyBold" color={colors.black} style={{ marginTop: 2 }}>
@@ -603,7 +603,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                           <Ionicons name="alert-circle" size={24} color={colors.white} />
                         </View>
                         <View style={{ flex: 1, marginLeft: spacing.md }}>
-                          <Typography variant="caption" color={colors.pink + '80'} style={{ textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: '600' }}>
+                          <Typography variant="caption" color={colors.pink} style={{ textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: '600' }}>
                             Watch Out
                           </Typography>
                           <Typography variant="bodyBold" color={colors.black} style={{ marginTop: 2 }}>
@@ -1007,7 +1007,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   scoreCard: {
-    alignItems: 'center',
+    flexDirection: 'row',
+    alignItems: 'baseline',
     justifyContent: 'center',
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,

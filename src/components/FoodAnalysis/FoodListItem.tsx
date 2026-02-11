@@ -1,8 +1,8 @@
 /**
- * FoodListItem Component - Minimal Scannable Version
- * Displays a single food in a concise card for easy comparison
+ * FoodListItem Component - Premium Scannable Version
+ * Displays a single food with semi-circle score gauge and visual hierarchy
  *
- * Shows: name, nutrition grade, risk level, summary line, explanation
+ * Shows: name, score gauge, risk dot, nutrition pills, explanation
  * Presentation Component - Pure UI, receives data as props
  */
 
@@ -11,9 +11,9 @@ import { View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Typography } from '../Typography';
 import { Card } from '../Card';
+import { ScoreGauge } from './ScoreGauge';
 import { colors, spacing, radii } from '../../theme';
 import { Ionicons } from '@expo/vector-icons';
-import { getNutritionScoreColor } from '../../utils/nutritionScore';
 
 interface FoodListItemProps {
   foodName: string;
@@ -59,14 +59,42 @@ const getRiskColor = (level?: string): string => {
 const getRiskLabel = (level?: string): string => {
   switch (level) {
     case 'low':
-      return 'Low';
+      return 'Low Risk';
     case 'moderate':
       return 'Moderate';
     case 'high':
-      return 'High';
+      return 'High Risk';
     default:
       return 'Unknown';
   }
+};
+
+const getRiskIcon = (level?: string): keyof typeof Ionicons.glyphMap => {
+  switch (level) {
+    case 'low':
+      return 'shield-checkmark';
+    case 'moderate':
+      return 'alert-circle';
+    case 'high':
+      return 'warning';
+    default:
+      return 'help-circle';
+  }
+};
+
+type NutrientKey = 'calories' | 'protein' | 'carbs' | 'fat' | 'fiber' | 'sugar' | 'sodium';
+
+const getNutrientColor = (key: NutrientKey): string => {
+  const map: Record<NutrientKey, string> = {
+    calories: colors.pink,
+    protein: colors.blue,
+    carbs: colors.yellow,
+    fat: colors.pink,
+    fiber: colors.green,
+    sugar: colors.pink,
+    sodium: colors.blue,
+  };
+  return map[key];
 };
 
 export const FoodListItem: React.FC<FoodListItemProps> = ({
@@ -79,22 +107,23 @@ export const FoodListItem: React.FC<FoodListItemProps> = ({
 }) => {
   const riskColor = getRiskColor(analysis?.level);
   const riskLabel = getRiskLabel(analysis?.level);
+  const riskIcon = getRiskIcon(analysis?.level);
 
-  // Show minimal loading state immediately
+  // Loading state
   if (isLoading && !analysis) {
     return (
       <Animated.View entering={FadeIn.duration(200)}>
         <Card
           variant="white"
           padding="md"
-          style={[styles.container, { borderLeftColor: colors.mediumGray, borderLeftWidth: 4 }]}
+          style={[styles.container, styles.loadingContainer]}
         >
           <View style={styles.header}>
             <Pressable onPress={onToggle} style={styles.checkbox}>
               <Ionicons
                 name={isSelected ? 'checkmark-circle' : 'radio-button-off'}
-                size={20}
-                color={isSelected ? colors.blue : colors.black + '40'}
+                size={22}
+                color={isSelected ? colors.green : colors.black + '30'}
               />
             </Pressable>
             <Typography variant="bodyBold" color={colors.black} style={{ flex: 1 }}>
@@ -102,7 +131,7 @@ export const FoodListItem: React.FC<FoodListItemProps> = ({
             </Typography>
             <View style={styles.loadingBadge}>
               <ActivityIndicator size="small" color={colors.blue} />
-              <Typography variant="caption" color={colors.blue} style={{ marginLeft: 4 }}>
+              <Typography variant="caption" color={colors.blue} style={{ marginLeft: 6 }}>
                 Analyzing...
               </Typography>
             </View>
@@ -112,26 +141,27 @@ export const FoodListItem: React.FC<FoodListItemProps> = ({
     );
   }
 
+  // Not found state
   if (!analysis) {
     return (
       <Animated.View entering={FadeIn.duration(200)}>
         <Card
           variant="white"
           padding="md"
-          style={[styles.container, { borderLeftColor: colors.mediumGray, borderLeftWidth: 4 }]}
+          style={[styles.container, { borderLeftColor: colors.mediumGray, borderLeftWidth: 3 }]}
         >
           <View style={styles.header}>
             <Pressable onPress={onToggle} style={styles.checkbox}>
               <Ionicons
                 name={isSelected ? 'checkmark-circle' : 'radio-button-off'}
-                size={20}
-                color={isSelected ? colors.blue : colors.black + '40'}
+                size={22}
+                color={isSelected ? colors.green : colors.black + '30'}
               />
             </Pressable>
             <Typography variant="bodyBold" color={colors.black} style={{ flex: 1 }}>
               {foodName}
             </Typography>
-            <Typography variant="caption" color={colors.black + '60'}>
+            <Typography variant="caption" color={colors.black + '50'}>
               Not found
             </Typography>
           </View>
@@ -140,9 +170,8 @@ export const FoodListItem: React.FC<FoodListItemProps> = ({
     );
   }
 
-  // Use nutrition score from AI (prefer score field, fall back to nutritionScore for compatibility)
+  // Use nutrition score from AI
   const scoreValue = analysis.score ?? analysis.nutritionScore ?? 5;
-  const scoreColor = getNutritionScoreColor(scoreValue);
 
   return (
     <Animated.View entering={FadeIn.duration(300)}>
@@ -150,112 +179,89 @@ export const FoodListItem: React.FC<FoodListItemProps> = ({
         <Card
           variant="white"
           padding="md"
-          style={[styles.container, { borderLeftColor: riskColor, borderLeftWidth: 4 }]}
+          style={[
+            styles.container,
+            { borderLeftColor: riskColor, borderLeftWidth: 3 },
+            isSelected && styles.selectedContainer,
+          ]}
         >
-        {/* Header: Checkbox + Name + Score + Risk */}
-        <View style={styles.header}>
-          <Pressable onPress={onToggle} style={styles.checkbox}>
-            <Ionicons
-              name={isSelected ? 'checkmark-circle' : 'radio-button-off'}
-              size={20}
-              color={isSelected ? colors.blue : colors.black + '40'}
-            />
-          </Pressable>
+          {/* Header: Checkbox + Name + Score Gauge */}
+          <View style={styles.header}>
+            <Pressable onPress={onToggle} style={styles.checkbox}>
+              <Ionicons
+                name={isSelected ? 'checkmark-circle' : 'radio-button-off'}
+                size={22}
+                color={isSelected ? colors.green : colors.black + '30'}
+              />
+            </Pressable>
 
-          <View style={{ flex: 1 }}>
-            <Typography variant="bodyBold" color={colors.black}>
-              {foodName}
+            <View style={{ flex: 1 }}>
+              <Typography variant="bodyBold" color={colors.black}>
+                {foodName}
+              </Typography>
+              {/* Risk inline with dot */}
+              <View style={styles.riskRow}>
+                <Ionicons name={riskIcon} size={13} color={riskColor} />
+                <Typography variant="caption" color={riskColor} style={{ marginLeft: 3, fontWeight: '600' }}>
+                  {riskLabel}
+                </Typography>
+              </View>
+            </View>
+
+            {/* Semi-circle Score Gauge */}
+            <ScoreGauge score={scoreValue} size={52} />
+          </View>
+
+          {/* Nutrition Pills */}
+          {analysis.nutrition && (
+            <View style={styles.nutritionRow}>
+              {([
+                { key: 'calories' as NutrientKey, label: 'Cal', value: analysis.nutrition.calories, unit: '' },
+                { key: 'protein' as NutrientKey, label: 'Pro', value: analysis.nutrition.protein, unit: 'g' },
+                { key: 'carbs' as NutrientKey, label: 'Carb', value: analysis.nutrition.carbs, unit: 'g' },
+                { key: 'fat' as NutrientKey, label: 'Fat', value: analysis.nutrition.fat, unit: 'g' },
+                { key: 'fiber' as NutrientKey, label: 'Fib', value: analysis.nutrition.fiber, unit: 'g' },
+              ]).map(({ key, label, value, unit }) => {
+                const pillColor = getNutrientColor(key);
+                return (
+                  <View key={key} style={[styles.nutrientPill, { backgroundColor: pillColor + '12' }]}>
+                    <Typography variant="caption" color={pillColor + 'AA'} style={{ fontSize: 10 }}>
+                      {label}
+                    </Typography>
+                    <Typography variant="caption" color={colors.black} style={{ fontWeight: '700', fontSize: 12 }}>
+                      {value}{unit}
+                    </Typography>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {/* Known Trigger Warning */}
+          {triggerWarning && (
+            <View style={styles.triggerWarning}>
+              <Ionicons name="warning" size={16} color={colors.white} />
+              <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                <Typography variant="caption" color={colors.white} style={{ fontWeight: '700' }}>
+                  Known Trigger ({triggerWarning.confidence})
+                </Typography>
+                <Typography variant="caption" color={colors.white + 'cc'} style={{ fontSize: 11 }}>
+                  {triggerWarning.frequencyText} · {triggerWarning.symptoms.join(', ')} · {triggerWarning.latency}
+                </Typography>
+              </View>
+            </View>
+          )}
+
+          {/* AI Explanation */}
+          {analysis.explanation && (
+            <Typography
+              variant="caption"
+              color={colors.black + '55'}
+              style={{ marginTop: spacing.sm, fontStyle: 'italic', lineHeight: 16 }}
+            >
+              {analysis.explanation}
             </Typography>
-          </View>
-
-          {/* Score Badge */}
-          <View style={[styles.badge, { backgroundColor: scoreColor + '20' }]}>
-            <Typography variant="caption" color={scoreColor} style={{ fontWeight: '700' }}>
-              {scoreValue}/10
-            </Typography>
-          </View>
-
-          {/* Risk Badge */}
-          <View style={[styles.badge, { backgroundColor: riskColor + '20', marginLeft: spacing.xs }]}>
-            <Typography variant="caption" color={riskColor}>
-              {riskLabel}
-            </Typography>
-          </View>
-        </View>
-
-        {/* Nutrition Grid */}
-        {analysis.nutrition && (
-          <View style={styles.nutritionGrid}>
-            <View style={styles.nutrientItem}>
-              <Typography variant="caption" color={colors.black + '70'}>Cal</Typography>
-              <Typography variant="caption" color={colors.black} style={{ fontWeight: '600' }}>
-                {analysis.nutrition.calories}
-              </Typography>
-            </View>
-            <View style={styles.nutrientItem}>
-              <Typography variant="caption" color={colors.black + '70'}>Pro</Typography>
-              <Typography variant="caption" color={colors.black} style={{ fontWeight: '600' }}>
-                {analysis.nutrition.protein}g
-              </Typography>
-            </View>
-            <View style={styles.nutrientItem}>
-              <Typography variant="caption" color={colors.black + '70'}>Carb</Typography>
-              <Typography variant="caption" color={colors.black} style={{ fontWeight: '600' }}>
-                {analysis.nutrition.carbs}g
-              </Typography>
-            </View>
-            <View style={styles.nutrientItem}>
-              <Typography variant="caption" color={colors.black + '70'}>Fat</Typography>
-              <Typography variant="caption" color={colors.black} style={{ fontWeight: '600' }}>
-                {analysis.nutrition.fat}g
-              </Typography>
-            </View>
-            <View style={styles.nutrientItem}>
-              <Typography variant="caption" color={colors.black + '70'}>Fiber</Typography>
-              <Typography variant="caption" color={colors.black} style={{ fontWeight: '600' }}>
-                {analysis.nutrition.fiber}g
-              </Typography>
-            </View>
-            <View style={styles.nutrientItem}>
-              <Typography variant="caption" color={colors.black + '70'}>Sugar</Typography>
-              <Typography variant="caption" color={colors.black} style={{ fontWeight: '600' }}>
-                {analysis.nutrition.sugar}g
-              </Typography>
-            </View>
-            <View style={styles.nutrientItem}>
-              <Typography variant="caption" color={colors.black + '70'}>Sodium</Typography>
-              <Typography variant="caption" color={colors.black} style={{ fontWeight: '600' }}>
-                {analysis.nutrition.sodium}mg
-              </Typography>
-            </View>
-          </View>
-        )}
-
-        {/* Known Trigger Warning */}
-        {triggerWarning && (
-          <View style={styles.triggerWarning}>
-            <Ionicons name="warning" size={18} color={colors.white} />
-            <View style={{ flex: 1, marginLeft: spacing.sm }}>
-              <Typography variant="caption" color={colors.white} style={{ fontWeight: '700' }}>
-                Known Trigger ({triggerWarning.confidence} confidence)
-              </Typography>
-              <Typography variant="caption" color={colors.white + 'cc'}>
-                {triggerWarning.frequencyText} · {triggerWarning.symptoms.join(', ')} · {triggerWarning.latency}
-              </Typography>
-            </View>
-          </View>
-        )}
-
-        {/* Single explanation - AI chooses most relevant (history or personalized) */}
-        {analysis.explanation && (
-          <Typography
-            variant="caption"
-            color={colors.black + '60'}
-            style={{ marginTop: spacing.xs, fontStyle: 'italic' }}
-          >
-            {analysis.explanation}
-          </Typography>
-        )}
+          )}
         </Card>
       </Pressable>
     </Animated.View>
@@ -266,6 +272,14 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: spacing.sm,
   },
+  loadingContainer: {
+    borderLeftColor: colors.blue,
+    borderLeftWidth: 3,
+  },
+  selectedContainer: {
+    backgroundColor: colors.green + '06',
+    borderColor: colors.green + '30',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -274,44 +288,39 @@ const styles = StyleSheet.create({
   checkbox: {
     padding: spacing.xs,
   },
-  badge: {
-    borderRadius: radii.sm,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
+  riskRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    minWidth: 32,
+    marginTop: 2,
   },
   loadingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     backgroundColor: colors.blue + '10',
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
   },
-  nutritionGrid: {
+  nutritionRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: spacing.xs,
     marginTop: spacing.sm,
+    paddingLeft: 34, // align with food name (past checkbox)
   },
-  nutrientItem: {
+  nutrientPill: {
     flex: 1,
-    minWidth: '28%',
     alignItems: 'center',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.xs,
-    backgroundColor: colors.black + '02',
-    borderRadius: radii.sm,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    borderRadius: radii.md,
+    gap: 1,
   },
   triggerWarning: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: colors.pink,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     padding: spacing.md,
     marginTop: spacing.sm,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.pink,
   },
 });

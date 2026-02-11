@@ -269,7 +269,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               style={[styles.actionButton, { backgroundColor: colors.blue, borderWidth: 0 }]}
               onPress={() => navigation.navigate('ScanFood')}
            >
-              <Typography variant="h3">🍽️</Typography>
+              <Typography variant="h3">🍕</Typography>
               <Typography variant="bodyBold" color={colors.white}>Scan Food</Typography>
            </Pressable>
 
@@ -352,6 +352,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    backgroundColor: colors.backgroundTint,
   },
   greetingRow: {
     alignItems: 'center',
