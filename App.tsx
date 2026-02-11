@@ -35,8 +35,10 @@ const GutBuddyTheme = {
   },
 };
 
-// Initialize RevenueCat as early as possible
-RevenueCatService.initialize();
+// Initialize RevenueCat in background (fire-and-forget, non-blocking)
+RevenueCatService.initialize().catch(() => {
+  // Silently fail if RevenueCat isn't available
+});
 
 export default function App() {
   const { session, loading: authLoading } = useAuth();
@@ -70,7 +72,7 @@ export default function App() {
     };
   }, []);
 
-  // Sync RevenueCat session & Analytics
+  // Sync Analytics (RevenueCat logIn is deferred until needed for premium checks)
   const prevSessionRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
@@ -78,9 +80,11 @@ export default function App() {
     const prevUserId = prevSessionRef.current;
 
     if (currentUserId && currentUserId !== prevUserId) {
-      RevenueCatService.logIn(currentUserId);
+      // Only sync Analytics immediately
       analyticsService.setUserId(currentUserId);
       prevSessionRef.current = currentUserId;
+
+      // Defer RevenueCat logIn until actually needed (lazy-load on paywall/profile screen)
     } else if (!currentUserId && prevUserId && !authLoading) {
       RevenueCatService.logOut();
       prevSessionRef.current = null;
@@ -88,17 +92,17 @@ export default function App() {
   }, [session, authLoading]);
 
 
-  // Load user data and onboarding status
+  // Check onboarding status only (minimal blocking)
   React.useEffect(() => {
-    const loadData = async () => {
+    const checkOnboardingStatus = async () => {
       // Wait for Auth and Fonts
       if (authLoading || !fontsLoaded) return;
 
       if (session?.user?.id) {
         try {
           const { supabase } = await import('./src/config/supabase');
-          
-          // Check onboarding
+
+          // Check onboarding status only
           const { data: userProfile } = await supabase
             .from('users')
             .select('onboarding_completed')
@@ -106,32 +110,44 @@ export default function App() {
             .maybeSingle();
 
           setOnboardingComplete(userProfile?.onboarding_completed || false);
-          
-          // Load other user data
-          const { loadUserDataFromDatabase } = await import('./src/utils/loadUserData');
-          await loadUserDataFromDatabase();
-          
-          // Load completed tasks from local storage
-          const { useGutStore } = await import('./src/store');
-          await useGutStore.getState().loadCompletedTasks();
-          
-          setDataLoaded(true);
-
-          // NOTE: We do NOT force a network refresh here anymore. 
-          // It's handled by the 5-min interval or the Specific Paywall screens.
 
         } catch (e) {
-          console.error("Error loading initial data:", e);
+          console.error("Error checking onboarding status:", e);
         }
       }
-      
-      // We are ready to show the app (either Auth screen or Main app)
+
+      // Ready to show app immediately (screens load data when needed)
+      setDataLoaded(true);
       setIsReady(true);
       await ExpoSplashScreen.hideAsync();
     };
 
-    loadData();
+    checkOnboardingStatus();
   }, [authLoading, fontsLoaded, session?.user?.id, refreshKey]);
+
+  // Load user data in background after app is ready (non-blocking)
+  React.useEffect(() => {
+    if (!isReady || !session?.user?.id) return;
+
+    const loadDataInBackground = async () => {
+      try {
+        const { loadUserDataFromDatabase } = await import('./src/utils/loadUserData');
+        await loadUserDataFromDatabase();
+
+        // Load completed tasks from local storage
+        const { useGutStore } = await import('./src/store');
+        await useGutStore.getState().loadCompletedTasks();
+
+        console.log('✅ Background data load complete');
+      } catch (e) {
+        console.error("Error loading user data in background:", e);
+      }
+    };
+
+    // Schedule data load after a short delay to prioritize app render
+    const timer = setTimeout(loadDataInBackground, 100);
+    return () => clearTimeout(timer);
+  }, [isReady, session?.user?.id]);
 
   const linking: any = {
     prefixes: ['foodhabit://'],

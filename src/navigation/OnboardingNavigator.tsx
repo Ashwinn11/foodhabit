@@ -7,6 +7,7 @@ import {
   OnboardingValueInterruptScreen,
   OnboardingStoolScreen,
   OnboardingRegularityScreen,
+  OnboardingDemographicsScreen,
   OnboardingMedicalScreen,
   OnboardingProcessingScreen,
   OnboardingResultsScreen,
@@ -34,10 +35,11 @@ export const OnboardingNavigator = () => {
       <Stack.Screen name="OnboardingValueInterrupt" component={OnboardingValueInterruptScreen} />
       <Stack.Screen name="OnboardingStool" component={OnboardingStoolScreen} />
       <Stack.Screen name="OnboardingRegularity" component={OnboardingRegularityScreen} />
+      <Stack.Screen name="OnboardingDemographics" component={OnboardingDemographicsScreen} />
+      <Stack.Screen name="OnboardingCondition" component={OnboardingConditionScreen} />
       <Stack.Screen name="OnboardingMedical" component={OnboardingMedicalScreen} />
       <Stack.Screen name="OnboardingProcessing" component={OnboardingProcessingScreen} />
       <Stack.Screen name="OnboardingResults" component={OnboardingResultsScreen} />
-      <Stack.Screen name="OnboardingCondition" component={OnboardingConditionScreen} />
       <Stack.Screen name="OnboardingValue" component={OnboardingValueScreen} />
       <Stack.Screen name="OnboardingPaywall" component={OnboardingPaywallScreen} />
     </Stack.Navigator>

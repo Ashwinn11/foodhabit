@@ -26,13 +26,13 @@ export const OnboardingResultsScreen = () => {
   }, [calculatedScore, gutCheckAnswers.medicalFlags, totalSteps]);
 
   const handleNext = () => {
-    setCurrentStep(9);
-    navigation.navigate('OnboardingCondition');
+    setCurrentStep(11);
+    navigation.navigate('OnboardingValue');
   };
 
   const handleBack = () => {
     navigation.goBack();
-    setCurrentStep(7);
+    setCurrentStep(9);
   };
 
   const stoolScore = [10, 25, 40, 25, 10][gutCheckAnswers.stoolConsistency ?? 2] || 20;
@@ -54,7 +54,7 @@ export const OnboardingResultsScreen = () => {
 
   return (
     <OnboardingScreen
-      currentStep={8}
+      currentStep={10}
       totalSteps={totalSteps}
       title="Your Gut Health Report"
       subtitle=""

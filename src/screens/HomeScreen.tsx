@@ -44,7 +44,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { triggers } = useTriggers(userId);
 
   // Still use old store for data
-  const { user, dismissAlert, meals } = useGutStore();
+  const { user, dismissAlert, meals, calorieGoal } = useGutStore();
   const { unreadCount } = useNotificationStore();
 
   // Calculate today's meal totals
@@ -269,7 +269,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               style={[styles.actionButton, { backgroundColor: colors.blue, borderWidth: 0 }]}
               onPress={() => navigation.navigate('ScanFood')}
            >
-              <IconContainer name="fast-food" size={24} iconSize={24} color={colors.white} variant="transparent" shadow={false} />
+              <Typography variant="h3">🍽️</Typography>
               <Typography variant="bodyBold" color={colors.white}>Scan Food</Typography>
            </Pressable>
 
@@ -278,8 +278,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               style={[styles.actionButton, { backgroundColor: colors.pink, borderWidth: 0 }]}
               onPress={() => navigation.navigate('AddEntry')}
            >
-              <IconContainer name="happy" size={24} iconSize={24} color={colors.white} variant="transparent" shadow={false} />
-              <Typography variant="bodyBold" color={colors.white}>Log Movement</Typography>
+              <Typography variant="h3">💩</Typography>
+              <Typography variant="bodyBold" color={colors.white}>Log Poop</Typography>
            </Pressable>
         </Animated.View>
 
@@ -290,7 +290,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         >
           <DailyIntakeSummary
             calories={dailyTotals.calories}
-            calorieGoal={2000}
+            calorieGoal={calorieGoal}
             protein={dailyTotals.protein}
             carbs={dailyTotals.carbs}
             fat={dailyTotals.fat}

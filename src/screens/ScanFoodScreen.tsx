@@ -100,7 +100,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     }
   }, [userId]);
 
-  // Keep device awake during image processing and cleanup on unmount
+  // Keep device awake during image processing
   useEffect(() => {
     if (isProcessingImage) {
       try {
@@ -115,9 +115,11 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
         // Keep awake not available
       }
     }
+  }, [isProcessingImage]);
 
+  // Cleanup on unmount: cancel pending requests
+  useEffect(() => {
     return () => {
-      // Cleanup: cancel pending requests if component unmounts
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -127,7 +129,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
         // Keep awake not available
       }
     };
-  }, [isProcessingImage]);
+  }, []);
 
   // Quick suggestions
   const SUGGESTIONS = ['Coffee', 'Pizza', 'Garlic', 'Onion', 'Apple', 'Milk', 'Bread', 'Pasta', 'Rice', 'Chicken'];
@@ -313,37 +315,34 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
   const handleImageScan = useCallback(async (base64: string) => {
     setIsProcessingImage(true);
 
-    // Create abort controller for this request
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
     try {
-      // Get Supabase session for auth
-      const { data: { session } } = await supabase.auth.getSession();
-
-      // Call edge function with image to extract food items
-      const supabaseUrl = (supabase as any).supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/analyze-food`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ''}`,
-        },
-        body: JSON.stringify({
-          imageBase64: base64,
-          extractFoodsOnly: true, // Signal edge function to extract foods from menu
-        }),
-        signal: abortController.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Edge function error: ${response.statusText}`);
+      // Base64 might be too large - compress/resize if needed
+      const maxSize = 5000000; // 5MB limit (base64 encoded)
+      if (base64.length > maxSize) {
+        setModalState({
+          visible: true,
+          type: 'error',
+          title: 'Image too large',
+          message: 'Please select a smaller image or take a clearer photo.',
+        });
+        setIsProcessingImage(false);
+        return;
       }
 
-      const data = await response.json();
+      // Call edge function using Supabase SDK (same as manual input)
+      const { data, error } = await supabase.functions.invoke('analyze-food', {
+        body: {
+          imageBase64: base64,
+          extractFoodsOnly: true, // Signal edge function to extract foods from menu
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to analyze image');
+      }
 
       // Extract foods array from response
-      const extractedFoods = data.foods || data.extractedFoods || [];
+      const extractedFoods = data?.foods || data?.extractedFoods || [];
 
       if (extractedFoods.length === 0) {
         setModalState({
@@ -353,9 +352,6 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
           message: 'Could not extract any food items from the image. Try a clearer photo of the menu.',
         });
       } else {
-        // Close the processing overlay immediately after extraction
-        setIsProcessingImage(false);
-
         // Add all extracted foods in parallel for speed
         // Don't wait for this - let skeleton loaders show while analyzing
         Promise.all(extractedFoods.map((food: string) => addFood(food))).then(() => {
@@ -410,7 +406,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
         allowsEditing: false,
-        quality: 0.8,
+        quality: 0.3,
         base64: true,
       });
 
@@ -425,7 +421,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
         const result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ['images'],
           allowsEditing: false,
-          quality: 0.8,
+          quality: 0.3,
           base64: true,
         });
 

@@ -41,7 +41,7 @@ export const OnboardingProcessingScreen = () => {
 
     // Navigate after processing
     const navigateTimer = setTimeout(() => {
-      setCurrentStep(8);
+      setCurrentStep(10);
       navigation.navigate('OnboardingResults');
     }, 4500);
 

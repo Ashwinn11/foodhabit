@@ -24,7 +24,7 @@ export const loadUserDataFromDatabase = async () => {
         // Use maybeSingle() to avoid PGRST116 error if user is new
         let { data: userProfile, error: profileError } = await supabase
             .from('users')
-            .select('*')
+            .select('id, onboarding_completed, onboarding_data, created_at')
             .eq('id', userId)
             .maybeSingle();
 
@@ -66,32 +66,78 @@ export const loadUserDataFromDatabase = async () => {
                 onboardingStore.setIsOnboardingComplete(true);
             }
 
-            // Load onboarding data: baseline score and regularity for health calculations
-            const onboardingData = userProfile.onboarding_data as { score?: number; answers?: { bowelRegularity?: number } } | null;
+            // Load onboarding data: baseline score, regularity, and calorie goal
+            const onboardingData = userProfile.onboarding_data as { score?: number; calorieGoal?: number; answers?: any } | null;
             if (onboardingData?.score) {
                 gutStore.setBaselineScore(onboardingData.score);
             }
             if (onboardingData?.answers?.bowelRegularity !== undefined) {
                 gutStore.setBaselineRegularity(onboardingData.answers.bowelRegularity);
             }
+
+            // Load or recalculate calorie goal
+            let calorieGoal = onboardingData?.calorieGoal;
+            if (!calorieGoal && onboardingData?.answers?.age && onboardingData?.answers?.height && onboardingData?.answers?.weight && onboardingData?.answers?.gender) {
+                // Recalculate if missing
+                const { calculateDailyCalories } = await import('../utils/calorieCalculator');
+                calorieGoal = calculateDailyCalories({
+                    age: onboardingData.answers.age,
+                    height: onboardingData.answers.height,
+                    weight: onboardingData.answers.weight,
+                    gender: onboardingData.answers.gender,
+                    activityLevel: 'moderate'
+                });
+            }
+            if (calorieGoal) {
+                gutStore.setCalorieGoal(calorieGoal);
+            }
         }
 
-        // Load recent gut logs (last 30 days of significant logs)
+        // Parallelize all independent data loads
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const { data: gutLogs, error: logsError } = await supabase
-            .from('gut_logs')
-            .select('*')
-            .eq('user_id', userId)
-            .gte('timestamp', thirtyDaysAgo.toISOString())
-            .order('timestamp', { ascending: false })
-            .limit(100);
+        const [gutLogsResult, mealsResult, triggerFoodsResult, healthLogsResult, dismissedAlertsResult] = await Promise.all([
+            // Load recent gut logs (last 30 days)
+            supabase
+                .from('gut_logs')
+                .select('*')
+                .eq('user_id', userId)
+                .gte('timestamp', thirtyDaysAgo.toISOString())
+                .order('timestamp', { ascending: false })
+                .limit(100),
+            // Load recent meals (last 30 days)
+            supabase
+                .from('meals')
+                .select('*')
+                .eq('user_id', userId)
+                .gte('timestamp', thirtyDaysAgo.toISOString())
+                .order('timestamp', { ascending: false })
+                .limit(100),
+            // Load trigger foods
+            supabase
+                .from('trigger_foods')
+                .select('*')
+                .eq('user_id', userId),
+            // Load health logs (water, fiber, probiotic, exercise) - last 30 days
+            supabase
+                .from('health_logs')
+                .select('*')
+                .eq('user_id', userId)
+                .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
+                .order('date', { ascending: false }),
+            // Load dismissed alerts from AsyncStorage
+            AsyncStorage.getItem('dismissedAlerts').catch(error => {
+                console.error('Failed to load dismissed alerts:', error);
+                return null;
+            })
+        ]);
 
+        // Process gut logs
+        const { data: gutLogs, error: logsError } = gutLogsResult;
         if (logsError) {
             console.error('Failed to load gut logs:', logsError);
         } else if (gutLogs && gutLogs.length > 0) {
-            // Convert database format to app format
             const gutStore = useGutStore.getState();
 
             // Separate bowel movements from standalone symptom logs
@@ -133,15 +179,8 @@ export const loadUserDataFromDatabase = async () => {
             gutStore.setSymptomLogs(standaloneSymptoms);
         }
 
-        // Load recent meals (last 30 days)
-        const { data: meals, error: mealsError } = await supabase
-            .from('meals')
-            .select('*')
-            .eq('user_id', userId)
-            .gte('timestamp', thirtyDaysAgo.toISOString())
-            .order('timestamp', { ascending: false })
-            .limit(100);
-
+        // Process meals
+        const { data: meals, error: mealsError } = mealsResult;
         if (mealsError) {
             console.error('Failed to load meals:', mealsError);
         } else if (meals && meals.length > 0) {
@@ -160,12 +199,9 @@ export const loadUserDataFromDatabase = async () => {
             }));
             gutStore.setMeals(mealEntries);
         }
-        // Load trigger foods
-        const { data: triggerFoods, error: triggersError } = await supabase
-            .from('trigger_foods')
-            .select('*')
-            .eq('user_id', userId);
 
+        // Process trigger foods
+        const { data: triggerFoods, error: triggersError } = triggerFoodsResult;
         if (triggersError) {
             console.error('Failed to load trigger foods:', triggersError);
         } else if (triggerFoods && triggerFoods.length > 0) {
@@ -178,15 +214,8 @@ export const loadUserDataFromDatabase = async () => {
             gutStore.setTriggerFeedback(triggers);
         }
 
-
-        // Load health logs (water, fiber, probiotic, exercise) - last 30 days
-        const { data: healthLogs, error: healthLogsError } = await supabase
-            .from('health_logs')
-            .select('*')
-            .eq('user_id', userId)
-            .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
-            .order('date', { ascending: false });
-
+        // Process health logs
+        const { data: healthLogs, error: healthLogsError } = healthLogsResult;
         if (healthLogsError) {
             console.error('Failed to load health logs:', healthLogsError);
         } else if (healthLogs && healthLogs.length > 0) {
@@ -225,16 +254,15 @@ export const loadUserDataFromDatabase = async () => {
             gutStore.setExerciseLogs(exerciseLogs);
         }
 
-        // Load dismissed alerts from AsyncStorage
+        // Process dismissed alerts
         try {
-            const dismissedAlertsJson = await AsyncStorage.getItem('dismissedAlerts');
-            if (dismissedAlertsJson) {
-                const dismissedAlerts = JSON.parse(dismissedAlertsJson);
+            if (dismissedAlertsResult) {
+                const dismissedAlerts = JSON.parse(dismissedAlertsResult);
                 const gutStore = useGutStore.getState();
                 gutStore.dismissedAlerts = dismissedAlerts;
             }
         } catch (error) {
-            console.error('Failed to load dismissed alerts:', error);
+            console.error('Failed to parse dismissed alerts:', error);
         }
 
         // Sync widget after all data is loaded (fixes widget showing 0/no data)

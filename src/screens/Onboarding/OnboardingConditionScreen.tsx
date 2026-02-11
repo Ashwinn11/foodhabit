@@ -74,18 +74,18 @@ export const OnboardingConditionScreen = () => {
     // Store condition in onboarding answers (saved with rest of onboarding data at completion)
     setGutCheckAnswer('userCondition' as any, selectedCondition);
 
-    setCurrentStep(10);
-    navigation.navigate('OnboardingValue');
+    setCurrentStep(8);
+    navigation.navigate('OnboardingMedical');
   };
 
   const handleBack = () => {
     navigation.goBack();
-    setCurrentStep(8);
+    setCurrentStep(6);
   };
 
   return (
     <OnboardingScreen
-      currentStep={9}
+      currentStep={7}
       totalSteps={totalSteps}
       title="What's your main gut issue?"
       subtitle="This helps us personalize food recommendations (can change later)"

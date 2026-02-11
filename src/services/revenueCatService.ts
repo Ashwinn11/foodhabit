@@ -38,6 +38,7 @@ export const REVENUECAT_PAYWALL_ID = 'GutScan Pro';
 export class RevenueCatService {
     private static initialized = false;
     private static configuring = false;
+    private static loggedInUserId: string | null = null;
 
     static checkAvailability() {
         return isAvailable && !!Purchases && !!PurchasesUI;
@@ -71,11 +72,25 @@ export class RevenueCatService {
 
     static async logIn(userId: string) {
         if (!this.checkAvailability() || !this.initialized) return;
+
+        // Skip if already logged in as this user
+        if (this.loggedInUserId === userId) return;
+
         try {
             await Purchases.logIn(userId);
-
+            this.loggedInUserId = userId;
         } catch (e) {
             console.error('RevenueCat login failed', e);
+        }
+    }
+
+    /**
+     * Ensure user is logged in before checking premium status
+     * Call this from screens that need premium information
+     */
+    static async ensureLoggedIn(userId: string) {
+        if (userId && userId !== this.loggedInUserId) {
+            await this.logIn(userId);
         }
     }
 

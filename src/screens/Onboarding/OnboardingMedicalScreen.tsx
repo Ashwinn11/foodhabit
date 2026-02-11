@@ -30,18 +30,18 @@ export const OnboardingMedicalScreen = () => {
 
     analyticsService.trackEvent('onboarding_medical_selected', { has_medical_flags: selected });
 
-    setCurrentStep(7);
+    setCurrentStep(9);
     navigation.navigate('OnboardingProcessing');
   };
 
   const handleBack = () => {
     navigation.goBack();
-    setCurrentStep(5);
+    setCurrentStep(7);
   };
 
   return (
     <OnboardingScreen
-      currentStep={6}
+      currentStep={8}
       totalSteps={totalSteps}
       title="One Last Question"
       subtitle="Have you noticed blood or mucus in your stool?"

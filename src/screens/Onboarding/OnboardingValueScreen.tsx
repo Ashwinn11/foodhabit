@@ -32,18 +32,18 @@ export const OnboardingValueScreen = () => {
   }, [totalSteps]);
 
   const handleNext = () => {
-    setCurrentStep(11);
+    setCurrentStep(12);
     navigation.navigate('OnboardingPaywall');
   };
 
   const handleBack = () => {
     navigation.goBack();
-    setCurrentStep(9);
+    setCurrentStep(10);
   };
 
   return (
     <OnboardingScreen
-      currentStep={10}
+      currentStep={11}
       totalSteps={totalSteps}
       title="Your Transformation Awaits"
       subtitle="Everything you need to heal & optimize"

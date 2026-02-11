@@ -87,57 +87,37 @@ export const GlobalToast: React.FC = () => {
   
 
     return (
-
       <Animated.View 
-
         style={[
-
           styles.container, 
-
           { 
-
             width: width - spacing.xl * 2,
-
             backgroundColor: getBackgroundColor(),
-
             borderColor: getBorderColor(),
-
           }, 
-
           animatedStyle
-
         ]}
-
       >
-
-              <View style={styles.content}>
-
-                {toastOptions.icon && (
-
-                  <Ionicons 
-
-                    name={toastOptions.icon} 
-
-                    size={24} 
-
-                    color={toastOptions.iconColor || colors.white} 
-
-                    style={styles.icon} 
-
-                  />
-
-                )}
-
-                <Text style={styles.message}>{toastOptions.message}</Text>
-
-              </View>
-
-        
-
+        <View style={styles.content}>
+          {toastOptions.icon && (
+            (() => {
+              const isEmoji = !/^[a-z-]+$/.test(toastOptions.icon);
+              return isEmoji ? (
+                <Text style={[styles.icon, { fontSize: 24 }]}>{toastOptions.icon}</Text>
+              ) : (
+                <Ionicons 
+                  name={toastOptions.icon as any} 
+                  size={24} 
+                  color={toastOptions.iconColor || colors.white} 
+                  style={styles.icon} 
+                />
+              );
+            })()
+          )}
+          <Text style={styles.message}>{toastOptions.message}</Text>
+        </View>
       </Animated.View>
-
     );
-
   };
 
   

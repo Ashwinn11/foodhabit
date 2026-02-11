@@ -77,14 +77,19 @@ export function useGutData() {
     }, [symptomLogs]);
 
     // Calculate health score using new service
+    // Get user condition from onboarding if available
+    const { gutCheckAnswers } = require('../../store/onboardingStore').useOnboardingStore.getState?.() || {};
+    const userCondition = gutCheckAnswers?.userCondition;
+
     const healthScore = useMemo(() => {
         return healthScoreService.calculateScore({
             moments: domainMoments,
             symptomLogs: domainSymptomLogs,
             baselineScore: baselineScore || 50,
             baselineRegularity: baselineRegularity ?? 1,
+            userCondition,
         });
-    }, [domainMoments, domainSymptomLogs, baselineScore, baselineRegularity, healthScoreService]);
+    }, [domainMoments, domainSymptomLogs, baselineScore, baselineRegularity, healthScoreService, userCondition]);
 
     // Calculate streak using new service
     const streak = useMemo(() => {

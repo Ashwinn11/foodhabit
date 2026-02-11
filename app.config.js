@@ -7,12 +7,12 @@ module.exports = {
     owner: "foodhabit",
     version: pkg.version,
     orientation: "portrait",
-    icon: "./assets/icon.png",
+    icon: "./assets/icon1.png",
     userInterfaceStyle: "light",
     scheme: "foodhabit",
     newArchEnabled: true,
     splash: {
-      image: "./assets/background.png",
+      image: "./assets/icon1.png",
       resizeMode: "contain",
       backgroundColor: "#2E2345"
     },

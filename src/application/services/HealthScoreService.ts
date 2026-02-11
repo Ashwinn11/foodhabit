@@ -9,6 +9,7 @@ export interface HealthScoreInput {
     symptomLogs?: SymptomLog[];
     baselineScore: number;
     baselineRegularity?: number; // 0=Regular (1-3x/day), 1=Somewhat (1x/day or every other), 2=Unpredictable
+    userCondition?: string; // ibs-d, ibs-c, ibs-m, ibs-u, bloating
 }
 
 export class HealthScoreService {
@@ -21,7 +22,7 @@ export class HealthScoreService {
      * Calculate the gut health score
      */
     calculateScore(input: HealthScoreInput): HealthScore {
-        const { moments, symptomLogs = [], baselineScore, baselineRegularity = 1 } = input;
+        const { moments, symptomLogs = [], baselineScore, baselineRegularity = 1, userCondition } = input;
 
         // Get last 7 days of data
         const sevenDaysAgo = new Date();
@@ -39,12 +40,29 @@ export class HealthScoreService {
         let calculatedScore = 100;
 
         // 1. Bristol Scale Penalties (40 points max impact)
+        // Adjusted based on user condition
         const bristolMoments = recentMoments.filter(m => m.bristolType);
         const bristolPenalties = bristolMoments.map(m => {
             const type = m.bristolType!.getValue();
-            if (type === 3 || type === 4) return 0;   // Ideal
-            if (type === 2 || type === 5) return 10;  // Acceptable
-            return 30; // Concerning (1, 6, 7)
+
+            // Condition-aware penalties
+            if (userCondition === 'ibs-d') {
+                // User has diarrhea tendency - penalize less for loose stools (5-7)
+                if (type === 3 || type === 4 || type === 5) return 0;   // More lenient
+                if (type === 2 || type === 6) return 10;
+                return 20; // Only penalize hard stools (1)
+            } else if (userCondition === 'ibs-c') {
+                // User has constipation tendency - penalize less for hard stools (1-2)
+                if (type === 3 || type === 4) return 0;   // Ideal
+                if (type === 2 || type === 1) return 5;   // More lenient for constipation
+                if (type === 5) return 10;
+                return 30; // Penalize loose stools more (6-7)
+            } else {
+                // Default scoring
+                if (type === 3 || type === 4) return 0;   // Ideal
+                if (type === 2 || type === 5) return 10;  // Acceptable
+                return 30; // Concerning (1, 6, 7)
+            }
         });
 
         const avgBristolPenalty = bristolPenalties.length > 0

@@ -73,6 +73,10 @@ export const ProfileScreen: React.FC = () => {
   );
 
   const checkPremiumStatus = async () => {
+    // Ensure user is logged in to RevenueCat before checking premium status
+    if (user?.id) {
+      await RevenueCatService.ensureLoggedIn(user.id);
+    }
     const premium = await RevenueCatService.isPremium();
     setIsPremium(premium);
     setCheckingPremium(false);

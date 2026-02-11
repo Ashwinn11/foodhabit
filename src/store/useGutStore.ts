@@ -112,6 +112,10 @@ interface GutStore {
     baselineRegularity: number;
     setBaselineRegularity: (regularity: number) => void;
 
+    // Daily calorie goal from onboarding demographics
+    calorieGoal: number;
+    setCalorieGoal: (goal: number) => void;
+
     // Gut moments (poop logs)
     gutMoments: GutMoment[];
     addGutMoment: (moment: Omit<GutMoment, 'id'>) => void;
@@ -410,6 +414,10 @@ export const useGutStore = create<GutStore>()((set, get) => ({
     baselineRegularity: 1,
     setBaselineRegularity: (regularity) => set({ baselineRegularity: regularity }),
 
+    // Daily calorie goal from onboarding (default 2000)
+    calorieGoal: 2000,
+    setCalorieGoal: (goal) => set({ calorieGoal: goal }),
+
     // Notifications
     notificationSettings: {
         enabled: false,
@@ -437,8 +445,8 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         if (poopsToday === 0) {
             useUIStore.getState().showToast({
                 message: 'Mission Plop-plete!',
-                icon: 'sparkles',
-                iconColor: colors.yellow
+                icon: '✨',
+                iconColor: colors.white
             });
             useNotificationStore.getState().addNotification({
                 title: 'Mission Plop-plete! 💩',
@@ -448,8 +456,8 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         } else {
             useUIStore.getState().showToast({
                 message: 'Poop logged!',
-                icon: 'happy',
-                iconColor: colors.yellow
+                icon: '💩',
+                iconColor: colors.white
             });
         }
 
@@ -547,14 +555,14 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         if (poopsToday === 0) {
             useUIStore.getState().showToast({
                 message: 'Mission Plop-plete!',
-                icon: 'sparkles',
-                iconColor: colors.yellow
+                icon: '✨',
+                iconColor: colors.white
             });
         } else {
             useUIStore.getState().showToast({
                 message: 'Quick plop logged!',
-                icon: 'checkmark-circle',
-                iconColor: colors.blue
+                icon: '💩',
+                iconColor: colors.white
             });
         }
 
@@ -606,8 +614,8 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         if (!mealTypeLogged) {
             useUIStore.getState().showToast({
                 message: `${meal.mealType.charAt(0).toUpperCase() + meal.mealType.slice(1)} logged!`,
-                icon: 'restaurant',
-                iconColor: colors.blue
+                icon: '🍽️',
+                iconColor: colors.white
             });
         }
 
@@ -681,7 +689,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             useUIStore.getState().showToast({
                 message,
                 icon,
-                iconColor: colors.blue
+                iconColor: colors.white
             });
         }
 
@@ -728,14 +736,14 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             useUIStore.getState().showToast({
                 message: `+${grams}g Fiber logged!`,
                 icon: 'leaf',
-                iconColor: colors.yellow
+                iconColor: colors.white
             });
 
             if (currentFiber >= fiberGoal && (existingLog ? existingLog.grams : 0) < fiberGoal) {
                 useUIStore.getState().showToast({
                     message: `Fiber goal met! Rockstar!`,
                     icon: 'happy',
-                    iconColor: colors.yellow
+                    iconColor: colors.white
                 });
                 useNotificationStore.getState().addNotification({
                     title: 'Fiber Power! 🌾',
@@ -746,7 +754,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                 useUIStore.getState().showToast({
                     message: `Fiber powerhouse!`,
                     icon: 'sparkles',
-                    iconColor: colors.yellow
+                    iconColor: colors.white
                 });
             }
         }
@@ -792,7 +800,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
         useUIStore.getState().showToast({
             message: currentProbiotics === 1 ? 'Probiotic logged!' : 'More probiotics logged!',
             icon: 'bug',
-            iconColor: colors.blue
+            iconColor: colors.white
         });
 
         // Sync to Supabase
@@ -1050,7 +1058,7 @@ export const useGutStore = create<GutStore>()((set, get) => ({
 
     // Gut Health Score (0-100) based on medical indicators with blended scoring
     getGutHealthScore: () => {
-        const { gutMoments, symptomLogs, baselineScore } = get();
+        const { gutMoments, symptomLogs, baselineScore, baselineRegularity } = get();
 
         // Single Source of Truth: HealthScoreService
         const { container } = require('../infrastructure/di');
@@ -1095,10 +1103,16 @@ export const useGutStore = create<GutStore>()((set, get) => ({
             notes: s.notes,
         }));
 
+        // Get user condition from answers if available (from onboarding)
+        const { gutCheckAnswers } = require('../store/onboardingStore').useOnboardingStore.getState?.() || {};
+        const userCondition = gutCheckAnswers?.userCondition;
+
         const healthScore = healthScoreService.calculateScore({
             moments: domainMoments,
             symptomLogs: domainSymptomLogs,
-            baselineScore: baselineScore || 50
+            baselineScore: baselineScore || 50,
+            baselineRegularity: baselineRegularity ?? 1,
+            userCondition
         });
 
         return {

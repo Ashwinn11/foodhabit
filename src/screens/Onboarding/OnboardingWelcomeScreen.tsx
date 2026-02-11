@@ -28,14 +28,24 @@ export const OnboardingWelcomeScreen = () => {
       currentStep={0}
       totalSteps={totalSteps}
       title="Let's Fix Your Gut"
-      subtitle="Answer a few quick questions so we can build your personalized plan"
+      subtitle="Answer a few quick questions to assess your gut health"
       onNext={handleNext}
       showBackButton={false}
       nextLabel="Start My Assessment"
     >
       <View style={styles.container}>
-
-
+        {/* Congratulations Message */}
+        <Animated.View entering={FadeInDown.delay(100)} style={styles.congratsSection}>
+          <View style={styles.congratsIcon}>
+            <Ionicons name="checkmark-circle" size={48} color={colors.green} />
+          </View>
+          <Typography variant="h2" style={{ marginTop: spacing.md, textAlign: 'center' }}>
+            You've Made the Right Choice
+          </Typography>
+          <Typography variant="body" color={colors.textSecondary} style={{ marginTop: spacing.sm, textAlign: 'center' }}>
+            By choosing GutBuddy, you're committing to a healthier you. Let's create your personalized plan together.
+          </Typography>
+        </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200)} style={styles.promiseContainer}>
           <View style={styles.promiseItem}>
@@ -90,6 +100,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'space-between',
+  },
+
+  congratsSection: {
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+    paddingVertical: spacing.lg,
+  },
+
+  congratsIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.green + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   promiseContainer: {

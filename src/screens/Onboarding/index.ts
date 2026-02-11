@@ -4,6 +4,7 @@ export * from './OnboardingQuizScreen';
 export * from './OnboardingValueInterruptScreen';
 export * from './OnboardingStoolScreen';
 export * from './OnboardingRegularityScreen';
+export * from './OnboardingDemographicsScreen';
 export * from './OnboardingMedicalScreen';
 export * from './OnboardingProcessingScreen';
 export * from './OnboardingResultsScreen';

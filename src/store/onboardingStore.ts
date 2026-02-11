@@ -12,7 +12,11 @@ export interface GutCheckAnswers {
     symptomFrequency?: number;  // 0-2 (Rarely...Daily)
     bowelRegularity?: number;   // 0-2 (Regular...Unpredictable)
     medicalFlags?: boolean;     // true/false
-    userCondition?: string;     // NEW: ibs-d, ibs-c, ibs-m, ibs-u, bloating
+    userCondition?: string;     // ibs-d, ibs-c, ibs-m, ibs-u, bloating
+    age?: number;               // User's age in years
+    height?: number;            // User's height in inches
+    weight?: number;            // User's weight in lbs
+    gender?: 'male' | 'female'; // For calorie calculation
 }
 
 interface OnboardingState {
@@ -36,7 +40,7 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
     gutCheckAnswers: {},
     calculatedScore: 0,
     currentStep: 0,
-    totalSteps: 12, // Welcome + Goal + Symptoms + ValueInterrupt + Stool + Regularity + Medical + Processing + Results + Condition + Value + Paywall
+    totalSteps: 13, // Welcome + Goal + Symptoms + ValueInterrupt + Stool + Regularity + Demographics + Condition + Medical + Processing + Results + Value + Paywall
 
     setGutCheckAnswer: (key, value) => {
         set((state) => ({
@@ -58,6 +62,19 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
         console.log('📝 completeOnboarding called');
         const state = get();
 
+        // Calculate calorie goal if age, height, weight, and gender are available
+        let calorieGoal = 2000; // default
+        if (state.gutCheckAnswers.age && state.gutCheckAnswers.height && state.gutCheckAnswers.weight && state.gutCheckAnswers.gender) {
+            const { calculateDailyCalories } = await import('../utils/calorieCalculator');
+            calorieGoal = calculateDailyCalories({
+                age: state.gutCheckAnswers.age,
+                height: state.gutCheckAnswers.height,
+                weight: state.gutCheckAnswers.weight,
+                gender: state.gutCheckAnswers.gender,
+                activityLevel: 'moderate' // default to moderate
+            });
+        }
+
         // Get session first
         const { supabase } = await import('../config/supabase');
         const { data: { session } } = await supabase.auth.getSession();
@@ -72,7 +89,8 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
                         onboarding_completed: true,
                         onboarding_data: {
                             answers: state.gutCheckAnswers,
-                            score: state.calculatedScore
+                            score: state.calculatedScore,
+                            calorieGoal
                         },
                         updated_at: new Date().toISOString()
                     }, {
@@ -91,11 +109,13 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
                 // Only update local state after successful database update
                 set({ isOnboardingComplete: true });
 
-                // Update baseline score and regularity in gut store
+                // Update baseline score, regularity, and calorie goal in gut store
                 useGutStore.getState().setBaselineScore(state.calculatedScore);
                 if (state.gutCheckAnswers.bowelRegularity !== undefined) {
                     useGutStore.getState().setBaselineRegularity(state.gutCheckAnswers.bowelRegularity);
                 }
+                // Set calorie goal immediately so it's available on HomeScreen
+                useGutStore.getState().setCalorieGoal(calorieGoal);
             } catch (error) {
                 console.error('❌ Failed to complete onboarding:', error);
                 // Don't update local state if database update failed

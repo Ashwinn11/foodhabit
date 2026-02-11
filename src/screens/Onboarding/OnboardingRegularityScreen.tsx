@@ -28,7 +28,7 @@ export const OnboardingRegularityScreen = () => {
     setGutCheckAnswer('bowelRegularity', selected);
     analyticsService.trackEvent('onboarding_regularity_selected', { regularity: selected });
     setCurrentStep(6);
-    navigation.navigate('OnboardingMedical');
+    navigation.navigate('OnboardingDemographics');
   };
 
   const handleBack = () => {

@@ -5,12 +5,12 @@
     "owner": "foodhabit",
     "version": "1.0.5",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon1.png",
     "userInterfaceStyle": "light",
     "scheme": "foodhabit",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/background.png",
+      "image": "./assets/icon1.png",
       "resizeMode": "contain",
       "backgroundColor": "#2E2345"
     },
@@ -32,7 +32,7 @@
       }
     },
     "web": {
-      "favicon": "./assets/icon.png",
+      "favicon": "./assets/icon1.png",
       "bundler": "metro",
       "output": "single",
       "build": {

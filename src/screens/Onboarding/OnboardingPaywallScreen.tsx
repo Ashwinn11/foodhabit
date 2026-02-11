@@ -11,13 +11,34 @@ import { Ionicons } from '@expo/vector-icons';
 import * as StoreReview from 'expo-store-review';
 import { RevenueCatService } from '../../services/revenueCatService';
 import { analyticsService } from '../../analytics/analyticsService';
+import { useAuth } from '../../hooks/useAuth';
 
 export const OnboardingPaywallScreen = () => {
   const navigation = useNavigation<any>();
-  const { calculatedScore, totalSteps, setCurrentStep } = useOnboardingStore();
+  const { user } = useAuth();
+  const { calculatedScore, totalSteps, setCurrentStep, gutCheckAnswers } = useOnboardingStore();
   const { completeOnboarding, isCompleting } = useOnboardingActions();
   const [countdown, setCountdown] = useState(15 * 60); // 15 minutes in seconds
+  const [calorieGoal, setCalorieGoal] = useState<number>(2000);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    // Calculate calorie goal
+    const calculateCalories = async () => {
+      if (gutCheckAnswers.age && gutCheckAnswers.height && gutCheckAnswers.weight && gutCheckAnswers.gender) {
+        const { calculateDailyCalories } = await import('../../utils/calorieCalculator');
+        const calories = calculateDailyCalories({
+          age: gutCheckAnswers.age,
+          height: gutCheckAnswers.height,
+          weight: gutCheckAnswers.weight,
+          gender: gutCheckAnswers.gender,
+          activityLevel: 'moderate'
+        });
+        setCalorieGoal(calories);
+      }
+    };
+    calculateCalories();
+  }, [gutCheckAnswers]);
 
   useEffect(() => {
     analyticsService.trackPaywallViewed();
@@ -44,6 +65,11 @@ export const OnboardingPaywallScreen = () => {
   const handleNext = async () => {
     // Show native RevenueCat Paywall
     try {
+      // Ensure user is logged in to RevenueCat before presenting paywall
+      if (user?.id) {
+        await RevenueCatService.ensureLoggedIn(user.id);
+      }
+
       const paywallResult = await RevenueCatService.presentPaywall();
       const isPremium = await RevenueCatService.isPremium(true);
       const purchasedOrRestored = paywallResult === 'PURCHASED' || paywallResult === 'RESTORED';
@@ -83,7 +109,7 @@ export const OnboardingPaywallScreen = () => {
 
   const handleBack = () => {
     navigation.goBack();
-    setCurrentStep(10);
+    setCurrentStep(11);
   };
 
   const formatCountdown = (seconds: number): string => {
@@ -94,13 +120,13 @@ export const OnboardingPaywallScreen = () => {
 
   return (
     <OnboardingScreen
-      currentStep={11}
+      currentStep={12}
       totalSteps={totalSteps}
-      title="Your Plan Is Ready"
-      subtitle="Don't lose your personalized protocol"
+      title="Your Gut Assessment Is Ready"
+      subtitle="Unlock personalized recommendations to fix your gut"
       onNext={handleNext}
       onBack={handleBack}
-      nextLabel="Keep My Plan — Start Free Trial"
+      nextLabel="Unlock Premium Access"
       nextLoading={isCompleting}
     >
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
@@ -158,25 +184,40 @@ export const OnboardingPaywallScreen = () => {
                 </Typography>
               </View>
 
+              {/* Personalized Calorie Goal */}
+              <View style={styles.calorieGoalContainer}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="nutrition" size={20} color={colors.blue} />
+                  <View style={{ marginLeft: spacing.md, flex: 1 }}>
+                    <Typography variant="caption" color={colors.textSecondary}>
+                      Your Daily Calorie Goal
+                    </Typography>
+                    <Typography variant="h2" color={colors.blue} style={{ fontSize: 24 }}>
+                      {calorieGoal} kcal
+                    </Typography>
+                  </View>
+                </View>
+              </View>
+
               <View style={styles.divider} />
 
               <View style={styles.timeline}>
                 <TimelineItem
-                  title="Phase 1: CALM"
+                  title="Phase 1: ASSESS"
                   duration="Week 1-2"
-                  desc="Reduce inflammation & find triggers."
+                  desc="Track & identify your food triggers."
                   color={colors.pink}
                 />
                 <TimelineItem
-                  title="Phase 2: RESTORE"
+                  title="Phase 2: OPTIMIZE"
                   duration="Week 3-6"
-                  desc="Rebuild bacteria & optimize hydration."
+                  desc="Eliminate triggers & improve digestion."
                   color={colors.green}
                 />
                 <TimelineItem
                   title="Phase 3: THRIVE"
                   duration="Week 7-12"
-                  desc="Maintain progress & fine-tune diet."
+                  desc="Maintain momentum & sustain improvements."
                   color={colors.blue}
                   isLast
                 />
@@ -191,8 +232,8 @@ export const OnboardingPaywallScreen = () => {
             </Typography>
             <View style={styles.featureList}>
               <FeatureItem icon="scan" text="AI Food Scanner" />
-              <FeatureItem icon="trending-up" text="Smart Trigger Tracking" />
-              <FeatureItem icon="calendar" text="Personalized Daily Plan" />
+              <FeatureItem icon="trending-up" text="Personalized Trigger Insights" />
+              <FeatureItem icon="nutrition" text="Smart Nutrition Tracking" />
               <FeatureItem icon="shield-checkmark" text="100% Private & Secure" />
             </View>
           </Animated.View>
@@ -311,6 +352,14 @@ const styles = StyleSheet.create({
   },
   planHeader: {
     marginBottom: spacing.sm,
+  },
+  calorieGoalContainer: {
+    backgroundColor: colors.blue + '15',
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   projectionBar: {
     alignItems: 'center',

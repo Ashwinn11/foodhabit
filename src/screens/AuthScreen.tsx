@@ -144,7 +144,7 @@ export default function AuthScreen() {
           <Animated.View entering={FadeIn.duration(1000)} style={styles.header}>
             <Animated.View style={[avatarStyle, styles.avatarContainer]}>
               <Image
-                source={require('../../assets/icon.png')}
+                source={require('../../assets/icon2.webp')}
                 style={{ width: width * 0.35, height: width * 0.35, borderRadius: (width * 0.35) / 2 }}
                 resizeMode="contain"
               />
@@ -153,15 +153,15 @@ export default function AuthScreen() {
             <Animated.View entering={FadeInDown.delay(300).springify()}>
               <Typography variant="h1" align="center" style={styles.title}>GutBuddy</Typography>
               <Typography variant="body" align="center" color={colors.black + '99'} style={styles.subtitle}>
-                Transform your gut. Transform your life. Join <Typography variant="bodyBold" color={colors.pink}>50,000+</Typography> others.
+                Identify your food triggers. Reclaim your gut health. Join <Typography variant="bodyBold" color={colors.pink}>50,000+</Typography> others.
               </Typography>
             </Animated.View>
           </Animated.View>
 
           <View style={styles.featuresRow}>
-            <FeatureItem icon="flash" text="Beat Bloat" color={colors.pink} delay={500} />
+            <FeatureItem icon="scan" text="Scan Your Food" color={colors.pink} delay={500} />
             <FeatureItem icon="analytics" text="Find Triggers" color={colors.blue} delay={600} />
-            <FeatureItem icon="sunny" text="Glow Daily" color={colors.green} delay={700} />
+            <FeatureItem icon="trending-up" text="Track Progress" color={colors.green} delay={700} />
           </View>
         </View>
 
@@ -180,7 +180,7 @@ export default function AuthScreen() {
 
           <View style={styles.authCard}>
             <Typography variant="bodyXS" color={colors.black + '66'} align="center" style={{ marginBottom: spacing.lg }}>
-              Your 90-day reset starts with a secure account
+              Start your personalized gut health journey today
             </Typography>
             
             <View style={styles.buttonWrapper}>
