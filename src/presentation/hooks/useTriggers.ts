@@ -27,6 +27,7 @@ export function useTriggers(userId: string | null): UseTriggersReturn {
     const saveFeedbackUseCase = container.saveTriggerFeedbackUseCase;
 
     const fetchTriggers = useCallback(async () => {
+        // Don't fetch if no userId (user is logged out)
         if (!userId) {
             setTriggers([]);
             setCombinationTriggers([]);
@@ -42,16 +43,40 @@ export function useTriggers(userId: string | null): UseTriggersReturn {
             ]);
             setTriggers(detected);
             setCombinationTriggers(combos);
-        } catch (error) {
-            console.error('Failed to detect triggers:', error);
+        } catch (error: any) {
+            // Handle permission errors and auth issues gracefully
+            const errorMessage = error?.message?.toLowerCase() || '';
+            const status = error?.status;
+            if (error?.code === 'PGRST116' || errorMessage.includes('permission') || errorMessage.includes('denied') || status === 403 || status === 500) {
+                // Only log if user was actually authenticated (suppress on logout)
+                if (userId) {
+                    if (status === 500) {
+                        console.warn('Server error fetching triggers - Supabase may be temporarily unavailable:', error);
+                    } else {
+                        console.debug('Permission denied detecting triggers - user session may have expired');
+                    }
+                }
+                setTriggers([]);
+                setCombinationTriggers([]);
+            } else {
+                console.error('Failed to detect triggers:', error);
+            }
         } finally {
             setLoading(false);
         }
     }, [userId, detectUseCase, detectComboUseCase]);
 
     useEffect(() => {
-        fetchTriggers();
-    }, [fetchTriggers]);
+        // Only fetch if user is authenticated
+        if (userId) {
+            fetchTriggers();
+        } else {
+            // Clear data on logout
+            setTriggers([]);
+            setCombinationTriggers([]);
+            setLoading(false);
+        }
+    }, [fetchTriggers, userId]);
 
     const saveFeedback = useCallback(async (
         foodName: string,

@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Svg, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
-import { colors, spacing } from '../../theme';
+import { colors } from '../../theme';
 
 interface GutScoreRingProps {
   score: number; // 0-100

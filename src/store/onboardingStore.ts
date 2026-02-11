@@ -87,54 +87,53 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
     completeOnboarding: async () => {
         console.log('📝 completeOnboarding called');
         const state = get();
-        set({ isOnboardingComplete: true });
 
-        // Directly update database
+        // Get session first
         const { supabase } = await import('../config/supabase');
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session?.user?.id) {
             try {
-                // First, ensure user record exists by attempting INSERT
-                await supabase
+                // Use upsert to insert or update in one operation
+                const { data, error } = await supabase
                     .from('users')
-                    .insert({
+                    .upsert({
                         id: session.user.id,
-                        onboarding_completed: true,
-                        onboarding_data: {
-                            answers: state.gutCheckAnswers,
-                            score: state.calculatedScore
-                        }
-                    })
-                    .select()
-                    .single();
-            } catch (insertError) {
-                // User record likely exists, update it instead
-                const { error: updateError } = await supabase
-                    .from('users')
-                    .update({
                         onboarding_completed: true,
                         onboarding_data: {
                             answers: state.gutCheckAnswers,
                             score: state.calculatedScore
                         },
                         updated_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'id'
                     })
-                    .eq('id', session.user.id);
+                    .select()
+                    .single();
 
-                if (updateError) {
-                    console.error('❌ Database update error:', updateError);
-                    return;
+                if (error) {
+                    console.error('❌ Database upsert error:', error);
+                    throw error;
                 }
-            }
 
-            // Update baseline score and regularity in gut store immediately
-            useGutStore.getState().setBaselineScore(state.calculatedScore);
-            if (state.gutCheckAnswers.bowelRegularity !== undefined) {
-                useGutStore.getState().setBaselineRegularity(state.gutCheckAnswers.bowelRegularity);
+                console.log('✅ Onboarding completed in database:', data);
+
+                // Only update local state after successful database update
+                set({ isOnboardingComplete: true });
+
+                // Update baseline score and regularity in gut store
+                useGutStore.getState().setBaselineScore(state.calculatedScore);
+                if (state.gutCheckAnswers.bowelRegularity !== undefined) {
+                    useGutStore.getState().setBaselineRegularity(state.gutCheckAnswers.bowelRegularity);
+                }
+            } catch (error) {
+                console.error('❌ Failed to complete onboarding:', error);
+                // Don't update local state if database update failed
+                throw error;
             }
         } else {
-            // Even if not logged in, update local state for consistency
+            console.warn('⚠️ No session found, updating local state only');
+            set({ isOnboardingComplete: true });
             useGutStore.getState().setBaselineScore(state.calculatedScore);
             if (state.gutCheckAnswers.bowelRegularity !== undefined) {
                 useGutStore.getState().setBaselineRegularity(state.gutCheckAnswers.bowelRegularity);

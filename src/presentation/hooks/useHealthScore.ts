@@ -35,8 +35,15 @@ export function useHealthScore(
         try {
             const result = await calculateUseCase.execute(userId, baselineScore);
             setScore(result);
-        } catch (error) {
-            console.error('Failed to calculate health score:', error);
+        } catch (error: any) {
+            // Handle permission errors, auth issues, and server errors gracefully
+            const errorMessage = error?.message?.toLowerCase() || '';
+            const status = error?.status;
+            if (error?.code === 'PGRST116' || errorMessage.includes('permission') || errorMessage.includes('denied') || status === 403 || status === 500) {
+                console.warn('Unable to calculate health score:', error);
+            } else {
+                console.error('Failed to calculate health score:', error);
+            }
             setScore(HealthScore.fromBaseline(baselineScore));
         } finally {
             setLoading(false);

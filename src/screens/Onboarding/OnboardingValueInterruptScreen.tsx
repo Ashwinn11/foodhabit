@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { OnboardingScreen } from '../../components/Onboarding';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useNavigation } from '@react-navigation/native';
-import { Typography, GutAvatar, Card } from '../../components';
+import { Typography, Card } from '../../components';
 import { colors, spacing } from '../../theme';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,9 +39,7 @@ export const OnboardingValueInterruptScreen = () => {
     >
       <View style={styles.container}>
 
-        <Animated.View entering={FadeInDown.delay(100)} style={styles.mascotContainer}>
-          <GutAvatar score={70} size={120} mood="neutral" />
-        </Animated.View>
+
 
         <Animated.View entering={FadeInDown.delay(200)}>
           <Card style={styles.insightCard}>
@@ -100,10 +98,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  mascotContainer: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
+
   insightCard: {
     backgroundColor: colors.white,
     borderColor: colors.border,

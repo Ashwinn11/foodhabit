@@ -83,13 +83,13 @@ struct FoodHabitWidgetEntryView : View {
         return black.opacity(0.7)
     }
     
-    // 🔥 Fun grade based on score (TikTok-viral)
+    // 🔥 Grade based on score
     var funGrade: String {
-        if entry.data.score >= 90 { return "Thriving 🌟" }
-        if entry.data.score >= 80 { return "Vibing ✨" }
-        if entry.data.score >= 70 { return "Mid 😐" }
-        if entry.data.score >= 50 { return "Sus 👀" }
-        return "SOS 🆘"
+        if entry.data.score >= 90 { return "Optimal" }
+        if entry.data.score >= 80 { return "Good" }
+        if entry.data.score >= 70 { return "Moderate" }
+        if entry.data.score >= 50 { return "Concerning" }
+        return "Critical"
     }
     
     // 🔤 Font Helpers
@@ -121,7 +121,7 @@ struct FoodHabitWidgetEntryView : View {
         .applyWidgetBackground(scoreColor)
     }
     
-    // MARK: - Small Layout (Whimsical Card)
+    // MARK: - Small Layout (Score Card)
     var smallLayout: some View {
         ZStack {
             VStack(alignment: .leading, spacing: 0) {
@@ -135,51 +135,44 @@ struct FoodHabitWidgetEntryView : View {
                 }
                 .padding(.top, 14)
                 .padding(.horizontal, 14)
-                
+
                 Spacer()
-                
-                // Big Score center
-                HStack(alignment: .lastTextBaseline, spacing: 2) {
-                    Text("\(entry.data.score)")
-                        .font(cheeryFont(size: 64))
-                        .foregroundColor(black)
-                        .shadow(color: black.opacity(0.05), radius: 0, x: 2, y: 2)
-                    
-                    Text(funGrade)
-                        .font(cheeryFont(size: 18))
-                        .foregroundColor(gradeTextColor)
-                        .rotationEffect(.degrees(-10))
-                }
-                .padding(.leading, 14)
-                .padding(.bottom, 4)
-                
-                Spacer()
-                
-                // Footer
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("LAST 💩")
-                            .font(bodyFont(size: 10, weight: .bold))
-                            .foregroundColor(black.opacity(0.4))
-                        Text(entry.data.lastPoopTime)
-                            .font(cheeryFont(size: 14))
-                            .foregroundColor(black)
+
+                // Score Ring and Info
+                HStack(spacing: 16) {
+                    CircularProgressRing(
+                        score: entry.data.score,
+                        size: 80,
+                        strokeWidth: 5,
+                        color: scoreColor
+                    )
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        // Grade
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("GRADE")
+                                .font(bodyFont(size: 10, weight: .bold))
+                                .foregroundColor(black.opacity(0.4))
+                            Text(funGrade)
+                                .font(cheeryFont(size: 14))
+                                .foregroundColor(black)
+                        }
+
+                        // Last Poop
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("LAST 💩")
+                                .font(bodyFont(size: 10, weight: .bold))
+                                .foregroundColor(black.opacity(0.4))
+                            Text(entry.data.lastPoopTime)
+                                .font(cheeryFont(size: 14))
+                                .foregroundColor(black)
+                        }
                     }
+
                     Spacer()
                 }
-                .padding(14)
-            }
-            
-            // Mascot Peeking Overlay
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    SafeMascotImage(score: entry.data.score)
-                        .frame(width: 80, height: 80)
-                        .rotationEffect(.degrees(10))
-                        .offset(x: 10, y: 10)
-                }
+                .padding(.horizontal, 14)
+                .padding(.bottom, 14)
             }
         }
     }
@@ -187,10 +180,10 @@ struct FoodHabitWidgetEntryView : View {
     // MARK: - Medium Layout (Split Card)
     var mediumLayout: some View {
         HStack(spacing: 0) {
-            // LEFT: Solid Color Block (Uses Container Background)
+            // LEFT: Score Ring
             ZStack {
                 Color.clear // Transparent to show containerBackground
-                
+
                 VStack {
                     HStack {
                         Text("Gut Score")
@@ -200,19 +193,22 @@ struct FoodHabitWidgetEntryView : View {
                         Spacer()
                     }
                     Spacer()
+
+                    CircularProgressRing(
+                        score: entry.data.score,
+                        size: 100,
+                        strokeWidth: 6,
+                        color: scoreColor
+                    )
+
+                    Spacer()
                 }
                 .padding(16)
-                
-                // Centered Score
-                Text("\(entry.data.score)")
-                    .font(cheeryFont(size: 64))
-                    .foregroundColor(black)
-                    .shadow(color: black.opacity(0.1), radius: 0, x: 2, y: 3)
             }
             .frame(width: 140) // Fixed width for left side
-            .zIndex(1) // Keep below mascot
-            
-            // RIGHT: Stats & Chart
+            .zIndex(1)
+
+            // RIGHT: Stats & Details
             ZStack {
                 white
                 VStack(alignment: .leading, spacing: 14) {
@@ -225,70 +221,60 @@ struct FoodHabitWidgetEntryView : View {
                             .lineLimit(3)
                         Spacer()
                     }
-                    
+
                     Divider()
-                    
+
                     // Stats Row
                     HStack(spacing: 20) {
                         statItem(label: "LAST 💩", value: entry.data.lastPoopTime)
-                        statItem(label: "VIBE", value: funGrade)
+                        statItem(label: "GRADE", value: funGrade)
                     }
                 }
                 .padding(18)
-                .padding(.leading, 24) // Extra padding for mascot overlap
             }
             .frame(maxWidth: .infinity)
-            .overlay(
-                 // Mascot Overlapping the middle line
-                SafeMascotImage(score: entry.data.score)
-                    .frame(width: 80, height: 80)
-                    .offset(x: -32, y: 20), // Left offset to straddle the line
-                alignment: .bottomLeading
-            )
-            .zIndex(2) // Above left side
+            .zIndex(2)
         }
     }
     
-    // MARK: - Large Layout (Playful Dashboard)
+    // MARK: - Large Layout (Dashboard)
     var largeLayout: some View {
         ZStack {
             // Transparent base to show containerBackground
             Color.clear
-            
-                VStack(spacing: 0) {
-                 // Header Area (Compact Top)
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("HELLO!")
-                            .font(bodyFont(size: 12, weight: .bold))
-                            .foregroundColor(black.opacity(0.4))
-                            .tracking(1.5)
-                        
+
+            VStack(spacing: 0) {
+                // Header Area with Score Ring
+                HStack(alignment: .center, spacing: 20) {
+                    CircularProgressRing(
+                        score: entry.data.score,
+                        size: 100,
+                        strokeWidth: 6,
+                        color: scoreColor
+                    )
+
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Your Gut Score")
                             .font(cheeryFont(size: 24))
                             .foregroundColor(black)
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            statItem(label: "GRADE", value: funGrade)
+                            statItem(label: "LAST 💩", value: entry.data.lastPoopTime)
+                        }
                     }
+
                     Spacer()
-                    
-                    // Score with Mascot
-                    HStack(spacing: 8) {
-                        Text("\(entry.data.score)")
-                            .font(cheeryFont(size: 42))
-                            .foregroundColor(black)
-                        
-                        SafeMascotImage(score: entry.data.score)
-                            .frame(width: 48, height: 48)
-                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 .padding(.bottom, 16)
-                
+
                 // White Card Body (Fills remaining space)
                 ZStack(alignment: .top) {
                     white
-                        .cornerRadius(24) // Rounds all, but bottom is hidden
-                    
+                        .cornerRadius(24)
+
                     VStack(alignment: .leading, spacing: 18) {
                         // Insight Text
                         Text(funInsightMessage(score: entry.data.score, lastPoop: entry.data.lastPoopTime))
@@ -296,22 +282,22 @@ struct FoodHabitWidgetEntryView : View {
                             .foregroundColor(black)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
-                        
-                         // Stats & Chart
+
+                        // Stats & Chart
                         VStack(alignment: .leading, spacing: 10) {
                             Text("THIS WEEK")
                                 .font(bodyFont(size: 10, weight: .bold))
                                 .foregroundColor(black.opacity(0.4))
                                 .tracking(1)
-                            
+
                             HStack(alignment: .bottom, spacing: 8) {
                                 if let history = entry.data.weeklyHistory {
                                     ForEach(history.suffix(7), id: \.date) { point in
                                         VStack(spacing: 4) {
                                             RoundedRectangle(cornerRadius: 6)
                                                 .fill(point.count > 0 ? pink : black.opacity(0.05))
-                                                .frame(height: min(CGFloat(point.count) * 10 + 6, 54)) // Cap bar height to prevent overlap
-                                            
+                                                .frame(height: min(CGFloat(point.count) * 10 + 6, 54))
+
                                             Text(point.label ?? "S")
                                                 .font(cheeryFont(size: 10))
                                                 .foregroundColor(black.opacity(0.4))
@@ -322,16 +308,8 @@ struct FoodHabitWidgetEntryView : View {
                             }
                             .frame(height: 66)
                         }
-                        
+
                         Spacer()
-                        
-                         // Footer Stats
-                        HStack {
-                            statItem(label: "LAST 💩", value: entry.data.lastPoopTime)
-                            Spacer()
-                            statItem(label: "VIBE", value: funGrade)
-                            Spacer() 
-                        }
                     }
                     .padding(24)
                 }
@@ -413,28 +391,45 @@ struct FoodHabitWidgetEntryView : View {
     }
 }
 
-// MARK: - Safe Image Loader
-struct SafeMascotImage: View {
+// MARK: - Circular Progress Ring
+struct CircularProgressRing: View {
     let score: Int
-    
-    var imageName: String {
-        if score >= 80 { return "happy-baloon.png" }
-        if score >= 50 { return "happy-clap.png" }
-        return "sad-cry.png"
-    }
-    
+    let size: CGFloat
+    let strokeWidth: CGFloat
+    let color: Color
+
     var body: some View {
-        // Try to load keeping in mind it might be a loose file
-        if let uiImage = UIImage(named: imageName) {
-            Image(uiImage: uiImage)
-                .resizable()
-                .scaledToFit()
-        } else {
-            // Fallback debugging circle
+        ZStack {
+            // Background circle
             Circle()
-                .fill(Color.gray.opacity(0.3))
-                .overlay(Text("?").font(.caption))
+                .stroke(Color.black.opacity(0.1), lineWidth: strokeWidth)
+
+            // Progress circle
+            Circle()
+                .trim(from: 0, to: CGFloat(score) / 100)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [color, color.opacity(0.6)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    style: StrokeStyle(lineWidth: strokeWidth, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+
+            // Center text
+            VStack(spacing: 2) {
+                Text("GUT")
+                    .font(.system(size: 10, weight: .semibold, design: .default))
+                    .foregroundColor(Color.black.opacity(0.6))
+                    .tracking(0.5)
+
+                Text("\(score)")
+                    .font(.system(size: 32, weight: .bold, design: .default))
+                    .foregroundColor(Color.black)
+            }
         }
+        .frame(width: size, height: size)
     }
 }
 

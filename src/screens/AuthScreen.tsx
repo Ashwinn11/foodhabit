@@ -4,6 +4,7 @@ import {
   StyleSheet,
   Platform,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Animated, {
@@ -18,7 +19,7 @@ import Animated, {
 import { useAuth } from '../hooks/useAuth';
 import { colors, spacing } from '../theme/theme';
 import { useUIStore } from '../store/useUIStore';
-import { GutAvatar, ScreenWrapper, IconContainer, Typography, Button } from '../components';
+import { ScreenWrapper, IconContainer, Typography, Button } from '../components';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
@@ -142,13 +143,10 @@ export default function AuthScreen() {
         <View style={styles.headerSection}>
           <Animated.View entering={FadeIn.duration(1000)} style={styles.header}>
             <Animated.View style={[avatarStyle, styles.avatarContainer]}>
-              <GutAvatar 
-                score={100} 
-                size={width * 0.45} 
-                showBadge 
-                badgeIcon="heart" 
-                badgeText="Feel light again" 
-                ringColor={colors.blue + '30'} 
+              <Image
+                source={require('../../assets/icon.png')}
+                style={{ width: width * 0.35, height: width * 0.35, borderRadius: (width * 0.35) / 2 }}
+                resizeMode="contain"
               />
             </Animated.View>
             

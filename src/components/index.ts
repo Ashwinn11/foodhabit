@@ -1,5 +1,4 @@
 // Gut Buddy Components Index
-export { GutAvatar } from './GutAvatar';
 export { GutScoreRing } from './GutScoreRing/GutScoreRing';
 
 

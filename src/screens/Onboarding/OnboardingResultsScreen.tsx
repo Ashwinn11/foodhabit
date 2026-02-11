@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { OnboardingScreen } from '../../components/Onboarding';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useNavigation } from '@react-navigation/native';
-import { Typography, Card, GutAvatar } from '../../components';
+import { Typography, Card, GutScoreRing } from '../../components';
 import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -67,14 +67,26 @@ export const OnboardingResultsScreen = () => {
 
         {/* Score Display */}
         <Animated.View entering={FadeInDown.delay(100)} style={styles.scoreContainer}>
-          <GutAvatar score={calculatedScore} size={110} style={{ marginBottom: spacing.md }} />
-          <View style={[styles.scoreCircle, { borderColor: scoreColor }]}>
-            <Typography variant="h1" color={scoreColor} style={{ fontSize: 38 }}>{calculatedScore}</Typography>
-            <Typography variant="caption" color={colors.mediumGray}>GUT SCORE</Typography>
+
+          <View style={styles.scoreRingWrapper}>
+            <GutScoreRing
+              score={calculatedScore}
+              color={scoreColor}
+              size={140}
+              strokeWidth={7}
+            />
+            <View style={styles.scoreOverlay}>
+              <Typography variant="bodyXS" color={colors.black + '60'} style={{ letterSpacing: 1, fontSize: 10 }}>
+                GUT SCORE
+              </Typography>
+              <Typography variant="h1" color={scoreColor} style={{ fontSize: 44, lineHeight: 52, fontWeight: '700' }}>
+                {calculatedScore}
+              </Typography>
+            </View>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.xs, gap: 6 }}>
-             <Ionicons name={funGrade.icon as any} size={24} color={scoreColor} />
-             <Typography variant="h3" color={scoreColor}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.md, gap: 6 }}>
+             <Ionicons name={funGrade.icon as any} size={20} color={scoreColor} />
+             <Typography variant="bodyBold" color={scoreColor} style={{ fontSize: 16 }}>
                {funGrade.label}
              </Typography>
           </View>
@@ -161,14 +173,19 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     marginTop: spacing.sm,
   },
-  scoreCircle: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    borderWidth: 6,
+  scoreRingWrapper: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    position: 'relative',
+    width: 140,
+    height: 140,
+  },
+  scoreOverlay: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
   },
   goalDateCard: {
     backgroundColor: colors.lightGray,

@@ -5,7 +5,7 @@ import { ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, fontSizes, radii, shadows, fonts } from '../theme/theme';
-import { GutAvatar, ScreenWrapper, IconContainer, Typography, Card } from '../components';
+import { ScreenWrapper, IconContainer, Typography, Card } from '../components';
 import { useGutStore, useUIStore } from '../store';
 import { useGutData } from '../presentation/hooks';
 import { useAuth } from '../hooks/useAuth';
@@ -53,7 +53,7 @@ const SettingsItem: React.FC<{
 
 export const ProfileScreen: React.FC = () => {
   // Use new architecture for computed values
-  const { healthScore, streak } = useGutData();
+  const { streak } = useGutData();
   
   // Keep some store access for actions and data not yet migrated
   const { user: gutUser, getStats, notificationSettings, setNotificationSettings } = useGutStore();
@@ -192,7 +192,11 @@ export const ProfileScreen: React.FC = () => {
             </>
           ) : (
             <>
-              <GutAvatar score={healthScore.score} size={70} />
+              <View style={styles.avatarContainer}>
+                <View style={styles.initialsAvatar}>
+                  <Typography variant="h2" color={colors.white}>{gutUser.name?.substring(0, 2).toUpperCase() || 'GB'}</Typography>
+                </View>
+              </View>
               <View style={styles.profileInfo}>
                 <Typography variant="h3">{gutUser.name}</Typography>
                 <Typography variant="body" color={colors.black + '99'} style={{ marginTop: spacing.xs }}>

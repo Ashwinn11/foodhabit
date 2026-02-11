@@ -58,13 +58,25 @@ export const OnboardingPaywallScreen = () => {
       );
 
       // User purchased! Mark complete
-      await completeOnboarding();
+      try {
+        await completeOnboarding();
+        console.log('✅ Onboarding marked complete');
 
-      // Trigger update in App.tsx
-      // @ts-ignore
-      if (global.refreshOnboardingStatus) {
+        // Trigger update in App.tsx only after successful completion
         // @ts-ignore
-        global.refreshOnboardingStatus();
+        if (global.refreshOnboardingStatus) {
+          // @ts-ignore
+          global.refreshOnboardingStatus();
+        }
+      } catch (onboardingError) {
+        console.error('❌ Failed to complete onboarding:', onboardingError);
+        // TODO: Show error message to user
+        // For now, still trigger refresh to try to recover
+        // @ts-ignore
+        if (global.refreshOnboardingStatus) {
+          // @ts-ignore
+          global.refreshOnboardingStatus();
+        }
       }
     } catch (error) {
       console.error('❌ Paywall error:', error);

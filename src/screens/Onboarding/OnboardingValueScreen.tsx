@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { OnboardingScreen, ReviewCard } from '../../components/Onboarding';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useNavigation } from '@react-navigation/native';
-import { Typography, Card, IconContainer, GutAvatar } from '../../components';
+import { Typography, Card, IconContainer } from '../../components';
 import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -53,9 +53,8 @@ export const OnboardingValueScreen = () => {
     >
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
 
-        {/* Mascot & Confidence Message */}
-        <Animated.View entering={FadeInDown.delay(100)} style={styles.mascotContainer}>
-          <GutAvatar score={90} size={100} />
+        {/* Confidence Message */}
+        <Animated.View entering={FadeInDown.delay(100)} style={styles.messageContainer}>
           <View style={styles.speechBubble}>
             <Typography variant="bodyBold" color={colors.white}>
               We've got this! <Ionicons name="rocket" size={16} color={colors.white} />
@@ -174,7 +173,7 @@ export const OnboardingValueScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  mascotContainer: {
+  messageContainer: {
     alignItems: 'center',
     marginBottom: spacing.lg,
   },

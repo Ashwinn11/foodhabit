@@ -119,6 +119,24 @@ export function useGutData() {
         return log?.minutes ?? 0;
     }, [exerciseLogs, todayStr]);
 
+    // Calculate last poop time
+    const lastPoopTime = useMemo(() => {
+        if (!gutMoments || gutMoments.length === 0) return 'No data';
+
+        const lastMoment = gutMoments[0]; // Assuming first element is most recent
+        const now = new Date();
+        const momentTime = new Date(lastMoment.timestamp);
+        const diffMs = now.getTime() - momentTime.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        return `${diffDays}d ago`;
+    }, [gutMoments]);
+
     return {
         // User data
         userId,
@@ -131,6 +149,7 @@ export function useGutData() {
             breakdown: healthScore.breakdown,
             color: healthScore.getColor(),
             emoji: healthScore.getEmoji(),
+            lastPoopTime,
         },
 
         // Streak (from new service)

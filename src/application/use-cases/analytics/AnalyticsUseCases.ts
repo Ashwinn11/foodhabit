@@ -22,16 +22,31 @@ export class CalculateHealthScoreUseCase {
     ) { }
 
     async execute(userId: string, baselineScore: number): Promise<HealthScore> {
-        const moments = await this.gutMomentRepo.findByUserId(userId);
+        try {
+            const moments = await this.gutMomentRepo.findByUserId(userId);
 
-        // Fetch user's baseline regularity from onboarding data
-        const baselineRegularity = await this.fetchBaselineRegularity(userId);
+            // Fetch user's baseline regularity from onboarding data
+            const baselineRegularity = await this.fetchBaselineRegularity(userId);
 
-        return this.healthScoreService.calculateScore({
-            moments,
-            baselineScore,
-            baselineRegularity,
-        });
+            return this.healthScoreService.calculateScore({
+                moments,
+                baselineScore,
+                baselineRegularity,
+            });
+        } catch (error: any) {
+            // Handle permission errors, auth issues, and server errors gracefully
+            const errorMessage = error?.message?.toLowerCase() || '';
+            const status = error?.status;
+            if (error?.code === 'PGRST116' || errorMessage.includes('permission') || errorMessage.includes('denied') || status === 403 || status === 500) {
+                if (status === 500) {
+                    console.warn('Server error fetching health score - Supabase may be temporarily unavailable');
+                } else {
+                    console.debug('Permission denied fetching health score - user session may have expired');
+                }
+                return HealthScore.fromBaseline(baselineScore);
+            }
+            throw error;
+        }
     }
 
     /**
@@ -85,17 +100,32 @@ export class DetectTriggersUseCase {
     ) { }
 
     async execute(userId: string): Promise<Trigger[]> {
-        const [moments, meals, feedback] = await Promise.all([
-            this.gutMomentRepo.findByUserId(userId),
-            this.mealRepo.findByUserId(userId),
-            this.feedbackRepo.findByUserId(userId),
-        ]);
+        try {
+            const [moments, meals, feedback] = await Promise.all([
+                this.gutMomentRepo.findByUserId(userId),
+                this.mealRepo.findByUserId(userId),
+                this.feedbackRepo.findByUserId(userId),
+            ]);
 
-        return this.triggerService.detectTriggers({
-            moments,
-            meals,
-            feedback,
-        });
+            return this.triggerService.detectTriggers({
+                moments,
+                meals,
+                feedback,
+            });
+        } catch (error: any) {
+            // Handle permission errors, auth issues, and server errors gracefully - return empty triggers
+            const errorMessage = error?.message?.toLowerCase() || '';
+            const status = error?.status;
+            if (error?.code === 'PGRST116' || errorMessage.includes('permission') || errorMessage.includes('denied') || status === 403 || status === 500) {
+                if (status === 500) {
+                    console.warn('Server error fetching triggers - Supabase may be temporarily unavailable');
+                } else {
+                    console.debug('Permission denied fetching triggers - user session may have expired');
+                }
+                return [];
+            }
+            throw error;
+        }
     }
 
     /**
@@ -125,12 +155,27 @@ export class DetectCombinationTriggersUseCase {
     ) { }
 
     async execute(userId: string): Promise<CombinationTrigger[]> {
-        const [moments, meals] = await Promise.all([
-            this.gutMomentRepo.findByUserId(userId),
-            this.mealRepo.findByUserId(userId),
-        ]);
+        try {
+            const [moments, meals] = await Promise.all([
+                this.gutMomentRepo.findByUserId(userId),
+                this.mealRepo.findByUserId(userId),
+            ]);
 
-        return this.triggerService.detectCombinationTriggers(moments, meals);
+            return this.triggerService.detectCombinationTriggers(moments, meals);
+        } catch (error: any) {
+            // Handle permission errors, auth issues, and server errors gracefully - return empty triggers
+            const errorMessage = error?.message?.toLowerCase() || '';
+            const status = error?.status;
+            if (error?.code === 'PGRST116' || errorMessage.includes('permission') || errorMessage.includes('denied') || status === 403 || status === 500) {
+                if (status === 500) {
+                    console.warn('Server error fetching combination triggers - Supabase may be temporarily unavailable');
+                } else {
+                    console.debug('Permission denied fetching combination triggers - user session may have expired');
+                }
+                return [];
+            }
+            throw error;
+        }
     }
 }
 

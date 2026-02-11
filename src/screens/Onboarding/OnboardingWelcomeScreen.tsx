@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { OnboardingScreen } from '../../components/Onboarding';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useNavigation } from '@react-navigation/native';
-import { Typography, GutAvatar, Card } from '../../components';
+import { Typography, Card } from '../../components';
 import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,9 +35,7 @@ export const OnboardingWelcomeScreen = () => {
     >
       <View style={styles.container}>
 
-        <Animated.View entering={FadeInDown.delay(100)} style={styles.mascotContainer}>
-          <GutAvatar score={85} size={140} />
-        </Animated.View>
+
 
         <Animated.View entering={FadeInDown.delay(200)} style={styles.promiseContainer}>
           <View style={styles.promiseItem}>
@@ -93,10 +91,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
   },
-  mascotContainer: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
+
   promiseContainer: {
     gap: spacing.lg,
     marginBottom: spacing.xl,

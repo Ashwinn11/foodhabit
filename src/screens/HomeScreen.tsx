@@ -222,12 +222,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   </View>
                 </View>
 
-                {/* Right: Grade Label and Streak */}
+                {/* Right: Grade Label and Last Poop */}
                 <View style={styles.heroRight}>
                   {/* Grade */}
                   <View style={{ gap: 4 }}>
                     <Typography variant="bodyXS" color={colors.black + '60'} style={{ letterSpacing: 0.5, fontSize: 10 }}>
-                      STATUS
+                      GRADE
                     </Typography>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Ionicons name={getFunGrade(healthScore.score).icon as any} size={20} color={healthScore.color} />
@@ -237,17 +237,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     </View>
                   </View>
 
-                  {/* Streak Badge */}
-                  <View style={styles.streakBadge}>
-                    <IconContainer name="flame" size={20} color={colors.pink} variant="transparent" shadow={false} />
-                    <View>
-                      <Typography variant="bodyXS" color={colors.black + '60'} style={{ fontSize: 10 }}>
-                        STREAK
-                      </Typography>
-                      <Typography variant="bodyBold" color={colors.black} style={{ fontSize: 16 }}>
-                        {streak} Day{streak !== 1 ? 's' : ''}
-                      </Typography>
-                    </View>
+                  {/* Last Poop */}
+                  <View style={{ gap: 4 }}>
+                    <Typography variant="bodyXS" color={colors.black + '60'} style={{ fontSize: 10 }}>
+                      LAST 💩
+                    </Typography>
+                    <Typography variant="bodyBold" color={colors.black} style={{ fontSize: 16 }}>
+                      {healthScore.lastPoopTime || 'No data'}
+                    </Typography>
                   </View>
                 </View>
               </View>
