@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { create } from 'zustand';
 import { ModalType } from '../components/Modal/CustomModal';
 

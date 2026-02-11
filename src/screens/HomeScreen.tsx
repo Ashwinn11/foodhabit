@@ -41,7 +41,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   // Get user ID and triggers
   const { session } = useAuth();
   const userId = session?.user?.id ?? null;
-  const { triggers } = useTriggers(userId);
+  const { triggers, saveFeedback } = useTriggers(userId);
 
   // Still use old store for data
   const { user, dismissAlert, meals, calorieGoal } = useGutStore();
@@ -304,7 +304,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           entering={FadeInDown.delay(270).springify()}
           style={styles.section}
         >
-          <UserTriggersCard triggers={triggers} />
+          <UserTriggersCard
+            triggers={triggers}
+            onConfirm={(food) => saveFeedback(food, true)}
+            onDismiss={(food) => saveFeedback(food, false)}
+          />
         </Animated.View>
 
         <View style={styles.bottomPadding} />

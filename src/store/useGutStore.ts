@@ -11,6 +11,7 @@ import { useNotificationStore } from './useNotificationStore';
 import { analyzeFoodWithAI, getLowFODMAPAlternatives } from '../services/fodmapService';
 
 import { colors } from '../theme/theme';
+import { Trigger, CombinationTrigger } from '../domain/entities';
 
 // Types for gut tracking
 export type BristolType = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -178,6 +179,13 @@ interface GutStore {
     addTriggerFeedback: (feedback: TriggerFeedback) => void;
     setTriggerFeedback: (feedback: TriggerFeedback[]) => void;
     getTriggerFeedback: (foodName: string) => TriggerFeedback | undefined;
+
+    // Detected Triggers (Cached for performance)
+    detectedTriggers: Trigger[];
+    combinationTriggers: CombinationTrigger[];
+    setDetectedTriggers: (triggers: Trigger[]) => void;
+    setCombinationTriggers: (triggers: CombinationTrigger[]) => void;
+    refreshTriggers: () => Promise<void>;
 
     // Computed
     getRecentMoments: (count: number) => GutMoment[];
@@ -429,6 +437,32 @@ export const useGutStore = create<GutStore>()((set, get) => ({
 
     // Gut moments (start empty)
     gutMoments: [],
+    detectedTriggers: [],
+    combinationTriggers: [],
+
+    setDetectedTriggers: (triggers) => set({ detectedTriggers: triggers }),
+    setCombinationTriggers: (triggers) => set({ combinationTriggers: triggers }),
+    refreshTriggers: async () => {
+        try {
+            const { supabase } = await import('../config/supabase');
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.user?.id) return;
+
+            const { container } = await import('../infrastructure/di');
+            const [triggers, combos] = await Promise.all([
+                container.detectTriggersUseCase.execute(session.user.id),
+                container.detectCombinationTriggersUseCase.execute(session.user.id),
+            ]);
+
+            set({
+                detectedTriggers: triggers,
+                combinationTriggers: combos,
+            });
+        } catch (error) {
+            console.error('Failed to refresh triggers in store:', error);
+        }
+    },
+
     addGutMoment: (moment) => set((state) => {
         const newMoment = { ...moment, id: generateId() };
         const newMoments = [newMoment, ...state.gutMoments];

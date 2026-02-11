@@ -53,6 +53,8 @@ export default function App() {
   const [isReady, setIsReady] = React.useState(false);
   const [dataLoaded, setDataLoaded] = React.useState(false);
   const [onboardingComplete, setOnboardingComplete] = React.useState(false);
+  const [isPremium, setIsPremium] = React.useState(true); // Default true to avoid flash-locking
+  const [paywallKey, setPaywallKey] = React.useState(0); // Increment to re-present paywall on dismiss
   const [refreshKey, setRefreshKey] = React.useState(0);
 
   // Initialize Services
@@ -109,7 +111,20 @@ export default function App() {
             .eq('id', session.user.id)
             .maybeSingle();
 
-          setOnboardingComplete(userProfile?.onboarding_completed || false);
+          const isOnboarded = userProfile?.onboarding_completed || false;
+          setOnboardingComplete(isOnboarded);
+
+          // Check subscription status for onboarded users
+          if (isOnboarded && RevenueCatService.checkAvailability()) {
+            try {
+              await RevenueCatService.ensureLoggedIn(session.user.id);
+              const premium = await RevenueCatService.isPremium();
+              setIsPremium(premium);
+            } catch {
+              // If RevenueCat fails, don't lock user out
+              setIsPremium(true);
+            }
+          }
 
         } catch (e) {
           console.error("Error checking onboarding status:", e);
@@ -148,6 +163,27 @@ export default function App() {
     const timer = setTimeout(loadDataInBackground, 100);
     return () => clearTimeout(timer);
   }, [isReady, session?.user?.id]);
+
+  // Present RevenueCat paywall for expired/missing subscriptions
+  const presentSubscriptionPaywall = React.useCallback(async () => {
+    if (!session?.user?.id) return;
+    await RevenueCatService.ensureLoggedIn(session.user.id);
+    await RevenueCatService.presentPaywall();
+    const premium = await RevenueCatService.isPremium(true);
+    if (premium) {
+      setIsPremium(true);
+    } else {
+      // User dismissed without purchasing — re-present paywall
+      setPaywallKey(prev => prev + 1);
+    }
+  }, [session?.user?.id]);
+
+  // Show paywall automatically when user is gated (paywallKey re-triggers on dismiss)
+  React.useEffect(() => {
+    if (isReady && session && onboardingComplete && !isPremium) {
+      presentSubscriptionPaywall();
+    }
+  }, [isReady, session, onboardingComplete, isPremium, paywallKey, presentSubscriptionPaywall]);
 
   const linking: any = {
     prefixes: ['foodhabit://'],

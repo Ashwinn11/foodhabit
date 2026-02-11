@@ -133,6 +133,21 @@ export const loadUserDataFromDatabase = async () => {
             })
         ]);
 
+        // Fetch triggers using Use Cases (Clean Architecture)
+        // We do this after the raw Supabase data is loaded to ensure we have fresh insights
+        const fetchTriggersPromise = (async () => {
+            try {
+                const { container } = await import('../infrastructure/di');
+                return await Promise.all([
+                    container.detectTriggersUseCase.execute(userId),
+                    container.detectCombinationTriggersUseCase.execute(userId),
+                ]);
+            } catch (error) {
+                console.error('Failed to detect triggers during load:', error);
+                return [[], []];
+            }
+        })();
+
         // Process gut logs
         const { data: gutLogs, error: logsError } = gutLogsResult;
         if (logsError) {
@@ -267,6 +282,16 @@ export const loadUserDataFromDatabase = async () => {
 
         // Sync widget after all data is loaded (fixes widget showing 0/no data)
         // This ensures the widget shows correct gut score and poop history
+        // Update store with triggers
+        try {
+            const [detectedTriggers, comboTriggers] = await fetchTriggersPromise;
+            const gutStore = useGutStore.getState();
+            gutStore.setDetectedTriggers(detectedTriggers);
+            gutStore.setCombinationTriggers(comboTriggers);
+        } catch (error) {
+            console.error('Failed to update triggers in store:', error);
+        }
+
         // even for new users (default score of 50) or after app restart
         try {
             const gutStore = useGutStore.getState();

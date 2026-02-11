@@ -82,6 +82,21 @@ class Container {
     private _dailyTaskService?: DailyTaskService;
     private _storeSyncService?: StoreSyncService;
 
+    // Cached use cases
+    private _logGutMomentUseCase?: LogGutMomentUseCase;
+    private _quickLogGutMomentUseCase?: QuickLogGutMomentUseCase;
+    private _getGutMomentsUseCase?: GetGutMomentsUseCase;
+    private _deleteGutMomentUseCase?: DeleteGutMomentUseCase;
+    private _logMealUseCase?: LogMealUseCase;
+    private _getMealsUseCase?: GetMealsUseCase;
+    private _deleteMealUseCase?: DeleteMealUseCase;
+    private _calculateHealthScoreUseCase?: CalculateHealthScoreUseCase;
+    private _detectTriggersUseCase?: DetectTriggersUseCase;
+    private _detectCombinationTriggersUseCase?: DetectCombinationTriggersUseCase;
+    private _checkMedicalAlertsUseCase?: CheckMedicalAlertsUseCase;
+    private _saveTriggerFeedbackUseCase?: SaveTriggerFeedbackUseCase;
+    private _completeOnboardingUseCase?: CompleteOnboardingUseCase;
+
     private constructor() { }
 
     static getInstance(): Container {
@@ -201,85 +216,124 @@ class Container {
     // === Use Cases ===
 
     get logGutMomentUseCase(): LogGutMomentUseCase {
-        return new LogGutMomentUseCase(
-            this.gutMomentRepository,
-            this.notificationService,
-            this.widgetService,
-            this.streakService
-        );
+        if (!this._logGutMomentUseCase) {
+            this._logGutMomentUseCase = new LogGutMomentUseCase(
+                this.gutMomentRepository,
+                this.notificationService,
+                this.widgetService,
+                this.streakService
+            );
+        }
+        return this._logGutMomentUseCase;
     }
 
     get quickLogGutMomentUseCase(): QuickLogGutMomentUseCase {
-        return new QuickLogGutMomentUseCase(
-            this.gutMomentRepository,
-            this.notificationService,
-            this.streakService
-        );
+        if (!this._quickLogGutMomentUseCase) {
+            this._quickLogGutMomentUseCase = new QuickLogGutMomentUseCase(
+                this.gutMomentRepository,
+                this.notificationService,
+                this.streakService
+            );
+        }
+        return this._quickLogGutMomentUseCase;
     }
 
     get getGutMomentsUseCase(): GetGutMomentsUseCase {
-        return new GetGutMomentsUseCase(this.gutMomentRepository);
+        if (!this._getGutMomentsUseCase) {
+            this._getGutMomentsUseCase = new GetGutMomentsUseCase(this.gutMomentRepository);
+        }
+        return this._getGutMomentsUseCase;
     }
 
     get deleteGutMomentUseCase(): DeleteGutMomentUseCase {
-        return new DeleteGutMomentUseCase(
-            this.gutMomentRepository,
-            this.streakService
-        );
+        if (!this._deleteGutMomentUseCase) {
+            this._deleteGutMomentUseCase = new DeleteGutMomentUseCase(
+                this.gutMomentRepository,
+                this.streakService
+            );
+        }
+        return this._deleteGutMomentUseCase;
     }
 
     get logMealUseCase(): LogMealUseCase {
-        return new LogMealUseCase(
-            this.mealRepository,
-            this.notificationService
-        );
+        if (!this._logMealUseCase) {
+            this._logMealUseCase = new LogMealUseCase(
+                this.mealRepository,
+                this.notificationService
+            );
+        }
+        return this._logMealUseCase;
     }
 
     get getMealsUseCase(): GetMealsUseCase {
-        return new GetMealsUseCase(this.mealRepository);
+        if (!this._getMealsUseCase) {
+            this._getMealsUseCase = new GetMealsUseCase(this.mealRepository);
+        }
+        return this._getMealsUseCase;
     }
 
     get deleteMealUseCase(): DeleteMealUseCase {
-        return new DeleteMealUseCase(this.mealRepository);
+        if (!this._deleteMealUseCase) {
+            this._deleteMealUseCase = new DeleteMealUseCase(this.mealRepository);
+        }
+        return this._deleteMealUseCase;
     }
 
     get calculateHealthScoreUseCase(): CalculateHealthScoreUseCase {
-        return new CalculateHealthScoreUseCase(
-            this.gutMomentRepository,
-            this.healthScoreService
-        );
+        if (!this._calculateHealthScoreUseCase) {
+            this._calculateHealthScoreUseCase = new CalculateHealthScoreUseCase(
+                this.gutMomentRepository,
+                this.healthScoreService
+            );
+        }
+        return this._calculateHealthScoreUseCase;
     }
 
     get detectTriggersUseCase(): DetectTriggersUseCase {
-        return new DetectTriggersUseCase(
-            this.gutMomentRepository,
-            this.mealRepository,
-            this.triggerFeedbackRepository,
-            this.triggerDetectionService
-        );
+        if (!this._detectTriggersUseCase) {
+            this._detectTriggersUseCase = new DetectTriggersUseCase(
+                this.gutMomentRepository,
+                this.mealRepository,
+                this.triggerFeedbackRepository,
+                this.triggerDetectionService
+            );
+        }
+        return this._detectTriggersUseCase;
     }
 
     get detectCombinationTriggersUseCase(): DetectCombinationTriggersUseCase {
-        return new DetectCombinationTriggersUseCase(
-            this.gutMomentRepository,
-            this.mealRepository,
-            this.triggerDetectionService
-        );
+        if (!this._detectCombinationTriggersUseCase) {
+            this._detectCombinationTriggersUseCase = new DetectCombinationTriggersUseCase(
+                this.gutMomentRepository,
+                this.mealRepository,
+                this.triggerDetectionService
+            );
+        }
+        return this._detectCombinationTriggersUseCase;
     }
 
     get checkMedicalAlertsUseCase(): CheckMedicalAlertsUseCase {
-        return new CheckMedicalAlertsUseCase(
-            this.gutMomentRepository,
-            this.medicalAlertService
-        );
+        if (!this._checkMedicalAlertsUseCase) {
+            this._checkMedicalAlertsUseCase = new CheckMedicalAlertsUseCase(
+                this.gutMomentRepository,
+                this.medicalAlertService
+            );
+        }
+        return this._checkMedicalAlertsUseCase;
     }
 
     get saveTriggerFeedbackUseCase(): SaveTriggerFeedbackUseCase {
-        return new SaveTriggerFeedbackUseCase(this.triggerFeedbackRepository);
+        if (!this._saveTriggerFeedbackUseCase) {
+            this._saveTriggerFeedbackUseCase = new SaveTriggerFeedbackUseCase(this.triggerFeedbackRepository);
+        }
+        return this._saveTriggerFeedbackUseCase;
     }
 
     get completeOnboardingUseCase(): CompleteOnboardingUseCase {
-        return new CompleteOnboardingUseCase(this.userRepository);
+        if (!this._completeOnboardingUseCase) {
+            this._completeOnboardingUseCase = new CompleteOnboardingUseCase(this.userRepository);
+        }
+        return this._completeOnboardingUseCase;
     }
 
     /**
@@ -299,6 +353,20 @@ class Container {
         this._streakService = undefined;
         this._dailyTaskService = undefined;
         this._storeSyncService = undefined;
+
+        this._logGutMomentUseCase = undefined;
+        this._quickLogGutMomentUseCase = undefined;
+        this._getGutMomentsUseCase = undefined;
+        this._deleteGutMomentUseCase = undefined;
+        this._logMealUseCase = undefined;
+        this._getMealsUseCase = undefined;
+        this._deleteMealUseCase = undefined;
+        this._calculateHealthScoreUseCase = undefined;
+        this._detectTriggersUseCase = undefined;
+        this._detectCombinationTriggersUseCase = undefined;
+        this._checkMedicalAlertsUseCase = undefined;
+        this._saveTriggerFeedbackUseCase = undefined;
+        this._completeOnboardingUseCase = undefined;
     }
 }
 

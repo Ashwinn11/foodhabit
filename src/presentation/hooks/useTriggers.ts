@@ -2,9 +2,10 @@
  * useTriggers Hook
  * React hook for trigger detection
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Trigger, CombinationTrigger, GutMoment, Meal, TriggerFeedback } from '../../domain';
 import { container } from '../../infrastructure/di';
+import { useGutStore } from '../../store';
 
 interface UseTriggersReturn {
     triggers: Trigger[];
@@ -15,68 +16,27 @@ interface UseTriggersReturn {
 }
 
 /**
- * Hook for trigger detection
+ * Hook for trigger detection - Reads from global store
  */
 export function useTriggers(userId: string | null): UseTriggersReturn {
-    const [triggers, setTriggers] = useState<Trigger[]>([]);
-    const [combinationTriggers, setCombinationTriggers] = useState<CombinationTrigger[]>([]);
-    const [loading, setLoading] = useState(true);
+    const {
+        detectedTriggers,
+        combinationTriggers,
+        refreshTriggers
+    } = useGutStore();
 
-    const detectUseCase = container.detectTriggersUseCase;
-    const detectComboUseCase = container.detectCombinationTriggersUseCase;
+    const [refreshing, setRefreshing] = useState(false);
     const saveFeedbackUseCase = container.saveTriggerFeedbackUseCase;
 
-    const fetchTriggers = useCallback(async () => {
-        // Don't fetch if no userId (user is logged out)
-        if (!userId) {
-            setTriggers([]);
-            setCombinationTriggers([]);
-            setLoading(false);
-            return;
-        }
-
-        setLoading(true);
+    const refresh = useCallback(async () => {
+        if (!userId) return;
+        setRefreshing(true);
         try {
-            const [detected, combos] = await Promise.all([
-                detectUseCase.execute(userId),
-                detectComboUseCase.execute(userId),
-            ]);
-            setTriggers(detected);
-            setCombinationTriggers(combos);
-        } catch (error: any) {
-            // Handle permission errors and auth issues gracefully
-            const errorMessage = error?.message?.toLowerCase() || '';
-            const status = error?.status;
-            if (error?.code === 'PGRST116' || errorMessage.includes('permission') || errorMessage.includes('denied') || status === 403 || status === 500) {
-                // Only log if user was actually authenticated (suppress on logout)
-                if (userId) {
-                    if (status === 500) {
-                        console.warn('Server error fetching triggers - Supabase may be temporarily unavailable:', error);
-                    } else {
-                        console.debug('Permission denied detecting triggers - user session may have expired');
-                    }
-                }
-                setTriggers([]);
-                setCombinationTriggers([]);
-            } else {
-                console.error('Failed to detect triggers:', error);
-            }
+            await refreshTriggers();
         } finally {
-            setLoading(false);
+            setRefreshing(false);
         }
-    }, [userId, detectUseCase, detectComboUseCase]);
-
-    useEffect(() => {
-        // Only fetch if user is authenticated
-        if (userId) {
-            fetchTriggers();
-        } else {
-            // Clear data on logout
-            setTriggers([]);
-            setCombinationTriggers([]);
-            setLoading(false);
-        }
-    }, [fetchTriggers, userId]);
+    }, [userId, refreshTriggers]);
 
     const saveFeedback = useCallback(async (
         foodName: string,
@@ -88,14 +48,14 @@ export function useTriggers(userId: string | null): UseTriggersReturn {
         await saveFeedbackUseCase.execute(userId, foodName, confirmed, notes);
 
         // Refresh triggers to update with new feedback
-        await fetchTriggers();
-    }, [userId, saveFeedbackUseCase, fetchTriggers]);
+        await refresh();
+    }, [userId, saveFeedbackUseCase, refresh]);
 
     return {
-        triggers,
+        triggers: detectedTriggers,
         combinationTriggers,
-        loading,
-        refresh: fetchTriggers,
+        loading: refreshing,
+        refresh,
         saveFeedback,
     };
 }

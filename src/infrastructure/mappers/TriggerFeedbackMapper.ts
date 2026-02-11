@@ -22,13 +22,12 @@ export class TriggerFeedbackMapper {
         });
     }
 
-    static toPersistence(userId: string, feedback: TriggerFeedback): TriggerFeedbackRow {
+    static toPersistence(userId: string, feedback: TriggerFeedback): Omit<TriggerFeedbackRow, 'notes'> {
         return {
             user_id: userId,
             food_name: feedback.foodName,
             user_confirmed: feedback.userConfirmed,
             updated_at: feedback.timestamp.toISOString(),
-            notes: feedback.notes ?? null,
         };
     }
 }

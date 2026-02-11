@@ -144,7 +144,7 @@ export default function AuthScreen() {
           <Animated.View entering={FadeIn.duration(1000)} style={styles.header}>
             <Animated.View style={[avatarStyle, styles.avatarContainer]}>
               <Image
-                source={require('../../assets/icon2.webp')}
+                source={require('../../assets/icon.png')}
                 style={{ width: width * 0.35, height: width * 0.35, borderRadius: (width * 0.35) / 2 }}
                 resizeMode="contain"
               />

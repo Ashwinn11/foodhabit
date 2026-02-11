@@ -7,14 +7,14 @@ module.exports = {
     owner: "foodhabit",
     version: pkg.version,
     orientation: "portrait",
-    icon: "./assets/icon1.png",
+    icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     scheme: "foodhabit",
     newArchEnabled: true,
     splash: {
-      image: "./assets/icon1.png",
-      resizeMode: "contain",
-      backgroundColor: "#2E2345"
+      image: "./assets/icon.png",
+      imageWidth: 200,
+      backgroundColor: "#ffffff"
     },
     ios: {
       supportsTablet: false,
@@ -33,6 +33,11 @@ module.exports = {
       googleServicesFile: "./GoogleService-Info.plist"
     },
     plugins: [
+      ["expo-splash-screen", {
+        image: "./assets/icon.png",
+        imageWidth: 200,
+        backgroundColor: "#ffffff"
+      }],
       "expo-apple-authentication",
       "expo-web-browser",
       "@bacons/apple-targets",

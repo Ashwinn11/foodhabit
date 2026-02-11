@@ -61,35 +61,25 @@ struct FoodHabitWidgetEntryView : View {
     var entry: Provider.Entry
     @Environment(\.widgetFamily) var family
     
-    // 🎨 Theme Colors
-    let yellow = Color(hex: "FCE762")
-    let pink = Color(hex: "FF7495")
-    let blue = Color(hex: "70CFFF")
-    let black = Color(hex: "2D2D2D")
-    let white = Color.white
-    let green = Color(hex: "059669")
+    // 🎨 Theme Colors (matches app design system)
+    let teal = Color(hex: "3AA7A3")     // Primary
+    let coral = Color(hex: "FF7E67")    // Secondary
+    let black = Color(hex: "1F2937")    // Ink/Midnight
+    let white = Color.white             // Canvas
     
     var scoreColor: Color {
-        if entry.data.score >= 90 { return green }  // Thriving (Green)
-        if entry.data.score >= 80 { return yellow } // Vibing (Yellow)
-        if entry.data.score >= 70 { return blue }   // Mid (Blue)
-        if entry.data.score >= 50 { return pink }   // Sus (Pink)
-        return Color(hex: "FF4444")                 // SOS (Red)
-    }
-    
-    // Fix contrast: use black text on lighter backgrounds, white on green
-    var gradeTextColor: Color {
-        if entry.data.score >= 90 { return white }
-        return black.opacity(0.7)
+        if entry.data.score >= 80 { return teal }   // Good+ (Primary)
+        if entry.data.score >= 50 { return coral }   // Moderate (Secondary)
+        return Color(hex: "D94F4F")                  // Critical (Muted red)
     }
     
     // 🔥 Grade based on score
     var funGrade: String {
         if entry.data.score >= 90 { return "Optimal" }
         if entry.data.score >= 80 { return "Good" }
-        if entry.data.score >= 70 { return "Moderate" }
-        if entry.data.score >= 50 { return "Concerning" }
-        return "Critical"
+        if entry.data.score >= 70 { return "Fair" }
+        if entry.data.score >= 50 { return "Low" }
+        return "Poor"
     }
     
     // 🔤 Font Helpers
@@ -129,7 +119,7 @@ struct FoodHabitWidgetEntryView : View {
                 HStack {
                     Text("GUT SCORE")
                         .font(cheeryFont(size: 14))
-                        .foregroundColor(black.opacity(0.6))
+                        .foregroundColor(white.opacity(0.7))
                         .tracking(1)
                     Spacer()
                 }
@@ -144,7 +134,8 @@ struct FoodHabitWidgetEntryView : View {
                         score: entry.data.score,
                         size: 70,
                         strokeWidth: 4,
-                        color: scoreColor
+                        color: white,
+                        textColor: white
                     )
 
                     VStack(alignment: .leading, spacing: 6) {
@@ -152,22 +143,24 @@ struct FoodHabitWidgetEntryView : View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text("GRADE")
                                 .font(bodyFont(size: 9, weight: .bold))
-                                .foregroundColor(black.opacity(0.4))
+                                .foregroundColor(white.opacity(0.6))
                             Text(funGrade)
                                 .font(cheeryFont(size: 13))
-                                .foregroundColor(black)
+                                .foregroundColor(white)
                                 .lineLimit(1)
+                                .minimumScaleFactor(0.7)
                         }
 
                         // Last Poop
                         VStack(alignment: .leading, spacing: 1) {
                             Text("LAST 💩")
                                 .font(bodyFont(size: 9, weight: .bold))
-                                .foregroundColor(black.opacity(0.4))
+                                .foregroundColor(white.opacity(0.6))
                             Text(entry.data.lastPoopTime)
                                 .font(cheeryFont(size: 13))
-                                .foregroundColor(black)
+                                .foregroundColor(white)
                                 .lineLimit(1)
+                                .minimumScaleFactor(0.7)
                         }
                     }
                 }
@@ -188,7 +181,7 @@ struct FoodHabitWidgetEntryView : View {
                     HStack {
                         Text("Gut Score")
                             .font(cheeryFont(size: 14))
-                            .foregroundColor(black.opacity(0.5))
+                            .foregroundColor(white.opacity(0.7))
                             .tracking(1)
                         Spacer()
                     }
@@ -198,7 +191,8 @@ struct FoodHabitWidgetEntryView : View {
                         score: entry.data.score,
                         size: 100,
                         strokeWidth: 6,
-                        color: scoreColor
+                        color: white,
+                        textColor: white
                     )
 
                     Spacer()
@@ -250,17 +244,18 @@ struct FoodHabitWidgetEntryView : View {
                         score: entry.data.score,
                         size: 100,
                         strokeWidth: 6,
-                        color: scoreColor
+                        color: white,
+                        textColor: white
                     )
 
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Your Gut Score")
+                        Text("Gut Score")
                             .font(cheeryFont(size: 24))
-                            .foregroundColor(black)
+                            .foregroundColor(white)
 
                         VStack(alignment: .leading, spacing: 6) {
-                            statItem(label: "GRADE", value: funGrade)
-                            statItem(label: "LAST 💩", value: entry.data.lastPoopTime)
+                            largeHeaderStatItem(label: "GRADE", value: funGrade)
+                            largeHeaderStatItem(label: "LAST 💩", value: entry.data.lastPoopTime)
                         }
                     }
 
@@ -295,7 +290,7 @@ struct FoodHabitWidgetEntryView : View {
                                     ForEach(history.suffix(7), id: \.date) { point in
                                         VStack(spacing: 4) {
                                             RoundedRectangle(cornerRadius: 6)
-                                                .fill(point.count > 0 ? pink : black.opacity(0.05))
+                                                .fill(point.count > 0 ? coral : black.opacity(0.05))
                                                 .frame(height: min(CGFloat(point.count) * 10 + 6, 54))
 
                                             Text(point.label ?? "S")
@@ -389,6 +384,17 @@ struct FoodHabitWidgetEntryView : View {
                 .foregroundColor(black)
         }
     }
+
+    func largeHeaderStatItem(label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(bodyFont(size: 10, weight: .bold))
+                .foregroundColor(white.opacity(0.6))
+            Text(value)
+                .font(cheeryFont(size: 18))
+                .foregroundColor(white)
+        }
+    }
 }
 
 // MARK: - Circular Progress Ring
@@ -397,12 +403,13 @@ struct CircularProgressRing: View {
     let size: CGFloat
     let strokeWidth: CGFloat
     let color: Color
+    var textColor: Color = Color(hex: "1F2937")
 
     var body: some View {
         ZStack {
             // Background circle
             Circle()
-                .stroke(Color.black.opacity(0.1), lineWidth: strokeWidth)
+                .stroke(textColor.opacity(0.15), lineWidth: strokeWidth)
 
             // Progress circle
             Circle()
@@ -419,14 +426,9 @@ struct CircularProgressRing: View {
 
             // Center text
             VStack(spacing: 2) {
-                Text("GUT")
-                    .font(.system(size: 10, weight: .semibold, design: .default))
-                    .foregroundColor(Color.black.opacity(0.6))
-                    .tracking(0.5)
-
                 Text("\(score)")
-                    .font(.system(size: 32, weight: .bold, design: .default))
-                    .foregroundColor(Color.black)
+                    .font(.system(size: 34, weight: .bold, design: .default))
+                    .foregroundColor(textColor)
             }
         }
         .frame(width: size, height: size)
