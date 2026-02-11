@@ -19,6 +19,7 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+GoogleService-Info.plist
 
 # Native Build Folders
 ios/
