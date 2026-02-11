@@ -9,6 +9,7 @@ import {
     SupabaseGutMomentRepository,
     SupabaseMealRepository,
     SupabaseHealthLogRepository,
+    SupabaseUserRepository,
     SupabaseTriggerFeedbackRepository,
 } from '../repositories';
 
@@ -43,6 +44,7 @@ import {
     DetectCombinationTriggersUseCase,
     CheckMedicalAlertsUseCase,
     SaveTriggerFeedbackUseCase,
+    CompleteOnboardingUseCase,
 } from '../../application/use-cases';
 
 // Ports (for type safety)
@@ -50,6 +52,7 @@ import type {
     IGutMomentRepository,
     IMealRepository,
     IHealthLogRepository,
+    IUserRepository,
     ITriggerFeedbackRepository,
     INotificationService,
     IWidgetService,
@@ -67,6 +70,7 @@ class Container {
     private _gutMomentRepo?: IGutMomentRepository;
     private _mealRepo?: IMealRepository;
     private _healthLogRepo?: IHealthLogRepository;
+    private _userRepo?: IUserRepository;
     private _triggerFeedbackRepo?: ITriggerFeedbackRepository;
     private _notificationService?: INotificationService;
     private _widgetService?: IWidgetService;
@@ -115,6 +119,13 @@ class Container {
             this._triggerFeedbackRepo = new SupabaseTriggerFeedbackRepository(supabase);
         }
         return this._triggerFeedbackRepo;
+    }
+
+    get userRepository(): IUserRepository {
+        if (!this._userRepo) {
+            this._userRepo = new SupabaseUserRepository(supabase);
+        }
+        return this._userRepo;
     }
 
     // === Infrastructure Services ===
@@ -265,6 +276,10 @@ class Container {
 
     get saveTriggerFeedbackUseCase(): SaveTriggerFeedbackUseCase {
         return new SaveTriggerFeedbackUseCase(this.triggerFeedbackRepository);
+    }
+
+    get completeOnboardingUseCase(): CompleteOnboardingUseCase {
+        return new CompleteOnboardingUseCase(this.userRepository);
     }
 
     /**

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { OnboardingScreen } from '../../components/Onboarding';
 import { useOnboardingStore } from '../../store/onboardingStore';
+import { useOnboardingActions } from '../../presentation/hooks';
 import { useNavigation } from '@react-navigation/native';
 import { Typography, Card } from '../../components';
 import { colors, spacing, radii } from '../../theme';
@@ -13,7 +14,8 @@ import { analyticsService } from '../../analytics/analyticsService';
 
 export const OnboardingPaywallScreen = () => {
   const navigation = useNavigation<any>();
-  const { calculatedScore, totalSteps, setCurrentStep, completeOnboarding } = useOnboardingStore();
+  const { calculatedScore, totalSteps, setCurrentStep } = useOnboardingStore();
+  const { completeOnboarding, isCompleting } = useOnboardingActions();
   const [countdown, setCountdown] = useState(15 * 60); // 15 minutes in seconds
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -57,26 +59,22 @@ export const OnboardingPaywallScreen = () => {
         analyticsService.getSessionDurationSeconds()
       );
 
-      // User purchased! Mark complete
+      // User purchased! Mark complete using CLEAN ARCHITECTURE hook
       try {
-        await completeOnboarding();
-        console.log('✅ Onboarding marked complete');
+        const success = await completeOnboarding();
+        if (success) {
+          console.log('✅ Onboarding marked complete');
 
-        // Trigger update in App.tsx only after successful completion
-        // @ts-ignore
-        if (global.refreshOnboardingStatus) {
+          // Trigger update in App.tsx only after successful completion
           // @ts-ignore
-          global.refreshOnboardingStatus();
+          if (global.refreshOnboardingStatus) {
+            // @ts-ignore
+            global.refreshOnboardingStatus();
+          }
         }
       } catch (onboardingError) {
         console.error('❌ Failed to complete onboarding:', onboardingError);
         // TODO: Show error message to user
-        // For now, still trigger refresh to try to recover
-        // @ts-ignore
-        if (global.refreshOnboardingStatus) {
-          // @ts-ignore
-          global.refreshOnboardingStatus();
-        }
       }
     } catch (error) {
       console.error('❌ Paywall error:', error);
@@ -103,6 +101,7 @@ export const OnboardingPaywallScreen = () => {
       onNext={handleNext}
       onBack={handleBack}
       nextLabel="Keep My Plan — Start Free Trial"
+      nextLoading={isCompleting}
     >
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
         <Animated.View entering={FadeIn} layout={Layout} style={styles.content}>

@@ -128,7 +128,7 @@ struct FoodHabitWidgetEntryView : View {
                 // Header
                 HStack {
                     Text("GUT SCORE")
-                        .font(cheeryFont(size: 16))
+                        .font(cheeryFont(size: 14))
                         .foregroundColor(black.opacity(0.6))
                         .tracking(1)
                     Spacer()
@@ -139,40 +139,40 @@ struct FoodHabitWidgetEntryView : View {
                 Spacer()
 
                 // Score Ring and Info
-                HStack(spacing: 16) {
+                HStack(spacing: 12) {
                     CircularProgressRing(
                         score: entry.data.score,
-                        size: 80,
-                        strokeWidth: 5,
+                        size: 70,
+                        strokeWidth: 4,
                         color: scoreColor
                     )
 
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 6) {
                         // Grade
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 1) {
                             Text("GRADE")
-                                .font(bodyFont(size: 10, weight: .bold))
+                                .font(bodyFont(size: 9, weight: .bold))
                                 .foregroundColor(black.opacity(0.4))
                             Text(funGrade)
-                                .font(cheeryFont(size: 14))
+                                .font(cheeryFont(size: 13))
                                 .foregroundColor(black)
+                                .lineLimit(1)
                         }
 
                         // Last Poop
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 1) {
                             Text("LAST 💩")
-                                .font(bodyFont(size: 10, weight: .bold))
+                                .font(bodyFont(size: 9, weight: .bold))
                                 .foregroundColor(black.opacity(0.4))
                             Text(entry.data.lastPoopTime)
-                                .font(cheeryFont(size: 14))
+                                .font(cheeryFont(size: 13))
                                 .foregroundColor(black)
+                                .lineLimit(1)
                         }
                     }
-
-                    Spacer()
                 }
                 .padding(.horizontal, 14)
-                .padding(.bottom, 14)
+                .padding(.bottom, 16)
             }
         }
     }

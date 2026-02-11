@@ -11,3 +11,4 @@ export { useMedicalAlerts, useMedicalAlertsFromMoments } from './useMedicalAlert
 export { useGutData } from './useGutData';
 export { useGutActions } from './useGutActions';
 export { useStoreSync } from './useStoreSync';
+export { useOnboardingActions } from './useOnboardingActions';

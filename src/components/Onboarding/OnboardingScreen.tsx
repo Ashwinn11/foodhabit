@@ -23,6 +23,7 @@ interface OnboardingScreenProps {
   onBack?: () => void;
   nextLabel?: string;
   nextDisabled?: boolean;
+  nextLoading?: boolean;
   showBackButton?: boolean;
   centerContent?: boolean;
 }
@@ -37,6 +38,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
   onBack,
   nextLabel = 'Continue',
   nextDisabled = false,
+  nextLoading = false,
   showBackButton = true,
   centerContent = false,
 }) => {
@@ -102,6 +104,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
           title={nextLabel}
           onPress={onNext}
           disabled={nextDisabled}
+          loading={nextLoading}
           style={styles.nextButton}
           size="lg"
         />

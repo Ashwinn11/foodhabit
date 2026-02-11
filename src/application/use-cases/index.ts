@@ -6,3 +6,4 @@
 export * from './gut';
 export * from './meals';
 export * from './analytics';
+export * from './user';

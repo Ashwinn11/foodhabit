@@ -89,7 +89,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           entering={FadeInDown.delay(100).springify()}
           style={styles.header}
         >
-          <View>
+          <View style={{ flex: 1, marginRight: spacing.md }}>
             <View style={styles.greetingRow}>
               <IconContainer
                 name="hand-right"
@@ -105,18 +105,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 {getGreeting()}
               </Typography>
             </View>
-            <Typography variant="h1">
+            <Typography variant="h1" numberOfLines={1}>
               {user.name} <Typography variant="h1" color={colors.pink}>&amp; Co.</Typography>
             </Typography>
           </View>
           
-          <BoxButton 
-            icon="notifications" 
-            onPress={() => navigation.navigate('Notifications')}
-            size={44}
-            color={colors.pink}
-            badgeCount={unreadCount}
-          />
+          <View style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'center' }}>
+            <View style={styles.streakBadge}>
+              <Typography variant="bodyBold" color={colors.pink}>
+                {streak} 🔥
+              </Typography>
+            </View>
+            <BoxButton 
+              icon="notifications" 
+              onPress={() => navigation.navigate('Notifications')}
+              size={44}
+              color={colors.pink}
+              badgeCount={unreadCount}
+            />
+          </View>
         </Animated.View>
         
         {/* Medical Alerts Banner - Now using new architecture */}

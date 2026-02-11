@@ -4,6 +4,7 @@
  */
 import { create } from 'zustand';
 import { useGutStore } from './useGutStore';
+import { OnboardingAnswers } from '../domain';
 
 export interface GutCheckAnswers {
     selectedGoal?: string;      // User's #1 gut goal
@@ -45,39 +46,8 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
 
     calculateScore: () => {
         const { gutCheckAnswers } = get();
-        let totalScore = 100; // Start with a perfect Gut Score
-
-        // 1. Consistency Penalties (Bristol Scale)
-        // 0=Hard, 1=SlightHard, 2=Normal(0 penalty), 3=Loose, 4=Watery
-        const consistencyPenalties = [25, 10, 0, 15, 30];
-        totalScore -= consistencyPenalties[gutCheckAnswers.stoolConsistency ?? 2] || 15;
-
-        // 2. Frequency Penalties
-        // 0=Rarely(0 penalty), 1=Weekly, 2=Daily
-        const frequencyPenalties = [0, 15, 30];
-        totalScore -= frequencyPenalties[gutCheckAnswers.symptomFrequency ?? 1] || 15;
-
-        // 3. Regularity Penalties
-        // 0=Regular(0 penalty), 1=So-so, 2=Unpredictable
-        const regularityPenalties = [0, 10, 20];
-        totalScore -= regularityPenalties[gutCheckAnswers.bowelRegularity ?? 1] || 10;
-
-        // 4. THE RED FLAG (Alarm Symptoms)
-        // Medically, blood/mucus is a massive clinical penalty.
-        if (gutCheckAnswers.medicalFlags) {
-            totalScore -= 60; // Huge drop for blood/mucus
-
-            // 5. SEVERITY CORRELATION
-            // If blood is present AND consistency is watery/hard, health risk doubles.
-            if ((gutCheckAnswers.stoolConsistency ?? 2) === 4 || (gutCheckAnswers.stoolConsistency ?? 2) === 0) {
-                totalScore -= 10; // Extra clinical urgency
-            }
-        }
-
-        // Final Floor: Cannot be less than 5 (to show it's "critical" but not 0)
-        // Ceiling: Cannot be more than 100
-        totalScore = Math.max(5, Math.min(100, totalScore));
-
+        const answers = OnboardingAnswers.create(gutCheckAnswers as any);
+        const totalScore = answers.calculateScore();
         set({ calculatedScore: totalScore });
     },
 

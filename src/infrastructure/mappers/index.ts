@@ -4,5 +4,6 @@
 
 export { GutMomentMapper, type GutLogRow } from './GutMomentMapper';
 export { MealMapper, type MealRow } from './MealMapper';
+export { UserMapper } from './UserMapper';
 export { HealthLogMapper, type HealthLogRow } from './HealthLogMapper';
 export { TriggerFeedbackMapper, type TriggerFeedbackRow } from './TriggerFeedbackMapper';
