@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Typography } from '../Typography';
 import { Card } from '../Card';
 import { colors, spacing, radii } from '../../theme';
@@ -28,6 +29,7 @@ interface FoodListItemProps {
       sodium: number;
     };
     nutritionScore?: number;
+    score?: number;
     explanation?: string;
   } | null;
   isSelected: boolean;
@@ -78,65 +80,78 @@ export const FoodListItem: React.FC<FoodListItemProps> = ({
   const riskColor = getRiskColor(analysis?.level);
   const riskLabel = getRiskLabel(analysis?.level);
 
-  if (isLoading) {
+  // Show minimal loading state immediately
+  if (isLoading && !analysis) {
     return (
-      <Card
-        variant="white"
-        padding="md"
-        style={[styles.container, { borderLeftColor: colors.mediumGray, borderLeftWidth: 4 }]}
-      >
-        <View style={styles.header}>
-          <Pressable onPress={onToggle} style={styles.checkbox}>
-            <ActivityIndicator size="small" color={colors.blue} />
-          </Pressable>
-          <Typography variant="bodyBold" color={colors.black} style={{ flex: 1 }}>
-            {foodName}
-          </Typography>
-          <Typography variant="caption" color={colors.black + '60'}>
-            Analyzing...
-          </Typography>
-        </View>
-      </Card>
+      <Animated.View entering={FadeIn.duration(200)}>
+        <Card
+          variant="white"
+          padding="md"
+          style={[styles.container, { borderLeftColor: colors.mediumGray, borderLeftWidth: 4 }]}
+        >
+          <View style={styles.header}>
+            <Pressable onPress={onToggle} style={styles.checkbox}>
+              <Ionicons
+                name={isSelected ? 'checkmark-circle' : 'radio-button-off'}
+                size={20}
+                color={isSelected ? colors.blue : colors.black + '40'}
+              />
+            </Pressable>
+            <Typography variant="bodyBold" color={colors.black} style={{ flex: 1 }}>
+              {foodName}
+            </Typography>
+            <View style={styles.loadingBadge}>
+              <ActivityIndicator size="small" color={colors.blue} />
+              <Typography variant="caption" color={colors.blue} style={{ marginLeft: 4 }}>
+                Analyzing...
+              </Typography>
+            </View>
+          </View>
+        </Card>
+      </Animated.View>
     );
   }
 
   if (!analysis) {
     return (
-      <Card
-        variant="white"
-        padding="md"
-        style={[styles.container, { borderLeftColor: colors.mediumGray, borderLeftWidth: 4 }]}
-      >
-        <View style={styles.header}>
-          <Pressable onPress={onToggle} style={styles.checkbox}>
-            <Ionicons
-              name={isSelected ? 'checkmark-circle' : 'radio-button-off'}
-              size={20}
-              color={isSelected ? colors.blue : colors.black + '40'}
-            />
-          </Pressable>
-          <Typography variant="bodyBold" color={colors.black} style={{ flex: 1 }}>
-            {foodName}
-          </Typography>
-          <Typography variant="caption" color={colors.black + '60'}>
-            Not found
-          </Typography>
-        </View>
-      </Card>
+      <Animated.View entering={FadeIn.duration(200)}>
+        <Card
+          variant="white"
+          padding="md"
+          style={[styles.container, { borderLeftColor: colors.mediumGray, borderLeftWidth: 4 }]}
+        >
+          <View style={styles.header}>
+            <Pressable onPress={onToggle} style={styles.checkbox}>
+              <Ionicons
+                name={isSelected ? 'checkmark-circle' : 'radio-button-off'}
+                size={20}
+                color={isSelected ? colors.blue : colors.black + '40'}
+              />
+            </Pressable>
+            <Typography variant="bodyBold" color={colors.black} style={{ flex: 1 }}>
+              {foodName}
+            </Typography>
+            <Typography variant="caption" color={colors.black + '60'}>
+              Not found
+            </Typography>
+          </View>
+        </Card>
+      </Animated.View>
     );
   }
 
-  // Use nutrition score from AI
-  const scoreValue = analysis.nutritionScore || 5;
+  // Use nutrition score from AI (prefer score field, fall back to nutritionScore for compatibility)
+  const scoreValue = analysis.score ?? analysis.nutritionScore ?? 5;
   const scoreColor = getNutritionScoreColor(scoreValue);
 
   return (
-    <Pressable onPress={onToggle}>
-      <Card
-        variant="white"
-        padding="md"
-        style={[styles.container, { borderLeftColor: riskColor, borderLeftWidth: 4 }]}
-      >
+    <Animated.View entering={FadeIn.duration(300)}>
+      <Pressable onPress={onToggle}>
+        <Card
+          variant="white"
+          padding="md"
+          style={[styles.container, { borderLeftColor: riskColor, borderLeftWidth: 4 }]}
+        >
         {/* Header: Checkbox + Name + Score + Risk */}
         <View style={styles.header}>
           <Pressable onPress={onToggle} style={styles.checkbox}>
@@ -241,8 +256,9 @@ export const FoodListItem: React.FC<FoodListItemProps> = ({
             {analysis.explanation}
           </Typography>
         )}
-      </Card>
-    </Pressable>
+        </Card>
+      </Pressable>
+    </Animated.View>
   );
 };
 
@@ -264,6 +280,14 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     alignItems: 'center',
     minWidth: 32,
+  },
+  loadingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.blue + '10',
+    borderRadius: radii.md,
   },
   nutritionGrid: {
     flexDirection: 'row',

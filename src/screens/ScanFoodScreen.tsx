@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,11 +7,12 @@ import {
   ScrollView,
   Keyboard,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
+import * as KeepAwake from 'expo-keep-awake';
 import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme/theme';
 import {
   ScreenWrapper,
@@ -19,7 +20,8 @@ import {
   BoxButton,
   Button,
   NutritionCard,
-  FoodListItem
+  FoodListItem,
+  CustomModal,
 } from '../components';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -55,6 +57,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     normalizedName?: string;
     nutrition?: any;
     nutritionScore?: number;
+    score?: number;
     explanation?: string;
   }) | null>>({});
   const [loadingFoods, setLoadingFoods] = useState<string[]>([]);
@@ -65,6 +68,18 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
 
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('snack');
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+
+  // Modal state for custom dialogs
+  const [modalState, setModalState] = useState<{
+    visible: boolean;
+    type: 'info' | 'success' | 'error' | 'confirm';
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+  }>({ visible: false, type: 'info', title: '', message: '' });
+
+  // Abort controller for canceling AI requests
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Fetch onboarding data on mount
   useEffect(() => {
@@ -85,8 +100,40 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     }
   }, [userId]);
 
+  // Keep device awake during image processing and cleanup on unmount
+  useEffect(() => {
+    if (isProcessingImage) {
+      try {
+        (KeepAwake as any).activate?.();
+      } catch {
+        // Keep awake not available (simulator or dev)
+      }
+    } else {
+      try {
+        (KeepAwake as any).deactivate?.();
+      } catch {
+        // Keep awake not available
+      }
+    }
+
+    return () => {
+      // Cleanup: cancel pending requests if component unmounts
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      try {
+        (KeepAwake as any).deactivate?.();
+      } catch {
+        // Keep awake not available
+      }
+    };
+  }, [isProcessingImage]);
+
   // Quick suggestions
   const SUGGESTIONS = ['Coffee', 'Pizza', 'Garlic', 'Onion', 'Apple', 'Milk', 'Bread', 'Pasta', 'Rice', 'Chicken'];
+
+  // Helper: Normalize food names for consistent lookups (case-insensitive)
+  const normalizeFoodName = (food: string) => food.toLowerCase().trim();
 
   // Helper: Calculate symptom co-occurrence patterns
   const calculateSymptomPatterns = useCallback(() => {
@@ -136,8 +183,17 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     const symptomPatterns = calculateSymptomPatterns();
     const bristolPattern = getRecentBristolPattern();
 
+    // Get condition type from getType() method, with fallback to onboarding data
+    let userCondition = 'unknown';
+    if (condition) {
+      userCondition = condition.getType();
+    } else if (onboardingData?.answers?.userCondition) {
+      // Fallback to onboarding data if condition hook hasn't loaded yet
+      userCondition = onboardingData.answers.userCondition;
+    }
+
     return {
-      userCondition: condition?.getType(),
+      userCondition,
       personalTriggers,
       symptomPatterns,
       recentBristolPattern: bristolPattern,
@@ -147,9 +203,9 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
 
   // Helper: Check if a food is a known trigger
   const checkForKnownTriggers = useCallback((foodName: string) => {
-    const normalizedName = foodName.toLowerCase().trim();
+    const normalizedName = normalizeFoodName(foodName);
     const knownTrigger = triggers.find(t =>
-      t.food.toLowerCase().trim() === normalizedName
+      normalizeFoodName(t.food) === normalizedName
     );
 
     if (knownTrigger && knownTrigger.probability >= 0.5) {
@@ -227,7 +283,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
         // Check for known triggers
         const triggerInfo = checkForKnownTriggers(canonicalName);
         if (triggerInfo.isKnownTrigger) {
-          setTriggerWarnings(prev => ({ ...prev, [canonicalName]: triggerInfo }));
+          setTriggerWarnings(prev => ({ ...prev, [normalizeFoodName(canonicalName)]: triggerInfo }));
         }
       } else {
         // No normalization found, keep raw input
@@ -236,7 +292,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
         // Check for known triggers
         const triggerInfo = checkForKnownTriggers(rawInput);
         if (triggerInfo.isKnownTrigger) {
-          setTriggerWarnings(prev => ({ ...prev, [rawInput]: triggerInfo }));
+          setTriggerWarnings(prev => ({ ...prev, [normalizeFoodName(rawInput)]: triggerInfo }));
         }
       }
     } catch (e) {
@@ -244,6 +300,10 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
       setAiResults(prev => ({ ...prev, [rawInput]: null }));
     } finally {
       setLoadingFoods(prev => prev.filter(f => f !== rawInput));
+      // Add haptic feedback on completion
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {
+        // Haptics not available (e.g., in simulator)
+      });
     }
   }, [selectedFoods, aiResults, getUserContext, checkForKnownTriggers]);
 
@@ -252,6 +312,11 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
    */
   const handleImageScan = useCallback(async (base64: string) => {
     setIsProcessingImage(true);
+
+    // Create abort controller for this request
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     try {
       // Get Supabase session for auth
       const { data: { session } } = await supabase.auth.getSession();
@@ -268,6 +333,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
           imageBase64: base64,
           extractFoodsOnly: true, // Signal edge function to extract foods from menu
         }),
+        signal: abortController.signal,
       });
 
       if (!response.ok) {
@@ -280,31 +346,45 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
       const extractedFoods = data.foods || data.extractedFoods || [];
 
       if (extractedFoods.length === 0) {
-        Alert.alert(
-          'No foods found',
-          'Could not extract any food items from the image. Try a clearer photo of the menu.',
-          [{ text: 'OK' }]
-        );
+        setModalState({
+          visible: true,
+          type: 'error',
+          title: 'No foods found',
+          message: 'Could not extract any food items from the image. Try a clearer photo of the menu.',
+        });
+      } else {
+        // Close the processing overlay immediately after extraction
+        setIsProcessingImage(false);
+
+        // Add all extracted foods in parallel for speed
+        // Don't wait for this - let skeleton loaders show while analyzing
+        Promise.all(extractedFoods.map((food: string) => addFood(food))).then(() => {
+          setModalState({
+            visible: true,
+            type: 'success',
+            title: 'Foods extracted!',
+            message: `Found ${extractedFoods.length} items: ${extractedFoods.slice(0, 3).join(', ')}${extractedFoods.length > 3 ? '...' : ''}`,
+          });
+        });
+      }
+    } catch (error: any) {
+      // Check if error is due to abort
+      if (error.name === 'AbortError') {
+        console.log('Image scan cancelled');
         return;
       }
 
-      // Add all extracted foods in parallel for speed
-      await Promise.all(extractedFoods.map((food: string) => addFood(food)));
-
-      Alert.alert(
-        'Foods extracted!',
-        `Found ${extractedFoods.length} items: ${extractedFoods.slice(0, 3).join(', ')}${extractedFoods.length > 3 ? '...' : ''}`,
-        [{ text: 'OK' }]
-      );
-    } catch (error) {
       console.error('Image scan error:', error);
-      Alert.alert(
-        'Scan failed',
-        'Could not process the image. Try a clearer photo or type the food manually.',
-        [{ text: 'OK' }]
-      );
+      setModalState({
+        visible: true,
+        type: 'error',
+        title: 'Scan failed',
+        message: 'Could not process the image. Try a clearer photo or type the food manually.',
+      });
     } finally {
+      // Only set to false if we haven't already closed it in the success case
       setIsProcessingImage(false);
+      abortControllerRef.current = null;
     }
   }, [addFood]);
 
@@ -317,11 +397,12 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
 
       if (status !== 'granted') {
-        Alert.alert(
-          'Camera Access Needed',
-          'Please allow camera access to scan food menus.',
-          [{ text: 'OK' }]
-        );
+        setModalState({
+          visible: true,
+          type: 'error',
+          title: 'Camera Access Needed',
+          message: 'Please allow camera access to scan food menus.',
+        });
         return;
       }
 
@@ -358,24 +439,6 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     }
   }, [handleImageScan]);
 
-  const removeFood = (foodToRemove: string) => {
-    setSelectedFoods(prev => prev.filter(f => f !== foodToRemove));
-    setSelectedFoodItems(prev => {
-      const newState = { ...prev };
-      delete newState[foodToRemove];
-      return newState;
-    });
-    setAiResults(prev => {
-      const newResults = { ...prev };
-      delete newResults[foodToRemove];
-      return newResults;
-    });
-    setTriggerWarnings(prev => {
-      const newWarnings = { ...prev };
-      delete newWarnings[foodToRemove];
-      return newWarnings;
-    });
-  };
 
   const handleLogMeal = () => {
     // Get only selected foods
@@ -443,11 +506,12 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
           size={44}
           style={{ backgroundColor: colors.white }}
         />
-        <Typography variant="h3">Safe to Eat?</Typography>
+        <Typography variant="h3">Scan Food</Typography>
         <View style={{ width: 44 }} /> 
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <View style={{ flex: 1, position: 'relative' }}>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
         {/* Instructions */}
         <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.instructionsContainer}>
@@ -488,40 +552,21 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
           </View>
         </Animated.View>
 
-        {/* Selected Foods Chips */}
-        <View style={styles.chipsContainer}>
-          {selectedFoods.map((food, index) => (
-            <Animated.View key={food} entering={FadeIn.delay(index * 50)}>
-              <Pressable style={styles.chip} onPress={() => removeFood(food)}>
-                 {triggerWarnings[food] && (
-                   <Ionicons
-                     name="warning"
-                     size={14}
-                     color={colors.pink}
-                     style={{ marginRight: 4 }}
-                   />
-                 )}
-                 <Typography variant="bodySmall" color={colors.black}>{food}</Typography>
-                 {loadingFoods.includes(food) ? (
-                   <ActivityIndicator size="small" color={colors.blue} style={{ marginLeft: 4 }} />
-                 ) : (
-                   <Ionicons name="close-circle" size={18} color={colors.black + '66'} />
-                 )}
-              </Pressable>
-            </Animated.View>
-          ))}
-        </View>
 
         {/* Food Analysis Sections */}
         {selectedFoods.length > 0 ? (
           <Animated.View entering={FadeInDown.springify()} style={styles.resultSection}>
-             {/* Enhanced Food Analysis - List View for Multiple Foods */}
+               {/* Enhanced Food Analysis - List View for Multiple Foods */}
              {selectedFoods.length > 1 && (() => {
-                // Get nutrition scores from AI for all foods
-                const foodScores = selectedFoods.map(food => ({
-                  food,
-                  score: aiResults[food]?.nutritionScore || 5,
-                }));
+                // Compare foods using AI's personalized score for this user
+                const foodScores = selectedFoods.map(food => {
+                  const analysis = aiResults[food];
+                  return {
+                    food,
+                    score: analysis?.score || 5,
+                  };
+                });
+
                 const bestFood = foodScores.reduce((best, current) =>
                   current.score > best.score ? current : best
                 );
@@ -532,31 +577,49 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                 return (
                   <>
                     {/* Comparison Summary */}
-                    <View style={styles.comparisonSummary}>
-                      <View style={styles.comparisonItem}>
-                        <Ionicons name="checkmark-circle" size={16} color={colors.green} />
-                        <View style={{ marginLeft: spacing.sm, flex: 1 }}>
-                          <Typography variant="caption" color={colors.black + '60'}>Best Choice</Typography>
-                          <Typography variant="bodySmall" color={colors.green}>{bestFood.food}</Typography>
+                    <View style={styles.comparisonContainer}>
+                      {/* Healthiest Choice Card */}
+                      <View style={[styles.comparisonCard, styles.bestChoiceCard]}>
+                        <View style={styles.comparisonCardIcon}>
+                          <Ionicons name="checkmark-circle" size={24} color={colors.white} />
                         </View>
-                        <View style={[styles.scoreIndicator, { backgroundColor: getNutritionScoreColor(bestFood.score) + '20' }]}>
-                          <Typography variant="caption" color={getNutritionScoreColor(bestFood.score)} style={{ fontWeight: '700' }}>
-                            {bestFood.score}/10
+                        <View style={{ flex: 1, marginLeft: spacing.md }}>
+                          <Typography variant="caption" color={colors.green + '80'} style={{ textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: '600' }}>
+                            Healthiest Choice
+                          </Typography>
+                          <Typography variant="bodyBold" color={colors.black} style={{ marginTop: 2 }}>
+                            {bestFood.food}
+                          </Typography>
+                        </View>
+                        <View style={styles.scoreCard}>
+                          <Typography variant="bodyBold" color={getNutritionScoreColor(bestFood.score)}>
+                            {bestFood.score}
+                          </Typography>
+                          <Typography variant="caption" color={getNutritionScoreColor(bestFood.score)}>
+                            /10
                           </Typography>
                         </View>
                       </View>
 
-                      <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.sm }} />
-
-                      <View style={styles.comparisonItem}>
-                        <Ionicons name="alert-circle" size={16} color={colors.pink} />
-                        <View style={{ marginLeft: spacing.sm, flex: 1 }}>
-                          <Typography variant="caption" color={colors.black + '60'}>Watch Out</Typography>
-                          <Typography variant="bodySmall" color={colors.pink}>{worstFood.food}</Typography>
+                      {/* Watch Out Card */}
+                      <View style={[styles.comparisonCard, styles.worstChoiceCard]}>
+                        <View style={styles.comparisonCardIconWarning}>
+                          <Ionicons name="alert-circle" size={24} color={colors.white} />
                         </View>
-                        <View style={[styles.scoreIndicator, { backgroundColor: getNutritionScoreColor(worstFood.score) + '20' }]}>
-                          <Typography variant="caption" color={getNutritionScoreColor(worstFood.score)} style={{ fontWeight: '700' }}>
-                            {worstFood.score}/10
+                        <View style={{ flex: 1, marginLeft: spacing.md }}>
+                          <Typography variant="caption" color={colors.pink + '80'} style={{ textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: '600' }}>
+                            Watch Out
+                          </Typography>
+                          <Typography variant="bodyBold" color={colors.black} style={{ marginTop: 2 }}>
+                            {worstFood.food}
+                          </Typography>
+                        </View>
+                        <View style={styles.scoreCard}>
+                          <Typography variant="bodyBold" color={getNutritionScoreColor(worstFood.score)}>
+                            {worstFood.score}
+                          </Typography>
+                          <Typography variant="caption" color={getNutritionScoreColor(worstFood.score)}>
+                            /10
                           </Typography>
                         </View>
                       </View>
@@ -580,7 +643,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                           }));
                         }}
                         isLoading={loadingFoods.includes(food)}
-                        triggerWarning={triggerWarnings[food]}
+                        triggerWarning={triggerWarnings[normalizeFoodName(food)]}
                       />
                     ))}
 
@@ -633,22 +696,12 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
              {selectedFoods.length === 1 && (() => {
                 const firstFood = selectedFoods[0];
                 const analysis = aiResults[firstFood];
-                if (!analysis) return null;
+                const normalizedFood = normalizeFoodName(firstFood);
+                const triggerInfo = triggerWarnings[normalizedFood];
 
                 return (
                   <>
-                    {/* Nutrition Breakdown */}
-                    <NutritionCard
-                      calories={analysis.nutrition?.calories || 0}
-                      protein={analysis.nutrition?.protein || 0}
-                      carbs={analysis.nutrition?.carbs || 0}
-                      fat={analysis.nutrition?.fat || 0}
-                      fiber={analysis.nutrition?.fiber || 0}
-                      sugar={analysis.nutrition?.sugar || 0}
-                      sodium={analysis.nutrition?.sodium || 0}
-                    />
-
-                    {/* Use FoodListItem for consistent display */}
+                    {/* Show FoodListItem for loading state and results */}
                     <FoodListItem
                       foodName={firstFood}
                       analysis={analysis}
@@ -660,8 +713,23 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                         }));
                       }}
                       isLoading={loadingFoods.includes(firstFood)}
-                      triggerWarning={triggerWarnings[firstFood]}
+                      triggerWarning={triggerInfo}
                     />
+
+                    {/* Nutrition Breakdown - only show when analysis is complete */}
+                    {analysis && (
+                      <View style={{ marginTop: spacing.lg }}>
+                        <NutritionCard
+                          calories={analysis.nutrition?.calories || 0}
+                          protein={analysis.nutrition?.protein || 0}
+                          carbs={analysis.nutrition?.carbs || 0}
+                          fat={analysis.nutrition?.fat || 0}
+                          fiber={analysis.nutrition?.fiber || 0}
+                          sugar={analysis.nutrition?.sugar || 0}
+                          sodium={analysis.nutrition?.sodium || 0}
+                        />
+                      </View>
+                    )}
                   </>
                 );
              })()}
@@ -738,6 +806,39 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
         )}
 
       </ScrollView>
+
+        {/* Processing overlay during image scan */}
+        {isProcessingImage && (
+          <Animated.View entering={FadeIn} style={styles.processingOverlay}>
+            <View style={styles.processingCard}>
+              <ActivityIndicator size="large" color={colors.pink} />
+              <Typography variant="bodyBold" style={{ marginTop: spacing.md }}>
+                Extracting Foods
+              </Typography>
+              <Typography variant="caption" color={colors.black + '60'}>
+                Analyzing menu image...
+              </Typography>
+            </View>
+          </Animated.View>
+        )}
+
+        {/* Custom Modal for dialogs */}
+        <CustomModal
+          visible={modalState.visible}
+          onClose={() => setModalState({ ...modalState, visible: false })}
+          type={modalState.type}
+          title={modalState.title}
+          message={modalState.message}
+          primaryButtonText="OK"
+          onPrimaryPress={() => {
+            setModalState({ ...modalState, visible: false });
+            if (modalState.onConfirm) {
+              modalState.onConfirm();
+            }
+          }}
+          cancelable={true}
+        />
+      </View>
     </ScreenWrapper>
   );
 };
@@ -871,27 +972,77 @@ const styles = StyleSheet.create({
   suggestions: {
     marginTop: spacing.xl,
   },
-  comparisonSummary: {
-    backgroundColor: colors.white,
-    borderRadius: radii.lg,
-    padding: spacing.md,
+  comparisonContainer: {
     marginTop: spacing.lg,
     marginBottom: spacing.lg,
-    ...shadows.sm,
-    borderColor: colors.border,
-    borderWidth: 1,
+    gap: spacing.md,
   },
-  comparisonItem: {
+  comparisonCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    ...shadows.md,
   },
-  scoreIndicator: {
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 4,
+  bestChoiceCard: {
+    backgroundColor: colors.green + '08',
+    borderLeftWidth: 4,
+    borderLeftColor: colors.green,
+  },
+  worstChoiceCard: {
+    backgroundColor: colors.pink + '08',
+    borderLeftWidth: 4,
+    borderLeftColor: colors.pink,
+  },
+  comparisonCardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.green,
     alignItems: 'center',
-    minWidth: 35,
-    marginLeft: spacing.sm,
+    justifyContent: 'center',
+  },
+  comparisonCardIconWarning: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.pink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scoreCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  processingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.black + '40',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  processingCard: {
+    backgroundColor: colors.white,
+    borderRadius: radii.xl,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xl,
+    alignItems: 'center',
+  },
+  batchIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.blue + '10',
+    borderRadius: radii.full,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    alignSelf: 'center',
+    marginTop: spacing.sm,
   },
 });

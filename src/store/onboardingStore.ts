@@ -128,11 +128,17 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
                 }
             }
 
-            // Update baseline score in gut store immediately
+            // Update baseline score and regularity in gut store immediately
             useGutStore.getState().setBaselineScore(state.calculatedScore);
+            if (state.gutCheckAnswers.bowelRegularity !== undefined) {
+                useGutStore.getState().setBaselineRegularity(state.gutCheckAnswers.bowelRegularity);
+            }
         } else {
             // Even if not logged in, update local state for consistency
             useGutStore.getState().setBaselineScore(state.calculatedScore);
+            if (state.gutCheckAnswers.bowelRegularity !== undefined) {
+                useGutStore.getState().setBaselineRegularity(state.gutCheckAnswers.bowelRegularity);
+            }
         }
     },
 

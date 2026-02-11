@@ -122,24 +122,28 @@ If this is not a food menu/meal photo, return:
       =====================
       INSTRUCTIONS:
       1. If input is gibberish or non-food (e.g., "asdfgh", "iPhone"), return: {"error": "not_food"}
-      2. If misspelled food (e.g., "blubberries"), correct it in "normalizedName" and proceed
-      3. Analyze considering user's CONDITION and PERSONAL HISTORY
-      4. Trust personal history over general FODMAP rules (if they had diarrhea after apples, mark it risky)
+      2. If misspelled food (e.g., "blubberries"), correct it in "normalizedName" as Title Case (e.g., "Blueberry") and proceed
+      3. Analyze considering user's CONDITION and PERSONAL HISTORY - this is CRITICAL
+      4. Risk Level determination (MOST IMPORTANT):
+         - "high": IF food appears in personal triggers OR matches known triggers, OR contains ingredients in their culprit list
+         - "moderate": IF food might trigger symptoms based on condition, OR has some concerning ingredients
+         - "low": IF food is safe based on their history AND their condition
+      5. Trust personal history over general FODMAP rules (if they had symptoms after this food, mark as HIGH risk)
 
-      NUTRITION SCORE FORMULA:
-      Score from 1-10 based on:
-      - Protein (0-3 pts): 0g=0, 10g=1.5, 20g+=3
-      - Fiber (0-3 pts): 0g=0, 3g=1.5, 6g+=3
-      - Sugar (0-2 pts): 0g=2, 10g=1, 20g+=0 (less is better)
-      - Sodium (0-2 pts): 0mg=2, 400mg=1, 800mg+=0 (less is better)
-      Total = round(min(10, max(1, sum)))
+      FOOD SCORE (1-10) - CRITICAL: This score reflects how SAFE/GOOD this food is for THIS USER:
 
-      Return ONLY JSON (no markdown):
+      IF level="high": Score MUST be 1-3 (dangerous for this user)
+      IF level="moderate": Score 4-6 (has some risk for this user)
+      IF level="low": Score 7-10 (safe for this user)
+
+      This is the ONLY score - it determines if food is healthy for THEM, not generic nutrition.
+
+      Return ONLY valid JSON (no markdown), with field names EXACTLY as specified:
       {
         "level": "high" | "moderate" | "low",
         "categories": ["fructans", "lactose", ...],
         "culprits": ["specific problematic ingredients"],
-        "normalizedName": "corrected spelling",
+        "normalizedName": "corrected spelling in Title Case (e.g., 'Garlic', 'Blueberry')",
 
         "nutrition": {
           "calories": number,
@@ -151,11 +155,14 @@ If this is not a food menu/meal photo, return:
           "sodium": number
         },
 
-        "nutritionScore": 1-10 (based on formula above),
+        "score": 1-10 (how good this is for THIS USER based on their history - see above),
 
         "explanation": "ONE explanation only (choose the most relevant):
-          - IF user has personal history with symptoms: describe their history (e.g., 'You ate this 3x and experienced bloating and gas')
-          - ELSE: provide personalized explanation based on their condition (e.g., 'This contains garlic which causes gas in IBS')"
+          - IF user has personal history with symptoms: describe their specific history (e.g., 'You ate this 3x and experienced bloating and gas')
+          - IF food is a known trigger: explain why (e.g., 'This is a known trigger for you - causes bloating')
+          - ELSE: provide personalized explanation based on their condition (e.g., 'This contains garlic which causes gas in IBS')",
+
+        "riskFactors": "Array of reasons why this is high/moderate risk for THIS user (e.g., ['known trigger', 'contains garlic', 'high FODMAP'])"
       }
     `
 
@@ -212,9 +219,11 @@ If this is not a food menu/meal photo, return:
         sugar: 0,
         sodium: 0
       },
-      nutritionScore: result.nutritionScore || 5,
+      score: result.score || result.nutritionScore || 5,
       // Single explanation field - AI chooses most relevant
-      explanation: result.explanation || 'Analysis complete'
+      explanation: result.explanation || 'Analysis complete',
+      // Risk factors for this user - helps understand personalized risk
+      riskFactors: result.riskFactors || []
     }
 
     return new Response(JSON.stringify(enrichedResult), {

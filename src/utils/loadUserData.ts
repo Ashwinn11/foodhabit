@@ -66,10 +66,13 @@ export const loadUserDataFromDatabase = async () => {
                 onboardingStore.setIsOnboardingComplete(true);
             }
 
-            // Load onboarding score as baseline for blended scoring
-            const onboardingData = userProfile.onboarding_data as { score?: number } | null;
+            // Load onboarding data: baseline score and regularity for health calculations
+            const onboardingData = userProfile.onboarding_data as { score?: number; answers?: { bowelRegularity?: number } } | null;
             if (onboardingData?.score) {
                 gutStore.setBaselineScore(onboardingData.score);
+            }
+            if (onboardingData?.answers?.bowelRegularity !== undefined) {
+                gutStore.setBaselineRegularity(onboardingData.answers.bowelRegularity);
             }
         }
 

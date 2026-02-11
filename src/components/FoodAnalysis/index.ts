@@ -10,3 +10,4 @@ export { NutritionCard } from './NutritionCard';
 export { PersonalizedExplanationCard } from './PersonalizedExplanationCard';
 export { PersonalHistoryCard } from './PersonalHistoryCard';
 export { FoodListItem } from './FoodListItem';
+export { FoodAnalysisSkeleton } from './FoodAnalysisSkeleton';

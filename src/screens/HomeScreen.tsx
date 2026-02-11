@@ -19,7 +19,7 @@ import {
   BoxButton,
   IconContainer,
   Typography,
-  GutAvatar,
+  GutScoreRing,
   UserTriggersCard,
   DailyIntakeSummary,
 } from '../components';
@@ -204,30 +204,51 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               }}
             >
               <View style={styles.heroContent}>
-                <View style={styles.heroLeft}>
-                  <GutAvatar score={healthScore.score} size={80} />
-                  <View style={styles.heroScoreText}>
-                    <Typography variant="bodyXS" color={colors.black + '60'} style={{ letterSpacing: 1 }}>
+                {/* Left: Circular Score Ring */}
+                <View style={styles.scoreRingContainer}>
+                  <GutScoreRing
+                    score={healthScore.score}
+                    color={healthScore.color}
+                    size={120}
+                    strokeWidth={6}
+                  />
+                  <View style={styles.scoreOverlay}>
+                    <Typography variant="bodyXS" color={colors.black + '60'} style={{ letterSpacing: 1, fontSize: 10 }}>
                       GUT SCORE
                     </Typography>
-                    <Typography variant="h1" color={healthScore.color} style={{ fontSize: 48, lineHeight: 56 }}>
+                    <Typography variant="h1" color={healthScore.color} style={{ fontSize: 44, lineHeight: 52, fontWeight: '700' }}>
                       {healthScore.score}
                     </Typography>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Ionicons name={getFunGrade(healthScore.score).icon as any} size={16} color={healthScore.color} />
-                      <Typography variant="bodyBold" color={healthScore.color}>
+                  </View>
+                </View>
+
+                {/* Right: Grade Label and Streak */}
+                <View style={styles.heroRight}>
+                  {/* Grade */}
+                  <View style={{ gap: 4 }}>
+                    <Typography variant="bodyXS" color={colors.black + '60'} style={{ letterSpacing: 0.5, fontSize: 10 }}>
+                      STATUS
+                    </Typography>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Ionicons name={getFunGrade(healthScore.score).icon as any} size={20} color={healthScore.color} />
+                      <Typography variant="bodyBold" color={healthScore.color} style={{ fontSize: 16 }}>
                         {getFunGrade(healthScore.score).label}
                       </Typography>
                     </View>
                   </View>
-                </View>
 
-                {/* Stats / Streak Badge - Now using new architecture */}
-                <View style={styles.streakBadge}>
-                  <IconContainer name="flame" size={24} color={colors.pink} variant="transparent" shadow={false} />
-                  <Typography variant="bodyBold" color={colors.black}>
-                    {streak} Day{streak !== 1 ? 's' : ''} Streak
-                  </Typography>
+                  {/* Streak Badge */}
+                  <View style={styles.streakBadge}>
+                    <IconContainer name="flame" size={20} color={colors.pink} variant="transparent" shadow={false} />
+                    <View>
+                      <Typography variant="bodyXS" color={colors.black + '60'} style={{ fontSize: 10 }}>
+                        STREAK
+                      </Typography>
+                      <Typography variant="bodyBold" color={colors.black} style={{ fontSize: 16 }}>
+                        {streak} Day{streak !== 1 ? 's' : ''}
+                      </Typography>
+                    </View>
+                  </View>
                 </View>
               </View>
             </View>
@@ -239,22 +260,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           entering={FadeInDown.delay(250).springify()}
           style={styles.actionGrid}
         >
-           {/* Safe to Eat? (Scan Food) */}
-           <Pressable 
+           {/* Scan Food */}
+           <Pressable
               style={[styles.actionButton, { backgroundColor: colors.blue, borderWidth: 0 }]}
               onPress={() => navigation.navigate('ScanFood')}
            >
               <IconContainer name="fast-food" size={24} iconSize={24} color={colors.white} variant="transparent" shadow={false} />
-              <Typography variant="bodyBold" color={colors.white}>Safe to Eat?</Typography>
+              <Typography variant="bodyBold" color={colors.white}>Scan Food</Typography>
            </Pressable>
 
-           {/* I Just Pooped! */}
-           <Pressable 
+           {/* Log Movement */}
+           <Pressable
               style={[styles.actionButton, { backgroundColor: colors.pink, borderWidth: 0 }]}
               onPress={() => navigation.navigate('AddEntry')}
            >
               <IconContainer name="happy" size={24} iconSize={24} color={colors.white} variant="transparent" shadow={false} />
-              <Typography variant="bodyBold" color={colors.white}>I Just Pooped!</Typography>
+              <Typography variant="bodyBold" color={colors.white}>Log Movement</Typography>
            </Pressable>
         </Animated.View>
 
@@ -343,14 +364,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: spacing.xl,
   },
-  heroLeft: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.lg,
-  },
-  heroScoreText: {
+  scoreRingContainer: {
+    width: 120,
+    height: 120,
     justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  scoreOverlay: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  heroRight: {
+    flex: 1,
+    justifyContent: 'space-between',
+    gap: spacing.lg,
   },
   heroSection: {
     marginBottom: spacing.lg,
@@ -369,13 +402,14 @@ const styles = StyleSheet.create({
   },
   streakBadge: {
     alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: radii.full,
+    backgroundColor: colors.pink + '10',
+    borderRadius: radii.lg,
     flexDirection: 'row',
-    gap: 4,
+    gap: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    transform: [{ rotate: '3deg' }],
+    paddingVertical: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.pink + '20',
   },
   waveIcon: {
     marginRight: spacing.xs,

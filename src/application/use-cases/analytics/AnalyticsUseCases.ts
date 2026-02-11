@@ -24,20 +24,52 @@ export class CalculateHealthScoreUseCase {
     async execute(userId: string, baselineScore: number): Promise<HealthScore> {
         const moments = await this.gutMomentRepo.findByUserId(userId);
 
+        // Fetch user's baseline regularity from onboarding data
+        const baselineRegularity = await this.fetchBaselineRegularity(userId);
+
         return this.healthScoreService.calculateScore({
             moments,
             baselineScore,
+            baselineRegularity,
         });
     }
 
     /**
      * Calculate score from provided moments (no DB call)
      */
-    calculateFromMoments(moments: GutMoment[], baselineScore: number): HealthScore {
+    calculateFromMoments(moments: GutMoment[], baselineScore: number, baselineRegularity?: number): HealthScore {
         return this.healthScoreService.calculateScore({
             moments,
             baselineScore,
+            baselineRegularity,
         });
+    }
+
+    /**
+     * Fetch user's baseline bowel regularity from onboarding data
+     * Returns 0-2 (0=Regular, 1=Somewhat, 2=Unpredictable)
+     * Defaults to 1 if not found
+     */
+    private async fetchBaselineRegularity(userId: string): Promise<number> {
+        try {
+            // Import here to avoid circular dependencies
+            const { supabase } = await import('../../../config/supabase');
+
+            const { data } = await supabase
+                .from('users')
+                .select('onboarding_data')
+                .eq('id', userId)
+                .maybeSingle();
+
+            if (data?.onboarding_data?.answers?.bowelRegularity !== undefined) {
+                return data.onboarding_data.answers.bowelRegularity;
+            }
+        } catch (error) {
+            console.warn('Failed to fetch baseline regularity:', error);
+        }
+
+        // Default to "somewhat regular" if not found
+        return 1;
     }
 }
 

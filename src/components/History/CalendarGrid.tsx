@@ -64,62 +64,47 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
       {/* Calendar grid */}
       {Array.from({ length: Math.ceil(days.length / 7) }).map((_, weekIndex) => (
         <View key={weekIndex} style={styles.weekRow}>
-          {days.slice(weekIndex * 7, (weekIndex + 1) * 7).map((day, dayIndex) => (
-            <TouchableOpacity
-              key={`${weekIndex}-${dayIndex}`}
-              style={[
-                styles.dayCell,
-                day.date === selectedDate && styles.selectedDay,
-                day.indicator !== 'empty' && day.indicator !== 'gray' && styles.hasLogsCell
-              ]}
-              onPress={() => day.hasLogs && onDayPress(day.date)}
-              disabled={!day.hasLogs}
-              activeOpacity={0.7}
-            >
-              {day.date !== 0 ? (
-                <>
-                  {day.indicator !== 'empty' && (
-                    <View
-                      style={[
-                        styles.indicator,
-                        { backgroundColor: getIndicatorColor(day.indicator) }
-                      ]}
-                    />
-                  )}
-                  <Typography
-                    variant="caption"
-                    color={day.indicator === 'gray' ? colors.black + '40' : colors.black}
-                  >
-                    {day.date}
-                  </Typography>
-                </>
-              ) : null}
-            </TouchableOpacity>
-          ))}
+          {days.slice(weekIndex * 7, (weekIndex + 1) * 7).map((day, dayIndex) => {
+            const isSelected = day.date === selectedDate;
+            const hasLogs = day.indicator !== 'empty' && day.indicator !== 'gray';
+            const isEmpty = day.indicator === 'gray' || day.indicator === 'empty';
+
+            return (
+              <TouchableOpacity
+                key={`${weekIndex}-${dayIndex}`}
+                style={[
+                  styles.dayCell,
+                  isSelected && styles.selectedDay,
+                  !isSelected && hasLogs && styles.hasLogsCell,
+                  !isSelected && isEmpty && styles.emptyCell
+                ]}
+                onPress={() => day.hasLogs && onDayPress(day.date)}
+                disabled={!day.hasLogs}
+                activeOpacity={0.7}
+              >
+                {day.date !== 0 ? (
+                  <>
+                    <Typography
+                      variant="bodyBold"
+                      color={isSelected ? colors.white : isEmpty ? colors.black + '40' : colors.black}
+                    >
+                      {day.date}
+                    </Typography>
+                    {!isSelected && hasLogs && (
+                      <View
+                        style={[
+                          styles.indicator,
+                          { backgroundColor: getIndicatorColor(day.indicator) }
+                        ]}
+                      />
+                    )}
+                  </>
+                ) : null}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       ))}
-
-      {/* Legend */}
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: colors.green }]} />
-          <Typography variant="caption" color={colors.black + '60'}>
-            Good Day
-          </Typography>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: colors.yellow }]} />
-          <Typography variant="caption" color={colors.black + '60'}>
-            Okay
-          </Typography>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: colors.pink }]} />
-          <Typography variant="caption" color={colors.black + '60'}>
-            Triggered
-          </Typography>
-        </View>
-      </View>
     </View>
   );
 };
@@ -131,7 +116,7 @@ const styles = StyleSheet.create({
   },
   weekRow: {
     flexDirection: 'row',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   dayHeader: {
     flex: 1,
@@ -143,25 +128,34 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radii.lg,
+    margin: 2,
+    backgroundColor: colors.white,
   },
   hasLogsCell: {
-    borderColor: colors.blue + '40',
-    backgroundColor: colors.blue + '05',
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.blue,
   },
   selectedDay: {
-    borderColor: colors.blue,
-    borderWidth: 2,
-    backgroundColor: colors.blue + '15',
+    backgroundColor: colors.blue,
+    borderWidth: 0,
+    shadowColor: colors.blue,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  emptyCell: {
+    backgroundColor: '#F3F4F6',
+    opacity: 0.6,
   },
   indicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     position: 'absolute',
-    top: 4,
+    bottom: 4,
     right: 4,
   },
   legend: {

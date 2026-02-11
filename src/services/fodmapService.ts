@@ -43,16 +43,12 @@ export const analyzeFoodWithAI = async (food: string): Promise<any | null> => {
                 sugar: data.nutrition?.sugar || 0,
                 sodium: data.nutrition?.sodium || 0,
             },
-            // Nutrition score from AI
-            nutritionScore: data.nutritionScore || 5,
+            // Nutrition score from AI (prefer score, fall back to nutritionScore for compatibility)
+            score: data.score ?? data.nutritionScore ?? 5,
+            nutritionScore: data.nutritionScore || data.score || 5,
             // Single explanation - AI chooses most relevant (history or personalized)
             explanation: data.explanation,
         };
-
-        console.log('--- AI ANALYSIS DEBUG ---');
-        console.log('Food Input:', food);
-        console.log('Essential Data:', JSON.stringify(essentialResult, null, 2));
-        console.log('-------------------------');
 
         return essentialResult;
     } catch (e) {
@@ -117,18 +113,13 @@ export const analyzeFoodWithPersonalization = async (
                 sodium: data.nutrition?.sodium || 0,
             },
 
-            // Nutrition score from AI
-            nutritionScore: data.nutritionScore || 5,
+            // Nutrition score from AI (prefer score, fall back to nutritionScore for compatibility)
+            score: data.score ?? data.nutritionScore ?? 5,
+            nutritionScore: data.nutritionScore || data.score || 5,
 
             // Single explanation - AI chooses most relevant (history or personalized)
             explanation: data.explanation || 'Analysis complete',
         };
-
-        console.log('--- PERSONALIZED ANALYSIS DEBUG ---');
-        console.log('Food Input:', food);
-        console.log('User Condition:', userCondition);
-        console.log('Essential Data:', JSON.stringify(essentialResult, null, 2));
-        console.log('-----------------------------------');
 
         return essentialResult;
     } catch (e) {

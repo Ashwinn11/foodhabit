@@ -29,6 +29,7 @@ export function useGutData() {
         symptomLogs, // Standalone logs
         meals,
         baselineScore,
+        baselineRegularity,
         user,
         waterLogs,
         fiberLogs,
@@ -81,8 +82,9 @@ export function useGutData() {
             moments: domainMoments,
             symptomLogs: domainSymptomLogs,
             baselineScore: baselineScore || 50,
+            baselineRegularity: baselineRegularity ?? 1,
         });
-    }, [domainMoments, domainSymptomLogs, baselineScore, healthScoreService]);
+    }, [domainMoments, domainSymptomLogs, baselineScore, baselineRegularity, healthScoreService]);
 
     // Calculate streak using new service
     const streak = useMemo(() => {

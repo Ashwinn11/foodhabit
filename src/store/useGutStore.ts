@@ -108,6 +108,10 @@ interface GutStore {
     baselineScore: number;
     setBaselineScore: (score: number) => void;
 
+    // Baseline regularity from onboarding (0=Regular, 1=Somewhat, 2=Unpredictable)
+    baselineRegularity: number;
+    setBaselineRegularity: (regularity: number) => void;
+
     // Gut moments (poop logs)
     gutMoments: GutMoment[];
     addGutMoment: (moment: Omit<GutMoment, 'id'>) => void;
@@ -401,6 +405,10 @@ export const useGutStore = create<GutStore>()((set, get) => ({
     // Baseline score from onboarding (default 50, updated when user completes onboarding)
     baselineScore: 50,
     setBaselineScore: (score) => set({ baselineScore: score }),
+
+    // Baseline regularity from onboarding (default 1=Somewhat regular)
+    baselineRegularity: 1,
+    setBaselineRegularity: (regularity) => set({ baselineRegularity: regularity }),
 
     // Notifications
     notificationSettings: {
