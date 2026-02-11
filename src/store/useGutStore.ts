@@ -458,6 +458,8 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     urgency: newMoment.urgency,
                     pain_score: newMoment.painScore,
                     notes: newMoment.notes,
+                    duration: newMoment.duration,
+                    incomplete_evacuation: newMoment.incompleteEvacuation,
                 }).then(({ error }) => {
                     if (error) {
                         console.error('DB Write Failed:', error.message, error.details || '');
@@ -560,6 +562,8 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     urgency: newMoment.urgency,
                     pain_score: newMoment.painScore,
                     notes: newMoment.notes,
+                    duration: newMoment.duration,
+                    incomplete_evacuation: newMoment.incompleteEvacuation,
                 }).then(({ error }) => {
                     if (error) console.error('Quick Log DB Write Failed:', error.message, error.details || '');
                 });
@@ -614,6 +618,8 @@ export const useGutStore = create<GutStore>()((set, get) => ({
                     portion_size: newMeal.portionSize,
                     description: newMeal.description,
                     food_tags: newMeal.foodTags || [],
+                    normalized_foods: newMeal.normalizedFoods || [],
+                    nutrition: newMeal.nutrition || {},
                 }).then(({ error }) => {
                     if (error) {
                         console.error('Meal DB Write Failed:', error.message, error.details || '');

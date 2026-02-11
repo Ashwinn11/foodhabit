@@ -14,6 +14,15 @@ export interface MealRow {
     portion_size?: string | null;
     food_tags?: string[] | null;
     normalized_foods?: string[] | null;
+    nutrition?: {
+        calories?: number;
+        protein?: number;
+        carbs?: number;
+        fat?: number;
+        fiber?: number;
+        sugar?: number;
+        sodium?: number;
+    } | null;
 }
 
 export class MealMapper {
@@ -28,6 +37,7 @@ export class MealMapper {
             portionSize: row.portion_size ? PortionSize.create(row.portion_size) : undefined,
             foodTags: row.food_tags || undefined,
             normalizedFoods: row.normalized_foods || undefined,
+            nutrition: row.nutrition || undefined,
         });
     }
 
@@ -43,6 +53,15 @@ export class MealMapper {
             portion_size: meal.portionSize?.getValue() ?? null,
             food_tags: meal.foodTags.length > 0 ? meal.foodTags : null,
             normalized_foods: meal.normalizedFoods.length > 0 ? meal.normalizedFoods : null,
+            nutrition: meal.nutrition ? {
+                calories: meal.nutrition.calories,
+                protein: meal.nutrition.protein,
+                carbs: meal.nutrition.carbs,
+                fat: meal.nutrition.fat,
+                fiber: meal.nutrition.fiber,
+                sugar: meal.nutrition.sugar,
+                sodium: meal.nutrition.sodium,
+            } : null,
         };
     }
 }

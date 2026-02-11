@@ -1,1 +1,0 @@
-export { FoodBlobCard } from './FoodBlobCard';

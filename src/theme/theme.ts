@@ -1,34 +1,62 @@
 /**
- * Gut Buddy Strict Design System
- * Minimal, bright, saturated color palette: 
- * Sunshine Yellow, Sky Blue, Candy Pink, Black, White.
+ * Gut Buddy STRICT Premium Design System
+ * 
+ * Adheres to a strict 4-color rule for maximum visual consistency.
+ * 1. Primary (Brand/Trust) - Teal
+ * 2. Secondary (Warmth/Alert) - Coral
+ * 3. Ink (Text/Contrast) - Midnight
+ * 4. Canvas (Background/Surface) - Paper
  */
 
+const core = {
+    teal: '#3AA7A3',    // Primary: Calm, Professional, Medical
+    coral: '#FF7E67',   // Secondary: Energy, Highlights, Alerts
+    midnight: '#1F2937',// Ink: Text, Icons, Structure
+    paper: '#FFFFFF',   // Canvas: Clean backgrounds
+} as const;
+
 export const colors = {
-    // 🎨 Core Minimal Palette (Bright & Saturated)
-    yellow: '#FCE762', // Sunshine Yellow
-    blue: '#70CFFF',   // Sky Blue
-    pink: '#FF7495',   // Candy Pink
+    // 🎨 The 4 Pillars
+    primary: core.teal,
+    secondary: core.coral,
+    text: core.midnight,
+    background: core.paper,
 
-    // 🌑 Neutrals
-    black: '#2D2D2D',  // High-contrast Black
-    white: '#FFFFFF',
-    background: '#FFFFFF', // Changed to white for cleaner transitions
-    border: '#E8D9C0',     // Minimal warm border
-    iconInactive: '#A1A1A1', // Standard gray for inactive icons as per reference
-    gradientBackground: ['#FFF9C4', '#FFFFFF', '#FDE1E8'], // Softened Yellow (TR) -> White (C) -> Softened Pink (BL)
+    // 🌑 Semantic Mappings (All derived strictly from the 4 Pillars)
 
-    // Additional colors for extended features
-    darkGray: '#2D2D2D',
-    mediumGray: '#666666',
-    lightGray: '#F5F5F5',
-    red: '#FF4444',
-    green: '#059669',
+    // UI Surfaces
+    surface: core.paper,
+    card: core.paper,
+    border: `${core.midnight}15`, // 15% Opacity Midnight
 
-    // Semantic text color tokens
-    textPrimary: '#2D2D2D',
-    textSecondary: '#666666',
-    textTertiary: '#999999',
+    // Text Layers
+    textPrimary: core.midnight,
+    textSecondary: `${core.midnight}99`, // 60% Opacity
+    textTertiary: `${core.midnight}66`,  // 40% Opacity
+
+    // Status / Functional (Mapped to dual colors)
+    success: core.teal,  // Success is Primary
+    error: core.coral,   // Error is Secondary
+    warning: core.coral, // Warning is Secondary
+    info: core.teal,     // Info is Primary
+
+    // 🔄 Legacy/Backward Compatibility
+    // Forced into the 2-hue system to maintain the 4-color rule
+    blue: core.teal,
+    green: core.teal,
+    yellow: core.coral,
+    pink: core.coral,
+    red: core.coral,
+
+    // Neutrals
+    white: core.paper,
+    black: core.midnight,
+    lightGray: `${core.midnight}08`, // 5% Opacity
+    mediumGray: `${core.midnight}66`,
+    darkGray: core.midnight,
+
+    // UI States
+    iconInactive: `${core.midnight}40`,
 } as const;
 
 export const fonts = {
@@ -70,22 +98,29 @@ export const radii = {
 
 export const shadows = {
     sm: {
-        shadowColor: '#000',
+        shadowColor: core.midnight,
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
         elevation: 2,
     },
     md: {
-        shadowColor: '#000',
+        shadowColor: core.midnight,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 4,
+        shadowOpacity: 0.1,
+        shadowRadius: 16,
+        elevation: 5,
+    },
+    lg: {
+        shadowColor: core.midnight,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.12,
+        shadowRadius: 24,
+        elevation: 10,
     },
 } as const;
 
-// 💩 Medical Consistency
+// 💩 Medical Consistency (Exempt from 4-color rule as data)
 export const bristolColors = {
     type1: '#5D4037',
     type2: '#6D4C41',
@@ -95,7 +130,6 @@ export const bristolColors = {
     type6: '#BCAAA4',
     type7: '#D7CCC8',
 } as const;
-
 
 export const theme = {
     colors,

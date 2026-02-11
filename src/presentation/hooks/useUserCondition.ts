@@ -1,26 +1,24 @@
 /**
  * useUserCondition Hook
- * Presentation layer hook that bridges domain + infrastructure
+ * Provides user condition from onboarding_data
  *
- * Provides user condition to screens
- * Orchestrates: Repository → Domain Service → Presentation
+ * Reads condition from users.onboarding_data JSONB field
+ * (where it's stored during onboarding)
  */
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Condition } from '../../domain/value-objects/Condition';
-import { SupabaseUserConditionRepository } from '../../infrastructure/repositories/SupabaseUserConditionRepository';
-import { SetUserConditionApplicationService } from '../../application/services/SetUserConditionApplicationService';
+import { supabase } from '../../config/supabase';
 
 export interface UseUserConditionResult {
   condition: Condition | null;
   loading: boolean;
   error: string | null;
-  setCondition: (conditionType: string) => Promise<boolean>;
 }
 
 /**
- * Hook that provides user condition from database
+ * Hook that provides user condition from onboarding_data
  * Automatically fetches when user logs in
  */
 export const useUserCondition = (): UseUserConditionResult => {
@@ -29,7 +27,7 @@ export const useUserCondition = (): UseUserConditionResult => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch user condition on mount or when user changes
+  // Fetch user condition from onboarding_data
   useEffect(() => {
     const fetchCondition = async () => {
       if (!session?.user?.id) {
@@ -39,12 +37,26 @@ export const useUserCondition = (): UseUserConditionResult => {
 
       setLoading(true);
       try {
-        const repository = new SupabaseUserConditionRepository();
-        const result = await repository.getCondition(session.user.id);
+        const { data: userProfile, error: fetchError } = await supabase
+          .from('users')
+          .select('onboarding_data')
+          .eq('id', session.user.id)
+          .maybeSingle();
 
-        if (result.isSuccess()) {
-          setConditionState(result.getValueOrThrow());
-          setError(null);
+        if (fetchError) {
+          setError(fetchError.message);
+          setConditionState(null);
+        } else if (userProfile?.onboarding_data?.answers?.userCondition) {
+          try {
+            const conditionType = userProfile.onboarding_data.answers.userCondition;
+            const newCondition = Condition.create(conditionType);
+            setConditionState(newCondition);
+            setError(null);
+          } catch (e) {
+            // Invalid condition stored
+            setConditionState(null);
+            setError(null); // Don't show error, just no condition yet
+          }
         } else {
           // No condition set yet (expected for new users)
           setConditionState(null);
@@ -61,48 +73,9 @@ export const useUserCondition = (): UseUserConditionResult => {
     fetchCondition();
   }, [session?.user?.id]);
 
-  /**
-   * Set user condition
-   * Uses application service for use case orchestration
-   */
-  const setCondition = async (conditionType: string): Promise<boolean> => {
-    if (!session?.user?.id) {
-      setError('User not authenticated');
-      return false;
-    }
-
-    setLoading(true);
-    try {
-      const repository = new SupabaseUserConditionRepository();
-      const service = new SetUserConditionApplicationService(repository);
-
-      const result = await service.execute({
-        userId: session.user.id,
-        condition: conditionType as any
-      });
-
-      if (result.isSuccess()) {
-        const newCondition = Condition.create(conditionType as any);
-        setConditionState(newCondition);
-        setError(null);
-        return true;
-      } else {
-        setError(result.getErrorOrThrow().message);
-        return false;
-      }
-    } catch (e) {
-      const errorMsg = (e as Error).message;
-      setError(errorMsg);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return {
     condition,
     loading,
     error,
-    setCondition
   };
 };

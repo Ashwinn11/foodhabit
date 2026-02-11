@@ -51,12 +51,6 @@ export interface UseGutActionsReturn {
     // Meal actions
     logMeal: (input: LogMealInput) => Promise<boolean>;
 
-    // Health tracking actions
-    logWater: () => Promise<void>;
-    logFiber: (grams: number) => Promise<void>;
-    logProbiotic: () => Promise<void>;
-    logExercise: (minutes: number) => Promise<void>;
-
     // Loading states
     isLogging: boolean;
     error: string | null;
@@ -74,20 +68,13 @@ export function useGutActions(): UseGutActionsReturn {
     const logGutMomentUseCase = container.logGutMomentUseCase;
     const deleteGutMomentUseCase = container.deleteGutMomentUseCase;
     const logMealUseCase = container.logMealUseCase;
-    const logWaterUseCase = container.logWaterUseCase;
-    const logFiberUseCase = container.logFiberUseCase;
-    const logProbioticUseCase = container.logProbioticUseCase;
-    const logExerciseUseCase = container.logExerciseUseCase;
+
 
     // Get store for local state sync
     const {
         addGutMoment,
         deleteGutMoment: storeDeleteGutMoment,
         addMeal,
-        addWater,
-        addFiber,
-        addProbiotic,
-        addExercise,
     } = useGutStore();
 
     const [isLogging, setIsLogging] = useState(false);
@@ -208,74 +195,10 @@ export function useGutActions(): UseGutActionsReturn {
         }
     }, [userId, addMeal, logMealUseCase]);
 
-    /**
-     * Log water intake
-     */
-    const logWater = useCallback(async (): Promise<void> => {
-        try {
-            addWater();
-
-            if (userId) {
-                await logWaterUseCase.execute(userId);
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to log water');
-        }
-    }, [userId, addWater, logWaterUseCase]);
-
-    /**
-     * Log fiber intake
-     */
-    const logFiber = useCallback(async (grams: number): Promise<void> => {
-        try {
-            addFiber(grams);
-
-            if (userId) {
-                await logFiberUseCase.execute(userId, grams);
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to log fiber');
-        }
-    }, [userId, addFiber, logFiberUseCase]);
-
-    /**
-     * Log probiotic intake
-     */
-    const logProbiotic = useCallback(async (): Promise<void> => {
-        try {
-            addProbiotic();
-
-            if (userId) {
-                await logProbioticUseCase.execute(userId);
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to log probiotic');
-        }
-    }, [userId, addProbiotic, logProbioticUseCase]);
-
-    /**
-     * Log exercise
-     */
-    const logExercise = useCallback(async (minutes: number): Promise<void> => {
-        try {
-            addExercise(minutes);
-
-            if (userId) {
-                await logExerciseUseCase.execute(userId, minutes);
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to log exercise');
-        }
-    }, [userId, addExercise, logExerciseUseCase]);
-
     return {
         logGutMoment,
         deleteGutMoment,
         logMeal,
-        logWater,
-        logFiber,
-        logProbiotic,
-        logExercise,
         isLogging,
         error,
     };

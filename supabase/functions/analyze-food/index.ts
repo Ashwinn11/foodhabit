@@ -126,14 +126,20 @@ If this is not a food menu/meal photo, return:
       3. Analyze considering user's CONDITION and PERSONAL HISTORY
       4. Trust personal history over general FODMAP rules (if they had diarrhea after apples, mark it risky)
 
+      NUTRITION SCORE FORMULA:
+      Score from 1-10 based on:
+      - Protein (0-3 pts): 0g=0, 10g=1.5, 20g+=3
+      - Fiber (0-3 pts): 0g=0, 3g=1.5, 6g+=3
+      - Sugar (0-2 pts): 0g=2, 10g=1, 20g+=0 (less is better)
+      - Sodium (0-2 pts): 0mg=2, 400mg=1, 800mg+=0 (less is better)
+      Total = round(min(10, max(1, sum)))
+
       Return ONLY JSON (no markdown):
       {
         "level": "high" | "moderate" | "low",
         "categories": ["fructans", "lactose", ...],
         "culprits": ["specific problematic ingredients"],
-        "alternatives": ["3-5 safe alternatives for this user"],
         "normalizedName": "corrected spelling",
-        "baseIngredients": ["main components"],
 
         "nutrition": {
           "calories": number,
@@ -145,18 +151,11 @@ If this is not a food menu/meal photo, return:
           "sodium": number
         },
 
-        "personalizedExplanation": "Why this is safe/risky for THIS user (1-2 sentences, simple language)",
+        "nutritionScore": 1-10 (based on formula above),
 
-        "portionAdvice": "For moderate foods: safe portion size or null",
-
-        "personalHistory": {
-          "everEaten": boolean,
-          "symptoms": ["symptom1", "symptom2"],
-          "occurrenceCount": number,
-          "latency": "time range like 2-4 hours"
-        },
-
-        "compoundRiskWarning": "If food triggers multiple symptoms they experience together, warn them here or null"
+        "explanation": "ONE explanation only (choose the most relevant):
+          - IF user has personal history with symptoms: describe their history (e.g., 'You ate this 3x and experienced bloating and gas')
+          - ELSE: provide personalized explanation based on their condition (e.g., 'This contains garlic which causes gas in IBS')"
       }
     `
 
@@ -203,9 +202,7 @@ If this is not a food menu/meal photo, return:
       level: result.level || 'moderate',
       categories: result.categories || [],
       culprits: result.culprits || [],
-      alternatives: result.alternatives || [],
       normalizedName: result.normalizedName || food.toLowerCase(),
-      baseIngredients: result.baseIngredients || [],
       nutrition: result.nutrition || {
         calories: 0,
         protein: 0,
@@ -215,15 +212,9 @@ If this is not a food menu/meal photo, return:
         sugar: 0,
         sodium: 0
       },
-      personalizedExplanation: result.personalizedExplanation || 'Analysis complete',
-      portionAdvice: result.portionAdvice || null,
-      personalHistory: result.personalHistory || {
-        everEaten: false,
-        symptoms: [],
-        occurrenceCount: 0,
-        latency: null
-      },
-      compoundRiskWarning: result.compoundRiskWarning || null
+      nutritionScore: result.nutritionScore || 5,
+      // Single explanation field - AI chooses most relevant
+      explanation: result.explanation || 'Analysis complete'
     }
 
     return new Response(JSON.stringify(enrichedResult), {

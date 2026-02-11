@@ -5,5 +5,4 @@
 
 export * from './gut';
 export * from './meals';
-export * from './health';
 export * from './analytics';

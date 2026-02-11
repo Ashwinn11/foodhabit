@@ -8,7 +8,6 @@ export { useMeals, useTodayMeals } from './useMeals';
 export { useHealthScore, useHealthScoreFromMoments } from './useHealthScore';
 export { useTriggers, useTriggersFromData } from './useTriggers';
 export { useMedicalAlerts, useMedicalAlertsFromMoments } from './useMedicalAlerts';
-export { useHealthLogs } from './useHealthLogs';
 export { useGutData } from './useGutData';
 export { useGutActions } from './useGutActions';
 export { useStoreSync } from './useStoreSync';

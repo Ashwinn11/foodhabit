@@ -80,12 +80,12 @@ export const SymptomToggle: React.FC<SymptomToggleProps> = ({
         />
         <Typography 
           variant="bodyBold" 
-          color={active ? colors.black : colors.black + '66'}
+          color={active ? colors.white : colors.black + '66'}
         >
           {label}
         </Typography>
         {active && (
-          <View style={[styles.activeDot, { backgroundColor: color === colors.yellow ? colors.black : colors.white }]} />
+          <View style={[styles.activeDot, { backgroundColor: colors.white }]} />
         )}
       </Animated.View>
     </Pressable>

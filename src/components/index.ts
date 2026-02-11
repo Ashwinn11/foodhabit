@@ -1,12 +1,12 @@
 // Gut Buddy Components Index
 export { GutAvatar } from './GutAvatar';
-export { WobblyCheckbox } from './WobblyCheckbox';
-export { FoodBlobCard } from './FoodBlobCard';
+
+
 export * from './FoodAnalysis';
 export * from './Home';
 export * from './History';
-export { StatCard } from './StatCard';
-export { AddButton } from './AddButton';
+
+
 export { BristolPicker } from './BristolPicker';
 export { SymptomToggle } from './SymptomToggle';
 export { IconContainer } from './IconContainer/IconContainer';

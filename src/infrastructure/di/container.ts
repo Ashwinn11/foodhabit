@@ -38,11 +38,6 @@ import {
     LogMealUseCase,
     GetMealsUseCase,
     DeleteMealUseCase,
-    LogWaterUseCase,
-    LogFiberUseCase,
-    LogProbioticUseCase,
-    LogExerciseUseCase,
-    GetHealthLogsUseCase,
     CalculateHealthScoreUseCase,
     DetectTriggersUseCase,
     DetectCombinationTriggersUseCase,
@@ -235,38 +230,6 @@ class Container {
 
     get deleteMealUseCase(): DeleteMealUseCase {
         return new DeleteMealUseCase(this.mealRepository);
-    }
-
-    get logWaterUseCase(): LogWaterUseCase {
-        return new LogWaterUseCase(
-            this.healthLogRepository,
-            this.notificationService
-        );
-    }
-
-    get logFiberUseCase(): LogFiberUseCase {
-        return new LogFiberUseCase(
-            this.healthLogRepository,
-            this.notificationService
-        );
-    }
-
-    get logProbioticUseCase(): LogProbioticUseCase {
-        return new LogProbioticUseCase(
-            this.healthLogRepository,
-            this.notificationService
-        );
-    }
-
-    get logExerciseUseCase(): LogExerciseUseCase {
-        return new LogExerciseUseCase(
-            this.healthLogRepository,
-            this.notificationService
-        );
-    }
-
-    get getHealthLogsUseCase(): GetHealthLogsUseCase {
-        return new GetHealthLogsUseCase(this.healthLogRepository);
     }
 
     get calculateHealthScoreUseCase(): CalculateHealthScoreUseCase {

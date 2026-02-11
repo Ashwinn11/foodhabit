@@ -27,37 +27,34 @@ export const analyzeFoodWithAI = async (food: string): Promise<any | null> => {
             return null;
         }
 
-        // Return FULL AI response including nutrition, personalization, and analysis
-        const finalResult = {
+        // Return ONLY essential data we actually use in the UI
+        const essentialResult = {
             level: data.level,
             categories: data.categories,
             culprits: data.culprits,
-            alternatives: data.alternatives,
             normalizedName: data.normalizedName,
-            baseIngredients: data.baseIngredients,
-            // Add nutrition data
-            nutrition: data.nutrition || {
-                calories: 0,
-                protein: 0,
-                carbs: 0,
-                fat: 0,
-                fiber: 0,
-                sugar: 0,
-                sodium: 0
+            // Nutrition data - all fields for display
+            nutrition: {
+                calories: data.nutrition?.calories || 0,
+                protein: data.nutrition?.protein || 0,
+                carbs: data.nutrition?.carbs || 0,
+                fat: data.nutrition?.fat || 0,
+                fiber: data.nutrition?.fiber || 0,
+                sugar: data.nutrition?.sugar || 0,
+                sodium: data.nutrition?.sodium || 0,
             },
-            // Add personalization data
-            personalizedExplanation: data.personalizedExplanation,
-            portionAdvice: data.portionAdvice,
-            personalHistory: data.personalHistory,
-            compoundRiskWarning: data.compoundRiskWarning
+            // Nutrition score from AI
+            nutritionScore: data.nutritionScore || 5,
+            // Single explanation - AI chooses most relevant (history or personalized)
+            explanation: data.explanation,
         };
 
         console.log('--- AI ANALYSIS DEBUG ---');
         console.log('Food Input:', food);
-        console.log('Full Response:', JSON.stringify(finalResult, null, 2));
+        console.log('Essential Data:', JSON.stringify(essentialResult, null, 2));
         console.log('-------------------------');
 
-        return finalResult;
+        return essentialResult;
     } catch (e) {
         console.error('Edge Function Error:', e);
         return null;
@@ -101,52 +98,39 @@ export const analyzeFoodWithPersonalization = async (
             return null;
         }
 
-        // Enhanced response includes nutrition, personalized explanation, and risk assessment
-        const enhancedResult = {
+        // Return ONLY essential data we actually use in the UI
+        const essentialResult = {
             // FODMAP Analysis
             level: data.level || 'moderate',
             categories: data.categories || [],
             culprits: data.culprits || [],
-            alternatives: data.alternatives || [],
             normalizedName: data.normalizedName || food.toLowerCase(),
-            baseIngredients: data.baseIngredients || [],
 
-            // Nutrition Data
-            nutrition: data.nutrition || {
-                calories: 0,
-                protein: 0,
-                carbs: 0,
-                fat: 0,
-                fiber: 0,
-                sugar: 0,
-                sodium: 0
+            // Nutrition Data - all fields for display
+            nutrition: {
+                calories: data.nutrition?.calories || 0,
+                protein: data.nutrition?.protein || 0,
+                carbs: data.nutrition?.carbs || 0,
+                fat: data.nutrition?.fat || 0,
+                fiber: data.nutrition?.fiber || 0,
+                sugar: data.nutrition?.sugar || 0,
+                sodium: data.nutrition?.sodium || 0,
             },
 
-            // Personalized Explanation (tied to their condition)
-            personalizedExplanation: data.personalizedExplanation || 'Analysis complete',
+            // Nutrition score from AI
+            nutritionScore: data.nutritionScore || 5,
 
-            // Portion Advice (for yellow/moderate foods)
-            portionAdvice: data.portionAdvice || null,
-
-            // Personal History (if they've eaten this before)
-            personalHistory: data.personalHistory || {
-                everEaten: false,
-                symptoms: [],
-                occurrenceCount: 0,
-                latency: null
-            },
-
-            // Compound Risk Warning (if triggers multiple symptoms they get together)
-            compoundRiskWarning: data.compoundRiskWarning || null
+            // Single explanation - AI chooses most relevant (history or personalized)
+            explanation: data.explanation || 'Analysis complete',
         };
 
         console.log('--- PERSONALIZED ANALYSIS DEBUG ---');
         console.log('Food Input:', food);
         console.log('User Condition:', userCondition);
-        console.log('Enhanced Response:', JSON.stringify(enhancedResult, null, 2));
+        console.log('Essential Data:', JSON.stringify(essentialResult, null, 2));
         console.log('-----------------------------------');
 
-        return enhancedResult;
+        return essentialResult;
     } catch (e) {
         console.error('Edge Function Error:', e);
         return null;
@@ -193,11 +177,11 @@ export const analyzeFODMAPs = async (foods: string[]): Promise<{
         if (fodmapInfo.level === 'high') {
             highFODMAPs.push({ food, categories: fodmapInfo.categories, level: fodmapInfo.level });
             totalFODMAPLoad += 3;
-            fodmapInfo.categories.forEach(cat => categoryBreakdown[cat]++);
+            fodmapInfo.categories.forEach((cat: FODMAPCategory) => categoryBreakdown[cat]++);
         } else if (fodmapInfo.level === 'moderate') {
             moderateFODMAPs.push({ food, categories: fodmapInfo.categories, level: fodmapInfo.level });
             totalFODMAPLoad += 1.5;
-            fodmapInfo.categories.forEach(cat => categoryBreakdown[cat] += 0.5);
+            fodmapInfo.categories.forEach((cat: FODMAPCategory) => categoryBreakdown[cat] += 0.5);
         } else {
             lowFODMAPs.push(food);
         }

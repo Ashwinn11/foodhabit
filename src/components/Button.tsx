@@ -78,7 +78,7 @@ export const Button: React.FC<ButtonProps> = ({
       default:
         return {
           container: { backgroundColor: color, borderWidth: 0 },
-          text: { color: color === colors.yellow ? colors.black : colors.white }
+          text: { color: colors.white }
         };
     }
   };

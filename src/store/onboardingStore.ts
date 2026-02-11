@@ -35,7 +35,7 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
     gutCheckAnswers: {},
     calculatedScore: 0,
     currentStep: 0,
-    totalSteps: 12, // Welcome + Goal + Symptoms + ValueInterrupt + Stool + Regularity + Medical + Processing + Results + Condition (NEW) + Value + Paywall
+    totalSteps: 12, // Welcome + Goal + Symptoms + ValueInterrupt + Stool + Regularity + Medical + Processing + Results + Condition + Value + Paywall
 
     setGutCheckAnswer: (key, value) => {
         set((state) => ({
@@ -94,23 +94,42 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session?.user?.id) {
-            const { error } = await supabase
-                .from('users')
-                .upsert({
-                    id: session.user.id,
-                    onboarding_completed: true,
-                    onboarding_data: {
-                        answers: state.gutCheckAnswers,
-                        score: state.calculatedScore
-                    }
-                });
+            try {
+                // First, ensure user record exists by attempting INSERT
+                await supabase
+                    .from('users')
+                    .insert({
+                        id: session.user.id,
+                        onboarding_completed: true,
+                        onboarding_data: {
+                            answers: state.gutCheckAnswers,
+                            score: state.calculatedScore
+                        }
+                    })
+                    .select()
+                    .single();
+            } catch (insertError) {
+                // User record likely exists, update it instead
+                const { error: updateError } = await supabase
+                    .from('users')
+                    .update({
+                        onboarding_completed: true,
+                        onboarding_data: {
+                            answers: state.gutCheckAnswers,
+                            score: state.calculatedScore
+                        },
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', session.user.id);
 
-            if (error) {
-                console.error('❌ Database update error:', error);
-            } else {
-                // Update baseline score in gut store immediately
-                useGutStore.getState().setBaselineScore(state.calculatedScore);
+                if (updateError) {
+                    console.error('❌ Database update error:', updateError);
+                    return;
+                }
             }
+
+            // Update baseline score in gut store immediately
+            useGutStore.getState().setBaselineScore(state.calculatedScore);
         } else {
             // Even if not logged in, update local state for consistency
             useGutStore.getState().setBaselineScore(state.calculatedScore);

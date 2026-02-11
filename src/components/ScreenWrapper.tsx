@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet, ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, SafeAreaViewProps } from 'react-native-safe-area-context';
 import { colors } from '../theme/theme';
 
@@ -21,16 +20,9 @@ export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
 
   if (useGradient) {
     return (
-      <LinearGradient
-        colors={[...colors.gradientBackground]}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={[styles.container, style]}
-      >
         <SafeAreaView style={[styles.safeArea, contentContainerStyle]} {...safeAreaProps}>
           {children}
         </SafeAreaView>
-      </LinearGradient>
     );
   }
 

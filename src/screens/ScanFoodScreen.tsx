@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -16,22 +16,20 @@ import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme/them
 import {
   ScreenWrapper,
   Typography,
-  Card,
-  IconContainer,
   BoxButton,
   Button,
   NutritionCard,
-  PersonalizedExplanationCard,
-  PersonalHistoryCard
+  FoodListItem
 } from '../components';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { analyzeFoodWithAI } from '../services/fodmapService';
+import { analyzeFoodWithPersonalization } from '../services/fodmapService';
 import { supabase } from '../config/supabase';
-import { useGutStore } from '../store';
-import { useGutActions } from '../presentation/hooks';
+import { useGutActions, useTriggers, useGutData } from '../presentation/hooks';
 import { useUserCondition } from '../presentation/hooks/useUserCondition';
+import { useAuth } from '../hooks/useAuth';
 import { FODMAPTag } from '../types/fodmap';
+import { getNutritionScoreColor } from '../utils/nutritionScore';
 
 type ScanFoodScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -40,30 +38,132 @@ type ScanFoodScreenProps = {
 export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const { condition } = useUserCondition(); // Get user's condition for personalization
+  const { session } = useAuth();
+  const userId = session?.user?.id ?? null;
+
+  // Get trigger and gut data for personalization
+  const { triggers } = useTriggers(userId);
+  const { moments } = useGutData();
+
+  // State for onboarding data
+  const [onboardingData, setOnboardingData] = useState<any>(null);
+
   const [searchText, setSearchText] = useState('');
   const [selectedFoods, setSelectedFoods] = useState<string[]>([]);
+  const [selectedFoodItems, setSelectedFoodItems] = useState<Record<string, boolean>>({});
   const [aiResults, setAiResults] = useState<Record<string, (FODMAPTag & {
-    alternatives?: string[];
     normalizedName?: string;
-    baseIngredients?: string[];
     nutrition?: any;
-    personalizedExplanation?: string;
-    personalHistory?: any;
-    portionAdvice?: string;
-    compoundRiskWarning?: string;
+    nutritionScore?: number;
+    explanation?: string;
   }) | null>>({});
   const [loadingFoods, setLoadingFoods] = useState<string[]>([]);
+  const [triggerWarnings, setTriggerWarnings] = useState<Record<string, any>>({});
 
   // Use new actions for logging
   const { logMeal } = useGutActions();
-  // Still need store for trigger feedback lookup
-  const { triggerFeedback } = useGutStore();
 
   const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('snack');
   const [isProcessingImage, setIsProcessingImage] = useState(false);
 
+  // Fetch onboarding data on mount
+  useEffect(() => {
+    if (userId) {
+      const fetchOnboarding = async () => {
+        try {
+          const { data } = await supabase
+            .from('users')
+            .select('onboarding_data')
+            .eq('id', userId)
+            .maybeSingle();
+          setOnboardingData(data?.onboarding_data);
+        } catch (err) {
+          console.error('Failed to fetch onboarding data:', err);
+        }
+      };
+      fetchOnboarding();
+    }
+  }, [userId]);
+
   // Quick suggestions
   const SUGGESTIONS = ['Coffee', 'Pizza', 'Garlic', 'Onion', 'Apple', 'Milk', 'Bread', 'Pasta', 'Rice', 'Chicken'];
+
+  // Helper: Calculate symptom co-occurrence patterns
+  const calculateSymptomPatterns = useCallback(() => {
+    if (!moments || moments.length === 0) return [];
+
+    const patterns: Map<string, number> = new Map();
+    moments.forEach(m => {
+      const activeSymptoms = Object.keys(m.symptoms || {}).filter(s => m.symptoms?.[s as keyof typeof m.symptoms]);
+      if (activeSymptoms.length > 0) {
+        const key = activeSymptoms.sort().join(' + ');
+        patterns.set(key, (patterns.get(key) || 0) + 1);
+      }
+    });
+
+    const total = moments.length || 1;
+    return Array.from(patterns.entries()).map(([symptoms, count]) => ({
+      symptoms: symptoms.split(' + '),
+      frequency: count / total
+    }));
+  }, [moments]);
+
+  // Helper: Get recent Bristol pattern summary
+  const getRecentBristolPattern = useCallback(() => {
+    if (!moments || moments.length === 0) return null;
+
+    const last7Days = moments.slice(0, 7);
+    const types = last7Days.map((m: any) => m.bristolType).filter(Boolean);
+    if (types.length === 0) return null;
+
+    const avg = types.reduce((a: number, b: number) => a + b, 0) / types.length;
+    return {
+      avgType: Math.round(avg),
+      isDiarrhea: avg >= 6,
+      isConstipated: avg <= 2
+    };
+  }, [moments]);
+
+  // Helper: Get user context for AI personalization
+  const getUserContext = useCallback(() => {
+    const personalTriggers = triggers.map(trigger => ({
+      food: trigger.food,
+      symptoms: trigger.symptoms,
+      count: trigger.occurrences,
+      latency: trigger.latencyDescription
+    }));
+
+    const symptomPatterns = calculateSymptomPatterns();
+    const bristolPattern = getRecentBristolPattern();
+
+    return {
+      userCondition: condition?.getType(),
+      personalTriggers,
+      symptomPatterns,
+      recentBristolPattern: bristolPattern,
+      onboardingProfile: onboardingData?.answers
+    };
+  }, [triggers, condition, onboardingData, calculateSymptomPatterns, getRecentBristolPattern]);
+
+  // Helper: Check if a food is a known trigger
+  const checkForKnownTriggers = useCallback((foodName: string) => {
+    const normalizedName = foodName.toLowerCase().trim();
+    const knownTrigger = triggers.find(t =>
+      t.food.toLowerCase().trim() === normalizedName
+    );
+
+    if (knownTrigger && knownTrigger.probability >= 0.5) {
+      return {
+        isKnownTrigger: true,
+        confidence: knownTrigger.confidence,
+        frequencyText: knownTrigger.frequencyText,
+        symptoms: knownTrigger.symptoms,
+        latency: knownTrigger.latencyDescription
+      };
+    }
+
+    return { isKnownTrigger: false };
+  }, [triggers]);
 
   // Handle adding a food item - always use AI for normalization and analysis
   const addFood = useCallback(async (food: string) => {
@@ -76,13 +176,24 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
 
     // Add to selected foods immediately for responsiveness (using raw input for now)
     setSelectedFoods(prev => [...prev, rawInput]);
+    // Don't auto-select - let user choose
+    setSelectedFoodItems(prev => ({ ...prev, [rawInput]: false }));
     setSearchText('');
     Keyboard.dismiss();
 
     // Always call AI for analysis and normalization
     setLoadingFoods(prev => [...prev, rawInput]);
     try {
-      const aiResult = await analyzeFoodWithAI(rawInput);
+      // Get user context for personalized analysis
+      const userContext = getUserContext();
+
+      // Use personalized AI analysis
+      const aiResult = await analyzeFoodWithPersonalization(
+        rawInput,
+        userContext.userCondition,
+        userContext.personalTriggers,
+        userContext.symptomPatterns
+      );
 
       if (aiResult?.normalizedName) {
         // AI found a canonical name (fixed spelling, standardized casing, etc.)
@@ -97,15 +208,36 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
           return prev.map(f => f === rawInput ? canonicalName : f);
         });
 
+        // Update selection state to use canonical name
+        setSelectedFoodItems(prev => {
+          const newState = { ...prev };
+          const wasSelected = newState[rawInput];
+          delete newState[rawInput];
+          newState[canonicalName] = wasSelected;
+          return newState;
+        });
+
         setAiResults(prev => {
           const newState = { ...prev };
           delete newState[rawInput];
           newState[canonicalName] = aiResult;
           return newState;
         });
+
+        // Check for known triggers
+        const triggerInfo = checkForKnownTriggers(canonicalName);
+        if (triggerInfo.isKnownTrigger) {
+          setTriggerWarnings(prev => ({ ...prev, [canonicalName]: triggerInfo }));
+        }
       } else {
         // No normalization found, keep raw input
         setAiResults(prev => ({ ...prev, [rawInput]: aiResult }));
+
+        // Check for known triggers
+        const triggerInfo = checkForKnownTriggers(rawInput);
+        if (triggerInfo.isKnownTrigger) {
+          setTriggerWarnings(prev => ({ ...prev, [rawInput]: triggerInfo }));
+        }
       }
     } catch (e) {
       console.error('AI lookup failed:', e);
@@ -113,7 +245,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     } finally {
       setLoadingFoods(prev => prev.filter(f => f !== rawInput));
     }
-  }, [selectedFoods, aiResults]);
+  }, [selectedFoods, aiResults, getUserContext, checkForKnownTriggers]);
 
   /**
    * Handle menu/food image scanning - extract food items from photo
@@ -156,10 +288,8 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
         return;
       }
 
-      // Add each extracted food to selected foods
-      for (const food of extractedFoods) {
-        await addFood(food);
-      }
+      // Add all extracted foods in parallel for speed
+      await Promise.all(extractedFoods.map((food: string) => addFood(food)));
 
       Alert.alert(
         'Foods extracted!',
@@ -195,11 +325,10 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
         return;
       }
 
-      // Launch camera
+      // Launch camera - capture full image without forced cropping
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [4, 3],
+        allowsEditing: false,
         quality: 0.8,
         base64: true,
       });
@@ -210,12 +339,11 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
       }
     } catch (error) {
       console.error('Camera pick error:', error);
-      // Fallback to gallery
+      // Fallback to gallery - capture full image without forced cropping
       try {
         const result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ['images'],
-          allowsEditing: true,
-          aspect: [4, 3],
+          allowsEditing: false,
           quality: 0.8,
           base64: true,
         });
@@ -230,83 +358,33 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     }
   }, [handleImageScan]);
 
-  // AI-based analysis solely derived from AI results (no local DB lookup)
-  // Determine risk level based on selected foods' FODMAP levels
-  const aiAnalysis = useMemo(() => {
-    if (selectedFoods.length === 0) return null;
-
-    const results = selectedFoods
-      .map(food => aiResults[food])
-      .filter((r): r is NonNullable<typeof r> => r !== null && r !== undefined);
-
-    if (results.length === 0) return null;
-
-    // Count high and moderate FODMAP foods
-    const highCount = results.filter(r => r.level === 'high').length;
-    const moderateCount = results.filter(r => r.level === 'moderate').length;
-
-    let riskLevel: 'low' | 'moderate' | 'high' = 'low';
-    if (highCount > 0) {
-      riskLevel = 'high';
-    } else if (moderateCount > 0) {
-      riskLevel = 'moderate';
-    }
-
-    return { riskLevel };
-  }, [selectedFoods, aiResults]); 
-
-
-  // Use trigger feedback from store to check for personal triggers
-  // Enhanced to check both the full food name AND its base ingredients
-  const activeTriggers = useMemo(() => {
-    const foundTriggers: string[] = [];
-    
-    selectedFoods.forEach(food => {
-      const normalizedInput = food.toLowerCase().trim();
-      const aiResult = aiResults[food];
-      
-      // 1. Check if the food itself is a confirmed trigger
-      const directFeedback = triggerFeedback.find(f => 
-        f.foodName.toLowerCase().trim() === normalizedInput && f.userConfirmed === true
-      );
-      
-      if (directFeedback) {
-        foundTriggers.push(food);
-        return;
-      }
-      
-      // 2. Check if any base ingredients are known triggers
-      if (aiResult?.baseIngredients) {
-        const matchingIngredient = aiResult.baseIngredients.find(ing => 
-          triggerFeedback.some(f => 
-            f.foodName.toLowerCase().trim() === ing.toLowerCase().trim() && f.userConfirmed === true
-          )
-        );
-        
-        if (matchingIngredient) {
-          // If the ingredient is the trigger, flag it
-          foundTriggers.push(`${food} (contains ${matchingIngredient})`);
-        }
-      }
-    });
-    
-    return [...new Set(foundTriggers)];
-  }, [selectedFoods, triggerFeedback, aiResults]);
-
   const removeFood = (foodToRemove: string) => {
     setSelectedFoods(prev => prev.filter(f => f !== foodToRemove));
+    setSelectedFoodItems(prev => {
+      const newState = { ...prev };
+      delete newState[foodToRemove];
+      return newState;
+    });
     setAiResults(prev => {
       const newResults = { ...prev };
       delete newResults[foodToRemove];
       return newResults;
     });
+    setTriggerWarnings(prev => {
+      const newWarnings = { ...prev };
+      delete newWarnings[foodToRemove];
+      return newWarnings;
+    });
   };
 
   const handleLogMeal = () => {
-    if (selectedFoods.length === 0) return;
+    // Get only selected foods
+    const foodsToLog = selectedFoods.filter(food => selectedFoodItems[food]);
+
+    if (foodsToLog.length === 0) return;
 
     // Use AI-normalized names for trigger detection
-    const normalizedFoods = selectedFoods.map(food => {
+    const normalizedFoods = foodsToLog.map(food => {
       const aiResult = aiResults[food];
       return aiResult?.normalizedName ? aiResult.normalizedName.toLowerCase().trim() : food.toLowerCase().trim();
     });
@@ -314,8 +392,8 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     // Dedupe normalized foods
     const uniqueNormalizedFoods = [...new Set(normalizedFoods)];
 
-    // Calculate total nutrition from all selected foods
-    const nutrition = selectedFoods.reduce(
+    // Calculate total nutrition from ONLY selected foods
+    const nutrition = foodsToLog.reduce(
       (acc, food) => {
         const foodNutrition = aiResults[food]?.nutrition || {};
         return {
@@ -334,8 +412,8 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
     // Use the logMeal action from our new architecture hooks
     logMeal({
       mealType,
-      name: selectedFoods.join(', '),
-      foods: selectedFoods,
+      name: foodsToLog.join(', '),
+      foods: foodsToLog,
       normalizedFoods: uniqueNormalizedFoods,
       portionSize: 'medium',
       nutrition, // Add nutrition data to meal
@@ -349,33 +427,6 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
   };
 
   // derived state for "Safe to Eat?" result
-  const safetyStatus = useMemo(() => {
-    if (selectedFoods.length === 0) return 'neutral';
-    
-    // 1. Personal Triggers (Highest Priority - RED)
-    if (activeTriggers.length > 0) return 'danger';
-    
-    // 2. High FODMAP from AI (RED)
-    if (aiAnalysis?.riskLevel === 'high') return 'danger';
-    
-    // 3. Moderate FODMAP (YELLOW)
-    if (aiAnalysis?.riskLevel === 'moderate') return 'warning';
-    
-    // 4. Still loading AI? Show neutral until we know
-    if (loadingFoods.length > 0) return 'neutral';
-    
-    // 5. Check if any foods are unrecognized (AI returned null)
-    const hasUnrecognizedFoods = selectedFoods.some(food => {
-      const aiInfo = aiResults[food];
-      // If AI analyzed it but returned null = unrecognized (gibberish/non-food)
-      return aiInfo === null;
-    });
-    if (hasUnrecognizedFoods) return 'unknown';
-    
-    // 6. Safe (GREEN)
-    return 'safe';
-  }, [selectedFoods, activeTriggers, aiAnalysis, aiResults, loadingFoods]);
-
   return (
     <ScreenWrapper edges={['top']} style={styles.container}>
       {/* Header */}
@@ -442,6 +493,14 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
           {selectedFoods.map((food, index) => (
             <Animated.View key={food} entering={FadeIn.delay(index * 50)}>
               <Pressable style={styles.chip} onPress={() => removeFood(food)}>
+                 {triggerWarnings[food] && (
+                   <Ionicons
+                     name="warning"
+                     size={14}
+                     color={colors.pink}
+                     style={{ marginRight: 4 }}
+                   />
+                 )}
                  <Typography variant="bodySmall" color={colors.black}>{food}</Typography>
                  {loadingFoods.includes(food) ? (
                    <ActivityIndicator size="small" color={colors.blue} style={{ marginLeft: 4 }} />
@@ -453,83 +512,125 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
           ))}
         </View>
 
-        {/* Result Card (The Learning Moment) */}
+        {/* Food Analysis Sections */}
         {selectedFoods.length > 0 ? (
           <Animated.View entering={FadeInDown.springify()} style={styles.resultSection}>
-             {/* Traffic Light Visual */}
-             <View style={styles.trafficLightContainer}>
-                <View style={[styles.light, safetyStatus === 'safe' && { backgroundColor: colors.green }]} />
-                <View style={[styles.light, safetyStatus === 'warning' && { backgroundColor: '#FFA500' }]} />
-                <View style={[styles.light, safetyStatus === 'danger' && { backgroundColor: colors.pink }]} />
-             </View>
+             {/* Enhanced Food Analysis - List View for Multiple Foods */}
+             {selectedFoods.length > 1 && (() => {
+                // Get nutrition scores from AI for all foods
+                const foodScores = selectedFoods.map(food => ({
+                  food,
+                  score: aiResults[food]?.nutritionScore || 5,
+                }));
+                const bestFood = foodScores.reduce((best, current) =>
+                  current.score > best.score ? current : best
+                );
+                const worstFood = foodScores.reduce((worst, current) =>
+                  current.score < worst.score ? current : worst
+                );
 
-             <Card 
-               variant="colored" 
-               color={
-                 safetyStatus === 'safe' ? colors.green : 
-                 safetyStatus === 'warning' ? colors.yellow : 
-                 safetyStatus === 'unknown' ? colors.mediumGray :
-                 safetyStatus === 'neutral' ? colors.mediumGray :
-                 colors.pink
-               } 
-               padding="xl"
-               style={styles.resultCard}
-             >
-               <View style={styles.resultHeader}>
-                 <IconContainer 
-                    name={
-                      safetyStatus === 'safe' ? 'checkmark-circle' :
-                      safetyStatus === 'warning' ? 'alert-circle' :
-                      safetyStatus === 'unknown' ? 'help-circle' :
-                      safetyStatus === 'neutral' ? 'hourglass' :
-                      'warning'
-                    }
-                    size={48}
-                    color={colors.black}
-                    variant="solid"
-                    backgroundColor={colors.white}
-                 />
-                 <View style={{ flex: 1 }}>
-                   <Typography variant="h2" color={colors.black}>
-                      {safetyStatus === 'safe' ? 'Safe to eat' :
-                       safetyStatus === 'warning' ? 'Moderate' :
-                       safetyStatus === 'danger' && activeTriggers.length > 0 ? 'Personal trigger detected' :
-                       safetyStatus === 'danger' ? 'Not recommended' :
-                       safetyStatus === 'unknown' ? 'Food not recognized' :
-                       'Analyzing...'}
-                   </Typography>
-                 </View>
-               </View>
+                return (
+                  <>
+                    {/* Comparison Summary */}
+                    <View style={styles.comparisonSummary}>
+                      <View style={styles.comparisonItem}>
+                        <Ionicons name="checkmark-circle" size={16} color={colors.green} />
+                        <View style={{ marginLeft: spacing.sm, flex: 1 }}>
+                          <Typography variant="caption" color={colors.black + '60'}>Best Choice</Typography>
+                          <Typography variant="bodySmall" color={colors.green}>{bestFood.food}</Typography>
+                        </View>
+                        <View style={[styles.scoreIndicator, { backgroundColor: getNutritionScoreColor(bestFood.score) + '20' }]}>
+                          <Typography variant="caption" color={getNutritionScoreColor(bestFood.score)} style={{ fontWeight: '700' }}>
+                            {bestFood.score}/10
+                          </Typography>
+                        </View>
+                      </View>
 
-               {/* Explanation */}
-               <View style={styles.explanationBox}>
-                  {loadingFoods.length > 0 ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                       <ActivityIndicator size="small" color={colors.blue} />
-                       <Typography variant="body" color={colors.black}>
-                          Analyzing...
-                       </Typography>
+                      <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.sm }} />
+
+                      <View style={styles.comparisonItem}>
+                        <Ionicons name="alert-circle" size={16} color={colors.pink} />
+                        <View style={{ marginLeft: spacing.sm, flex: 1 }}>
+                          <Typography variant="caption" color={colors.black + '60'}>Watch Out</Typography>
+                          <Typography variant="bodySmall" color={colors.pink}>{worstFood.food}</Typography>
+                        </View>
+                        <View style={[styles.scoreIndicator, { backgroundColor: getNutritionScoreColor(worstFood.score) + '20' }]}>
+                          <Typography variant="caption" color={getNutritionScoreColor(worstFood.score)} style={{ fontWeight: '700' }}>
+                            {worstFood.score}/10
+                          </Typography>
+                        </View>
+                      </View>
                     </View>
-                   ) : safetyStatus === 'unknown' ? (
-                    <Typography variant="body" color={colors.black}>
-                       Is this even food? <Ionicons name="help-circle-outline" size={16} color={colors.black} /> Try typing it again or check for typos!
-                    </Typography>
-                  ) : activeTriggers.length > 0 ? (
-                    <Typography variant="body" color={colors.black}>
-                      You told us <Typography variant="bodyBold">{activeTriggers.join(', ')}</Typography> hurts you. Your past self was trying to protect you! <Ionicons name="shield-checkmark" size={16} color={colors.black} />
-                    </Typography>
-                  ) : aiAnalysis ? (
-                    <Typography variant="body" color={colors.black}>
-                       {aiAnalysis.riskLevel === 'high' ? "High FODMAP content detected." :
-                        aiAnalysis.riskLevel === 'moderate' ? "Moderate FODMAP content. May cause symptoms." :
-                        "Low FODMAP. Safe option."}
-                    </Typography>
-                  ) : null}
-               </View>
-             </Card>
 
-             {/* NEW: Enhanced Food Analysis Components */}
-             {selectedFoods.length > 0 && (() => {
+                    <Typography variant="bodyBold" color={colors.black} style={{ marginTop: spacing.lg, marginBottom: spacing.md }}>
+                      Foods to Log
+                    </Typography>
+
+                    {/* Food List Items */}
+                    {selectedFoods.map((food) => (
+                      <FoodListItem
+                        key={food}
+                        foodName={food}
+                        analysis={aiResults[food]}
+                        isSelected={selectedFoodItems[food] || false}
+                        onToggle={() => {
+                          setSelectedFoodItems(prev => ({
+                            ...prev,
+                            [food]: !prev[food]
+                          }));
+                        }}
+                        isLoading={loadingFoods.includes(food)}
+                        triggerWarning={triggerWarnings[food]}
+                      />
+                    ))}
+
+                    {/* Aggregate Nutrition Card */}
+                    {(() => {
+                      const selectedCount = Object.values(selectedFoodItems).filter(Boolean).length;
+                      if (selectedCount === 0) return null;
+
+                      const aggregateNutrition = selectedFoods.reduce(
+                        (acc, food) => {
+                          if (!selectedFoodItems[food]) return acc;
+                          const foodNutrition = aiResults[food]?.nutrition || {};
+                          return {
+                            calories: acc.calories + (foodNutrition.calories || 0),
+                            protein: acc.protein + (foodNutrition.protein || 0),
+                            carbs: acc.carbs + (foodNutrition.carbs || 0),
+                            fat: acc.fat + (foodNutrition.fat || 0),
+                            fiber: acc.fiber + (foodNutrition.fiber || 0),
+                            sugar: acc.sugar + (foodNutrition.sugar || 0),
+                            sodium: acc.sodium + (foodNutrition.sodium || 0),
+                          };
+                        },
+                        { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0 }
+                      );
+
+                      return (
+                        <>
+                          <View style={{ marginBottom: spacing.md }}>
+                            <Typography variant="caption" color={colors.black + '60'} style={{ textAlign: 'center', marginBottom: spacing.sm }}>
+                              Total for {selectedCount} selected item{selectedCount === 1 ? '' : 's'}
+                            </Typography>
+                          </View>
+                          <NutritionCard
+                            calories={aggregateNutrition.calories}
+                            protein={aggregateNutrition.protein}
+                            carbs={aggregateNutrition.carbs}
+                            fat={aggregateNutrition.fat}
+                            fiber={aggregateNutrition.fiber}
+                            sugar={aggregateNutrition.sugar}
+                            sodium={aggregateNutrition.sodium}
+                          />
+                        </>
+                      );
+                    })()}
+                  </>
+                );
+             })()}
+
+             {/* Single Food Detailed View */}
+             {selectedFoods.length === 1 && (() => {
                 const firstFood = selectedFoods[0];
                 const analysis = aiResults[firstFood];
                 if (!analysis) return null;
@@ -547,37 +648,41 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                       sodium={analysis.nutrition?.sodium || 0}
                     />
 
-                    {/* Personalized Explanation */}
-                    <PersonalizedExplanationCard
-                      explanation={analysis.personalizedExplanation || ''}
-                      condition={condition?.getDisplayName()}
-                      compoundRiskWarning={analysis.compoundRiskWarning}
+                    {/* Use FoodListItem for consistent display */}
+                    <FoodListItem
+                      foodName={firstFood}
+                      analysis={analysis}
+                      isSelected={selectedFoodItems[firstFood] || false}
+                      onToggle={() => {
+                        setSelectedFoodItems(prev => ({
+                          ...prev,
+                          [firstFood]: !prev[firstFood]
+                        }));
+                      }}
+                      isLoading={loadingFoods.includes(firstFood)}
+                      triggerWarning={triggerWarnings[firstFood]}
                     />
-
-                    {/* Personal History */}
-                    {analysis.personalHistory && (
-                      <PersonalHistoryCard
-                        everEaten={analysis.personalHistory.everEaten}
-                        symptoms={analysis.personalHistory.symptoms || []}
-                        occurrenceCount={analysis.personalHistory.occurrenceCount || 0}
-                        latency={analysis.personalHistory.latency}
-                      />
-                    )}
                   </>
                 );
              })()}
 
              {/* Log It Button */}
              <View style={styles.logActionContainer}>
+                {selectedFoods.length > 1 && (
+                  <Typography variant="bodySmall" color={colors.black + '60'} style={{ textAlign: 'center', marginBottom: spacing.sm }}>
+                     {Object.values(selectedFoodItems).filter(Boolean).length} item{Object.values(selectedFoodItems).filter(Boolean).length === 1 ? '' : 's'} selected
+                  </Typography>
+                )}
+
                 <Typography variant="bodySmall" color={colors.black + '60'} style={{ textAlign: 'center', marginBottom: spacing.sm }}>
                    Eating it anyway?
                 </Typography>
-                
+
                 {/* Meal Type Selector (Mini) */}
                 <View style={styles.mealTypeRow}>
                    {(['breakfast', 'lunch', 'dinner', 'snack'] as const).map(t => (
-                      <Pressable 
-                        key={t} 
+                      <Pressable
+                        key={t}
                         onPress={() => setMealType(t)}
                         style={[styles.mealTypeChip, mealType === t && styles.mealTypeChipActive]}
                       >
@@ -586,8 +691,8 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                    ))}
                 </View>
 
-                <Button 
-                   title="Log This Meal"
+                <Button
+                   title={selectedFoods.length > 1 ? "Log Selected Foods" : "Log This Meal"}
                    onPress={handleLogMeal}
                    variant="primary"
                    color={colors.black}
@@ -689,12 +794,6 @@ const styles = StyleSheet.create({
   guideText: {
     flex: 1,
   },
-  explanationBox: {
-    backgroundColor: colors.white + '60',
-    borderRadius: radii.lg,
-    marginBottom: spacing.md,
-    padding: spacing.md,
-  },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -712,14 +811,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: fontSizes.md,
     height: '100%',
-  },
-  light: {
-    backgroundColor: '#E0E0E0',
-    borderColor: '#D0D0D0',
-    borderRadius: 6,
-    borderWidth: 1, 
-    height: 12,
-    width: 12,
   },
   logActionContainer: {
     marginTop: spacing.xl,
@@ -740,15 +831,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
     justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  resultCard: {
-    width: '100%',
-  },
-  resultHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.md,
     marginBottom: spacing.md,
   },
   resultSection: {
@@ -789,10 +871,27 @@ const styles = StyleSheet.create({
   suggestions: {
     marginTop: spacing.xl,
   },
-  trafficLightContainer: {
+  comparisonSummary: {
+    backgroundColor: colors.white,
+    borderRadius: radii.lg,
+    padding: spacing.md,
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
+    ...shadows.sm,
+    borderColor: colors.border,
+    borderWidth: 1,
+  },
+  comparisonItem: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    justifyContent: 'center',
-    marginBottom: spacing.md,
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  scoreIndicator: {
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 4,
+    alignItems: 'center',
+    minWidth: 35,
+    marginLeft: spacing.sm,
   },
 });

@@ -3,7 +3,7 @@
  * Asks user their main gut condition (IBS-D, IBS-C, bloating, etc.)
  *
  * Presentation Layer - No business logic
- * Uses: useOnboardingStore (state), SetUserConditionApplicationService (persistence)
+ * Uses: useOnboardingStore (state is saved to users.onboarding_data in completeOnboarding)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -15,7 +15,6 @@ import { Typography, IconContainer } from '../../components';
 import { colors, spacing, radii } from '../../theme';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { analyticsService } from '../../analytics/analyticsService';
-import { useUserCondition } from '../../presentation/hooks/useUserCondition';
 
 const CONDITIONS = [
   {
@@ -58,7 +57,6 @@ const CONDITIONS = [
 export const OnboardingConditionScreen = () => {
   const navigation = useNavigation<any>();
   const { totalSteps, setCurrentStep, setGutCheckAnswer } = useOnboardingStore();
-  const { setCondition, loading: savingCondition } = useUserCondition();
   const [selectedCondition, setSelectedCondition] = useState<string | null>(null);
 
   useEffect(() => {
@@ -66,43 +64,35 @@ export const OnboardingConditionScreen = () => {
     analyticsService.trackOnboardingScreenView('condition', 8, totalSteps);
   }, [totalSteps]);
 
-  const handleNext = async () => {
+  const handleNext = () => {
     if (!selectedCondition) return;
 
     analyticsService.trackEvent('onboarding_condition_selected', {
       condition: selectedCondition
     });
 
-    // Store condition in onboarding answers
+    // Store condition in onboarding answers (saved with rest of onboarding data at completion)
     setGutCheckAnswer('userCondition' as any, selectedCondition);
 
-    // Save condition to database using domain service
-    const saved = await setCondition(selectedCondition);
-
-    if (saved) {
-      setCurrentStep(9);
-      navigation.navigate('OnboardingValue');
-    } else {
-      // Error will be shown in hook's error state
-      console.warn('Failed to save condition');
-    }
+    setCurrentStep(10);
+    navigation.navigate('OnboardingValue');
   };
 
   const handleBack = () => {
     navigation.goBack();
-    setCurrentStep(7);
+    setCurrentStep(8);
   };
 
   return (
     <OnboardingScreen
-      currentStep={8}
+      currentStep={9}
       totalSteps={totalSteps}
       title="What's your main gut issue?"
       subtitle="This helps us personalize food recommendations (can change later)"
       onNext={handleNext}
       onBack={handleBack}
-      nextLabel={savingCondition ? "Saving..." : "Continue"}
-      nextDisabled={!selectedCondition || savingCondition}
+      nextLabel="Continue"
+      nextDisabled={!selectedCondition}
     >
       <ScrollView
         style={styles.container}

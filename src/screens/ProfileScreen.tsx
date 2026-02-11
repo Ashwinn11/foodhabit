@@ -214,7 +214,7 @@ export const ProfileScreen: React.FC = () => {
                       name="star"
                       size={16}
                       iconSize={10}
-                      color={colors.black}
+                      color={colors.white}
                       backgroundColor="transparent"
                       borderWidth={0}
                       shadow={false}
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   premiumBadgeTextLarge: {
-    color: colors.black,
+    color: colors.white,
     fontFamily: fonts.bodyBold,
     fontSize: 12,
     letterSpacing: 1,

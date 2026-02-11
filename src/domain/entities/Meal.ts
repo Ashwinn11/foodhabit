@@ -14,6 +14,15 @@ export interface MealProps {
     portionSize?: PortionSize;
     foodTags?: string[];
     normalizedFoods?: string[];
+    nutrition?: {
+        calories?: number;
+        protein?: number;
+        carbs?: number;
+        fat?: number;
+        fiber?: number;
+        sugar?: number;
+        sodium?: number;
+    };
 }
 
 export interface CreateMealInput {
@@ -25,6 +34,15 @@ export interface CreateMealInput {
     portionSize?: string;
     foodTags?: string[];
     normalizedFoods?: string[];
+    nutrition?: {
+        calories?: number;
+        protein?: number;
+        carbs?: number;
+        fat?: number;
+        fiber?: number;
+        sugar?: number;
+        sodium?: number;
+    };
 }
 
 /**
@@ -57,6 +75,7 @@ export class Meal {
             portionSize: input.portionSize ? PortionSize.create(input.portionSize) : undefined,
             foodTags: input.foodTags,
             normalizedFoods: input.normalizedFoods,
+            nutrition: input.nutrition,
         });
     }
 
@@ -103,6 +122,10 @@ export class Meal {
 
     get normalizedFoods(): string[] {
         return this.props.normalizedFoods ? [...this.props.normalizedFoods] : [];
+    }
+
+    get nutrition() {
+        return this.props.nutrition;
     }
 
     // === Computed Properties ===
@@ -197,6 +220,7 @@ export class Meal {
                 : this.props.portionSize,
             foodTags: updates.foodTags ?? this.props.foodTags,
             normalizedFoods: updates.normalizedFoods ?? this.props.normalizedFoods,
+            nutrition: updates.nutrition ?? this.props.nutrition,
         });
     }
 
@@ -216,6 +240,7 @@ export class Meal {
             portionSize: this.props.portionSize?.getValue(),
             foodTags: this.props.foodTags,
             normalizedFoods: this.props.normalizedFoods,
+            nutrition: this.props.nutrition,
         };
     }
 

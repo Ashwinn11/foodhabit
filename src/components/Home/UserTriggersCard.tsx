@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 export interface Trigger {
   food: string;
   symptoms: string[];
-  count: number;
+  symptomOccurrences: number;
 }
 
 interface UserTriggersCardProps {
@@ -62,7 +62,7 @@ export const UserTriggersCard: React.FC<UserTriggersCardProps> = ({
               <Ionicons name="alert-circle" size={14} color={colors.pink} /> {trigger.food}
             </Typography>
             <Typography variant="caption" color={colors.black + '60'}>
-              Caused {trigger.symptoms.join(' + ')} ({trigger.count}x)
+              Caused {trigger.symptoms.join(' + ')} ({trigger.symptomOccurrences}x)
             </Typography>
           </View>
         </View>

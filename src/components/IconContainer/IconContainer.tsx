@@ -54,8 +54,6 @@ export const IconContainer: React.FC<IconContainerProps> = ({
     // If the primary color is also white, default to black for visibility.
     if (finalBgColor === colors.white) {
       finalIconColor = color === colors.white ? colors.black : color;
-    } else if (finalBgColor === colors.yellow) {
-      finalIconColor = colors.black;
     } else {
       finalIconColor = colors.white;
     }

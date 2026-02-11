@@ -103,7 +103,7 @@ export default function App() {
             .from('users')
             .select('onboarding_completed')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
 
           setOnboardingComplete(userProfile?.onboarding_completed || false);
           

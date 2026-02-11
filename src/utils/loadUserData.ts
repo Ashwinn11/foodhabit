@@ -108,6 +108,8 @@ export const loadUserDataFromDatabase = async () => {
                     urgency: log.urgency,
                     painScore: log.pain_score,
                     notes: log.notes,
+                    duration: log.duration,
+                    incompleteEvacuation: log.incomplete_evacuation,
                 }));
 
             const standaloneSymptoms = gutLogs
@@ -150,6 +152,8 @@ export const loadUserDataFromDatabase = async () => {
                 portionSize: meal.portion_size,
                 description: meal.description,
                 foodTags: meal.food_tags || [],
+                normalizedFoods: meal.normalized_foods || [],
+                nutrition: meal.nutrition || {},
             }));
             gutStore.setMeals(mealEntries);
         }

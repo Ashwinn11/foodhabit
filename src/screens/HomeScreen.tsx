@@ -9,9 +9,11 @@ import {
 import Animated, {
   FadeInDown,
 } from 'react-native-reanimated';
-import { colors, spacing, radii } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, spacing, radii, shadows } from '../theme';
 import { useGutStore, useNotificationStore } from '../store';
-import { useGutData } from '../presentation/hooks';
+import { useGutData, useTriggers } from '../presentation/hooks';
+import { useAuth } from '../hooks/useAuth';
 import {
   ScreenWrapper,
   BoxButton,
@@ -35,6 +37,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     medicalAlerts,
     streak,
   } = useGutData();
+
+  // Get user ID and triggers
+  const { session } = useAuth();
+  const userId = session?.user?.id ?? null;
+  const { triggers } = useTriggers(userId);
 
   // Still use old store for data
   const { user, dismissAlert, meals } = useGutStore();
@@ -175,43 +182,56 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           entering={FadeInDown.delay(200).springify()}
           style={styles.heroSection}
         >
-          <View
+          <LinearGradient
+            colors={[colors.primary, colors.primary + '40', colors.white]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={[
               styles.heroCard,
               {
-                backgroundColor: colors.blue,
-                padding: spacing.xl,
+                padding: 1.5, // Border width
+                borderRadius: radii.xl,
+                ...shadows.sm,
               }
             ]}
           >
-            <View style={styles.heroContent}>
-              <View style={styles.heroLeft}>
-                <GutAvatar score={healthScore.score} size={80} />
-                <View style={styles.heroScoreText}>
+            <View
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: radii.xl - 1.5,
+                padding: spacing.xl,
+                flex: 1,
+              }}
+            >
+              <View style={styles.heroContent}>
+                <View style={styles.heroLeft}>
+                  <GutAvatar score={healthScore.score} size={80} />
+                  <View style={styles.heroScoreText}>
                     <Typography variant="bodyXS" color={colors.black + '60'} style={{ letterSpacing: 1 }}>
                       GUT SCORE
                     </Typography>
                     <Typography variant="h1" color={healthScore.color} style={{ fontSize: 48, lineHeight: 56 }}>
                       {healthScore.score}
                     </Typography>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Ionicons name={getFunGrade(healthScore.score).icon as any} size={16} color={healthScore.color} />
-                        <Typography variant="bodyBold" color={healthScore.color}>
-                          {getFunGrade(healthScore.score).label}
-                        </Typography>
-                      </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Ionicons name={getFunGrade(healthScore.score).icon as any} size={16} color={healthScore.color} />
+                      <Typography variant="bodyBold" color={healthScore.color}>
+                        {getFunGrade(healthScore.score).label}
+                      </Typography>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Stats / Streak Badge - Now using new architecture */}
+                <View style={styles.streakBadge}>
+                  <IconContainer name="flame" size={24} color={colors.pink} variant="transparent" shadow={false} />
+                  <Typography variant="bodyBold" color={colors.black}>
+                    {streak} Day{streak !== 1 ? 's' : ''} Streak
+                  </Typography>
                 </View>
               </View>
-
-              {/* Stats / Streak Badge - Now using new architecture */}
-              <View style={styles.streakBadge}>
-                 <IconContainer name="flame" size={24} color={colors.pink} variant="transparent" shadow={false} />
-                 <Typography variant="bodyBold" color={colors.black}>
-                    {streak} Day{streak !== 1 ? 's' : ''} Streak
-                 </Typography>
-              </View>
             </View>
-          </View>
+          </LinearGradient>
         </Animated.View>
 
         {/* PRIMARY ACTIONS: 2-Column Grid */}
@@ -259,7 +279,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           entering={FadeInDown.delay(270).springify()}
           style={styles.section}
         >
-          <UserTriggersCard triggers={[]} />
+          <UserTriggersCard triggers={triggers} />
         </Animated.View>
 
         <View style={styles.bottomPadding} />
