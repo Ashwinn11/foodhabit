@@ -219,12 +219,12 @@ export const FoodListItem: React.FC<FoodListItemProps> = ({
         {/* Known Trigger Warning */}
         {triggerWarning && (
           <View style={styles.triggerWarning}>
-            <Ionicons name="warning" size={16} color={colors.pink} />
-            <View style={{ flex: 1, marginLeft: spacing.xs }}>
-              <Typography variant="caption" color={colors.pink} style={{ fontWeight: '600' }}>
+            <Ionicons name="warning" size={18} color={colors.white} />
+            <View style={{ flex: 1, marginLeft: spacing.sm }}>
+              <Typography variant="caption" color={colors.white} style={{ fontWeight: '700' }}>
                 Known Trigger ({triggerWarning.confidence} confidence)
               </Typography>
-              <Typography variant="caption" color={colors.black + '80'}>
+              <Typography variant="caption" color={colors.white + 'cc'}>
                 {triggerWarning.frequencyText} · {triggerWarning.symptoms.join(', ')} · {triggerWarning.latency}
               </Typography>
             </View>
@@ -283,9 +283,11 @@ const styles = StyleSheet.create({
   triggerWarning: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: colors.pink + '10',
-    borderRadius: radii.sm,
-    padding: spacing.sm,
+    backgroundColor: colors.pink,
+    borderRadius: radii.md,
+    padding: spacing.md,
     marginTop: spacing.sm,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.pink,
   },
 });
