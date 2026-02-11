@@ -10,6 +10,7 @@ import Animated, {
   FadeInDown,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import { colors, spacing, radii, shadows } from '../theme';
 import { useGutStore, useNotificationStore } from '../store';
 import { useGutData, useTriggers } from '../presentation/hooks';
@@ -267,7 +268,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
            {/* Scan Food */}
            <Pressable
               style={[styles.actionButton, { backgroundColor: colors.blue, borderWidth: 0 }]}
-              onPress={() => navigation.navigate('ScanFood')}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                navigation.navigate('ScanFood');
+              }}
            >
               <Typography variant="h3">🍕</Typography>
               <Typography variant="bodyBold" color={colors.white}>Scan Food</Typography>
@@ -276,7 +280,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
            {/* Log Movement */}
            <Pressable
               style={[styles.actionButton, { backgroundColor: colors.pink, borderWidth: 0 }]}
-              onPress={() => navigation.navigate('AddEntry')}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                navigation.navigate('AddEntry');
+              }}
            >
               <Typography variant="h3">💩</Typography>
               <Typography variant="bodyBold" color={colors.white}>Log Poop</Typography>

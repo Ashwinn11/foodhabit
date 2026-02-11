@@ -5,6 +5,8 @@
 
 import React, { useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { Typography } from '../Typography';
 import { colors, spacing, radii } from '../../theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -72,7 +74,11 @@ export const UserTriggersCard: React.FC<UserTriggersCardProps> = ({
       {displayTriggers.map((trigger, index) => {
         const feedback = getFeedback(trigger);
         return (
-          <View key={`${trigger.food}-${index}`} style={styles.triggerRow}>
+          <Animated.View
+            key={`${trigger.food}-${index}`}
+            entering={FadeInDown.delay(index * 60).springify()}
+            style={styles.triggerRow}
+          >
             {/* Icon circle */}
             <View style={styles.iconCircle}>
               <Ionicons name="restaurant" size={16} color={colors.white} />
@@ -104,15 +110,21 @@ export const UserTriggersCard: React.FC<UserTriggersCardProps> = ({
               <Ionicons name="close-circle" size={22} color={colors.black + '25'} />
             ) : (
               <View style={styles.actions}>
-                <Pressable onPress={() => handleConfirm(trigger.food)} style={styles.yesBtn} hitSlop={8}>
+                <Pressable onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  handleConfirm(trigger.food);
+                }} style={styles.yesBtn} hitSlop={8}>
                   <Ionicons name="checkmark" size={14} color={colors.white} />
                 </Pressable>
-                <Pressable onPress={() => handleDismiss(trigger.food)} style={styles.noBtn} hitSlop={8}>
+                <Pressable onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  handleDismiss(trigger.food);
+                }} style={styles.noBtn} hitSlop={8}>
                   <Ionicons name="close" size={14} color={colors.black + '40'} />
                 </Pressable>
               </View>
             )}
-          </View>
+          </Animated.View>
         );
       })}
 

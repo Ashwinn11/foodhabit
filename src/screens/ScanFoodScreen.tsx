@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import * as KeepAwake from 'expo-keep-awake';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, radii, shadows, fontSizes, fonts } from '../theme/theme';
 import {
   ScreenWrapper,
@@ -575,7 +576,12 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                     {/* Comparison Summary */}
                     <View style={styles.comparisonContainer}>
                       {/* Healthiest Choice Card */}
-                      <View style={[styles.comparisonCard, styles.bestChoiceCard]}>
+                      <LinearGradient
+                        colors={[colors.green + '18', colors.green + '05']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={[styles.comparisonCard, styles.bestChoiceCard]}
+                      >
                         <View style={styles.comparisonCardIcon}>
                           <Ionicons name="checkmark-circle" size={24} color={colors.white} />
                         </View>
@@ -595,10 +601,15 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                             /10
                           </Typography>
                         </View>
-                      </View>
+                      </LinearGradient>
 
                       {/* Watch Out Card */}
-                      <View style={[styles.comparisonCard, styles.worstChoiceCard]}>
+                      <LinearGradient
+                        colors={[colors.pink + '18', colors.pink + '05']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={[styles.comparisonCard, styles.worstChoiceCard]}
+                      >
                         <View style={styles.comparisonCardIconWarning}>
                           <Ionicons name="alert-circle" size={24} color={colors.white} />
                         </View>
@@ -618,7 +629,7 @@ export const ScanFoodScreen: React.FC<ScanFoodScreenProps> = () => {
                             /10
                           </Typography>
                         </View>
-                      </View>
+                      </LinearGradient>
                     </View>
 
                     <Typography variant="bodyBold" color={colors.black} style={{ marginTop: spacing.lg, marginBottom: spacing.md }}>
@@ -981,12 +992,10 @@ const styles = StyleSheet.create({
     ...shadows.md,
   },
   bestChoiceCard: {
-    backgroundColor: colors.green + '08',
     borderLeftWidth: 4,
     borderLeftColor: colors.green,
   },
   worstChoiceCard: {
-    backgroundColor: colors.pink + '08',
     borderLeftWidth: 4,
     borderLeftColor: colors.pink,
   },
