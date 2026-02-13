@@ -12,7 +12,7 @@ module.exports = {
     scheme: "foodhabit",
     newArchEnabled: true,
     splash: {
-      image: "./assets/image.png",
+      image: "./assets/icon.png",
       imageWidth: 200,
       backgroundColor: "#ffffff"
     },
@@ -34,7 +34,7 @@ module.exports = {
     },
     plugins: [
       ["expo-splash-screen", {
-        image: "./assets/image.png",
+        image: "./assets/icon.png",
         imageWidth: 200,
         backgroundColor: "#ffffff"
       }],

@@ -57,14 +57,21 @@ const MiniRing: React.FC<{ value: number; max: number; color: string; size?: num
 };
 
 export const DailyIntakeSummary: React.FC<DailyIntakeSummaryProps> = ({
-  calories,
+  calories: rawCalories,
   calorieGoal = 2000,
-  protein,
-  carbs,
-  fat,
-  fiber,
-  sugar
+  protein: rawProtein,
+  carbs: rawCarbs,
+  fat: rawFat,
+  fiber: rawFiber,
+  sugar: rawSugar
 }) => {
+  const calories = Math.round(rawCalories);
+  const protein = Math.round(rawProtein);
+  const carbs = Math.round(rawCarbs);
+  const fat = Math.round(rawFat);
+  const fiber = Math.round(rawFiber);
+  const sugar = Math.round(rawSugar);
+
   const caloriePercentage = Math.round((calories / calorieGoal) * 100);
   const calorieProgress = Math.min(calories / calorieGoal, 1);
   const fiberHealthy = fiber >= 15;

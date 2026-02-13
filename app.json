@@ -3,14 +3,14 @@
     "name": "Gut Buddy",
     "slug": "foodhabit",
     "owner": "foodhabit",
-    "version": "1.0.6",
+    "version": "1.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme": "foodhabit",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/image.png",
+      "image": "./assets/icon.png",
       "imageWidth": 200,
       "backgroundColor": "#ffffff"
     },
@@ -40,11 +40,14 @@
       }
     },
     "plugins": [
-      ["expo-splash-screen", {
-        "image": "./assets/image.png",
-        "imageWidth": 200,
-        "backgroundColor": "#ffffff"
-      }],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icon.png",
+          "imageWidth": 200,
+          "backgroundColor": "#ffffff"
+        }
+      ],
       "expo-apple-authentication",
       "react-native-purchases",
       "@bacons/apple-targets",

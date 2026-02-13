@@ -1,6 +1,6 @@
 {
   "name": "foodhabit",
-  "version": "1.0.6",
+  "version": "1.2",
   "main": "index.tsx",
   "scripts": {
     "start": "expo start",
