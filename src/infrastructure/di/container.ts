@@ -26,7 +26,6 @@ import {
     TriggerDetectionService,
     MedicalAlertService,
     StreakService,
-    DailyTaskService,
     StoreSyncService,
 } from '../../application/services';
 
@@ -79,7 +78,6 @@ class Container {
     private _triggerDetectionService?: TriggerDetectionService;
     private _medicalAlertService?: MedicalAlertService;
     private _streakService?: StreakService;
-    private _dailyTaskService?: DailyTaskService;
     private _storeSyncService?: StoreSyncService;
 
     // Cached use cases
@@ -194,13 +192,6 @@ class Container {
             this._streakService = new StreakService();
         }
         return this._streakService;
-    }
-
-    get dailyTaskService(): DailyTaskService {
-        if (!this._dailyTaskService) {
-            this._dailyTaskService = new DailyTaskService();
-        }
-        return this._dailyTaskService;
     }
 
     get storeSyncService(): StoreSyncService {
@@ -351,7 +342,6 @@ class Container {
         this._triggerDetectionService = undefined;
         this._medicalAlertService = undefined;
         this._streakService = undefined;
-        this._dailyTaskService = undefined;
         this._storeSyncService = undefined;
 
         this._logGutMomentUseCase = undefined;
