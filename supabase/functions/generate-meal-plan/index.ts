@@ -103,6 +103,12 @@ Rules:
       throw new Error('Invalid response structure from Gemini API')
     }
 
+    // sentry fix
+    if (!data.candidates[0].content.parts || !data.candidates[0].content.parts[0] || !data.candidates[0].content.parts[0].text) {
+      console.error('No text content in Gemini Response:', JSON.stringify(data));
+      throw new Error('No text content in Gemini API response')
+    }
+
     const textResponse = data.candidates[0].content.parts[0].text
     const jsonStr = textResponse.replace(/```json/g, '').replace(/```/g, '').trim()
     const result = JSON.parse(jsonStr)
@@ -111,7 +117,6 @@ Rules:
       throw new Error('Generated plan missing days array')
     }
 
-    // Add small defaults so the app never crashes even if Gemini misses fields
     const enrichedResult = {
       days: result.days.map((d: any, idx: number) => ({
         day: d.day || (idx + 1),
