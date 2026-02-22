@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
 import { Button } from '../components/Button';
@@ -8,18 +9,26 @@ import { Icon } from '../components/Icon';
 import { theme } from '../theme/theme';
 import { useAppStore } from '../store/useAppStore';
 
+const SCREEN_W = Dimensions.get('window').width;
+const TRACK_W  = SCREEN_W - theme.spacing.xl * 2 - 56;
+const PROGRESS = TRACK_W * 0.42;
+
 const SYMPTOMS = [
-  { id: 'bloating',  iconName: 'bloating',  label: 'Bloat' },
-  { id: 'gas',       iconName: 'gas',       label: 'Gas' },
-  { id: 'cramping',  iconName: 'cramping',  label: 'Cramp' },
-  { id: 'nausea',    iconName: 'nausea',    label: 'Nausea' },
-  { id: 'ibs_d',     iconName: 'ibs_d',     label: 'Diarrhea' },
-  { id: 'ibs_c',     iconName: 'ibs_c',     label: 'Constipation' },
+  { id: 'bloating',  iconName: 'bloating', color: theme.colors.amber, label: 'Bloating' },
+  { id: 'gas',       iconName: 'gas',      color: theme.colors.amber, label: 'Gas' },
+  { id: 'cramping',  iconName: 'cramping', color: theme.colors.coral, label: 'Cramping' },
+  { id: 'nausea',    iconName: 'nausea',   color: theme.colors.coral, label: 'Nausea' },
+  { id: 'ibs_d',     iconName: 'ibs_d',   color: theme.colors.coral, label: 'Diarrhea' },
+  { id: 'ibs_c',     iconName: 'ibs_c',   color: theme.colors.amber, label: 'Constipation' },
 ];
 
 export const OnboardingSymptoms = ({ navigation }: any) => {
   const { updateOnboardingAnswers, onboardingAnswers } = useAppStore();
   const [selected, setSelected] = useState<string[]>(onboardingAnswers.symptoms || []);
+
+  const progressAnim = useSharedValue(0);
+  useEffect(() => { progressAnim.value = withTiming(PROGRESS, { duration: 500 }); }, []);
+  const progressStyle = useAnimatedStyle(() => ({ width: progressAnim.value }));
 
   const toggle = (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -32,39 +41,47 @@ export const OnboardingSymptoms = ({ navigation }: any) => {
   };
 
   return (
-    <Screen padding={true}>
+    <Screen padding>
+      {/* Progress */}
       <View style={styles.progressRow}>
         <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: '42%' }]} />
+          <Animated.View style={[styles.progressFill, progressStyle]} />
         </View>
         <Text variant="caption" style={styles.stepText}>3 of 7</Text>
       </View>
 
-      <Text variant="hero" style={styles.title}>What do you{'\n'}experience?</Text>
-      <Text variant="body" style={styles.sub}>Select all that apply</Text>
+      {/* Header */}
+      <Text variant="hero" style={styles.title}>Your symptoms{'\n'}are data.</Text>
+      <Text variant="body" style={styles.sub}>Select everything you experience — even if it feels embarrassing.</Text>
 
-      {/* 2-col toggle grid — Selected = coral fill per plan */}
+      {/* 2-col grid — bug fix: tint NOT solid fill so icons stay visible */}
       <View style={styles.grid}>
         {SYMPTOMS.map((s) => {
           const active = selected.includes(s.id);
           return (
             <TouchableOpacity
               key={s.id}
-              activeOpacity={0.75}
+              activeOpacity={0.8}
               onPress={() => toggle(s.id)}
               style={[styles.card, active && styles.cardActive]}
             >
-              <Icon name={s.iconName} size={40} />
-              <Text variant="label" style={[styles.cardLabel, active && styles.cardLabelActive]}>
+              <Icon name={s.iconName} size={26} color={active ? s.color : theme.colors.textSecondary} />
+              <Text
+                variant="label"
+                style={[styles.cardLabel, active && { color: theme.colors.textPrimary }]}
+              >
                 {s.label}
               </Text>
+              {active && (
+                <View style={styles.activePip} />
+              )}
             </TouchableOpacity>
           );
         })}
       </View>
 
       <View style={styles.footer}>
-        <Button label="Continue →" onPress={handleContinue} disabled={selected.length === 0} />
+        <Button label="Continue" onPress={handleContinue} disabled={selected.length === 0} />
       </View>
     </Screen>
   );
@@ -78,8 +95,8 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     flex: 1,
-    height: 4,
-    backgroundColor: theme.colors.surface,
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: theme.radii.full,
     marginRight: theme.spacing.md,
     overflow: 'hidden',
@@ -89,8 +106,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.coral,
     borderRadius: theme.radii.full,
   },
-  stepText: { color: theme.colors.textSecondary },
-  title: { marginBottom: theme.spacing.sm },
+  stepText: { color: theme.colors.textPrimary, fontFamily: 'Inter_700Bold' },
+  title: { marginBottom: theme.spacing.md },
   sub: { color: theme.colors.textSecondary, marginBottom: theme.spacing.xxxl },
   grid: {
     flexDirection: 'row',
@@ -101,18 +118,37 @@ const styles = StyleSheet.create({
   card: {
     width: '47%',
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.radii.lg,
+    borderRadius: theme.radii.xl,
     padding: theme.spacing.xl,
     alignItems: 'center',
     gap: theme.spacing.md,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.06)',
+    height: 120,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   cardActive: {
-    backgroundColor: theme.colors.coral,
+    // Tint bg + coral border — icons stay fully visible
+    backgroundColor: 'rgba(224,93,76,0.08)',
     borderColor: theme.colors.coral,
+    shadowColor: theme.colors.coral,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
   },
-  cardLabel: { color: theme.colors.textSecondary },
-  cardLabelActive: { color: '#fff' },
+  cardLabel: { color: theme.colors.textSecondary, textAlign: 'center' },
+  activePip: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: theme.colors.coral,
+  },
   footer: { paddingTop: theme.spacing.xl, paddingBottom: theme.spacing.sm },
 });

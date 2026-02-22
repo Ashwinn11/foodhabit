@@ -1,14 +1,14 @@
 export const theme = {
     colors: {
-        bg: '#0D0F14',
-        surface: '#161A23',
-        surfaceHigh: '#1E2330',
-        border: 'rgba(255,255,255,0.08)',
-        coral: '#FF6B6B',
-        lime: '#6BCB77',
-        amber: '#FFD93D',
-        textPrimary: '#F2F4F8',
-        textSecondary: '#8B92A5',
+        bg: '#0A0D0B', // Deep Pine Green
+        surface: '#151916', // Slightly lighter Pine
+        surfaceHigh: '#1E241F',
+        border: 'rgba(212, 248, 112, 0.15)', // Chartreuse tinted border
+        coral: '#E05D4C', // Terracotta (Risky/Alert)
+        lime: '#D4F870', // Chartreuse (Safe/Primary)
+        amber: '#F5C97A', // Warm Amber (Caution)
+        textPrimary: '#F5F5F0', // Bone White
+        textSecondary: '#A3A8A4', // Muted Pine
     },
     spacing: {
         xs: 4,
@@ -20,6 +20,7 @@ export const theme = {
         xxxl: 32,
         giant: 48,
         massive: 64,
+        colossal: 96, // Added for editorial spacing
     },
     radii: {
         xs: 4,

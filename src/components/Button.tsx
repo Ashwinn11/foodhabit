@@ -11,7 +11,7 @@ import { Text } from './Text';
 export interface ButtonProps {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'ghost';
+  variant?: 'primary' | 'ghost' | 'danger';
   disabled?: boolean;
   loading?: boolean;
   leftIcon?: React.ReactNode;
@@ -37,8 +37,13 @@ export const Button: React.FC<ButtonProps> = ({
   }));
 
   const bgColor = variant === 'primary' ? theme.colors.coral : 'transparent';
-  const textColor = variant === 'primary' ? theme.colors.bg : theme.colors.textPrimary;
-  const borderColor = variant === 'ghost' ? theme.colors.border : 'transparent';
+  const textColor = variant === 'primary' ? theme.colors.bg
+    : variant === 'danger' ? theme.colors.coral
+    : theme.colors.textPrimary;
+  const borderColor = variant === 'ghost' ? theme.colors.border
+    : variant === 'danger' ? theme.colors.coral
+    : 'transparent';
+  const borderWidth = variant === 'ghost' || variant === 'danger' ? 1 : 0;
 
   return (
     <AnimatedPressable
@@ -52,7 +57,7 @@ export const Button: React.FC<ButtonProps> = ({
         {
           backgroundColor: bgColor,
           borderColor,
-          borderWidth: variant === 'ghost' ? 1 : 0,
+          borderWidth,
         },
       ]}
     >
@@ -62,8 +67,7 @@ export const Button: React.FC<ButtonProps> = ({
         <>
           {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
           <Text
-            variant="label"
-            style={{ color: textColor, textAlign: 'center', fontSize: 16, flex: leftIcon ? 1 : undefined }}
+            style={[styles.label, { color: textColor, textAlign: 'center', flex: leftIcon ? 1 : undefined }]}
           >
             {label}
           </Text>
@@ -76,7 +80,7 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: theme.spacing.lg + 2, // Slightly taller
     paddingHorizontal: theme.spacing.xxxl,
     borderRadius: theme.radii.full,
     alignItems: 'center',
@@ -89,4 +93,10 @@ const styles = StyleSheet.create({
   rightSpacer: {
     width: 24, // mirrors leftIcon width to keep label optically centered
   },
+  label: {
+    fontFamily: 'Inter_500Medium',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    fontSize: 13,
+  }
 });

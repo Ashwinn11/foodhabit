@@ -16,6 +16,13 @@ import { HomeIcon, ScanIcon, GutIcon, ProfileIcon } from './src/components/TabIc
 
 // Fonts
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
+import { 
+  PlayfairDisplay_400Regular, 
+  PlayfairDisplay_500Medium, 
+  PlayfairDisplay_600SemiBold, 
+  PlayfairDisplay_700Bold,
+  PlayfairDisplay_400Regular_Italic 
+} from '@expo-google-fonts/playfair-display';
 import { useFonts } from 'expo-font';
 
 // State and Services
@@ -122,6 +129,11 @@ export default function App() {
     Inter_400Regular,
     Inter_500Medium,
     Inter_700Bold,
+    PlayfairDisplay_400Regular,
+    PlayfairDisplay_500Medium,
+    PlayfairDisplay_600SemiBold,
+    PlayfairDisplay_700Bold,
+    PlayfairDisplay_400Regular_Italic,
   });
 
   const [isReady, setIsReady] = useState(false);

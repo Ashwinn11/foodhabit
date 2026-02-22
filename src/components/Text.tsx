@@ -38,14 +38,16 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
   },
   hero: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 32,
+    fontFamily: 'PlayfairDisplay_400Regular_Italic',
+    fontSize: 44,
     letterSpacing: -0.5,
+    lineHeight: 52,
   },
   title: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 24,
+    fontFamily: 'PlayfairDisplay_600SemiBold',
+    fontSize: 28,
     letterSpacing: -0.3,
+    lineHeight: 34,
   },
   body: {
     fontFamily: 'Inter_400Regular',
@@ -58,9 +60,9 @@ const styles = StyleSheet.create({
   },
   caption: {
     fontFamily: 'Inter_500Medium',
-    fontSize: 12,
+    fontSize: 11,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1.5,
     color: theme.colors.textSecondary,
   }
 });

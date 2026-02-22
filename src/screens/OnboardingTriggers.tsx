@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
 import { Button } from '../components/Button';
@@ -10,21 +11,30 @@ import { theme } from '../theme/theme';
 import { useAppStore } from '../store/useAppStore';
 import { fodmapService } from '../services/fodmapService';
 
+const SCREEN_W = Dimensions.get('window').width;
+const TRACK_W  = SCREEN_W - theme.spacing.xl * 2 - 56;
+const PROGRESS = TRACK_W * 0.56;
+
+// Color-coded triggers — amber = common irritant, coral = strong trigger
 const TRIGGERS = [
-  { id: 'dairy',    iconName: 'dairy',    label: 'Dairy' },
-  { id: 'garlic',   iconName: 'garlic',   label: 'Garlic' },
-  { id: 'onion',    iconName: 'onion',    label: 'Onion' },
-  { id: 'gluten',   iconName: 'gluten',   label: 'Gluten' },
-  { id: 'caffeine', iconName: 'caffeine', label: 'Caffeine' },
-  { id: 'spicy',    iconName: 'spicy',    label: 'Spicy' },
-  { id: 'alcohol',  iconName: 'alcohol',  label: 'Alcohol' },
-  { id: 'beans',    iconName: 'beans',    label: 'Beans' },
+  { id: 'dairy',    iconName: 'dairy',    color: theme.colors.amber, label: 'Dairy' },
+  { id: 'garlic',   iconName: 'garlic',   color: theme.colors.coral, label: 'Garlic' },
+  { id: 'onion',    iconName: 'onion',    color: theme.colors.coral, label: 'Onion' },
+  { id: 'gluten',   iconName: 'gluten',   color: theme.colors.amber, label: 'Gluten' },
+  { id: 'caffeine', iconName: 'caffeine', color: theme.colors.amber, label: 'Caffeine' },
+  { id: 'spicy',    iconName: 'spicy',    color: theme.colors.coral, label: 'Spicy food' },
+  { id: 'alcohol',  iconName: 'alcohol',  color: theme.colors.coral, label: 'Alcohol' },
+  { id: 'beans',    iconName: 'beans',    color: theme.colors.amber, label: 'Beans' },
 ];
 
 export const OnboardingTriggers = ({ navigation }: any) => {
   const { updateOnboardingAnswers, onboardingAnswers } = useAppStore();
   const [selected, setSelected] = useState<string[]>(onboardingAnswers.knownTriggers || []);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]   = useState(false);
+
+  const progressAnim = useSharedValue(0);
+  useEffect(() => { progressAnim.value = withTiming(PROGRESS, { duration: 500 }); }, []);
+  const progressStyle = useAnimatedStyle(() => ({ width: progressAnim.value }));
 
   const toggle = (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -36,33 +46,36 @@ export const OnboardingTriggers = ({ navigation }: any) => {
     setLoading(true);
     try {
       const testFoods = [...selected, 'Rice', 'Chicken breast', 'Oatmeal', 'Apples', 'Bread'].filter(Boolean);
-      const results = await fodmapService.analyzeFoods(testFoods);
+      const results   = await fodmapService.analyzeFoods(testFoods);
       navigation.navigate('OnboardingResults', { analysisData: results });
     } catch {
       navigation.navigate('OnboardingResults', { analysisData: null });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
-    <Screen padding={true} scroll={true}>
+    <Screen padding scroll>
+      {/* Progress */}
       <View style={styles.progressRow}>
         <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: '56%' }]} />
+          <Animated.View style={[styles.progressFill, progressStyle]} />
         </View>
         <Text variant="caption" style={styles.stepText}>4 of 7</Text>
       </View>
 
-      <Text variant="hero" style={styles.title}>Foods you already{'\n'}know bother you?</Text>
-      <Text variant="body" style={styles.sub}>We use this to pre-seed your personalised AI.</Text>
+      {/* Header */}
+      <Text variant="hero" style={styles.title}>Start with{'\n'}what you{'\n'}already know.</Text>
+      <Text variant="body" style={styles.sub}>
+        Tap anything you suspect. Our AI will verify and expand your list from your scans.
+      </Text>
 
+      {/* Trigger chips with colored icons */}
       <View style={styles.chipGrid}>
         {TRIGGERS.map((t) => (
           <Chip
             key={t.id}
             label={t.label}
-            icon={<Icon name={t.iconName} size={18} />}
+            icon={<Icon name={t.iconName} size={14} color={selected.includes(t.id) ? t.color : theme.colors.textSecondary} />}
             selected={selected.includes(t.id)}
             onPress={() => toggle(t.id)}
           />
@@ -78,7 +91,7 @@ export const OnboardingTriggers = ({ navigation }: any) => {
 
       <View style={styles.footer}>
         <Button
-          label={selected.length > 0 ? 'Continue →' : 'Skip for now →'}
+          label={selected.length > 0 ? 'Analyze My Profile' : 'Skip for now'}
           onPress={handleContinue}
           disabled={loading}
           loading={loading}
@@ -96,8 +109,8 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     flex: 1,
-    height: 4,
-    backgroundColor: theme.colors.surface,
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: theme.radii.full,
     marginRight: theme.spacing.md,
     overflow: 'hidden',
@@ -107,9 +120,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.coral,
     borderRadius: theme.radii.full,
   },
-  stepText: { color: theme.colors.textSecondary },
-  title: { marginBottom: theme.spacing.sm },
-  sub: { color: theme.colors.textSecondary, marginBottom: theme.spacing.xxxl },
+  stepText: { color: theme.colors.textPrimary, fontFamily: 'Inter_700Bold' },
+  title: { marginBottom: theme.spacing.md },
+  sub: { color: theme.colors.textSecondary, marginBottom: theme.spacing.xxxl, lineHeight: 26 },
   chipGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

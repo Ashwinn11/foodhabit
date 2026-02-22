@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
-  View, StyleSheet, TouchableOpacity, Linking, Alert, Platform, Image,
+  View, StyleSheet, TouchableOpacity, Linking, Alert, Platform,
+  Image, ActivityIndicator, Pressable,
 } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
@@ -8,9 +9,9 @@ import * as Crypto from 'expo-crypto';
 import Svg, { Path } from 'react-native-svg';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
-import { Button } from '../components/Button';
 import { theme } from '../theme/theme';
 import { supabase } from '../config/supabase';
+import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 const REDIRECT_URI = 'foodhabit://auth/callback';
 
@@ -32,18 +33,44 @@ const AppleIcon = () => (
   </Svg>
 );
 
+const AuthButton = ({
+  onPress, loading, label, icon, primary,
+}: {
+  onPress: () => void; loading: boolean; label: string;
+  icon?: React.ReactNode; primary?: boolean;
+}) => (
+  <Pressable
+    onPress={onPress}
+    disabled={loading}
+    style={[styles.authBtn, primary ? styles.authBtnPrimary : styles.authBtnGhost]}
+  >
+    {loading
+      ? <ActivityIndicator color={primary ? theme.colors.bg : theme.colors.textPrimary} size="small" />
+      : (
+        <>
+          {icon && <View>{icon}</View>}
+          <Text
+            variant="label"
+            style={{ color: primary ? theme.colors.bg : theme.colors.textPrimary, fontSize: 15, letterSpacing: 0.2 }}
+          >
+            {label}
+          </Text>
+        </>
+      )
+    }
+  </Pressable>
+);
+
 export const AuthScreen = () => {
-  const [appleLoading, setAppleLoading] = useState(false);
+  const [appleLoading, setAppleLoading]   = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleAppleSignIn = async () => {
     setAppleLoading(true);
     try {
-      const rawNonce = Math.random().toString(36).substring(2);
-      const hashedNonce = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256, rawNonce,
-      );
-      const credential = await AppleAuthentication.signInAsync({
+      const rawNonce    = Math.random().toString(36).substring(2);
+      const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
+      const credential  = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
@@ -52,17 +79,13 @@ export const AuthScreen = () => {
       });
       if (!credential.identityToken) throw new Error('No identity token from Apple.');
       const { error } = await supabase.auth.signInWithIdToken({
-        provider: 'apple',
-        token: credential.identityToken,
-        nonce: rawNonce,
+        provider: 'apple', token: credential.identityToken, nonce: rawNonce,
       });
       if (error) throw error;
     } catch (e: any) {
       if (e.code === 'ERR_REQUEST_CANCELED') return;
       Alert.alert('Apple Sign In Failed', e.message);
-    } finally {
-      setAppleLoading(false);
-    }
+    } finally { setAppleLoading(false); }
   };
 
   const handleGoogleSignIn = async () => {
@@ -75,118 +98,161 @@ export const AuthScreen = () => {
       if (error || !data.url) throw error ?? new Error('No auth URL.');
       const result = await WebBrowser.openAuthSessionAsync(data.url, REDIRECT_URI);
       if (result.type === 'success' && result.url) {
-        const fragment = result.url.includes('#')
-          ? result.url.split('#')[1]
-          : result.url.split('?')[1];
-        const params = new URLSearchParams(fragment);
-        const accessToken = params.get('access_token');
+        const fragment    = result.url.includes('#') ? result.url.split('#')[1] : result.url.split('?')[1];
+        const params      = new URLSearchParams(fragment);
+        const accessToken  = params.get('access_token');
         const refreshToken = params.get('refresh_token');
         if (!accessToken || !refreshToken) throw new Error('No tokens in redirect URL.');
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
+        const { error: sessionError } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
         if (sessionError) throw sessionError;
       }
     } catch (e: any) {
       Alert.alert('Google Sign In Failed', e.message);
-    } finally {
-      setGoogleLoading(false);
-    }
+    } finally { setGoogleLoading(false); }
   };
 
   return (
     <Screen padding={true}>
 
-      {/* ── Brand block: centred, prominent ── */}
-      <View style={styles.brandBlock}>
-        <Image source={require('../../assets/icon.png')} style={styles.appIcon} />
-        <Text variant="caption" style={styles.wordmark}>GUTBUDDY •</Text>
-      </View>
+      {/* Brand — small, confident, top-left */}
+      <Animated.View entering={FadeIn.delay(200).duration(600)} style={styles.brand}>
+        <View style={styles.logoRing}>
+          <Image source={require('../../assets/icon.png')} style={styles.logo} />
+        </View>
+        <Text variant="caption" style={styles.wordmark}>GUTBUDDY</Text>
+      </Animated.View>
 
-      {/* ── Hero: takes the remaining vertical space ── */}
-      <View style={styles.heroBlock}>
+      {/* Hero — owns the vertical space */}
+      <Animated.View entering={FadeInDown.delay(500).duration(900).springify()} style={styles.hero}>
         <Text variant="hero" style={styles.headline}>
-          Know what's safe{'\n'}before you eat it.
+          Eat{'\n'}
+          <Text style={styles.accentWord}>without</Text>{'\n'}
+          fear.
         </Text>
-      </View>
+        <Text variant="body" style={styles.sub}>
+          Your gut has a pattern. We decode it — so you know exactly what's safe before every bite.
+        </Text>
+      </Animated.View>
 
-      {/* ── Buttons pinned to bottom ── */}
-      <View style={styles.bottomBlock}>
+      {/* Proof strip */}
+      <Animated.View entering={FadeIn.delay(900).duration(600)} style={styles.proof}>
+        <View style={styles.proofDot} />
+        <Text style={styles.proofText}>2,400+ people eating freely  </Text>
+        {[0,1,2,3,4].map(i => <Text key={i} style={styles.star}>★</Text>)}
+      </Animated.View>
+
+      {/* Auth buttons */}
+      <Animated.View entering={FadeInUp.delay(1100).duration(700).springify()} style={styles.bottom}>
         {Platform.OS === 'ios' && (
           <>
-            <Button
-              label="Continue with Apple"
-              onPress={handleAppleSignIn}
-              variant="primary"
-              loading={appleLoading}
-              leftIcon={<AppleIcon />}
-            />
+            <AuthButton primary onPress={handleAppleSignIn} loading={appleLoading} label="Continue with Apple" icon={<AppleIcon />} />
             <View style={{ height: theme.spacing.md }} />
           </>
         )}
+        <AuthButton onPress={handleGoogleSignIn} loading={googleLoading} label="Continue with Google" icon={<GoogleIcon />} />
 
-        <Button
-          label="Continue with Google"
-          onPress={handleGoogleSignIn}
-          variant="ghost"
-          loading={googleLoading}
-          leftIcon={<GoogleIcon />}
-        />
-
-        <View style={styles.termsRow}>
+        <View style={styles.terms}>
           <Text variant="caption" style={styles.termsText}>By continuing you agree to our </Text>
           <TouchableOpacity onPress={() => Linking.openURL('https://gutbuddy.com/terms')}>
             <Text variant="caption" style={styles.termsLink}>Terms</Text>
           </TouchableOpacity>
           <Text variant="caption" style={styles.termsText}> & </Text>
           <TouchableOpacity onPress={() => Linking.openURL('https://gutbuddy.com/privacy')}>
-            <Text variant="caption" style={styles.termsLink}>Privacy Policy</Text>
+            <Text variant="caption" style={styles.termsLink}>Privacy</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
 
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  brandBlock: {
+  brand: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: theme.spacing.giant,
+    gap: theme.spacing.md,
+    paddingTop: theme.spacing.md,
   },
-  appIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: theme.radii.xl,
-    marginBottom: theme.spacing.lg,
+  logoRing: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(224,93,76,0.3)',
   },
+  logo: { width: 40, height: 40 },
   wordmark: {
     color: theme.colors.textSecondary,
-    letterSpacing: 2,
+    letterSpacing: 3,
   },
-  heroBlock: {
+  hero: {
     flex: 1,
     justifyContent: 'center',
+    paddingBottom: theme.spacing.xl,
   },
   headline: {
+    marginBottom: theme.spacing.xl,
     color: theme.colors.textPrimary,
   },
-  bottomBlock: {
-    paddingBottom: theme.spacing.sm,
+  accentWord: {
+    color: theme.colors.coral,
+    fontFamily: 'PlayfairDisplay_400Regular_Italic',
+    fontSize: 44,
+    lineHeight: 52,
   },
-  termsRow: {
+  sub: {
+    color: theme.colors.textSecondary,
+    lineHeight: 26,
+    maxWidth: 300,
+  },
+  proof: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xxxl,
+  },
+  proofDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: theme.colors.coral,
+    marginRight: theme.spacing.sm,
+  },
+  proofText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
+  star: { color: theme.colors.amber, fontSize: 12 },
+  bottom: { paddingBottom: theme.spacing.sm },
+  authBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.md,
+    paddingVertical: theme.spacing.lg + 2,
+    paddingHorizontal: theme.spacing.xxxl,
+    borderRadius: theme.radii.full,
+  },
+  authBtnPrimary: {
+    backgroundColor: theme.colors.coral,
+    shadowColor: theme.colors.coral,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  authBtnGhost: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  terms: {
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
     marginTop: theme.spacing.xxxl,
   },
-  termsText: {
-    color: theme.colors.textSecondary,
-    textTransform: 'none',
-  },
-  termsLink: {
-    color: theme.colors.coral,
-    textTransform: 'none',
-  },
+  termsText: { color: theme.colors.textSecondary, textTransform: 'none', letterSpacing: 0, fontSize: 11 },
+  termsLink: { color: theme.colors.coral, textTransform: 'none', letterSpacing: 0, fontSize: 11 },
 });

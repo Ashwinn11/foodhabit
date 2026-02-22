@@ -30,19 +30,15 @@ export const Chip: React.FC<ChipProps> = ({
   };
 
   const getBackgroundColor = () => {
-    if (selected) {
-      if (status !== 'neutral') return `${getStatusColor()}20`; // 20% opacity
-      return theme.colors.coral;
-    }
-    return theme.colors.surface;
+    if (status !== 'neutral') return `${getStatusColor()}15`; // 15% opacity background
+    if (selected) return theme.colors.surfaceHigh;
+    return 'transparent';
   };
 
   const getBorderColor = () => {
-    if (selected) {
-      if (status !== 'neutral') return getStatusColor();
-      return theme.colors.coral;
-    }
-    return 'transparent';
+    if (status !== 'neutral') return `${getStatusColor()}40`; // 40% opacity border
+    if (selected) return theme.colors.textSecondary;
+    return theme.colors.border;
   };
 
   const getTextColor = () => {
@@ -62,7 +58,6 @@ export const Chip: React.FC<ChipProps> = ({
         { 
           backgroundColor: getBackgroundColor(),
           borderColor: getBorderColor(),
-          borderWidth: selected || status !== 'neutral' ? 1 : 0
         }
       ]}
     >
@@ -82,9 +77,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg, // slightly wider
     borderRadius: theme.radii.full,
     alignSelf: 'flex-start',
+    borderWidth: 1, // Always have a border for structure
   },
   iconContainer: {
     marginRight: theme.spacing.sm,
