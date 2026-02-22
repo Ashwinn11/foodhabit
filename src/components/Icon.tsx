@@ -1,19 +1,18 @@
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import LottieView from 'lottie-react-native';
-// Note: We will need a vector icons fallback, like Ionicons if needed.
-// Example: import { Ionicons } from '@expo/vector-icons';
-// For now, focusing on 3D pngs and Lottie animations based on the plan.
+import { getFluentEmojiUrl } from '../utils/emojiMap';
 
 export interface IconProps {
-  name?: string; // e.g. 'garlic', 'dairy'
-  source?: any; // require('../assets/icons/garlic.png')
-  animation?: any; // require('../assets/animations/sad.json')
+  name?: string;     // e.g. 'triggers', 'bloating' mapped to Fluent Emoji CDN
+  source?: any;      // local image require()
+  animation?: any;   // local lottie .json require()
   size?: number;
   style?: any;
 }
 
 export const Icon: React.FC<IconProps> = ({ 
+  name,
   source, 
   animation,
   size = 24,
@@ -29,6 +28,15 @@ export const Icon: React.FC<IconProps> = ({
           style={{ width: size, height: size }}
         />
       </View>
+    );
+  }
+
+  if (name) {
+    return (
+      <Image
+        source={{ uri: getFluentEmojiUrl(name) }}
+        style={[{ width: size, height: size, resizeMode: 'contain' }, style]}
+      />
     );
   }
 

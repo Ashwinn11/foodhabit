@@ -44,6 +44,8 @@
         }
       ],
       "expo-apple-authentication",
+      "./plugins/withFirebaseFix",
+      "./plugins/withNodeModulesSymlink",
       [
         "expo-build-properties",
         {

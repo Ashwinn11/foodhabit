@@ -11,6 +11,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // Theme
 import { theme } from './src/theme/theme';
 
+// Tab Icons
+import { HomeIcon, ScanIcon, GutIcon, ProfileIcon } from './src/components/TabIcon';
+
 // Fonts
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 import { useFonts } from 'expo-font';
@@ -53,11 +56,52 @@ const GutBuddyTheme = {
 };
 
 const MainTabs = () => (
-  <Tab.Navigator screenOptions={{ headerShown: false, tabBarStyle: { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border } }}>
-    <Tab.Screen name="Home" component={HomeScreen} />
-    <Tab.Screen name="ScanFood" component={ScanFoodScreen} />
-    <Tab.Screen name="MyGut" component={MyGutScreen} />
-    <Tab.Screen name="Profile" component={ProfileScreen} />
+  <Tab.Navigator
+    screenOptions={{
+      headerShown: false,
+      tabBarActiveTintColor: theme.colors.coral,
+      tabBarInactiveTintColor: theme.colors.textSecondary,
+      tabBarLabelStyle: { fontFamily: 'Inter_500Medium', fontSize: 11 },
+      tabBarStyle: {
+        backgroundColor: theme.colors.surface,
+        borderTopColor: theme.colors.border,
+        height: 60,
+        paddingBottom: 8,
+        paddingTop: 8,
+      },
+    }}
+  >
+    <Tab.Screen
+      name="Home"
+      component={HomeScreen}
+      options={{
+        tabBarIcon: ({ color, size }) => <HomeIcon color={color} size={size} />,
+      }}
+    />
+    <Tab.Screen
+      name="ScanFood"
+      component={ScanFoodScreen}
+      options={{
+        tabBarLabel: 'Scan',
+        tabBarIcon: ({ color, size }) => <ScanIcon color={color} size={size} />,
+      }}
+    />
+    <Tab.Screen
+      name="MyGut"
+      component={MyGutScreen}
+      options={{
+        tabBarLabel: 'My Gut',
+        tabBarIcon: ({ color, size }) => <GutIcon color={color} size={size} />,
+      }}
+    />
+    <Tab.Screen
+      name="Profile"
+      component={ProfileScreen}
+      options={{
+        tabBarLabel: 'Profile',
+        tabBarIcon: ({ color, size }) => <ProfileIcon color={color} size={size} />,
+      }}
+    />
   </Tab.Navigator>
 );
 
@@ -85,6 +129,8 @@ export default function App() {
   
   const isOnboardingCompleted = useAppStore(state => state.isOnboardingCompleted);
   const setOnboardingCompleted = useAppStore(state => state.setOnboardingCompleted);
+  const updateOnboardingAnswers = useAppStore(state => state.updateOnboardingAnswers);
+  const resetOnboarding = useAppStore(state => state.resetOnboarding);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
@@ -96,11 +142,14 @@ export default function App() {
       }
     });
 
-    supabase.auth.onAuthStateChange((_event, currentSession) => {
+    supabase.auth.onAuthStateChange((event, currentSession) => {
       setSession(currentSession);
       if (currentSession?.user) {
         checkOnboarding(currentSession.user.id);
       } else {
+        if (event === 'SIGNED_OUT') {
+          resetOnboarding();
+        }
         setIsReady(true);
       }
     });
@@ -114,7 +163,8 @@ export default function App() {
         .eq('id', userId)
         .maybeSingle();
       
-      if (data?.onboarding_data) {
+      if (data?.onboarding_data && Object.keys(data.onboarding_data).length > 0) {
+        updateOnboardingAnswers(data.onboarding_data);
         setOnboardingCompleted(true);
       }
     } catch (e) {

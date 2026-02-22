@@ -44,16 +44,6 @@ CREATE TABLE meals (
   CONSTRAINT meals_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 
-CREATE TABLE health_logs (
-  id uuid PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
-  user_id uuid NOT NULL,
-  date date NOT NULL,
-  log_type text NOT NULL CHECK (log_type = ANY (ARRAY['water'::text, 'fiber'::text, 'probiotic'::text, 'exercise'::text])),
-  value numeric NOT NULL,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT health_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
-);
 
 
 CREATE TABLE trigger_foods (

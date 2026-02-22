@@ -1,9 +1,9 @@
 import React from 'react';
-import { StyleSheet, ActivityIndicator } from 'react-native';
-import Animated, { 
-  useAnimatedStyle, 
-  useSharedValue, 
-  withSpring
+import { StyleSheet, ActivityIndicator, Pressable, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from 'react-native-reanimated';
 import { theme } from '../theme/theme';
 import { Text } from './Text';
@@ -14,78 +14,63 @@ export interface ButtonProps {
   variant?: 'primary' | 'ghost';
   disabled?: boolean;
   loading?: boolean;
+  leftIcon?: React.ReactNode;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-
-export const Button: React.FC<ButtonProps> = ({ 
-  label, 
-  onPress, 
+export const Button: React.FC<ButtonProps> = ({
+  label,
+  onPress,
   variant = 'primary',
   disabled = false,
   loading = false,
+  leftIcon,
 }) => {
   const isPressed = useSharedValue(0);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { scale: withSpring(isPressed.value ? 0.96 : 1, { damping: 15, stiffness: 200 }) }
-      ],
-      opacity: disabled ? 0.5 : 1,
-    };
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: withSpring(isPressed.value ? 0.96 : 1, { damping: 15, stiffness: 200 }) },
+    ],
+    opacity: disabled ? 0.5 : 1,
+  }));
 
-  const getBackgroundColor = () => {
-    if (variant === 'primary') return theme.colors.coral;
-    return 'transparent';
-  };
-
-  const getTextColor = () => {
-    if (variant === 'primary') return theme.colors.bg; // High contrast text on coral
-    return theme.colors.textPrimary;
-  };
-
-  const getBorderColor = () => {
-    if (variant === 'ghost') return theme.colors.border;
-    return 'transparent';
-  };
+  const bgColor = variant === 'primary' ? theme.colors.coral : 'transparent';
+  const textColor = variant === 'primary' ? theme.colors.bg : theme.colors.textPrimary;
+  const borderColor = variant === 'ghost' ? theme.colors.border : 'transparent';
 
   return (
-    <Animated.View
+    <AnimatedPressable
+      onPress={onPress}
+      disabled={disabled || loading}
+      onPressIn={() => (isPressed.value = 1)}
+      onPressOut={() => (isPressed.value = 0)}
       style={[
         styles.button,
         animatedStyle,
-        { 
-          backgroundColor: getBackgroundColor(),
-          borderColor: getBorderColor(),
-          borderWidth: variant === 'ghost' ? 1 : 0
-        }
+        {
+          backgroundColor: bgColor,
+          borderColor,
+          borderWidth: variant === 'ghost' ? 1 : 0,
+        },
       ]}
-      onTouchStart={() => {
-        if (!disabled && !loading) isPressed.value = 1;
-      }}
-      onTouchEnd={() => {
-        if (!disabled && !loading) {
-          isPressed.value = 0;
-          onPress();
-        }
-      }}
-      onTouchCancel={() => {
-        isPressed.value = 0;
-      }}
     >
       {loading ? (
-        <ActivityIndicator color={getTextColor()} />
+        <ActivityIndicator color={textColor} />
       ) : (
-        <Text 
-          variant="label" 
-          style={{ color: getTextColor(), textAlign: 'center', fontSize: 16 }}
-        >
-          {label}
-        </Text>
+        <>
+          {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
+          <Text
+            variant="label"
+            style={{ color: textColor, textAlign: 'center', fontSize: 16, flex: leftIcon ? 1 : undefined }}
+          >
+            {label}
+          </Text>
+          {leftIcon && <View style={styles.rightSpacer} />}
+        </>
       )}
-    </Animated.View>
+    </AnimatedPressable>
   );
 };
 
@@ -97,5 +82,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-  }
+  },
+  leftIcon: {
+    marginRight: theme.spacing.md,
+  },
+  rightSpacer: {
+    width: 24, // mirrors leftIcon width to keep label optically centered
+  },
 });

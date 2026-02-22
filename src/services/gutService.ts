@@ -1,7 +1,7 @@
 import { supabase } from '../config/supabase';
 
 export interface GutMomentPayload {
-    mood: '😖' | '😐' | '😌';
+    mood: 'sad' | 'neutral' | 'happy';
     symptoms: string[];
 }
 

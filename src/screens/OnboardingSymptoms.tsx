@@ -1,28 +1,29 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
 import { Button } from '../components/Button';
+import { Icon } from '../components/Icon';
 import { theme } from '../theme/theme';
 import { useAppStore } from '../store/useAppStore';
 
 const SYMPTOMS = [
-  { id: 'bloating', icon: '🫧', label: 'Bloating' },
-  { id: 'gas', icon: '💨', label: 'Gas' },
-  { id: 'cramping', icon: '⚡', label: 'Cramping' },
-  { id: 'nausea', icon: '🤢', label: 'Nausea' },
-  { id: 'diarrhea', icon: '💧', label: 'Diarrhea' },
-  { id: 'constipation', icon: '🧱', label: 'Constipation' }
+  { id: 'bloating',  iconName: 'bloating',  label: 'Bloat' },
+  { id: 'gas',       iconName: 'gas',       label: 'Gas' },
+  { id: 'cramping',  iconName: 'cramping',  label: 'Cramp' },
+  { id: 'nausea',    iconName: 'nausea',    label: 'Nausea' },
+  { id: 'ibs_d',     iconName: 'ibs_d',     label: 'Diarrhea' },
+  { id: 'ibs_c',     iconName: 'ibs_c',     label: 'Constipation' },
 ];
 
 export const OnboardingSymptoms = ({ navigation }: any) => {
   const { updateOnboardingAnswers, onboardingAnswers } = useAppStore();
   const [selected, setSelected] = useState<string[]>(onboardingAnswers.symptoms || []);
 
-  const toggleSymptom = (id: string) => {
-    setSelected(prev => 
-      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
-    );
+  const toggle = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelected(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
   };
 
   const handleContinue = () => {
@@ -31,40 +32,31 @@ export const OnboardingSymptoms = ({ navigation }: any) => {
   };
 
   return (
-    <Screen padding={true} scroll={true}>
-      <View style={styles.header}>
-        <View style={styles.progressContainer}>
-          <View style={[styles.progressBar, { width: '42%' }]} />
+    <Screen padding={true}>
+      <View style={styles.progressRow}>
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: '42%' }]} />
         </View>
-        <Text variant="caption" style={styles.step}>3 of 7</Text>
+        <Text variant="caption" style={styles.stepText}>3 of 7</Text>
       </View>
 
-      <Text variant="hero" style={styles.title}>
-        What do you{`\n`}experience?
-      </Text>
-      <Text variant="body" style={styles.subtitle}>
-        Select all that apply
-      </Text>
+      <Text variant="hero" style={styles.title}>What do you{'\n'}experience?</Text>
+      <Text variant="body" style={styles.sub}>Select all that apply</Text>
 
+      {/* 2-col toggle grid — Selected = coral fill per plan */}
       <View style={styles.grid}>
-        {SYMPTOMS.map((symp) => {
-          const isSelected = selected.includes(symp.id);
+        {SYMPTOMS.map((s) => {
+          const active = selected.includes(s.id);
           return (
             <TouchableOpacity
-              key={symp.id}
-              activeOpacity={0.8}
-              onPress={() => toggleSymptom(symp.id)}
-              style={[
-                styles.card,
-                isSelected && styles.cardSelected
-              ]}
+              key={s.id}
+              activeOpacity={0.75}
+              onPress={() => toggle(s.id)}
+              style={[styles.card, active && styles.cardActive]}
             >
-              <Text variant="title" style={styles.icon}>{symp.icon}</Text>
-              <Text variant="label" style={[
-                styles.label,
-                isSelected && styles.labelSelected
-              ]}>
-                {symp.label}
+              <Icon name={s.iconName} size={40} />
+              <Text variant="label" style={[styles.cardLabel, active && styles.cardLabelActive]}>
+                {s.label}
               </Text>
             </TouchableOpacity>
           );
@@ -72,23 +64,19 @@ export const OnboardingSymptoms = ({ navigation }: any) => {
       </View>
 
       <View style={styles.footer}>
-        <Button 
-          label="Continue →" 
-          onPress={handleContinue} 
-          disabled={selected.length === 0}
-        />
+        <Button label="Continue →" onPress={handleContinue} disabled={selected.length === 0} />
       </View>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  header: {
+  progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: theme.spacing.xxxl,
   },
-  progressContainer: {
+  progressTrack: {
     flex: 1,
     height: 4,
     backgroundColor: theme.colors.surface,
@@ -96,51 +84,35 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.md,
     overflow: 'hidden',
   },
-  progressBar: {
+  progressFill: {
     height: '100%',
     backgroundColor: theme.colors.coral,
     borderRadius: theme.radii.full,
   },
-  step: {
-    color: theme.colors.textSecondary,
-  },
-  title: {
-    marginBottom: theme.spacing.xs,
-  },
-  subtitle: {
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.xxxl,
-  },
+  stepText: { color: theme.colors.textSecondary },
+  title: { marginBottom: theme.spacing.sm },
+  sub: { color: theme.colors.textSecondary, marginBottom: theme.spacing.xxxl },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.giant,
+    gap: theme.spacing.md,
+    flex: 1,
   },
   card: {
-    width: '48%',
+    width: '47%',
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radii.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
+    padding: theme.spacing.xl,
     alignItems: 'center',
+    gap: theme.spacing.md,
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  cardSelected: {
-    backgroundColor: theme.colors.surfaceHigh,
+  cardActive: {
+    backgroundColor: theme.colors.coral,
     borderColor: theme.colors.coral,
   },
-  icon: {
-    marginBottom: theme.spacing.sm,
-  },
-  label: {
-    color: theme.colors.textSecondary,
-  },
-  labelSelected: {
-    color: theme.colors.textPrimary,
-  },
-  footer: {
-    marginTop: 'auto',
-  },
+  cardLabel: { color: theme.colors.textSecondary },
+  cardLabelActive: { color: '#fff' },
+  footer: { paddingTop: theme.spacing.xl, paddingBottom: theme.spacing.sm },
 });

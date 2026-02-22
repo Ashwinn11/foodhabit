@@ -1,21 +1,28 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
 import { Button } from '../components/Button';
+import { Icon } from '../components/Icon';
 import { theme } from '../theme/theme';
 import { useAppStore } from '../store/useAppStore';
 
 const CONDITIONS = [
-  { id: 'ibs_d', icon: '💧', label: 'Mostly diarrhea' },
-  { id: 'ibs_c', icon: '🧱', label: 'Mostly constipated' },
-  { id: 'bloating', icon: '🫧', label: 'Bloating & gas' },
-  { id: 'unsure', icon: '🤷', label: 'Not sure yet' }
+  { id: 'ibs_d',    iconName: 'ibs_d',    label: 'Mostly diarrhea' },
+  { id: 'ibs_c',    iconName: 'ibs_c',    label: 'Mostly constipated' },
+  { id: 'bloating', iconName: 'bloating', label: 'Bloating & gas' },
+  { id: 'unsure',   iconName: 'unsure',   label: 'Not sure yet' },
 ];
 
 export const OnboardingCondition = ({ navigation }: any) => {
   const { updateOnboardingAnswers, onboardingAnswers } = useAppStore();
   const [selected, setSelected] = useState<string>(onboardingAnswers.condition || '');
+
+  const handleSelect = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelected(id);
+  };
 
   const handleContinue = () => {
     if (!selected) return;
@@ -25,36 +32,28 @@ export const OnboardingCondition = ({ navigation }: any) => {
 
   return (
     <Screen padding={true}>
-      <View style={styles.header}>
-        <View style={styles.progressContainer}>
-          <View style={[styles.progressBar, { width: '28%' }]} />
+      <View style={styles.progressRow}>
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: '28%' }]} />
         </View>
-        <Text variant="caption" style={styles.step}>2 of 7</Text>
+        <Text variant="caption" style={styles.stepText}>2 of 7</Text>
       </View>
 
-      <Text variant="hero" style={styles.title}>
-        What best describes{`\n`}your gut?
-      </Text>
+      <Text variant="hero" style={styles.title}>What best describes{'\n'}your gut?</Text>
 
-      <View style={styles.optionsContainer}>
-        {CONDITIONS.map((cond) => {
-          const isSelected = selected === cond.id;
+      <View style={styles.options}>
+        {CONDITIONS.map((c) => {
+          const active = selected === c.id;
           return (
             <TouchableOpacity
-              key={cond.id}
-              activeOpacity={0.8}
-              onPress={() => setSelected(cond.id)}
-              style={[
-                styles.optionCard,
-                isSelected && styles.optionCardSelected
-              ]}
+              key={c.id}
+              activeOpacity={0.75}
+              onPress={() => handleSelect(c.id)}
+              style={[styles.card, active && styles.cardActive]}
             >
-              <Text variant="title" style={styles.optionIcon}>{cond.icon}</Text>
-              <Text variant="body" style={[
-                styles.optionLabel,
-                isSelected && styles.optionLabelSelected
-              ]}>
-                {cond.label}
+              <Icon name={c.iconName} size={36} />
+              <Text variant="body" style={[styles.cardLabel, active && styles.cardLabelActive]}>
+                {c.label}
               </Text>
             </TouchableOpacity>
           );
@@ -62,23 +61,19 @@ export const OnboardingCondition = ({ navigation }: any) => {
       </View>
 
       <View style={styles.footer}>
-        <Button 
-          label="Continue →" 
-          onPress={handleContinue} 
-          disabled={!selected}
-        />
+        <Button label="Continue →" onPress={handleContinue} disabled={!selected} />
       </View>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  header: {
+  progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: theme.spacing.xxxl,
   },
-  progressContainer: {
+  progressTrack: {
     flex: 1,
     height: 4,
     backgroundColor: theme.colors.surface,
@@ -86,45 +81,29 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.md,
     overflow: 'hidden',
   },
-  progressBar: {
+  progressFill: {
     height: '100%',
     backgroundColor: theme.colors.coral,
     borderRadius: theme.radii.full,
   },
-  step: {
-    color: theme.colors.textSecondary,
-  },
-  title: {
-    marginBottom: theme.spacing.xxxl,
-  },
-  optionsContainer: {
-    flex: 1,
-  },
-  optionCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radii.lg,
-    padding: theme.spacing.xxl,
-    marginBottom: theme.spacing.lg,
+  stepText: { color: theme.colors.textSecondary },
+  title: { marginBottom: theme.spacing.xxxl },
+  options: { flex: 1, gap: theme.spacing.md },
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: theme.spacing.lg,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radii.lg,
+    padding: theme.spacing.xl,
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  optionCardSelected: {
+  cardActive: {
+    backgroundColor: 'rgba(255,107,107,0.10)',
     borderColor: theme.colors.coral,
-    backgroundColor: theme.colors.surfaceHigh,
   },
-  optionIcon: {
-    marginRight: theme.spacing.lg,
-  },
-  optionLabel: {
-    color: theme.colors.textSecondary,
-    fontWeight: '500',
-  },
-  optionLabelSelected: {
-    color: theme.colors.textPrimary,
-  },
-  footer: {
-    paddingBottom: theme.spacing.xl,
-  },
+  cardLabel: { color: theme.colors.textSecondary, flex: 1 },
+  cardLabelActive: { color: theme.colors.textPrimary },
+  footer: { paddingTop: theme.spacing.xl, paddingBottom: theme.spacing.sm },
 });
