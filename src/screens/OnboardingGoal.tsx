@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, FadeInDown } from 'react-native-reanimated';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
 import { Button } from '../components/Button';
-import { Icon } from '../components/Icon';
 import { theme } from '../theme/theme';
 import { useAppStore } from '../store/useAppStore';
 
@@ -14,10 +13,10 @@ const TRACK_W   = SCREEN_W - theme.spacing.xl * 2 - 56; // minus padding + step 
 const PROGRESS  = TRACK_W * 0.14;
 
 const GOALS = [
-  { id: 'triggers',   iconName: 'triggers',   color: theme.colors.amber, label: 'Identify my triggers',  sub: "Find what's secretly wrecking you" },
-  { id: 'bloating',   iconName: 'bloating',   color: theme.colors.coral, label: 'Reduce bloating',       sub: 'End the daily discomfort' },
-  { id: 'fear',       iconName: 'fear',        color: theme.colors.lime,  label: 'Eat without fear',      sub: 'Reclaim your social life' },
-  { id: 'understand', iconName: 'understand', color: theme.colors.lime,  label: 'Understand my gut',     sub: "Know your body's signals" },
+  { id: 'triggers',   label: 'Identify my triggers',  sub: "Find what's secretly wrecking you" },
+  { id: 'bloating',   label: 'Reduce bloating',       sub: 'End the daily discomfort' },
+  { id: 'fear',       label: 'Eat without fear',      sub: 'Reclaim your social life' },
+  { id: 'understand', label: 'Understand my gut',     sub: "Know your body's signals" },
 ];
 
 export const OnboardingGoal = ({ navigation }: any) => {
@@ -40,7 +39,7 @@ export const OnboardingGoal = ({ navigation }: any) => {
   };
 
   return (
-    <Screen padding>
+    <Screen padding scroll>
       {/* Progress */}
       <View style={styles.progressRow}>
         <View style={styles.progressTrack}>
@@ -50,34 +49,38 @@ export const OnboardingGoal = ({ navigation }: any) => {
       </View>
 
       {/* Header */}
-      <Text variant="hero" style={styles.title}>What's{'\n'}holding{'\n'}you back?</Text>
-      <Text variant="body" style={styles.sub}>We'll build your entire gut profile around this.</Text>
+      <Animated.View entering={FadeInDown.duration(600).springify()}>
+        <Text variant="hero" style={[styles.title, { lineHeight: 64 }]}>
+           What's <Text style={{ color: theme.colors.coral }}>holding</Text>{'\n'}you back?
+        </Text>
+        <Text variant="body" style={styles.sub}>We'll build your profile around this.</Text>
+      </Animated.View>
 
       {/* Options */}
       <View style={styles.options}>
-        {GOALS.map((g) => {
+        {GOALS.map((g, index) => {
           const active = selected === g.id;
           return (
-            <TouchableOpacity
-              key={g.id}
-              activeOpacity={0.8}
-              onPress={() => handleSelect(g.id)}
-              style={[styles.card, active && styles.cardActive]}
-            >
-              <Icon name={g.iconName} size={26} color={active ? g.color : theme.colors.textSecondary} />
-              <View style={styles.cardText}>
-                <Text variant="label" style={[styles.cardLabel, active && { color: theme.colors.textPrimary }]}>
-                  {g.label}
-                </Text>
-                <Text variant="caption" style={[styles.cardSub, active && { color: theme.colors.textSecondary }]}>
-                  {g.sub}
-                </Text>
-              </View>
-              {/* Radio indicator */}
-              <View style={[styles.radio, active && styles.radioActive]}>
-                {active && <View style={styles.radioDot} />}
-              </View>
-            </TouchableOpacity>
+            <Animated.View key={g.id} entering={FadeInDown.delay(100 + index * 100).duration(500).springify()}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => handleSelect(g.id)}
+                style={[styles.card, active && styles.cardActive]}
+              >
+                <View style={styles.cardText}>
+                  <Text variant="label" style={[styles.cardLabel, active && { color: theme.colors.textPrimary }]}>
+                    {g.label}
+                  </Text>
+                  <Text variant="caption" style={[styles.cardSub, active && { color: theme.colors.textSecondary }]}>
+                    {g.sub}
+                  </Text>
+                </View>
+                {/* Minimalist Radio indicator */}
+                <View style={[styles.radio, active && styles.radioActive]}>
+                  {active && <View style={styles.radioDot} />}
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
           );
         })}
       </View>
@@ -116,24 +119,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.md,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(21, 25, 22, 0.45)', // very subtle frosted glass
     borderRadius: theme.radii.xl,
     padding: theme.spacing.lg,
-    minHeight: 72,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.06)',
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
+    minHeight: 76, 
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   cardActive: {
-    backgroundColor: 'rgba(224,93,76,0.08)',
+    backgroundColor: 'rgba(30, 36, 31, 0.65)',
     borderColor: theme.colors.coral,
-    shadowColor: theme.colors.coral,
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
+    ...theme.shadows.minimal,
   },
   cardText: { flex: 1 },
   cardLabel: {

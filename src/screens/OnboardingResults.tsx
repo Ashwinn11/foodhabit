@@ -7,12 +7,14 @@ import { Button } from '../components/Button';
 import { Chip } from '../components/Chip';
 import { theme } from '../theme/theme';
 import { AnalysisResult } from '../services/fodmapService';
+import { useAppStore } from '../store/useAppStore';
 
 const SCREEN_W = Dimensions.get('window').width;
 const TRACK_W  = SCREEN_W - theme.spacing.xl * 2 - 56;
 const PROGRESS = TRACK_W * 0.71;
 
 export const OnboardingResults = ({ route, navigation }: any) => {
+  const { updateOnboardingAnswers } = useAppStore();
   const analysisData: AnalysisResult[] = route.params?.analysisData || [];
   const avoidFoods   = analysisData.filter(r => r.level === 'avoid' || r.level === 'caution');
   const safeFoods    = analysisData.filter(r => r.level === 'safe');
@@ -72,7 +74,13 @@ export const OnboardingResults = ({ route, navigation }: any) => {
       </View>
 
       <View style={styles.footer}>
-        <Button label="Looks right" onPress={() => navigation.navigate('OnboardingSocialProof')} />
+        <Button
+          label="Looks right"
+          onPress={() => {
+            updateOnboardingAnswers({ safeFoods: displaySafe, avoidFoods: displayAvoid });
+            navigation.navigate('OnboardingSocialProof');
+          }}
+        />
       </View>
     </Screen>
   );

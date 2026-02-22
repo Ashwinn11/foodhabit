@@ -171,12 +171,57 @@ export default function App() {
     try {
       const { data } = await supabase
         .from('users')
-        .select('onboarding_data')
+        .select('onboarding_completed, onboarding_data')
         .eq('id', userId)
         .maybeSingle();
-      
-      if (data?.onboarding_data && Object.keys(data.onboarding_data).length > 0) {
-        updateOnboardingAnswers(data.onboarding_data);
+
+      if (data?.onboarding_completed && data?.onboarding_data) {
+        let answers = data.onboarding_data;
+        let dirty = false;
+
+        // Migration A: derive avoidFoods from knownTriggers if missing.
+        if (!answers.avoidFoods?.length && answers.knownTriggers?.length) {
+          answers = { ...answers, avoidFoods: answers.knownTriggers };
+          dirty = true;
+        }
+
+        // Migration B: derive safeFoods via AI (same call as OnboardingTriggers).
+        // _sfDerived flag ensures this only ever runs once per user.
+        if (!answers._sfDerived && answers.knownTriggers?.length) {
+          try {
+            const testFoods = [
+              ...answers.knownTriggers,
+              'Rice', 'Chicken breast', 'Oatmeal', 'Apples', 'Bread',
+            ];
+            const { data: fn } = await supabase.functions.invoke('analyze-food', {
+              body: {
+                foods: testFoods,
+                userCondition: answers.condition ?? '',
+                userSymptoms: (answers.symptoms ?? []).join(', '),
+                userTriggers: answers.knownTriggers.join(', '),
+              },
+            });
+            const safe = (fn?.results ?? [])
+              .filter((r: any) => r.level === 'safe')
+              .map((r: any) => r.normalizedName as string);
+            answers = { ...answers, safeFoods: safe, _sfDerived: true };
+          } catch {
+            // AI unavailable — safe list stays empty; user discovers via scanning
+            answers = { ...answers, _sfDerived: true };
+          }
+          dirty = true;
+        }
+
+        if (dirty) {
+          await supabase
+            .from('users')
+            .update({ onboarding_data: answers })
+            .eq('id', userId);
+        }
+
+        // Strip internal migration flags before putting data into the typed store
+        const { _sfDerived: _ignored, ...storeAnswers } = answers;
+        updateOnboardingAnswers(storeAnswers);
         setOnboardingCompleted(true);
       }
     } catch (e) {

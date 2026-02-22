@@ -25,10 +25,10 @@ const GoogleIcon = () => (
 );
 
 const AppleIcon = () => (
-  <Svg width={15} height={18} viewBox="0 0 814 1000">
+  <Svg width={18} height={22} viewBox="0 0 384 512">
     <Path
       fill={theme.colors.bg}
-      d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 376.7 0 248.7 0 122.7c0-70.5 27.4-141.8 77.7-188.6 50.3-46.8 126.9-74.6 205.8-74.6 79.4 0 152 27.4 203 27.4s123.7-27.4 203-27.4c57.5 0 116.4 22.1 162.2 61zm-234.5-161.5c3.9-48.1-13.7-96.8-45.3-130.2-31.6-33.3-78.6-57.5-125.6-57.5-1.9 0-3.9.1-5.8.2 1.9 49.4 21.4 97.4 53 130.8 31.5 33.3 78.8 57.4 123.7 56.7z"
+      d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"
     />
   </Svg>
 );
@@ -123,14 +123,12 @@ export const AuthScreen = () => {
       </Animated.View>
 
       {/* Hero — owns the vertical space */}
-      <Animated.View entering={FadeInDown.delay(500).duration(900).springify()} style={styles.hero}>
+      <Animated.View entering={FadeInDown.delay(300).duration(900).springify()} style={styles.hero}>
         <Text variant="hero" style={styles.headline}>
-          Eat{'\n'}
-          <Text style={styles.accentWord}>without</Text>{'\n'}
-          fear.
+          Eat freely.
         </Text>
         <Text variant="body" style={styles.sub}>
-          Your gut has a pattern. We decode it — so you know exactly what's safe before every bite.
+          Your body leaves clues. We decode them, so you know exactly what's safe before every bite.
         </Text>
       </Animated.View>
 
@@ -193,19 +191,15 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xl,
   },
   headline: {
-    marginBottom: theme.spacing.xl,
-    color: theme.colors.textPrimary,
-  },
-  accentWord: {
-    color: theme.colors.coral,
-    fontFamily: 'PlayfairDisplay_400Regular_Italic',
-    fontSize: 44,
-    lineHeight: 52,
+    marginBottom: theme.spacing.lg, // slightly tighter spacing
+    lineHeight: 64, // Let Playfair breathe and avoid clipping
   },
   sub: {
     color: theme.colors.textSecondary,
-    lineHeight: 26,
-    maxWidth: 300,
+    lineHeight: 28, // slightly taller line height for elegance
+    maxWidth: 290,
+    fontFamily: 'Inter_400Regular',
+    letterSpacing: 0.2,
   },
   proof: {
     flexDirection: 'row',

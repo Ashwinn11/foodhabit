@@ -41,20 +41,18 @@ const styles = StyleSheet.create({
   card: {
     padding: theme.spacing.lg,
     borderRadius: theme.radii.lg,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(21, 25, 22, 0.45)', // very subtle, letting Pine bleed through
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   elevated: {
-    backgroundColor: theme.colors.surfaceHigh,
-    shadowColor: '#000',
-    shadowOffset: { width: 3, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
-    elevation: 8,
+    backgroundColor: 'rgba(30, 36, 31, 0.65)', // slightly brighter frosted glass
+    ...theme.shadows.minimal,
     borderTopWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 0,
     borderBottomWidth: 0,
-    borderTopColor: 'rgba(255,255,255,0.08)',
-    borderLeftColor: 'rgba(255,255,255,0.05)',
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.06)',
   },
 });

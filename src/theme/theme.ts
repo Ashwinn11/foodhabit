@@ -29,5 +29,21 @@ export const theme = {
         lg: 16,
         xl: 24,
         full: 9999,
+    },
+    shadows: {
+        minimal: {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.25,
+            shadowRadius: 12,
+            elevation: 4,
+        },
+        glow: {
+            shadowColor: '#D4F870', // Lime tint
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.15,
+            shadowRadius: 15,
+            elevation: 4,
+        }
     }
 };

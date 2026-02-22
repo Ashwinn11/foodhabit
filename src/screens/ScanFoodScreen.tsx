@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,16 +8,25 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withSequence,
+  Easing,
+} from 'react-native-reanimated';
 import { ScanLine, Camera, Image as ImageIcon, Check, Crown } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
-import { Chip } from '../components/Chip';
 import { theme } from '../theme/theme';
 import { fodmapService, AnalysisResult } from '../services/fodmapService';
 import { gutService } from '../services/gutService';
 import { useAppStore } from '../store/useAppStore';
+
+// ── Constants ──────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<string, string> = {
   safe:    theme.colors.lime,
@@ -30,6 +39,123 @@ const STATUS_LABEL: Record<string, string> = {
   avoid:   'Avoid',
 };
 
+const SCAN_PHASES = [
+  { title: 'Reading your menu…',       sub: 'Identifying every item' },
+  { title: 'Analysing ingredients…',   sub: 'Checking FODMAP levels' },
+  { title: 'Matching your profile…',   sub: 'Personalising results' },
+  { title: 'Almost ready…',            sub: 'Calculating gut impact' },
+];
+
+// ── ScanningLoader ─────────────────────────────────────────────────────────
+
+const ScanningLoader = () => {
+  const [phaseIdx, setPhaseIdx] = useState(0);
+  const textOpacity = useSharedValue(1);
+
+  // Cycle text every 2.2 s
+  useEffect(() => {
+    const id = setInterval(() => {
+      textOpacity.value = withSequence(
+        withTiming(0, { duration: 250 }),
+        withTiming(1, { duration: 250 }),
+      );
+      setPhaseIdx(i => (i + 1) % SCAN_PHASES.length);
+    }, 2200);
+    return () => clearInterval(id);
+  }, []);
+
+  // Three expanding rings at different speeds
+  const r1Scale = useSharedValue(1);
+  const r2Scale = useSharedValue(1);
+  const r3Scale = useSharedValue(1);
+  const r1Opacity = useSharedValue(0.55);
+  const r2Opacity = useSharedValue(0.35);
+  const r3Opacity = useSharedValue(0.18);
+
+  useEffect(() => {
+    const easing = Easing.out(Easing.ease);
+    r1Scale.value = withRepeat(withTiming(1.55, { duration: 1400, easing }), -1, false);
+    r2Scale.value = withRepeat(withTiming(1.9,  { duration: 1900, easing }), -1, false);
+    r3Scale.value = withRepeat(withTiming(2.3,  { duration: 2400, easing }), -1, false);
+    r1Opacity.value = withRepeat(withSequence(withTiming(0.55, { duration: 0 }), withTiming(0, { duration: 1400 })), -1, false);
+    r2Opacity.value = withRepeat(withSequence(withTiming(0.35, { duration: 0 }), withTiming(0, { duration: 1900 })), -1, false);
+    r3Opacity.value = withRepeat(withSequence(withTiming(0.18, { duration: 0 }), withTiming(0, { duration: 2400 })), -1, false);
+  }, []);
+
+  const s1 = useAnimatedStyle(() => ({ transform: [{ scale: r1Scale.value }], opacity: r1Opacity.value }));
+  const s2 = useAnimatedStyle(() => ({ transform: [{ scale: r2Scale.value }], opacity: r2Opacity.value }));
+  const s3 = useAnimatedStyle(() => ({ transform: [{ scale: r3Scale.value }], opacity: r3Opacity.value }));
+  const textStyle = useAnimatedStyle(() => ({ opacity: textOpacity.value }));
+
+  const phase = SCAN_PHASES[phaseIdx];
+
+  return (
+    <View style={loaderStyles.container}>
+      {/* Radar rings */}
+      <View style={loaderStyles.ringContainer}>
+        <Animated.View style={[loaderStyles.ring, s3]} />
+        <Animated.View style={[loaderStyles.ring, s2]} />
+        <Animated.View style={[loaderStyles.ring, s1]} />
+        {/* Core dot */}
+        <View style={loaderStyles.core}>
+          <ScanLine color={theme.colors.lime} size={22} strokeWidth={1.5} />
+        </View>
+      </View>
+
+      {/* Cycling text */}
+      <Animated.View style={[loaderStyles.textBlock, textStyle]}>
+        <Text style={loaderStyles.phaseTitle}>{phase.title}</Text>
+        <Text style={loaderStyles.phaseSub}>{phase.sub}</Text>
+      </Animated.View>
+    </View>
+  );
+};
+
+const loaderStyles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xxxl * 1.5,
+    gap: theme.spacing.xxxl,
+  },
+  ringContainer: {
+    width: 96,
+    height: 96,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ring: {
+    position: 'absolute',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 1.5,
+    borderColor: theme.colors.lime,
+  },
+  core: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(212,248,112,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(212,248,112,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textBlock: { alignItems: 'center', gap: theme.spacing.xs },
+  phaseTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    color: theme.colors.textPrimary,
+  },
+  phaseSub: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+  },
+});
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
 function findHealthiest(results: AnalysisResult[]): AnalysisResult | null {
   if (results.length <= 1) return null;
   return (
@@ -40,24 +166,81 @@ function findHealthiest(results: AnalysisResult[]): AnalysisResult | null {
 }
 
 type Mode  = 'text' | 'camera';
-type Stage = 'input' | 'extracting' | 'confirm' | 'analyzing' | 'results';
+type Stage = 'input' | 'scanning' | 'results';
+
+// ── ScanFoodScreen ─────────────────────────────────────────────────────────
 
 export const ScanFoodScreen = () => {
   const { setRecentScanAvoidFoods } = useAppStore();
 
-  const [mode, setMode]                     = useState<Mode>('text');
-  const [textInput, setTextInput]           = useState('');
-  const [stage, setStage]                   = useState<Stage>('input');
-  const [imageUri, setImageUri]             = useState<string | null>(null);
-  const [imageBase64, setImageBase64]       = useState<string | null>(null);
-  const [extractedFoods, setExtractedFoods] = useState<string[]>([]);
-  const [selectedExtracted, setSelectedExtracted] = useState<string[]>([]);
-  const [results, setResults]               = useState<AnalysisResult[]>([]);
-  const [error, setError]                   = useState<string | null>(null);
-  const [loggedFoods, setLoggedFoods]       = useState<string[]>([]);
-  const [mealLogged, setMealLogged]         = useState(false);
+  const [mode, setMode]       = useState<Mode>('text');
+  const [textInput, setTextInput] = useState('');
+  const [stage, setStage]     = useState<Stage>('input');
+  const [results, setResults] = useState<AnalysisResult[]>([]);
+  const [error, setError]     = useState<string | null>(null);
+  const [loggedFoods, setLoggedFoods] = useState<string[]>([]);
+  const [mealLogged, setMealLogged]   = useState(false);
 
-  // ── Input handlers ───────────────────────────────────────────────────────
+  // ── Shared result/reset ───────────────────────────────────────────────────
+
+  const applyResults = (res: AnalysisResult[]) => {
+    setResults(res);
+    setRecentScanAvoidFoods(res.filter(r => r.level === 'avoid').map(r => r.normalizedName));
+    setStage('results');
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const resetAll = () => {
+    setResults([]);
+    setError(null);
+    setLoggedFoods([]);
+    setMealLogged(false);
+    setTextInput('');
+    setStage('input');
+  };
+
+  const switchMode = (m: Mode) => {
+    setMode(m);
+    resetAll();
+  };
+
+  // ── Text mode ─────────────────────────────────────────────────────────────
+
+  const analyzeText = async () => {
+    const foods = textInput.split(',').map(f => f.trim()).filter(Boolean);
+    if (!foods.length) return;
+    setError(null);
+    setStage('scanning');
+    try {
+      const res = await fodmapService.analyzeFoods(foods) as AnalysisResult[];
+      applyResults(res);
+    } catch {
+      setError('Could not analyze foods. Check your connection and try again.');
+      setStage('input');
+    }
+  };
+
+  // ── Camera mode: extract + analyze in one shot ───────────────────────────
+
+  const scanAndAnalyze = async (base64: string) => {
+    setStage('scanning');
+    setError(null);
+    try {
+      // Step 1: extract food names from image
+      const foods = await fodmapService.analyzeFoods([], base64, true) as string[];
+      if (!foods.length) {
+        setError("Couldn't find any food items. Try a clearer photo of a menu or plate.");
+        setStage('input');
+        return;
+      }
+      // Step 2: immediately analyze — no confirm step
+      const res = await fodmapService.analyzeFoods(foods) as AnalysisResult[];
+      applyResults(res);
+    } catch {
+      setError('Could not read menu. Try a clearer photo.');
+      setStage('input');
+    }
+  };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -69,10 +252,9 @@ export const ScanFoodScreen = () => {
       base64: true, quality: 0.7, mediaTypes: 'images',
     });
     if (!result.canceled && result.assets[0]) {
-      setImageUri(result.assets[0].uri);
-      setImageBase64(result.assets[0].base64 ?? null);
-      setStage('input');
-      resetResults();
+      resetAll();
+      const b64 = result.assets[0].base64 ?? null;
+      if (b64) scanAndAnalyze(b64);
     }
   };
 
@@ -84,89 +266,13 @@ export const ScanFoodScreen = () => {
     }
     const result = await ImagePicker.launchCameraAsync({ base64: true, quality: 0.7 });
     if (!result.canceled && result.assets[0]) {
-      setImageUri(result.assets[0].uri);
-      setImageBase64(result.assets[0].base64 ?? null);
-      setStage('input');
-      resetResults();
+      resetAll();
+      const b64 = result.assets[0].base64 ?? null;
+      if (b64) scanAndAnalyze(b64);
     }
   };
 
-  const resetResults = () => {
-    setResults([]);
-    setError(null);
-    setExtractedFoods([]);
-    setSelectedExtracted([]);
-    setLoggedFoods([]);
-    setMealLogged(false);
-  };
-
-  const switchMode = (m: Mode) => {
-    setMode(m);
-    setStage('input');
-    setTextInput('');
-    setImageUri(null);
-    setImageBase64(null);
-    resetResults();
-  };
-
-  // ── Text mode ────────────────────────────────────────────────────────────
-
-  const analyzeText = async () => {
-    const foods = textInput.split(',').map(f => f.trim()).filter(Boolean);
-    if (!foods.length) return;
-    setError(null);
-    setStage('analyzing');
-    try {
-      const res = await fodmapService.analyzeFoods(foods) as AnalysisResult[];
-      setResults(res);
-      setRecentScanAvoidFoods(res.filter(r => r.level === 'avoid').map(r => r.normalizedName));
-      setStage('results');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      setError('Could not analyze foods. Check your connection and try again.');
-      setStage('input');
-    }
-  };
-
-  // ── Camera mode (two-step) ───────────────────────────────────────────────
-
-  const extractFromImage = async () => {
-    if (!imageBase64) return;
-    setStage('extracting');
-    setError(null);
-    try {
-      const foods = await fodmapService.analyzeFoods([], imageBase64, true) as string[];
-      setExtractedFoods(foods);
-      setSelectedExtracted(foods);
-      setStage('confirm');
-    } catch {
-      setError('Could not read foods from image. Try a clearer photo.');
-      setStage('input');
-    }
-  };
-
-  const analyzeExtracted = async () => {
-    if (!selectedExtracted.length) return;
-    setStage('analyzing');
-    setError(null);
-    try {
-      const res = await fodmapService.analyzeFoods(selectedExtracted) as AnalysisResult[];
-      setResults(res);
-      setRecentScanAvoidFoods(res.filter(r => r.level === 'avoid').map(r => r.normalizedName));
-      setStage('results');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      setError('Could not analyze foods. Try again.');
-      setStage('input');
-    }
-  };
-
-  const toggleExtracted = (food: string) =>
-    setSelectedExtracted(prev =>
-      prev.includes(food) ? prev.filter(f => f !== food) : [...prev, food]
-    );
-
-  // ── Meal logging ─────────────────────────────────────────────────────────
+  // ── Meal logging ──────────────────────────────────────────────────────────
 
   const toggleLogFood = (name: string) =>
     setLoggedFoods(prev =>
@@ -184,10 +290,9 @@ export const ScanFoodScreen = () => {
     }
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // ── Result card ───────────────────────────────────────────────────────────
 
-  const healthiest  = findHealthiest(results);
-  const isLoading   = stage === 'analyzing' || stage === 'extracting';
+  const healthiest = findHealthiest(results);
 
   const renderResultCard = (item: AnalysisResult, index: number) => {
     const color        = STATUS_COLOR[item.level];
@@ -226,28 +331,34 @@ export const ScanFoodScreen = () => {
     );
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
     <Screen padding scroll>
-      <Text variant="title" style={styles.title}>Scan Food</Text>
+      <Text variant="hero" style={[styles.title, { lineHeight: 64 }]}>
+        Scan Food.
+      </Text>
 
-      {/* Mode switcher */}
-      <View style={styles.modeSwitcher}>
-        {(['text', 'camera'] as Mode[]).map(m => (
-          <TouchableOpacity
-            key={m}
-            onPress={() => switchMode(m)}
-            style={[styles.modeTab, mode === m && styles.modeTabActive]}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.modeTabLabel, mode === m && styles.modeTabLabelActive]}>
-              {m === 'text' ? 'Type Foods' : 'Scan Menu'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {/* Mode switcher — hidden while scanning */}
+      {stage !== 'scanning' && (
+        <View style={styles.modeSwitcher}>
+          {(['text', 'camera'] as Mode[]).map(m => (
+            <TouchableOpacity
+              key={m}
+              onPress={() => switchMode(m)}
+              style={[styles.modeTab, mode === m && styles.modeTabActive]}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.modeTabLabel, mode === m && styles.modeTabLabelActive]}>
+                {m === 'text' ? 'Type Foods' : 'Scan Menu'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
-      {/* ── TEXT MODE ── */}
-      {mode === 'text' && (
+      {/* ── TEXT MODE input ── */}
+      {mode === 'text' && stage === 'input' && (
         <View style={styles.section}>
           <View style={styles.textBox}>
             <ScanLine color={theme.colors.textSecondary} size={18} strokeWidth={1.5} />
@@ -261,15 +372,14 @@ export const ScanFoodScreen = () => {
             />
           </View>
           <Button
-            label={stage === 'analyzing' ? 'Analyzing…' : 'Analyze'}
+            label="Analyze"
             onPress={analyzeText}
-            loading={stage === 'analyzing'}
-            disabled={!textInput.trim() || isLoading}
+            disabled={!textInput.trim()}
           />
         </View>
       )}
 
-      {/* ── CAMERA MODE — pick image ── */}
+      {/* ── CAMERA MODE input ── */}
       {mode === 'camera' && stage === 'input' && (
         <View style={styles.section}>
           <View style={styles.cameraRow}>
@@ -284,51 +394,13 @@ export const ScanFoodScreen = () => {
               <Text variant="caption" style={styles.cameraSub}>Pick an existing photo</Text>
             </TouchableOpacity>
           </View>
-          {imageUri && (
-            <Button
-              label="Identify Foods"
-              onPress={extractFromImage}
-              loading={isLoading}
-            />
-          )}
         </View>
       )}
 
-      {/* ── CAMERA MODE — confirm extracted foods ── */}
-      {mode === 'camera' && stage === 'confirm' && (
-        <View style={styles.section}>
-          <Text variant="body" style={styles.confirmCaption}>
-            Found these foods — deselect any you're not eating:
-          </Text>
-          <View style={styles.chipRow}>
-            {extractedFoods.map(f => (
-              <Chip
-                key={f}
-                label={f}
-                selected={selectedExtracted.includes(f)}
-                onPress={() => toggleExtracted(f)}
-              />
-            ))}
-          </View>
-          <Button
-            label={`Analyze ${selectedExtracted.length} Foods`}
-            onPress={analyzeExtracted}
-            disabled={!selectedExtracted.length || isLoading}
-            loading={isLoading}
-          />
-        </View>
-      )}
+      {/* ── SCANNING / loading ── */}
+      {stage === 'scanning' && <ScanningLoader />}
 
-      {/* Loading */}
-      {isLoading && (
-        <Card style={styles.loadingCard}>
-          <Text variant="body" style={{ color: theme.colors.textSecondary, textAlign: 'center' }}>
-            {stage === 'extracting' ? 'Reading your menu…' : 'Checking against your gut profile…'}
-          </Text>
-        </Card>
-      )}
-
-      {/* Error */}
+      {/* ── Error ── */}
       {!!error && (
         <Card style={styles.errorCard}>
           <Text style={styles.errorText}>{error}</Text>
@@ -336,7 +408,7 @@ export const ScanFoodScreen = () => {
       )}
 
       {/* ── RESULTS ── */}
-      {results.length > 0 && (
+      {results.length > 0 && stage === 'results' && (
         <View style={styles.results}>
           {/* Summary counts */}
           <View style={styles.summaryRow}>
@@ -351,6 +423,9 @@ export const ScanFoodScreen = () => {
                 </View>
               );
             })}
+            <TouchableOpacity onPress={resetAll} style={styles.scanAgain} activeOpacity={0.7}>
+              <Text style={styles.scanAgainLabel}>Scan again</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Cards sorted: safe → caution → avoid */}
@@ -387,7 +462,7 @@ export const ScanFoodScreen = () => {
       )}
 
       {/* Empty hint */}
-      {mode === 'text' && stage === 'input' && results.length === 0 && !error && (
+      {mode === 'text' && stage === 'input' && !error && (
         <Text variant="caption" style={styles.emptyHint}>
           Enter one food or a full meal — separate multiple items with commas
         </Text>
@@ -426,7 +501,7 @@ const styles = StyleSheet.create({
 
   textBox: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center', // Changed from flex-start to vertically center icon and text
     gap: theme.spacing.md,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radii.lg,
@@ -437,6 +512,8 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
+    padding: 0,
+    margin: 0,
     color: theme.colors.textPrimary,
     fontFamily: 'Inter_400Regular',
     fontSize: 15,
@@ -446,18 +523,14 @@ const styles = StyleSheet.create({
   cameraRow: { flexDirection: 'row', gap: theme.spacing.md },
   cameraCard: {
     flex: 1,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(21, 25, 22, 0.45)',
     borderRadius: theme.radii.xl,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
     padding: theme.spacing.xl,
     alignItems: 'center',
     gap: theme.spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
+    ...theme.shadows.minimal,
   },
   cameraLabel: {
     fontFamily: 'Inter_500Medium',
@@ -466,35 +539,40 @@ const styles = StyleSheet.create({
   },
   cameraSub: { color: theme.colors.textSecondary, textAlign: 'center', fontSize: 11 },
 
-  confirmCaption: { color: theme.colors.textSecondary },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
-
-  loadingCard: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xxxl,
-    marginTop: theme.spacing.xl,
-  },
   errorCard: {
-    backgroundColor: 'rgba(224,93,76,0.10)',
+    backgroundColor: 'rgba(224, 93, 76, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(224,93,76,0.25)',
+    borderColor: 'rgba(224, 93, 76, 0.15)',
     marginTop: theme.spacing.xl,
   },
   errorText: { color: theme.colors.coral, fontFamily: 'Inter_400Regular', fontSize: 14 },
 
   results: { gap: theme.spacing.md },
 
-  summaryRow: { flexDirection: 'row', gap: theme.spacing.xl, paddingBottom: theme.spacing.sm },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xl,
+    paddingBottom: theme.spacing.sm,
+    flexWrap: 'wrap',
+  },
   summaryItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   summaryDot: { width: 8, height: 8, borderRadius: 4 },
   summaryCount: { fontFamily: 'Inter_700Bold', fontSize: 14 },
   summaryLevel: { color: theme.colors.textSecondary, fontSize: 12, fontFamily: 'Inter_400Regular' },
+  scanAgain: { marginLeft: 'auto' },
+  scanAgainLabel: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    textDecorationLine: 'underline',
+  },
 
   resultCard: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(21, 25, 22, 0.45)',
     borderRadius: theme.radii.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
     borderLeftWidth: 4,
     padding: theme.spacing.lg,
     gap: theme.spacing.sm,
@@ -561,9 +639,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.md,
-    backgroundColor: 'rgba(212,248,112,0.06)',
+    backgroundColor: 'rgba(21, 25, 22, 0.45)',
     borderWidth: 1,
-    borderColor: 'rgba(212,248,112,0.2)',
+    borderColor: 'rgba(212, 248, 112, 0.15)',
+    padding: theme.spacing.lg,
+    borderRadius: theme.radii.lg,
     flexWrap: 'wrap',
   },
   loggedLabel: {

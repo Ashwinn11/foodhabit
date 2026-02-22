@@ -12,7 +12,6 @@ import { Text } from '../components/Text';
 import { Button } from '../components/Button';
 import { Chip } from '../components/Chip';
 import { Card } from '../components/Card';
-import { Icon } from '../components/Icon';
 import { theme } from '../theme/theme';
 import { useAppStore } from '../store/useAppStore';
 import { gutService, TriggerFood } from '../services/gutService';
@@ -148,7 +147,9 @@ export const MyGutScreen = () => {
 
   return (
     <Screen padding scroll>
-      <Text variant="title" style={styles.title}>My Gut</Text>
+      <Text variant="hero" style={[styles.title, { lineHeight: 64 }]}>
+        My Gut.
+      </Text>
 
       {/* ── Confirmed Triggers ── */}
       <View style={styles.section}>
@@ -258,11 +259,7 @@ export const MyGutScreen = () => {
             return (
               <Card key={`log-${i}`} elevated style={styles.timelineCard}>
                 <View style={styles.timelineRow}>
-                  <Icon
-                    name={entry.mood ?? 'neutral'}
-                    size={32}
-                    color={MOOD_COLOR[entry.mood ?? 'neutral'] ?? theme.colors.textSecondary}
-                  />
+                  <View style={[styles.moodDot, { backgroundColor: MOOD_COLOR[entry.mood ?? 'neutral'] ?? theme.colors.textSecondary }]} />
                   <View style={{ flex: 1 }}>
                     <View style={styles.logTopRow}>
                       <Text variant="caption" style={styles.timelineDate}>{formatDate(entry.timestamp)}</Text>
@@ -284,10 +281,10 @@ export const MyGutScreen = () => {
           })
         ) : (
           <View style={styles.emptyState}>
-            <Icon name="unsure" size={56} color={theme.colors.amber} />
-            <Text variant="label" style={styles.emptyTitle}>Nothing logged yet</Text>
+            <View style={styles.emptyCircle} />
+            <Text variant="label" style={styles.emptyTitle}>Awaiting Data</Text>
             <Text variant="body" style={styles.emptyBody}>
-              Scan food, log what you eat, then log how you feel. Over time we'll find your triggers.
+              Log meals and how you feel to build your timeline.
             </Text>
           </View>
         )}
@@ -298,7 +295,9 @@ export const MyGutScreen = () => {
         <View style={styles.overlay}>
           <View style={styles.sheet}>
             <View style={styles.dragHandle} />
-            <Text variant="title" style={styles.sheetTitle}>How did it go?</Text>
+            <Text variant="title" style={styles.sheetTitle}>
+              How did it go?
+            </Text>
 
             {/* Mood */}
             <View style={styles.moodRow}>
@@ -310,7 +309,7 @@ export const MyGutScreen = () => {
                   activeOpacity={0.8}
                 >
                   <View style={{ opacity: mood === m ? 1 : 0.35 }}>
-                    <Icon name={m} size={mood === m ? 56 : 44} color={MOOD_COLOR[m]} />
+                    <View style={[styles.modalMoodDot, { backgroundColor: MOOD_COLOR[m], transform: [{ scale: mood === m ? 1.2 : 1 }] }]} />
                   </View>
                   <Text
                     variant="caption"
@@ -469,8 +468,25 @@ const styles = StyleSheet.create({
 
   // Empty state
   emptyState: { alignItems: 'center', paddingVertical: theme.spacing.giant, gap: theme.spacing.md },
+  emptyCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: theme.spacing.sm,
+  },
   emptyTitle: { color: theme.colors.textPrimary, marginTop: theme.spacing.sm },
-  emptyBody: { color: theme.colors.textSecondary, textAlign: 'center', lineHeight: 24 },
+  emptyBody: { color: theme.colors.textSecondary, textAlign: 'center', lineHeight: 24, paddingHorizontal: theme.spacing.xxxl },
+
+  // Timeline specific additions
+  moodDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginTop: 4,
+    ...theme.shadows.glow,
+  },
 
   // Modal
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
@@ -497,6 +513,7 @@ const styles = StyleSheet.create({
   },
   moodBtn: { alignItems: 'center', gap: theme.spacing.sm, minHeight: 80, justifyContent: 'flex-end' },
   moodBtnLabel: { fontSize: 12, fontFamily: 'Inter_400Regular' },
+  modalMoodDot: { width: 44, height: 44, borderRadius: 22 },
   anyLabel: { color: theme.colors.textSecondary, marginBottom: theme.spacing.md },
   symptomChips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm, marginBottom: theme.spacing.xxxl },
   cancelBtn: { alignItems: 'center', marginTop: theme.spacing.lg, paddingVertical: theme.spacing.md },

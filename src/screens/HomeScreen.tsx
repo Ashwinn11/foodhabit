@@ -10,12 +10,6 @@ import { theme } from '../theme/theme';
 import { useAppStore } from '../store/useAppStore';
 import { supabase } from '../config/supabase';
 
-const SAFE_DEFAULTS_BY_CONDITION: Record<string, string[]> = {
-  ibs_d:    ['White rice', 'Chicken breast', 'Banana', 'Oatmeal'],
-  ibs_c:    ['Cooked oats', 'Papaya', 'Flaxseeds', 'Chicken'],
-  bloating: ['Rice', 'Tofu', 'Spinach', 'Strawberries'],
-  unsure:   ['Rice', 'Chicken', 'Oatmeal', 'Carrots'],
-};
 
 const getTimeOfDay = () => {
   const h = new Date().getHours();
@@ -36,12 +30,13 @@ export const HomeScreen = ({ navigation }: any) => {
     });
   }, []);
 
-  // Real data from store — what they told us during onboarding
-  const avoids = onboardingAnswers.knownTriggers?.length > 0
-    ? onboardingAnswers.knownTriggers
-    : ['Garlic', 'Dairy'];
+  // avoidFoods = AI-confirmed from results screen (new users)
+  //              falls back to knownTriggers (existing users / skip flow)
+  const avoids = onboardingAnswers.avoidFoods?.length > 0
+    ? onboardingAnswers.avoidFoods
+    : onboardingAnswers.knownTriggers ?? [];
 
-  const safePicks = SAFE_DEFAULTS_BY_CONDITION[onboardingAnswers.condition] ?? SAFE_DEFAULTS_BY_CONDITION.unsure;
+  const safePicks = onboardingAnswers.safeFoods ?? [];
 
   const conditionLabel: Record<string, string> = {
     ibs_d: 'IBS-D', ibs_c: 'IBS-C', bloating: 'Bloating', unsure: 'Gut Sensitivity',
@@ -53,7 +48,7 @@ export const HomeScreen = ({ navigation }: any) => {
       {/* Greeting */}
       <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.greetingBlock}>
         <Text variant="caption" style={styles.timeOfDay}>{getTimeOfDay()}</Text>
-        <Text variant="hero" style={styles.name}>
+        <Text variant="hero" style={[styles.name, { lineHeight: 64 }]}>
           {firstName ? `${firstName}.` : 'Welcome.'}
         </Text>
         {condition ? (
@@ -75,19 +70,25 @@ export const HomeScreen = ({ navigation }: any) => {
               <Text variant="caption" style={[styles.sectionLabel, { color: theme.colors.coral }]}>
                 AVOID TODAY
               </Text>
-              <Text style={styles.triggerCount}>{avoids.length} triggers</Text>
+              {avoids.length > 0 && (
+                <Text style={styles.triggerCount}>{avoids.length} triggers</Text>
+              )}
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-              <View style={styles.chipRow}>
-                {avoids.map((item: string, i: number) => (
-                  <Chip
-                    key={i}
-                    status="risky"
-                    label={item.charAt(0).toUpperCase() + item.slice(1)}
-                  />
-                ))}
-              </View>
-            </ScrollView>
+            {avoids.length > 0 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+                <View style={styles.chipRow}>
+                  {avoids.map((item: string, i: number) => (
+                    <Chip
+                      key={i}
+                      status="risky"
+                      label={item.charAt(0).toUpperCase() + item.slice(1)}
+                    />
+                  ))}
+                </View>
+              </ScrollView>
+            ) : (
+              <Text style={styles.safeNote}>No triggers set — tap Scan Food to analyse a meal</Text>
+            )}
           </View>
 
           {/* Divider */}
@@ -102,13 +103,17 @@ export const HomeScreen = ({ navigation }: any) => {
               </Text>
               <Text style={styles.safeNote}>based on your profile</Text>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-              <View style={styles.chipRow}>
-                {safePicks.map((item, i) => (
-                  <Chip key={i} status="safe" label={item} />
-                ))}
-              </View>
-            </ScrollView>
+            {safePicks.length > 0 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
+                <View style={styles.chipRow}>
+                  {safePicks.map((item, i) => (
+                    <Chip key={i} status="safe" label={item} />
+                  ))}
+                </View>
+              </ScrollView>
+            ) : (
+              <Text style={styles.safeNote}>Scan food to discover what's safe for you</Text>
+            )}
           </View>
         </View>
       </Animated.View>
@@ -163,16 +168,12 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   safetyCard: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(21, 25, 22, 0.45)', // very subtle, letting Pine bleed through
     borderRadius: theme.radii.xl,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
     marginBottom: theme.spacing.xxxl,
-    shadowColor: '#000',
-    shadowOffset: { width: 3, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 6,
+    ...theme.shadows.minimal,
   },
   safetySection: {
     padding: theme.spacing.lg,

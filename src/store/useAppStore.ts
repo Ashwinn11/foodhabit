@@ -7,6 +7,8 @@ export interface OnboardingAnswers {
   condition: string;
   symptoms: string[];
   knownTriggers: string[];
+  safeFoods: string[];   // AI-confirmed safe foods from onboarding analysis
+  avoidFoods: string[];  // AI-confirmed avoid foods from onboarding analysis
 }
 
 interface AppState {
@@ -31,6 +33,8 @@ const defaultAnswers: OnboardingAnswers = {
   condition: '',
   symptoms: [],
   knownTriggers: [],
+  safeFoods: [],
+  avoidFoods: [],
 };
 
 export const useAppStore = create<AppState>()(

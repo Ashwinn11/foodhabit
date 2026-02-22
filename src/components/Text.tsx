@@ -41,13 +41,13 @@ const styles = StyleSheet.create({
     fontFamily: 'PlayfairDisplay_400Regular_Italic',
     fontSize: 44,
     letterSpacing: -0.5,
-    lineHeight: 52,
+    lineHeight: 60, // Increased to prevent clipping
   },
   title: {
     fontFamily: 'PlayfairDisplay_600SemiBold',
     fontSize: 28,
     letterSpacing: -0.3,
-    lineHeight: 34,
+    lineHeight: 40, // Increased to prevent clipping
   },
   body: {
     fontFamily: 'Inter_400Regular',

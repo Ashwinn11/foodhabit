@@ -64,15 +64,12 @@ export const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <ActivityIndicator color={textColor} />
       ) : (
-        <>
+        <View style={styles.contentRow}>
           {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
-          <Text
-            style={[styles.label, { color: textColor, textAlign: 'center', flex: leftIcon ? 1 : undefined }]}
-          >
+          <Text style={[styles.label, { color: textColor }]}>
             {label}
           </Text>
-          {leftIcon && <View style={styles.rightSpacer} />}
-        </>
+        </View>
       )}
     </AnimatedPressable>
   );
@@ -80,23 +77,26 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: theme.spacing.lg + 2, // Slightly taller
-    paddingHorizontal: theme.spacing.xxxl,
+    paddingVertical: theme.spacing.lg, // Sleek, reduced height
+    paddingHorizontal: theme.spacing.xxl, // Base horizontal padding
     borderRadius: theme.radii.full,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
   },
-  leftIcon: {
-    marginRight: theme.spacing.md,
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  rightSpacer: {
-    width: 24, // mirrors leftIcon width to keep label optically centered
+  leftIcon: {
+    marginRight: theme.spacing.sm, // slight margin between icon and text
   },
   label: {
     fontFamily: 'Inter_500Medium',
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    fontSize: 13,
+    letterSpacing: 1.5, // Increased letter spacing for sophisticated feel
+    fontSize: 12,       // Pulled down to 12 for elegance
+    textAlign: 'center',
   }
 });

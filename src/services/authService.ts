@@ -10,7 +10,14 @@ export const authService = {
     completeOnboarding: async (answers: any) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("No user logged in");
-        return await supabase.from('users').update({ onboarding_data: answers, updated_at: new Date().toISOString() }).eq('id', user.id);
+        const { error } = await supabase.from('users').upsert({
+            id: user.id,
+            email: user.email,
+            onboarding_completed: true,
+            onboarding_data: answers,
+            updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+        if (error) throw error;
     },
     signOut: async () => supabase.auth.signOut(),
     deleteAccount: async (): Promise<void> => {
