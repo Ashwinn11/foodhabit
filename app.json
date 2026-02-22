@@ -24,11 +24,6 @@
       ],
       "config": {
         "usesNonExemptEncryption": false
-      },
-      "entitlements": {
-        "com.apple.security.application-groups": [
-          "group.com.foodhabit.app"
-        ]
       }
     },
     "web": {
@@ -49,9 +44,7 @@
         }
       ],
       "expo-apple-authentication",
-      "react-native-purchases",
-      "@bacons/apple-targets",
-      "./plugins/withWidgetVersionSync"
+      "react-native-purchases"
     ],
     "extra": {
       "eas": {

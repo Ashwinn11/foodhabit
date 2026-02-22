@@ -1,1 +1,0 @@
-export { SymptomToggle } from './SymptomToggle';
