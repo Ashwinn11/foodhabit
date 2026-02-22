@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { AlertTriangle, Edit3 } from 'lucide-react-native';
+import { AlertTriangle, Edit3, CheckCircle, XCircle, Utensils } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
 import { Button } from '../components/Button';
@@ -15,62 +15,100 @@ import { Card } from '../components/Card';
 import { Icon } from '../components/Icon';
 import { theme } from '../theme/theme';
 import { useAppStore } from '../store/useAppStore';
-import { gutService } from '../services/gutService';
+import { gutService, TriggerFood } from '../services/gutService';
 
 const SYMPTOM_CHIPS = ['Bloating', 'Gas', 'Nausea', 'Cramping', 'Constipation', 'Diarrhea'];
 
-const moodColors: Record<string, string> = {
+const MOOD_COLOR: Record<string, string> = {
   sad:     theme.colors.coral,
   neutral: theme.colors.amber,
   happy:   theme.colors.lime,
 };
-
-const moodLabels: Record<string, string> = {
+const MOOD_LABEL: Record<string, string> = {
   sad:     'Bad',
   neutral: 'Okay',
   happy:   'Good',
 };
 
+const formatDate = (ts: string) => {
+  const d = new Date(ts);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
 export const MyGutScreen = () => {
-  const { onboardingAnswers } = useAppStore();
-  const [logs, setLogs]             = useState<any[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [showLog, setShowLog]       = useState(false);
-  const [mood, setMood]             = useState<'sad' | 'neutral' | 'happy' | null>(null);
-  const [symptoms, setSymptoms]     = useState<string[]>([]);
-  const [submitting, setSubmitting] = useState(false);
+  const { onboardingAnswers, setLearnedTriggers } = useAppStore();
 
-  useEffect(() => { loadLogs(); }, []);
+  const [timeline, setTimeline]           = useState<any[]>([]);
+  const [triggerFoods, setTriggerFoods]   = useState<TriggerFood[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [showLog, setShowLog]             = useState(false);
+  const [mood, setMood]                   = useState<'sad' | 'neutral' | 'happy' | null>(null);
+  const [symptoms, setSymptoms]           = useState<string[]>([]);
+  const [submitting, setSubmitting]       = useState(false);
 
-  const loadLogs = async () => {
+  const loadData = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      setLogs(await gutService.getRecentLogs(5) || []);
-    } catch {
-      // requires auth — silently handle
+      // Run independently so a trigger_foods error never hides logs/meals
+      const [logsResult, mealsResult, triggersResult] = await Promise.allSettled([
+        gutService.getRecentLogs(10),
+        gutService.getRecentMeals(10),
+        gutService.getTriggerFoods(),
+      ]);
+
+      const logsData     = logsResult.status     === 'fulfilled' ? logsResult.value     : [];
+      const mealsData    = mealsResult.status    === 'fulfilled' ? mealsResult.value    : [];
+      const triggersData = triggersResult.status === 'fulfilled' ? triggersResult.value : [];
+
+      if (triggersResult.status === 'rejected') {
+        console.warn('getTriggerFoods failed:', triggersResult.reason);
+      }
+
+      // Merge gut logs + meals into a single chronological timeline
+      const merged = [
+        ...logsData.map((l: any)  => ({ ...l, _type: 'log'  })),
+        ...mealsData.map((m: any) => ({ ...m, _type: 'meal' })),
+      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      setTimeline(merged);
+      setTriggerFoods(triggersData as TriggerFood[]);
+
+      const confirmed = (triggersData as TriggerFood[])
+        .filter(t => t.user_confirmed === true || t.confidence === 'High')
+        .map(t => t.food_name);
+      setLearnedTriggers(confirmed);
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLearnedTriggers]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  // Split triggers into confirmed and suspected
+  const confirmedTriggers = triggerFoods.filter(
+    t => t.user_confirmed === true || t.confidence === 'High'
+  );
+  // Suspected = has evidence (confidence not null) but not yet confirmed/high
+  const suspectedTriggers = triggerFoods.filter(
+    t => t.user_confirmed !== true && t.confidence !== null && t.confidence !== 'High'
+  );
+
+  // All confirmed trigger names including onboarding known triggers
+  const allConfirmedNames = [
+    ...onboardingAnswers.knownTriggers,
+    ...confirmedTriggers.map(t => t.food_name),
+  ].filter((v, i, a) => a.indexOf(v) === i); // dedupe
+
+  // ── Log gut moment ───────────────────────────────────────────────────────
 
   const toggleSymptom = (s: string) =>
     setSymptoms(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
-
-  const handleSave = async () => {
-    if (!mood) return;
-    setSubmitting(true);
-    try {
-      await gutService.logMoment({ mood, symptoms });
-      setShowLog(false);
-      setMood(null);
-      setSymptoms([]);
-      await loadLogs();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const openLog = () => {
     setMood(null);
@@ -78,44 +116,103 @@ export const MyGutScreen = () => {
     setShowLog(true);
   };
 
-  const triggers = onboardingAnswers?.knownTriggers || [];
-
-  const formatDate = (timestamp: string) => {
-    const d = new Date(timestamp);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const handleSave = async () => {
+    if (!mood) return;
+    setSubmitting(true);
+    try {
+      await gutService.logGutMoment({ mood, symptoms });
+      setShowLog(false);
+      setMood(null);
+      setSymptoms([]);
+      await loadData(); // reload — correlation may have added suspected triggers
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  // ── Trigger actions ──────────────────────────────────────────────────────
+
+  const handleConfirm = async (foodName: string) => {
+    await gutService.confirmTrigger(foodName);
+    await loadData();
+  };
+
+  const handleDismiss = async (foodName: string) => {
+    await gutService.dismissTrigger(foodName);
+    await loadData();
+  };
+
+  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
     <Screen padding scroll>
       <Text variant="title" style={styles.title}>My Gut</Text>
 
-      {/* ── Triggers Section ── */}
+      {/* ── Confirmed Triggers ── */}
       <View style={styles.section}>
-        <View style={styles.triggerHeader}>
+        <View style={styles.sectionHeader}>
           <AlertTriangle color={theme.colors.amber} size={18} strokeWidth={2} />
-          <Text style={styles.triggerCountLabel}>
-            {triggers.length} Trigger{triggers.length !== 1 ? 's' : ''}
+          <Text style={styles.sectionHeaderLabel}>
+            {allConfirmedNames.length} Trigger{allConfirmedNames.length !== 1 ? 's' : ''} Found
           </Text>
         </View>
 
-        {triggers.length > 0 ? (
+        {allConfirmedNames.length > 0 ? (
           <View style={styles.chipRow}>
-            {triggers.map((t: string, i: number) => (
-              <Chip
-                key={i}
-                status="risky"
-                label={t.charAt(0).toUpperCase() + t.slice(1)}
-              />
+            {allConfirmedNames.map((name, i) => (
+              <Chip key={i} status="risky" label={name.charAt(0).toUpperCase() + name.slice(1)} />
             ))}
           </View>
         ) : (
-          <Card style={styles.emptyTriggersCard}>
-            <Text variant="body" style={styles.emptyTriggersText}>
-              No triggers yet — complete onboarding to personalize
+          <Card style={styles.emptyCard}>
+            <Text variant="body" style={styles.emptyCardText}>
+              No triggers confirmed yet. Scan food, log meals, and log how you feel — we'll find them for you.
             </Text>
           </Card>
         )}
       </View>
+
+      {/* ── Suspected Triggers ── */}
+      {suspectedTriggers.length > 0 && (
+        <View style={styles.section}>
+          <Text variant="caption" style={styles.suspectedLabel}>Suspected — confirm or dismiss:</Text>
+          {suspectedTriggers.map((t, i) => (
+            <Card key={i} elevated style={styles.suspectedCard}>
+              <View style={styles.suspectedRow}>
+                <View style={[styles.confidenceDot, {
+                  backgroundColor: t.confidence === 'Medium' ? theme.colors.amber : theme.colors.textSecondary
+                }]} />
+                <Text style={styles.suspectedName}>
+                  {t.food_name.charAt(0).toUpperCase() + t.food_name.slice(1)}
+                </Text>
+                <Text style={styles.confidenceLabel}>
+                  bad {t.bad_occurrences}× / good {t.good_occurrences}×
+                </Text>
+              </View>
+              <View style={styles.suspectedActions}>
+                <TouchableOpacity
+                  style={styles.confirmBtn}
+                  onPress={() => handleConfirm(t.food_name)}
+                  activeOpacity={0.8}
+                >
+                  <CheckCircle color={theme.colors.lime} size={16} strokeWidth={2} />
+                  <Text style={[styles.actionLabel, { color: theme.colors.lime }]}>Confirm</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.dismissBtn}
+                  onPress={() => handleDismiss(t.food_name)}
+                  activeOpacity={0.8}
+                >
+                  <XCircle color={theme.colors.textSecondary} size={16} strokeWidth={2} />
+                  <Text style={[styles.actionLabel, { color: theme.colors.textSecondary }]}>Dismiss</Text>
+                </TouchableOpacity>
+              </View>
+            </Card>
+          ))}
+        </View>
+      )}
 
       {/* ── Log Button ── */}
       <View style={styles.logBtnContainer}>
@@ -127,45 +224,70 @@ export const MyGutScreen = () => {
         />
       </View>
 
-      {/* ── Recent Logs Section ── */}
+      {/* ── Recent Logs ── */}
       <View style={styles.section}>
-        <View style={styles.recentRow}>
-          <Text variant="caption" style={styles.recentLabel}>Recent Logs</Text>
+        <View style={styles.dividerRow}>
+          <Text variant="caption" style={styles.dividerLabel}>Recent Logs</Text>
           <View style={styles.divider} />
         </View>
 
         {loading ? (
-          <View style={styles.centeredLoader}>
+          <View style={styles.loader}>
             <ActivityIndicator color={theme.colors.coral} />
           </View>
-        ) : logs.length > 0 ? (
-          logs.map((log, i) => (
-            <Card key={i} elevated style={styles.logCard}>
-              <View style={styles.logTopRow}>
-                <Text variant="caption" style={styles.logDate}>
-                  {formatDate(log.timestamp)}
-                </Text>
-                <Icon
-                  name={log.emoji}
-                  size={28}
-                  color={moodColors[log.emoji] || theme.colors.textSecondary}
-                />
-              </View>
-              {log.symptoms && log.symptoms.length > 0 && (
-                <View style={styles.logChipRow}>
-                  {log.symptoms.map((s: string, j: number) => (
-                    <Chip key={j} label={s} status="neutral" />
-                  ))}
+        ) : timeline.length > 0 ? (
+          timeline.map((entry, i) => {
+            if (entry._type === 'meal') {
+              return (
+                <Card key={`meal-${i}`} style={styles.timelineCard}>
+                  <View style={styles.timelineRow}>
+                    <View style={styles.mealIconWrap}>
+                      <Utensils color={theme.colors.textSecondary} size={16} strokeWidth={1.5} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text variant="caption" style={styles.timelineDate}>{formatDate(entry.timestamp)}</Text>
+                      <Text style={styles.mealFoods} numberOfLines={2}>
+                        {(entry.foods as string[]).join(', ')}
+                      </Text>
+                    </View>
+                  </View>
+                </Card>
+              );
+            }
+            // gut log entry
+            return (
+              <Card key={`log-${i}`} elevated style={styles.timelineCard}>
+                <View style={styles.timelineRow}>
+                  <Icon
+                    name={entry.mood ?? 'neutral'}
+                    size={32}
+                    color={MOOD_COLOR[entry.mood ?? 'neutral'] ?? theme.colors.textSecondary}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.logTopRow}>
+                      <Text variant="caption" style={styles.timelineDate}>{formatDate(entry.timestamp)}</Text>
+                      <Text style={[styles.moodLabel, { color: MOOD_COLOR[entry.mood ?? 'neutral'] }]}>
+                        {MOOD_LABEL[entry.mood ?? 'neutral']}
+                      </Text>
+                    </View>
+                    {entry.tags && entry.tags.length > 0 && (
+                      <View style={styles.logChipRow}>
+                        {entry.tags.map((s: string, j: number) => (
+                          <Chip key={j} label={s} status="neutral" />
+                        ))}
+                      </View>
+                    )}
+                  </View>
                 </View>
-              )}
-            </Card>
-          ))
+              </Card>
+            );
+          })
         ) : (
           <View style={styles.emptyState}>
             <Icon name="unsure" size={56} color={theme.colors.amber} />
-            <Text variant="label" style={styles.emptyStateTitle}>Nothing logged yet.</Text>
-            <Text variant="body" style={styles.emptyStateBody}>
-              Log your first gut moment to start seeing patterns.
+            <Text variant="label" style={styles.emptyTitle}>Nothing logged yet</Text>
+            <Text variant="body" style={styles.emptyBody}>
+              Scan food, log what you eat, then log how you feel. Over time we'll find your triggers.
             </Text>
           </View>
         )}
@@ -175,12 +297,10 @@ export const MyGutScreen = () => {
       <Modal visible={showLog} animationType="slide" transparent>
         <View style={styles.overlay}>
           <View style={styles.sheet}>
-            {/* Drag handle */}
             <View style={styles.dragHandle} />
-
             <Text variant="title" style={styles.sheetTitle}>How did it go?</Text>
 
-            {/* Mood Selector */}
+            {/* Mood */}
             <View style={styles.moodRow}>
               {(['sad', 'neutral', 'happy'] as const).map(m => (
                 <TouchableOpacity
@@ -190,20 +310,13 @@ export const MyGutScreen = () => {
                   activeOpacity={0.8}
                 >
                   <View style={{ opacity: mood === m ? 1 : 0.35 }}>
-                    <Icon
-                      name={m}
-                      size={mood === m ? 56 : 44}
-                      color={moodColors[m]}
-                    />
+                    <Icon name={m} size={mood === m ? 56 : 44} color={MOOD_COLOR[m]} />
                   </View>
                   <Text
                     variant="caption"
-                    style={[
-                      styles.moodBtnLabel,
-                      { color: mood === m ? moodColors[m] : theme.colors.textSecondary },
-                    ]}
+                    style={[styles.moodBtnLabel, { color: mood === m ? MOOD_COLOR[m] : theme.colors.textSecondary }]}
                   >
-                    {moodLabels[m]}
+                    {MOOD_LABEL[m]}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -222,23 +335,10 @@ export const MyGutScreen = () => {
               ))}
             </View>
 
-            {/* Save */}
-            <Button
-              label="Save"
-              onPress={handleSave}
-              loading={submitting}
-              disabled={!mood}
-            />
+            <Button label="Save" onPress={handleSave} loading={submitting} disabled={!mood} />
 
-            {/* Cancel */}
-            <TouchableOpacity
-              style={styles.cancelBtn}
-              onPress={() => setShowLog(false)}
-              activeOpacity={0.7}
-            >
-              <Text variant="label" style={{ color: theme.colors.textSecondary }}>
-                Cancel
-              </Text>
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowLog(false)} activeOpacity={0.7}>
+              <Text variant="label" style={{ color: theme.colors.textSecondary }}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -248,110 +348,132 @@ export const MyGutScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  title: {
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.xxxl,
-  },
-  section: {
-    marginBottom: theme.spacing.xxxl,
-  },
+  title: { marginTop: theme.spacing.lg, marginBottom: theme.spacing.xxxl },
+  section: { marginBottom: theme.spacing.xxxl },
 
-  // Triggers
-  triggerHeader: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
     marginBottom: theme.spacing.md,
   },
-  triggerCountLabel: {
+  sectionHeaderLabel: {
     fontFamily: 'Inter_700Bold',
     fontSize: 14,
     color: theme.colors.textPrimary,
   },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
+  emptyCard: { borderWidth: 1, borderColor: theme.colors.border, borderStyle: 'dashed' },
+  emptyCardText: { color: theme.colors.textSecondary, lineHeight: 22 },
+
+  // Suspected triggers
+  suspectedLabel: { color: theme.colors.textSecondary, marginBottom: theme.spacing.md },
+  suspectedCard: {
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(245,201,122,0.2)',
+    gap: theme.spacing.md,
   },
-  emptyTriggersCard: {
+  suspectedRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+  confidenceDot: { width: 8, height: 8, borderRadius: 4 },
+  suspectedName: {
+    flex: 1,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    color: theme.colors.textPrimary,
+  },
+  confidenceLabel: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 11,
+    color: theme.colors.textSecondary,
+  },
+  suspectedActions: { flexDirection: 'row', gap: theme.spacing.md },
+  confirmBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radii.md,
+    backgroundColor: 'rgba(212,248,112,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(212,248,112,0.2)',
+  },
+  dismissBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radii.md,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderStyle: 'dashed',
   },
-  emptyTriggersText: {
-    color: theme.colors.textSecondary,
-    fontStyle: 'italic',
-  },
+  actionLabel: { fontFamily: 'Inter_500Medium', fontSize: 12 },
 
   // Log button
-  logBtnContainer: {
-    marginBottom: theme.spacing.giant,
-  },
+  logBtnContainer: { marginBottom: theme.spacing.giant },
 
-  // Recent logs header
-  recentRow: {
+  // Recent logs
+  dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: theme.spacing.lg,
     gap: theme.spacing.md,
   },
-  recentLabel: {
-    color: theme.colors.textSecondary,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: theme.colors.border,
-  },
-  centeredLoader: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xxxl,
-  },
+  dividerLabel: { color: theme.colors.textSecondary },
+  divider: { flex: 1, height: 1, backgroundColor: theme.colors.border },
+  loader: { alignItems: 'center', paddingVertical: theme.spacing.xxxl },
 
-  // Log cards
-  logCard: {
-    marginBottom: theme.spacing.md,
+  timelineCard: {
+    marginBottom: theme.spacing.sm,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    gap: theme.spacing.sm,
   },
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing.md,
+  },
+  timelineDate: { color: theme.colors.textSecondary, marginBottom: 3 },
   logTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
-  logDate: {
-    color: theme.colors.textSecondary,
+  moodLabel: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 12,
   },
-  logChipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.xs,
+  logChipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
+
+  mealIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: theme.colors.surfaceHigh,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  mealFoods: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: theme.colors.textPrimary,
+    lineHeight: 18,
   },
 
   // Empty state
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.giant,
-    gap: theme.spacing.md,
-  },
-  emptyStateTitle: {
-    color: theme.colors.textPrimary,
-    marginTop: theme.spacing.sm,
-  },
-  emptyStateBody: {
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
+  emptyState: { alignItems: 'center', paddingVertical: theme.spacing.giant, gap: theme.spacing.md },
+  emptyTitle: { color: theme.colors.textPrimary, marginTop: theme.spacing.sm },
+  emptyBody: { color: theme.colors.textSecondary, textAlign: 'center', lineHeight: 24 },
 
   // Modal
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: theme.colors.surface,
     borderTopLeftRadius: theme.radii.xl,
@@ -362,46 +484,20 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   dragHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
+    width: 40, height: 4, borderRadius: 2,
     backgroundColor: 'rgba(255,255,255,0.15)',
-    alignSelf: 'center',
-    marginBottom: theme.spacing.xxl,
+    alignSelf: 'center', marginBottom: theme.spacing.xxl,
   },
-  sheetTitle: {
-    marginBottom: theme.spacing.xxxl,
-  },
+  sheetTitle: { marginBottom: theme.spacing.xxxl },
   moodRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: theme.spacing.xxxl,
     alignItems: 'flex-end',
   },
-  moodBtn: {
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    minHeight: 80,
-    justifyContent: 'flex-end',
-  },
-  moodBtnLabel: {
-    textTransform: 'none',
-    letterSpacing: 0,
-    fontSize: 12,
-  },
-  anyLabel: {
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.md,
-  },
-  symptomChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.xxxl,
-  },
-  cancelBtn: {
-    alignItems: 'center',
-    marginTop: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-  },
+  moodBtn: { alignItems: 'center', gap: theme.spacing.sm, minHeight: 80, justifyContent: 'flex-end' },
+  moodBtnLabel: { fontSize: 12, fontFamily: 'Inter_400Regular' },
+  anyLabel: { color: theme.colors.textSecondary, marginBottom: theme.spacing.md },
+  symptomChips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm, marginBottom: theme.spacing.xxxl },
+  cancelBtn: { alignItems: 'center', marginTop: theme.spacing.lg, paddingVertical: theme.spacing.md },
 });
