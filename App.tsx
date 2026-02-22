@@ -1,237 +1,157 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { AppNavigator, AuthNavigator, OnboardingNavigator } from './src/navigation';
-import { colors } from './src/theme';
-import { useAuth } from './src/hooks/useAuth';
-import { GlobalModal } from './src/components/Modal/GlobalModal';
-import { GlobalToast } from './src/components/Toast/GlobalToast';
-import { NotificationManager } from './src/components/NotificationManager';
-import { RevenueCatService } from './src/services/revenueCatService';
 
-import { Fredoka_400Regular, Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
+// Theme
+import { theme } from './src/theme/theme';
+
+// Fonts
+import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 import { useFonts } from 'expo-font';
-import { analyticsService } from './src/analytics/analyticsService';
 
-// Keep the native splash screen visible while we fetch resources
+// State and Services
+import { useAppStore } from './src/store/useAppStore';
+import { supabase } from './src/config/supabase';
+
+// Screens
+import { AuthScreen } from './src/screens/AuthScreen';
+import { OnboardingGoal } from './src/screens/OnboardingGoal';
+import { OnboardingCondition } from './src/screens/OnboardingCondition';
+import { OnboardingSymptoms } from './src/screens/OnboardingSymptoms';
+import { OnboardingTriggers } from './src/screens/OnboardingTriggers';
+import { OnboardingResults } from './src/screens/OnboardingResults';
+import { OnboardingSocialProof } from './src/screens/OnboardingSocialProof';
+import { OnboardingCustomPlan } from './src/screens/OnboardingCustomPlan';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { ScanFoodScreen } from './src/screens/ScanFoodScreen';
+import { MyGutScreen } from './src/screens/MyGutScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
+
 ExpoSplashScreen.preventAutoHideAsync();
 
-// Gut Buddy Light Theme
+const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
+
 const GutBuddyTheme = {
   ...DefaultTheme,
-  dark: false,
+  dark: true,
   colors: {
     ...DefaultTheme.colors,
-    primary: colors.pink,
-    background: colors.background,
-    card: colors.white,
-    text: colors.black,
-    border: colors.border,
-    notification: colors.pink,
+    primary: theme.colors.coral,
+    background: theme.colors.bg,
+    card: theme.colors.surface,
+    text: theme.colors.textPrimary,
+    border: theme.colors.border,
+    notification: theme.colors.coral,
   },
 };
 
-// Initialize RevenueCat in background (fire-and-forget, non-blocking)
-RevenueCatService.initialize().catch(() => {
-  // Silently fail if RevenueCat isn't available
-});
+const MainTabs = () => (
+  <Tab.Navigator screenOptions={{ headerShown: false, tabBarStyle: { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border } }}>
+    <Tab.Screen name="Home" component={HomeScreen} />
+    <Tab.Screen name="ScanFood" component={ScanFoodScreen} />
+    <Tab.Screen name="MyGut" component={MyGutScreen} />
+    <Tab.Screen name="Profile" component={ProfileScreen} />
+  </Tab.Navigator>
+);
+
+const OnboardingStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: theme.colors.bg } }}>
+    <Stack.Screen name="OnboardingGoal" component={OnboardingGoal} />
+    <Stack.Screen name="OnboardingCondition" component={OnboardingCondition} />
+    <Stack.Screen name="OnboardingSymptoms" component={OnboardingSymptoms} />
+    <Stack.Screen name="OnboardingTriggers" component={OnboardingTriggers} />
+    <Stack.Screen name="OnboardingResults" component={OnboardingResults} />
+    <Stack.Screen name="OnboardingSocialProof" component={OnboardingSocialProof} />
+    <Stack.Screen name="OnboardingCustomPlan" component={OnboardingCustomPlan} />
+  </Stack.Navigator>
+);
 
 export default function App() {
-  const { session, loading: authLoading } = useAuth();
-  
   const [fontsLoaded] = useFonts({
-    'Fredoka-Regular': Fredoka_400Regular,
-    'Fredoka-Medium': Fredoka_500Medium,
-    'Fredoka-SemiBold': Fredoka_600SemiBold,
-    'Fredoka-Bold': Fredoka_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_700Bold,
   });
 
-  const [isReady, setIsReady] = React.useState(false);
-  const [dataLoaded, setDataLoaded] = React.useState(false);
-  const [onboardingComplete, setOnboardingComplete] = React.useState(false);
-  const [isPremium, setIsPremium] = React.useState(true); // Default true to avoid flash-locking
-  const [paywallKey, setPaywallKey] = React.useState(0); // Increment to re-present paywall on dismiss
-  const [refreshKey, setRefreshKey] = React.useState(0);
+  const [isReady, setIsReady] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  
+  const isOnboardingCompleted = useAppStore(state => state.isOnboardingCompleted);
+  const setOnboardingCompleted = useAppStore(state => state.setOnboardingCompleted);
 
-  // Initialize Services
-  React.useEffect(() => {
-    // Listen for custom event to refresh onboarding status
-    const handleRefresh = () => {
-      console.log('🔄 Refreshing onboarding status...');
-      setRefreshKey(prev => prev + 1);
-    };
-    
-    // @ts-ignore - using global event emitter
-    global.refreshOnboardingStatus = handleRefresh;
-    
-    return () => {
-      // @ts-ignore
-      delete global.refreshOnboardingStatus;
-    };
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      if (currentSession?.user) {
+        checkOnboarding(currentSession.user.id);
+      } else {
+        setIsReady(true);
+      }
+    });
+
+    supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
+      if (currentSession?.user) {
+        checkOnboarding(currentSession.user.id);
+      } else {
+        setIsReady(true);
+      }
+    });
   }, []);
 
-  // Sync Analytics (RevenueCat logIn is deferred until needed for premium checks)
-  const prevSessionRef = React.useRef<string | null>(null);
-
-  React.useEffect(() => {
-    const currentUserId = session?.user?.id || null;
-    const prevUserId = prevSessionRef.current;
-
-    if (currentUserId && currentUserId !== prevUserId) {
-      // Only sync Analytics immediately
-      analyticsService.setUserId(currentUserId);
-      prevSessionRef.current = currentUserId;
-
-      // Defer RevenueCat logIn until actually needed (lazy-load on paywall/profile screen)
-    } else if (!currentUserId && prevUserId && !authLoading) {
-      RevenueCatService.logOut();
-      prevSessionRef.current = null;
-    }
-  }, [session, authLoading]);
-
-
-  // Check onboarding status only (minimal blocking)
-  React.useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      // Wait for Auth and Fonts
-      if (authLoading || !fontsLoaded) return;
-
-      if (session?.user?.id) {
-        try {
-          const { supabase } = await import('./src/config/supabase');
-
-          // Check onboarding status only
-          const { data: userProfile } = await supabase
-            .from('users')
-            .select('onboarding_completed')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          const isOnboarded = userProfile?.onboarding_completed || false;
-          setOnboardingComplete(isOnboarded);
-
-          // Check subscription status for onboarded users
-          if (isOnboarded && RevenueCatService.checkAvailability()) {
-            try {
-              await RevenueCatService.ensureLoggedIn(session.user.id);
-              const premium = await RevenueCatService.isPremium();
-              setIsPremium(premium);
-            } catch {
-              // If RevenueCat fails, don't lock user out
-              setIsPremium(true);
-            }
-          }
-
-        } catch (e) {
-          console.error("Error checking onboarding status:", e);
-        }
+  const checkOnboarding = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from('users')
+        .select('onboarding_data')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (data?.onboarding_data) {
+        setOnboardingCompleted(true);
       }
-
-      // Ready to show app immediately (screens load data when needed)
-      setDataLoaded(true);
+    } catch (e) {
+      console.error(e);
+    } finally {
       setIsReady(true);
-      await ExpoSplashScreen.hideAsync();
-    };
-
-    checkOnboardingStatus();
-  }, [authLoading, fontsLoaded, session?.user?.id, refreshKey]);
-
-  // Load user data in background after app is ready (non-blocking)
-  React.useEffect(() => {
-    if (!isReady || !session?.user?.id) return;
-
-    const loadDataInBackground = async () => {
-      try {
-        const { loadUserDataFromDatabase } = await import('./src/utils/loadUserData');
-        await loadUserDataFromDatabase();
-
-        // Load completed tasks from local storage
-        const { useGutStore } = await import('./src/store');
-        await useGutStore.getState().loadCompletedTasks();
-
-        console.log('✅ Background data load complete');
-      } catch (e) {
-        console.error("Error loading user data in background:", e);
-      }
-    };
-
-    // Schedule data load after a short delay to prioritize app render
-    const timer = setTimeout(loadDataInBackground, 100);
-    return () => clearTimeout(timer);
-  }, [isReady, session?.user?.id]);
-
-  // Present RevenueCat paywall for expired/missing subscriptions
-  const presentSubscriptionPaywall = React.useCallback(async () => {
-    if (!session?.user?.id) return;
-    await RevenueCatService.ensureLoggedIn(session.user.id);
-    await RevenueCatService.presentPaywall();
-    const premium = await RevenueCatService.isPremium(true);
-    if (premium) {
-      setIsPremium(true);
-    } else {
-      // User dismissed without purchasing — re-present paywall
-      setPaywallKey(prev => prev + 1);
     }
-  }, [session?.user?.id]);
-
-  // Show paywall automatically when user is gated (paywallKey re-triggers on dismiss)
-  React.useEffect(() => {
-    if (isReady && session && onboardingComplete && !isPremium) {
-      presentSubscriptionPaywall();
-    }
-  }, [isReady, session, onboardingComplete, isPremium, paywallKey, presentSubscriptionPaywall]);
-
-  const linking: any = {
-    prefixes: ['foodhabit://'],
-    config: {
-      screens: {
-        Main: {
-          screens: {
-            HomeTab: 'home',
-            HistoryTab: 'history',
-            InsightsTab: 'insights',
-          },
-        },
-        AddEntry: 'add-entry',
-        Notifications: 'notifications',
-      },
-    },
   };
 
-  // 1. Show Loading until everything is ready
-  if (!isReady || (session && !dataLoaded)) {
+  useEffect(() => {
+    if (isReady && fontsLoaded) {
+      ExpoSplashScreen.hideAsync();
+    }
+  }, [isReady, fontsLoaded]);
+
+  if (!isReady || !fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.pink} />
+        <ActivityIndicator size="large" color={theme.colors.coral} />
       </View>
     );
   }
 
-  // 2. Determine which Navigator to show
-  const getRootComponent = () => {
-    if (!session) {
-      return <AuthNavigator />;
-    }
-    if (!onboardingComplete) {
-      return <OnboardingNavigator />;
-    }
-    return <AppNavigator />;
-  };
-
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
-        <NavigationContainer theme={GutBuddyTheme} linking={linking}>
-          {getRootComponent()}
-          
-          <NotificationManager />
-          <GlobalModal />
-          <GlobalToast />
-          <StatusBar style="dark" translucent backgroundColor="transparent" />
+        <NavigationContainer theme={GutBuddyTheme}>
+          <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: theme.colors.bg } }}>
+            {!session ? (
+              <Stack.Screen name="Auth" component={AuthScreen} />
+            ) : !isOnboardingCompleted ? (
+              <Stack.Screen name="Onboarding" component={OnboardingStack} />
+            ) : (
+              <Stack.Screen name="MainTabs" component={MainTabs} />
+            )}
+          </Stack.Navigator>
+          <StatusBar style="light" translucent backgroundColor="transparent" />
         </NavigationContainer>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -241,12 +161,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.bg,
   },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: theme.colors.bg,
   },
 });

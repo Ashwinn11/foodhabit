@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, StyleSheet, StyleProp, ViewStyle, ImageStyle } from 'react-native';
+import { View, Image, StyleSheet } from 'react-native';
 import LottieView from 'lottie-react-native';
 // Note: We will need a vector icons fallback, like Ionicons if needed.
 // Example: import { Ionicons } from '@expo/vector-icons';
@@ -10,7 +10,7 @@ export interface IconProps {
   source?: any; // require('../assets/icons/garlic.png')
   animation?: any; // require('../assets/animations/sad.json')
   size?: number;
-  style?: StyleProp<ViewStyle | ImageStyle>;
+  style?: any;
 }
 
 export const Icon: React.FC<IconProps> = ({ 

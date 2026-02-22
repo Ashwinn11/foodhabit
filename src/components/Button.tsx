@@ -3,8 +3,7 @@ import { StyleSheet, ActivityIndicator } from 'react-native';
 import Animated, { 
   useAnimatedStyle, 
   useSharedValue, 
-  withSpring, 
-  interpolateColor
+  withSpring
 } from 'react-native-reanimated';
 import { theme } from '../theme/theme';
 import { Text } from './Text';
@@ -17,11 +16,7 @@ export interface ButtonProps {
   loading?: boolean;
 }
 
-const AnimatedTouchable = Animated.createAnimatedComponent(
-  React.forwardRef<any, any>((props, ref) => (
-    <Animated.View ref={ref} {...props} />
-  ))
-);
+
 
 export const Button: React.FC<ButtonProps> = ({ 
   label, 

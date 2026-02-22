@@ -20,11 +20,7 @@ export const getSupabaseRedirectUrl = (): string => {
     return `https://auth.expo.io/@${expoUsername}/${expoSlug}/--/auth/callback`;
   }
 
-  // Handle web vs native
-  if (typeof window !== 'undefined' && window.location) {
-    // Web environment
-    return `${window.location.origin}/auth/callback`;
-  }
+  return 'foodhabit://auth/callback';
 
   return 'foodhabit://auth/callback';
 };
