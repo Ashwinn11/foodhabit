@@ -241,7 +241,7 @@ export const ScanFoodScreen: React.FC = () => {
   if (mode === 'camera') {
     if (!cameraPermission) {
       return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
           <View style={styles.center}>
             <Text variant="body" color={theme.colors.textSecondary}>Checking camera permissions...</Text>
           </View>
@@ -250,7 +250,7 @@ export const ScanFoodScreen: React.FC = () => {
     }
     if (!cameraPermission.granted) {
       return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
           <View style={styles.center}>
             <Icon name="CameraOff" size={48} color={theme.colors.textTertiary} />
             <Text variant="h3" align="center">Camera Access Needed</Text>
@@ -438,14 +438,14 @@ const styles = StyleSheet.create({
   segmented: {
     flexDirection: 'row',
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.full,
     padding: 3,
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
   segBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: theme.spacing.xs, paddingVertical: theme.spacing.xs + 2, borderRadius: theme.radius.sm,
+    gap: theme.spacing.xs, paddingVertical: theme.spacing.xs + 2, borderRadius: theme.radius.full,
   },
   segBtnActive: { backgroundColor: theme.colors.primary },
 

@@ -192,7 +192,7 @@ export const ProfileScreen: React.FC = () => {
   const appVersion = Constants.expoConfig?.version ?? '1.0';
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar style="light" />
 
       <ScrollView
@@ -295,7 +295,7 @@ export const ProfileScreen: React.FC = () => {
             <View style={styles.divider} />
             <ProfileRow
               label="Terms of Service"
-              onPress={() => Linking.openURL('https://gutbuddy.app/terms')}
+              onPress={() => Linking.openURL('https://briefly.live/gutbuddy/terms-of-service')}
               showChevron
             />
             <View style={styles.divider} />

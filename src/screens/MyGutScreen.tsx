@@ -172,7 +172,7 @@ export const MyGutScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar style="light" />
 
       {/* Header */}
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.full,
     padding: 3,
     borderWidth: 1,
     borderColor: theme.colors.border,
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: theme.spacing.xs,
     paddingVertical: theme.spacing.xs + 2,
-    borderRadius: theme.radius.sm,
+    borderRadius: theme.radius.full,
   },
   tabBtnActive: {
     backgroundColor: theme.colors.primary,
