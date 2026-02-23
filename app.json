@@ -3,7 +3,7 @@
     "name": "Gut Buddy",
     "slug": "foodhabit",
     "owner": "foodhabit",
-    "version": "1.2",
+    "version": "2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -12,7 +12,7 @@
     "splash": {
       "image": "./assets/icon.png",
       "imageWidth": 200,
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#060A14"
     },
     "ios": {
       "supportsTablet": false,

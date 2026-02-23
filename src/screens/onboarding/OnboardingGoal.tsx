@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingLayout } from './OnboardingLayout';
@@ -11,30 +11,30 @@ const GOALS = [
   {
     id: 'bloating',
     lucideIcon: 'Wind' as const,
-    lucideColor: '#6DBE8C', // Safe/Green
-    title: 'Conquer the bloat',
-    description: "I feel constantly bloated or heavy after eating",
+    lucideColor: '#6DBE8C',
+    title: 'Stop feeling bloated',
+    description: 'That heavy, tight feeling after every meal ends here.',
   },
   {
     id: 'triggers',
     lucideIcon: 'Search' as const,
-    lucideColor: '#4D94FF', // Info/Blue
-    title: 'Uncover hidden triggers',
-    description: 'Pinpoint the exact foods that cause discomfort',
+    lucideColor: '#4D94FF',
+    title: "Find what's hurting me",
+    description: 'Pinpoint the exact foods behind your symptoms.',
   },
   {
     id: 'eating_out',
     lucideIcon: 'Utensils' as const,
-    lucideColor: '#FF9D4D', // Orange
-    title: 'Reclaim dining out',
-    description: 'Navigate restaurant menus without the stress',
+    lucideColor: '#FF9D4D',
+    title: 'Eat out confidently',
+    description: 'Order without anxiety at any restaurant.',
   },
   {
     id: 'condition',
     lucideIcon: 'Activity' as const,
-    lucideColor: '#FF4D4D', // Primary/Red
-    title: 'Manage a condition',
-    description: 'Take control of IBS, GERD, or similar',
+    lucideColor: '#FF4D4D',
+    title: 'Control my condition',
+    description: 'IBS, GERD, Celiac — backed by dietary science.',
   },
 ] as const;
 
@@ -43,23 +43,26 @@ export const OnboardingGoal: React.FC = () => {
   const [selected, setSelected] = useState<string | null>(null);
   const updateOnboardingAnswers = useAppStore((s) => s.updateOnboardingAnswers);
 
+  useEffect(() => {
+    analyticsService.logObStart();
+  }, []);
+
   const handleSelect = (goalId: string) => {
     setSelected(goalId);
     updateOnboardingAnswers({ goal: goalId });
-    analyticsService.logObStart();
     analyticsService.logObGoal(goalId);
     setTimeout(() => navigation.navigate('OnboardingCondition'), 350);
   };
 
   return (
-    <OnboardingLayout 
-      step={2} 
+    <OnboardingLayout
+      step={2}
       scroll
-      icon="avocado_thinking" 
-      title="What brings you to GutBuddy?"
+      icon="avocado_thinking"
+      title="What's your gut holding you back from?"
       titleIcon="Target"
       titleIconColor="#FF4D4D"
-      subtitle="Select the journey that aligns with your goals."
+      subtitle="Pick your biggest challenge — we'll build everything around it."
     >
       <View style={styles.container}>
         <View style={styles.goalsGrid}>

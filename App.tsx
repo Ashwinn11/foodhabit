@@ -33,7 +33,9 @@ import { useFonts } from 'expo-font';
 import { useAppStore } from './src/store/useAppStore';
 import { supabase } from './src/config/supabase';
 import { analyticsService } from './src/services/analyticsService';
-import { purchasesService } from './src/services/purchasesService';
+import { purchasesService, ENTITLEMENT_ID } from './src/services/purchasesService';
+import RevenueCatUI from 'react-native-purchases-ui';
+import { PAYWALL_RESULT } from '@revenuecat/purchases-typescript-internal';
 
 // Auth Screen
 import { AuthScreen } from './src/screens/AuthScreen';
@@ -277,6 +279,22 @@ export default function App() {
         // Strip internal migration flags before putting data into the typed store
         const { _sfDerived: _ignored, ...storeAnswers } = answers;
         updateOnboardingAnswers(storeAnswers);
+
+        // Enforce active subscription — catches lapsed/cancelled users on every app open.
+        // presentPaywallIfNeeded returns NOT_PRESENTED immediately if sub is active.
+        const enforceSubscription = async (): Promise<void> => {
+          const result = await RevenueCatUI.presentPaywallIfNeeded({
+            requiredEntitlementIdentifier: ENTITLEMENT_ID,
+            displayCloseButton: false,
+          });
+          if (result === PAYWALL_RESULT.CANCELLED) {
+            // Hard wall — keep showing until they subscribe or restore
+            return enforceSubscription();
+          }
+          // PURCHASED | RESTORED | NOT_PRESENTED → let through
+        };
+        await enforceSubscription();
+
         setOnboardingCompleted(true);
 
         // Load confirmed triggers + safe foods into store so Scan analysis uses them
@@ -304,8 +322,8 @@ export default function App() {
           if (safe.length) setLearnedSafeFoods(safe);
         }
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // silent — app still loads, user lands on main screen if onboarding was already done
     } finally {
       setIsReady(true);
     }

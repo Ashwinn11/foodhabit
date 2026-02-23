@@ -155,7 +155,7 @@ export const OnboardingCustomPlan: React.FC = () => {
         title: "Your gut plan is ready",
         titleIcon: "Sparkles" as const,
         titleIconColor: "#A855F7",
-        subtitle: "Here's a preview of how we'll help you feel better.",
+        subtitle: "Here's your personal guide to eating out safely.",
       };
 
   return (

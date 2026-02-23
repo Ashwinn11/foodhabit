@@ -118,6 +118,9 @@ export const MyGutScreen: React.FC = () => {
   const loadAll = async () => {
     setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
       const [meals, logs, triggers, trendResult] = await Promise.all([
         gutService.getRecentMeals(50),
@@ -126,6 +129,7 @@ export const MyGutScreen: React.FC = () => {
         supabase
           .from('gut_logs')
           .select('mood, timestamp')
+          .eq('user_id', user.id)
           .gte('timestamp', fourteenDaysAgo)
           .order('timestamp', { ascending: true }),
       ]);

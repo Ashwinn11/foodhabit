@@ -21,25 +21,25 @@ const FEATURES = [
     icon: 'Search' as LucideIconName,
     color: '#4D94FF',
     title: 'Menu Scanner',
-    description: 'Aim. Capture. Know instantly what\'s safe to order.',
+    description: 'Aim. Capture. Know what\'s safe to order in seconds.',
   },
   {
     icon: 'CheckCircle' as LucideIconName,
     color: '#6DBE8C',
     title: 'Safety Scores',
-    description: 'Every dish rated: Safe, Caution, or Avoid. No guessing.',
+    description: 'Safe, Caution, or Avoid — for every dish, personalized to you.',
   },
   {
     icon: 'Calendar' as LucideIconName,
     color: '#FF9D4D',
     title: 'Gut Journal',
-    description: 'Log meals and feelings. We find the patterns you miss.',
+    description: 'Log meals and symptoms. We find the connections you\'d never catch.',
   },
   {
     icon: 'Target' as LucideIconName,
     color: '#FF4D4D',
     title: 'Trigger Discovery',
-    description: 'Your personal trigger foods, learned over time.',
+    description: 'Your personal food triggers, learned from your own data over time.',
   },
 ];
 
@@ -80,11 +80,11 @@ export const OnboardingFeatures: React.FC = () => {
   const navigation = useNavigation<any>();
 
   return (
-    <OnboardingLayout 
-      step={9} 
-      scroll 
-      icon="avocado_success" 
-      title="Everything you need"
+    <OnboardingLayout
+      step={9}
+      scroll
+      icon="avocado_success"
+      title="Know exactly what to order."
       titleIcon="Sparkles"
       titleIconColor="#A855F7"
     >

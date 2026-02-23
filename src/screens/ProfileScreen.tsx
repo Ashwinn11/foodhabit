@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -22,7 +22,7 @@ import { Input } from '../components/Input';
 import { SelectionCard } from '../components/SelectionCard';
 import { LucideIconName } from '../components/Icon';
 import { useToast } from '../components/Toast';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../config/supabase';
 import { authService } from '../services/authService';
 import { purchasesService } from '../services/purchasesService';
@@ -82,24 +82,34 @@ export const ProfileScreen: React.FC = () => {
   const [subscription, setSubscription] = useState<{ plan: string; renewal: string } | null>(null);
   const [subLoading, setSubLoading] = useState(true);
 
+  // Reload from DB every time the tab is focused so edits from another session are reflected
+  useFocusEffect(
+    useCallback(() => {
+      loadProfileData();
+    }, [])
+  );
+
   useEffect(() => {
-    loadUser();
     loadSubscription();
   }, []);
 
-  const loadUser = async () => {
+  const loadProfileData = async () => {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
         const { data } = await supabase
           .from('users')
-          .select('full_name, email')
+          .select('full_name, email, onboarding_data')
           .eq('id', authUser.id)
           .maybeSingle();
         setUser({
           name: data?.full_name || authUser.email?.split('@')[0] || 'You',
           email: data?.email || authUser.email || '',
         });
+        // Sync onboarding answers from DB into store so profile always reflects latest
+        if (data?.onboarding_data) {
+          updateOnboardingAnswers(data.onboarding_data);
+        }
       }
     } catch {
       // silent
@@ -238,7 +248,7 @@ export const ProfileScreen: React.FC = () => {
         {/* Health Profile */}
         <View style={styles.section}>
           <Text variant="label" color={theme.colors.textTertiary} style={styles.sectionTitle}>
-            My Health Profile
+            My Gut Profile
           </Text>
           <Card variant="bordered" style={styles.listCard}>
             <ProfileRow
@@ -274,7 +284,7 @@ export const ProfileScreen: React.FC = () => {
             </Text>
             <Card variant="bordered" style={styles.safeFoodsCard}>
               <Text variant="caption" color={theme.colors.textSecondary} style={styles.safeFoodsHint}>
-                Foods consistently safe based on your profile
+                Foods you can order confidently — safe for your gut
               </Text>
               <View style={styles.safeFoodsChips}>
                 {safeFoods.map((food) => (

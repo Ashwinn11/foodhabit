@@ -15,7 +15,7 @@ import { SkeletonCard } from '../components/Skeleton';
 import { BottomSheet } from '../components/BottomSheet';
 import { Button } from '../components/Button';
 import { SelectionCard } from '../components/SelectionCard';
-import { LucideIconName } from '../components/Icon';
+import { Icon, LucideIconName } from '../components/Icon';
 import { useToast } from '../components/Toast';
 import { FluidMoodSlider } from '../components/fluid/FluidMoodSlider';
 import { TimelineLog } from '../components/fluid/TimelineLog';
@@ -80,14 +80,18 @@ export const HomeScreen: React.FC = () => {
 
   const loadData = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const [mealData, triggerData] = await Promise.all([
         gutService.getRecentMeals(5),
-        supabase
-          .from('trigger_foods')
-          .select('food_name, bad_occurrences, confidence')
-          .eq('confidence', 'High')
-          .order('bad_occurrences', { ascending: false })
-          .limit(1),
+        user
+          ? supabase
+              .from('trigger_foods')
+              .select('food_name, bad_occurrences, confidence')
+              .eq('user_id', user.id)
+              .in('confidence', ['High', 'Medium'])
+              .order('bad_occurrences', { ascending: false })
+              .limit(1)
+          : Promise.resolve({ data: [] }),
       ]);
 
       // Filter to today's meals
@@ -260,7 +264,7 @@ export const HomeScreen: React.FC = () => {
           <View style={styles.sheetHeader}>
             <Text variant="h3">How are you feeling?</Text>
             <Text variant="bodySmall" color={theme.colors.textSecondary}>
-              Select your mood and any active symptoms
+              Log symptoms to connect them to what you ate.
             </Text>
           </View>
 

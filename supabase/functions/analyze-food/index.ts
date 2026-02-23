@@ -117,6 +117,7 @@ If this is not a food menu/meal photo, return:
          - "safe": If it is completely safe for their condition, and avoids their symptoms and triggers.
       4. Explanation MUST be 1 single concise sentence referencing their specific context (triggers/condition).
       5. "normalizedName" should be a clean Title Case version of the food name.
+      6. If there are 2 or more foods, set "recommendedPick" to the normalizedName of the single best food the user should choose based on their condition, symptoms, and triggers. If all foods are "avoid" level or there is only 1 food, set "recommendedPick" to null.
 
       Return ONLY valid JSON (no markdown), matching this EXACT precise format:
       {
@@ -126,7 +127,8 @@ If this is not a food menu/meal photo, return:
             "level": "safe" | "caution" | "avoid",
             "explanation": "A single sentence explaining specifically why based on their given condition, symptoms, and triggers."
           }
-        ]
+        ],
+        "recommendedPick": "Normalised Food Name" | null
       }
     `
 
@@ -165,7 +167,7 @@ If this is not a food menu/meal photo, return:
       })
     }
 
-    return new Response(JSON.stringify({ results: result.results || [] }), {
+    return new Response(JSON.stringify({ results: result.results || [], recommendedPick: result.recommendedPick ?? null }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })

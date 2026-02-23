@@ -10,6 +10,7 @@ import { Input } from '../../components/Input';
 import { Icon, LucideIconName } from '../../components/Icon';
 import { SelectionCard } from '../../components/SelectionCard';
 import { useAppStore } from '../../store/useAppStore';
+import { analyticsService } from '../../services/analyticsService';
 
 const TRIGGER_META: Record<string, { icon: LucideIconName; color: string }> = {
   'Garlic': { icon: 'Activity', color: '#8E96A3' },
@@ -86,6 +87,7 @@ export const OnboardingTriggers: React.FC = () => {
   const handleNext = () => {
     const allTriggers = [...selected, ...custom];
     updateOnboardingAnswers({ knownTriggers: allTriggers });
+    analyticsService.logObTriggers(allTriggers);
     navigation.navigate('OnboardingHowItHelps');
   };
 
@@ -94,10 +96,10 @@ export const OnboardingTriggers: React.FC = () => {
       step={6}
       scroll
       icon="avocado_caution"
-      title="Suspected triggers"
+      title="Foods that fight back?"
       titleIcon="AlertCircle"
       titleIconColor="#E05D4C"
-      subtitle="Based on your profile, these often cause issues. Select any you suspect."
+      subtitle="Select what you already suspect. We'll confirm or clear them over time."
     >
       <View style={styles.container}>
         {/* Suggested */}

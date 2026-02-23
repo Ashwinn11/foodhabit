@@ -61,8 +61,8 @@ export const OnboardingAnalyzing: React.FC = () => {
   const items: CheckItem[] = [
     { label: `Condition: ${conditionLabel} noted`, delay: 300 },
     { label: `${symptomCount} symptom${symptomCount !== 1 ? 's' : ''} mapped`, delay: 900 },
-    { label: 'Searching our food database...', delay: 1500 },
-    { label: 'Building your gut profile...', delay: 2100 },
+    { label: 'Mapping foods to your condition...', delay: 1500 },
+    { label: 'Compiling your safe-to-eat list...', delay: 2100 },
   ];
 
   useEffect(() => {
@@ -73,8 +73,8 @@ export const OnboardingAnalyzing: React.FC = () => {
   }, []);
 
   const personalizedMessage = answers.condition?.includes('IBS')
-    ? 'IBS affects 1 in 10 adults. We\'ve helped thousands find relief.'
-    : 'Gut health affects millions. You\'re in the right place.';
+    ? 'IBS affects 1 in 10 adults. Most never know which specific foods are hurting them.'
+    : 'Gut issues affect millions — but your triggers are unique to you.';
 
   return (
     <OnboardingLayout 

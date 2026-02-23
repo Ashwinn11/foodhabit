@@ -61,9 +61,12 @@ export const gutService = {
   },
 
   getRecentMeals: async (limit = 10) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('meals')
       .select('id, timestamp, foods, name')
+      .eq('user_id', user.id)
       .order('timestamp', { ascending: false })
       .limit(limit);
     if (error) throw error;
@@ -89,9 +92,12 @@ export const gutService = {
   },
 
   getRecentLogs: async (limit = 10) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('gut_logs')
       .select('id, timestamp, mood, tags')
+      .eq('user_id', user.id)
       .order('timestamp', { ascending: false })
       .limit(limit);
     if (error) throw error;
@@ -100,7 +106,7 @@ export const gutService = {
 
   // ── Correlation engine ────────────────────────────────────────────────────
   //
-  // After every gut log we look at what was eaten in the past 6 hours and
+  // After every gut log we look at what was eaten in the past 24 hours and
   // record whether that meal led to a bad or good outcome.  Only after
   // enough bad evidence (vs good evidence) does a food surface as suspected.
 
@@ -109,13 +115,13 @@ export const gutService = {
     mood: GutLogPayload['mood'],
     symptoms: string[]
   ): Promise<void> => {
-    const sixHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const { data: recentMeals } = await supabase
       .from('meals')
       .select('foods')
       .eq('user_id', userId)
-      .gte('timestamp', sixHoursAgo);
+      .gte('timestamp', oneDayAgo);
 
     if (!recentMeals?.length) return;
 
@@ -164,9 +170,12 @@ export const gutService = {
   // Fetch all trigger foods for this user, filter client-side.
   // Only foods with evidence (confidence not null) or explicit confirmation are surfaced in the UI.
   getTriggerFoods: async (): Promise<TriggerFood[]> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
     const { data, error } = await supabase
       .from('trigger_foods')
       .select('food_name, user_confirmed, bad_occurrences, good_occurrences, confidence, symptoms')
+      .eq('user_id', user.id)
       .order('bad_occurrences', { ascending: false });
     if (error) throw error;
     return ((data ?? []) as TriggerFood[]).filter(
@@ -176,9 +185,12 @@ export const gutService = {
 
   // Foods the user tolerates well — high good occurrences, low bad ratio
   getSafeFoods: async (): Promise<string[]> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
     const { data } = await supabase
       .from('trigger_foods')
       .select('food_name, good_occurrences, bad_occurrences')
+      .eq('user_id', user.id)
       .gte('good_occurrences', 5);
     return (data ?? [])
       .filter((f: any) => {
@@ -190,7 +202,7 @@ export const gutService = {
 
   confirmTrigger: async (foodName: string): Promise<void> => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) throw new Error('Not authenticated');
     await supabase
       .from('trigger_foods')
       .update({ user_confirmed: true, updated_at: new Date().toISOString() })
@@ -200,7 +212,7 @@ export const gutService = {
 
   dismissTrigger: async (foodName: string): Promise<void> => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) throw new Error('Not authenticated');
     await supabase
       .from('trigger_foods')
       .delete()

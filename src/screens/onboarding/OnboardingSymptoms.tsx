@@ -8,6 +8,7 @@ import { Button } from '../../components/Button';
 import { SelectionCard } from '../../components/SelectionCard';
 import { LucideIconName } from '../../components/Icon';
 import { useAppStore } from '../../store/useAppStore';
+import { analyticsService } from '../../services/analyticsService';
 
 const SYMPTOMS = [
   { id: 'Bloating', icon: 'Wind' as LucideIconName, color: '#F5C97A' },
@@ -36,6 +37,7 @@ export const OnboardingSymptoms: React.FC = () => {
 
   const handleNext = () => {
     updateOnboardingAnswers({ symptoms: selected });
+    analyticsService.logObSymptoms(selected);
     navigation.navigate('OnboardingAnalyzing');
   };
 
@@ -44,10 +46,10 @@ export const OnboardingSymptoms: React.FC = () => {
       step={4}
       scroll
       icon="avocado_bloated"
-      title="What are you feeling?"
+      title="What does a rough day feel like?"
       titleIcon="Flame"
       titleIconColor="#FF9D4D"
-      subtitle="Select the symptoms that consistently disrupt your day."
+      subtitle="We'll connect these symptoms to what you're eating, automatically."
     >
       <View style={styles.container}>
         {selected.length > 0 && (

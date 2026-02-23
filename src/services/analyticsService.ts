@@ -40,6 +40,16 @@ export const analyticsService = {
     logEvent(a, 'ob_condition', { condition }).catch(() => {});
   },
 
+  logObSymptoms: (symptoms: string[]) => {
+    const a = ga(); if (!a) return;
+    logEvent(a, 'ob_symptoms', { count: symptoms.length, symptoms: symptoms.join(',') }).catch(() => {});
+  },
+
+  logObTriggers: (triggers: string[]) => {
+    const a = ga(); if (!a) return;
+    logEvent(a, 'ob_triggers', { count: triggers.length, triggers: triggers.join(',') }).catch(() => {});
+  },
+
   logObPaywallView: (variant: 'A' | 'B') => {
     const a = ga(); if (!a) return;
     logEvent(a, 'ob_paywall_view', { variant }).catch(() => {});

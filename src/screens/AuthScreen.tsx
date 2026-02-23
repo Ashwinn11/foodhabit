@@ -5,11 +5,13 @@ import {
   TouchableOpacity,
   Platform,
   Image,
+  Linking,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
+import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';
 import { Text } from '../components/Text';
 import { Icon } from '../components/Icon';
@@ -18,9 +20,12 @@ import { AppleIcon } from '../components/AppleIcon';
 import { authService } from '../services/authService';
 import { supabase, getSupabaseRedirectUrl } from '../config/supabase';
 
+const TERMS_URL = 'https://briefly.live/gutbuddy/terms-of-service';
+
 WebBrowser.maybeCompleteAuthSession();
 
 export const AuthScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
   const [loading, setLoading] = useState<'apple' | 'google' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -145,9 +150,13 @@ export const AuthScreen: React.FC = () => {
 
         <Text variant="caption" color={theme.colors.textTertiary} align="center" style={styles.legal}>
           By continuing, you agree to our{' '}
-          <Text variant="caption" color={theme.colors.primary}>Privacy Policy</Text>
+          <Text variant="caption" color={theme.colors.primary} onPress={() => navigation.navigate('PrivacyPolicy')}>
+            Privacy Policy
+          </Text>
           {' '}and{' '}
-          <Text variant="caption" color={theme.colors.primary}>Terms of Service</Text>
+          <Text variant="caption" color={theme.colors.primary} onPress={() => Linking.openURL(TERMS_URL)}>
+            Terms of Service
+          </Text>
         </Text>
       </View>
     </SafeAreaView>

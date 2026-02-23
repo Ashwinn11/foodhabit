@@ -45,10 +45,10 @@ export const OnboardingCondition: React.FC = () => {
       step={3}
       scroll
       icon="avocado_scientist"
-      title="Any known conditions?"
+      title="What are you dealing with?"
       titleIcon="Activity"
       titleIconColor="#4D94FF"
-      subtitle="Help us calibrate your analysis by sharing any existing diagnoses."
+      subtitle="The more you tell us, the more precisely we can tell you what's safe to order."
     >
       <View style={styles.container}>
         <View style={styles.pillContainer}>

@@ -23,7 +23,7 @@ import { Input } from '../components/Input';
 import { useToast } from '../components/Toast';
 import { AnimatedCameraOverlay } from '../components/fluid/AnimatedCameraOverlay';
 import { fodmapService } from '../services/fodmapService';
-import type { AnalysisResult } from '../services/fodmapService';
+import type { AnalysisResult, AnalysisResponse } from '../services/fodmapService';
 import { gutService } from '../services/gutService';
 import { notificationService } from '../services/notificationService';
 
@@ -43,17 +43,20 @@ interface ResultsListProps {
   results: AnalysisResult[];
   selectedFoods: Set<string>;
   onToggle: (name: string) => void;
+  recommendedPick: string | null;
 }
 
-const ResultsList: React.FC<ResultsListProps> = ({ results, selectedFoods, onToggle }) => {
+const ResultsList: React.FC<ResultsListProps> = ({ results, selectedFoods, onToggle, recommendedPick }) => {
   const sorted = [...results].sort((a, b) => {
     const order = { safe: 0, caution: 1, avoid: 2 };
     return order[a.level] - order[b.level];
   });
 
-  // Only promote to "Healthiest Pick" if there are multiple foods and the best isn't avoid
-  const best = sorted.length > 1 && sorted[0]?.level !== 'avoid' ? sorted[0] : null;
-  const rest = best ? sorted.slice(1) : sorted;
+  // AI-determined healthiest pick — null means AI didn't recommend one
+  const best = recommendedPick
+    ? (results.find(r => r.normalizedName === recommendedPick) ?? null)
+    : null;
+  const rest = best ? sorted.filter(r => r.normalizedName !== best.normalizedName) : sorted;
 
   if (sorted.length === 0) return null;
 
@@ -105,7 +108,7 @@ const ResultsList: React.FC<ResultsListProps> = ({ results, selectedFoods, onTog
             key={r.normalizedName}
             activeOpacity={0.75}
             onPress={() => onToggle(r.normalizedName)}
-            style={{ opacity: checked ? 1 : 0.5 }}
+            style={{ opacity: 1 }}
           >
             <Card variant="bordered" style={listStyles.card}>
               <View style={listStyles.topRow}>
@@ -168,6 +171,7 @@ export const ScanFoodScreen: React.FC = () => {
   const [cameraPermission, requestPermission] = useCameraPermissions();
 
   const [results, setResults] = useState<AnalysisResult[]>([]);
+  const [recommendedPick, setRecommendedPick] = useState<string | null>(null);
   const [selectedFoods, setSelectedFoods] = useState<Set<string>>(new Set());
   const [logging, setLogging] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -178,8 +182,9 @@ export const ScanFoodScreen: React.FC = () => {
 
   const cameraRef = useRef<any>(null);
 
-  const applyResults = (newResults: AnalysisResult[]) => {
+  const applyResults = (newResults: AnalysisResult[], pick: string | null = null) => {
     setResults(newResults);
+    setRecommendedPick(pick);
     setSelectedFoods(new Set()); // all unselected — user picks what to log
   };
 
@@ -195,6 +200,7 @@ export const ScanFoodScreen: React.FC = () => {
     if (!cameraRef.current) return;
     try {
       const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.7 });
+      if (!photo.base64) { setCameraState('error'); return; }
       setCapturedImage(photo.uri);
       setCameraState('processing_extract');
 
@@ -204,7 +210,8 @@ export const ScanFoodScreen: React.FC = () => {
 
       setCameraState('processing_analyze');
       const analysisResult = await fodmapService.analyzeFoods(extracted);
-      applyResults((analysisResult as AnalysisResult[]) ?? []);
+      const { results: analysisResults, recommendedPick: pick } = analysisResult as AnalysisResponse;
+      applyResults(analysisResults ?? [], pick);
       setCameraState('results');
     } catch {
       setCameraState('error');
@@ -214,12 +221,14 @@ export const ScanFoodScreen: React.FC = () => {
   const handleAddFood = async () => {
     const trimmed = typeInput.trim();
     if (!trimmed) return;
-    const newFoods = [...results.map((r) => r.normalizedName), trimmed];
+    const newEntries = trimmed.split(',').map((s) => s.trim()).filter(Boolean);
+    const newFoods = [...results.map((r) => r.normalizedName), ...newEntries];
     setTypeInput('');
     setTypeAnalyzing(true);
     try {
       const res = await fodmapService.analyzeFoods(newFoods);
-      applyResults((res as AnalysisResult[]) ?? []);
+      const { results: newRes, recommendedPick: pick } = res as AnalysisResponse;
+      applyResults(newRes ?? [], pick);
     } catch {
       showToast('Analysis failed. Try again.', 'error');
     } finally {
@@ -236,6 +245,7 @@ export const ScanFoodScreen: React.FC = () => {
       notificationService.schedulePostMealCheckIn(name);
       showToast('Meal logged!', 'success');
       setResults([]);
+      setRecommendedPick(null);
       setSelectedFoods(new Set());
       setCameraState('idle');
       setCapturedImage(null);
@@ -288,13 +298,13 @@ export const ScanFoodScreen: React.FC = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text variant="h3">Analyze Foods</Text>
+        <Text variant="h3">Is This Safe for Me?</Text>
         <View style={styles.segmented}>
           {(['camera', 'type'] as Mode[]).map((m) => (
             <TouchableOpacity
               key={m}
               style={[styles.segBtn, mode === m && styles.segBtnActive]}
-              onPress={() => { setMode(m); setResults([]); setSelectedFoods(new Set()); setCameraState('idle'); setCapturedImage(null); }}
+              onPress={() => { setMode(m); setResults([]); setRecommendedPick(null); setSelectedFoods(new Set()); setCameraState('idle'); setCapturedImage(null); }}
             >
               <Icon
                 name={m === 'camera' ? 'Camera' : 'PenLine'}
@@ -321,8 +331,8 @@ export const ScanFoodScreen: React.FC = () => {
               <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing={facing} />
               
               <View style={styles.cameraOverlay} pointerEvents="none">
-                <Text variant="caption" color="rgba(255,255,255,0.7)" align="center">Point at a menu or meal</Text>
-                <Text variant="caption" color="rgba(255,255,255,0.5)" align="center">Works with menus, receipts, or food photos</Text>
+                <Text variant="caption" color="rgba(255,255,255,0.7)" align="center">Point at a menu — we'll tell you what's safe</Text>
+                <Text variant="caption" color="rgba(255,255,255,0.5)" align="center">Works with menus, receipts, and food photos</Text>
               </View>
               <TouchableOpacity style={styles.flipBtn} onPress={() => setFacing(f => f === 'back' ? 'front' : 'back')}>
                 <Icon name="RefreshCw" size={22} color="#fff" />
@@ -364,11 +374,11 @@ export const ScanFoodScreen: React.FC = () => {
           {cameraState === 'results' && (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]}>
               <ScrollView style={styles.resultsScroll} contentContainerStyle={styles.resultsContent}>
-                <TouchableOpacity style={styles.retakeBtn} onPress={() => { setCameraState('idle'); setCapturedImage(null); setResults([]); setSelectedFoods(new Set()); }}>
+                <TouchableOpacity style={styles.retakeBtn} onPress={() => { setCameraState('idle'); setCapturedImage(null); setResults([]); setRecommendedPick(null); setSelectedFoods(new Set()); }}>
                   <Icon name="ChevronLeft" size={16} color={theme.colors.primary} />
                   <Text variant="caption" color={theme.colors.primary}>Retake</Text>
                 </TouchableOpacity>
-                <ResultsList results={results} selectedFoods={selectedFoods} onToggle={toggleFood} />
+                <ResultsList results={results} selectedFoods={selectedFoods} onToggle={toggleFood} recommendedPick={recommendedPick} />
               </ScrollView>
             </View>
           )}
@@ -408,17 +418,17 @@ export const ScanFoodScreen: React.FC = () => {
               contentContainerStyle={styles.typeScrollContent}
               keyboardShouldPersistTaps="always"
             >
-              <ResultsList results={results} selectedFoods={selectedFoods} onToggle={toggleFood} />
-              <TouchableOpacity onPress={() => { setResults([]); setSelectedFoods(new Set()); }} style={styles.clearAll}>
+              <ResultsList results={results} selectedFoods={selectedFoods} onToggle={toggleFood} recommendedPick={recommendedPick} />
+              <TouchableOpacity onPress={() => { setResults([]); setRecommendedPick(null); setSelectedFoods(new Set()); }} style={styles.clearAll}>
                 <Text variant="caption" color={theme.colors.textTertiary}>Clear all</Text>
               </TouchableOpacity>
             </ScrollView>
           ) : (
             <View style={styles.typeEmpty}>
               <Icon name="Search" size={48} color={theme.colors.textSecondary} />
-              <Text variant="h3" align="center">What did you eat?</Text>
+              <Text variant="h3" align="center">What are you about to eat?</Text>
               <Text variant="body" color={theme.colors.textSecondary} align="center">
-                Add foods above to see if they're safe for your gut
+                Type any dish or ingredient to see if it's safe for YOUR gut.
               </Text>
             </View>
           )}

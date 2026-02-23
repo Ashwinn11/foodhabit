@@ -14,23 +14,23 @@ const BENEFITS = [
   {
     icon: 'Search' as LucideIconName,
     color: '#4D94FF',
-    title: 'Scan Any Menu',
+    title: 'Instant menu scan',
     description:
-      'Point your camera at any restaurant menu. We instantly tell you what\'s safe.',
+      'Point your camera at any restaurant menu — we tell you exactly what to order.',
   },
   {
     icon: 'Brain' as LucideIconName,
-    color: '#A855F7', // Purple
-    title: 'Personalized to You',
+    color: '#A855F7',
+    title: 'Built for your gut, not everyone\'s',
     description:
-      'Every score is based on YOUR condition, YOUR triggers, YOUR gut.',
+      'Every rating is based on your condition, your triggers, and your history.',
   },
   {
     icon: 'TrendingUp' as LucideIconName,
     color: '#6DBE8C',
-    title: 'Find Your Triggers',
+    title: 'Triggers revealed automatically',
     description:
-      'Log meals and symptoms. We connect the dots automatically.',
+      'Log meals and how you feel. We find the patterns so you don\'t have to.',
   },
 ];
 
@@ -58,11 +58,13 @@ export const OnboardingHowItHelps: React.FC = () => {
     : '';
 
   return (
-    <OnboardingLayout 
-      step={7} 
-      scroll 
-      icon="avocado_magic" 
-      title="How GutBuddy Works"
+    <OnboardingLayout
+      step={7}
+      scroll
+      icon="avocado_magic"
+      title="GutBuddy learns your gut"
+      titleIcon="Sparkles"
+      titleIconColor="#A855F7"
     >
       <View style={styles.container}>
         {conditionText ? (

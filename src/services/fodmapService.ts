@@ -7,12 +7,17 @@ export interface AnalysisResult {
   explanation: string;
 }
 
+export interface AnalysisResponse {
+  results: AnalysisResult[];
+  recommendedPick: string | null;
+}
+
 export const fodmapService = {
   analyzeFoods: async (
     foods: string[],
     imageBase64?: string,
     extractFoodsOnly?: boolean
-  ): Promise<AnalysisResult[] | string[]> => {
+  ): Promise<AnalysisResponse | string[]> => {
     const { onboardingAnswers, learnedTriggers } = useAppStore.getState();
 
     const allTriggers = [
@@ -30,13 +35,16 @@ export const fodmapService = {
       body: { foods, imageBase64, extractFoodsOnly, ...context },
     });
 
-    if (error) {
-      console.error('Edge Function error:', error);
-      throw error;
-    }
+    if (error) throw error;
 
-    // extractFoodsOnly=true → returns { foods: string[] }
-    // normal mode        → returns { results: AnalysisResult[] }
-    return data.results ?? data.foods ?? [];
+    // extractFoodsOnly=true → returns string[]
+    // normal mode → returns AnalysisResponse { results, recommendedPick }
+    if (extractFoodsOnly) {
+      return (data.foods ?? []) as string[];
+    }
+    return {
+      results: (data.results ?? []) as AnalysisResult[],
+      recommendedPick: (data.recommendedPick ?? null) as string | null,
+    };
   },
 };
