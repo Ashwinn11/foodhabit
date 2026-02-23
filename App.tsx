@@ -14,14 +14,18 @@ import { theme } from './src/theme/theme';
 // Tab Icons
 import { HomeIcon, ScanIcon, GutIcon, ProfileIcon } from './src/components/TabIcon';
 
+// Toast provider
+import { ToastProvider } from './src/components/Toast';
+
 // Fonts
-import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
-import { 
-  PlayfairDisplay_400Regular, 
-  PlayfairDisplay_500Medium, 
-  PlayfairDisplay_600SemiBold, 
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
+import {
   PlayfairDisplay_700Bold,
-  PlayfairDisplay_400Regular_Italic 
 } from '@expo-google-fonts/playfair-display';
 import { useFonts } from 'expo-font';
 
@@ -29,19 +33,27 @@ import { useFonts } from 'expo-font';
 import { useAppStore } from './src/store/useAppStore';
 import { supabase } from './src/config/supabase';
 
-// Screens
+// Auth Screen
 import { AuthScreen } from './src/screens/AuthScreen';
-import { OnboardingGoal } from './src/screens/OnboardingGoal';
-import { OnboardingCondition } from './src/screens/OnboardingCondition';
-import { OnboardingSymptoms } from './src/screens/OnboardingSymptoms';
-import { OnboardingTriggers } from './src/screens/OnboardingTriggers';
-import { OnboardingResults } from './src/screens/OnboardingResults';
-import { OnboardingSocialProof } from './src/screens/OnboardingSocialProof';
-import { OnboardingCustomPlan } from './src/screens/OnboardingCustomPlan';
+
+// Onboarding Screens
+import { OnboardingGoal } from './src/screens/onboarding/OnboardingGoal';
+import { OnboardingCondition } from './src/screens/onboarding/OnboardingCondition';
+import { OnboardingSymptoms } from './src/screens/onboarding/OnboardingSymptoms';
+import { OnboardingAnalyzing } from './src/screens/onboarding/OnboardingAnalyzing';
+import { OnboardingTriggers } from './src/screens/onboarding/OnboardingTriggers';
+import { OnboardingHowItHelps } from './src/screens/onboarding/OnboardingHowItHelps';
+import { OnboardingReviews } from './src/screens/onboarding/OnboardingReviews';
+import { OnboardingFeatures } from './src/screens/onboarding/OnboardingFeatures';
+import { OnboardingCustomPlan } from './src/screens/onboarding/OnboardingCustomPlan';
+import { OnboardingPaywall } from './src/screens/onboarding/OnboardingPaywall';
+
+// Main Screens
 import { HomeScreen } from './src/screens/HomeScreen';
 import { ScanFoodScreen } from './src/screens/ScanFoodScreen';
 import { MyGutScreen } from './src/screens/MyGutScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
+import { PrivacyPolicyScreen } from './src/screens/PrivacyPolicyScreen';
 
 ExpoSplashScreen.preventAutoHideAsync();
 
@@ -56,9 +68,9 @@ const GutBuddyTheme = {
     primary: theme.colors.primary,
     background: theme.colors.background,
     card: theme.colors.surface,
-    text: theme.colors.text.primary,
+    text: theme.colors.text,
     border: theme.colors.border,
-    notification: theme.colors.secondary,
+    notification: theme.colors.primary,
   },
 };
 
@@ -67,11 +79,11 @@ const MainTabs = () => (
     screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: theme.colors.primary,
-      tabBarInactiveTintColor: theme.colors.text.secondary,
-      tabBarLabelStyle: { fontFamily: theme.typography.fonts.medium, fontSize: 11 },
+      tabBarInactiveTintColor: theme.colors.textTertiary,
+      tabBarLabelStyle: { fontFamily: theme.fonts.medium, fontSize: 11 },
       tabBarStyle: {
         backgroundColor: theme.colors.background,
-        borderTopColor: theme.colors.divider,
+        borderTopColor: theme.colors.border,
         paddingTop: 8,
         elevation: 0,
         shadowOpacity: 0,
@@ -97,7 +109,7 @@ const MainTabs = () => (
       name="MyGut"
       component={MyGutScreen}
       options={{
-        tabBarLabel: 'My Gut',
+        tabBarLabel: 'Journal',
         tabBarIcon: ({ color, size }) => <GutIcon color={color} size={size} />,
       }}
     />
@@ -113,15 +125,22 @@ const MainTabs = () => (
 );
 
 const OnboardingStack = () => (
-            <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: theme.colors.background } }}>
-  
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: false,
+      cardStyle: { backgroundColor: theme.colors.background },
+    }}
+  >
     <Stack.Screen name="OnboardingGoal" component={OnboardingGoal} />
     <Stack.Screen name="OnboardingCondition" component={OnboardingCondition} />
     <Stack.Screen name="OnboardingSymptoms" component={OnboardingSymptoms} />
+    <Stack.Screen name="OnboardingAnalyzing" component={OnboardingAnalyzing} />
     <Stack.Screen name="OnboardingTriggers" component={OnboardingTriggers} />
-    <Stack.Screen name="OnboardingResults" component={OnboardingResults} />
-    <Stack.Screen name="OnboardingSocialProof" component={OnboardingSocialProof} />
+    <Stack.Screen name="OnboardingHowItHelps" component={OnboardingHowItHelps} />
+    <Stack.Screen name="OnboardingReviews" component={OnboardingReviews} />
+    <Stack.Screen name="OnboardingFeatures" component={OnboardingFeatures} />
     <Stack.Screen name="OnboardingCustomPlan" component={OnboardingCustomPlan} />
+    <Stack.Screen name="OnboardingPaywall" component={OnboardingPaywall} />
   </Stack.Navigator>
 );
 
@@ -129,21 +148,18 @@ export default function App() {
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
+    Inter_600SemiBold,
     Inter_700Bold,
-    PlayfairDisplay_400Regular,
-    PlayfairDisplay_500Medium,
-    PlayfairDisplay_600SemiBold,
     PlayfairDisplay_700Bold,
-    PlayfairDisplay_400Regular_Italic,
   });
 
   const [isReady, setIsReady] = useState(false);
   const [session, setSession] = useState<any>(null);
-  
-  const isOnboardingCompleted = useAppStore(state => state.isOnboardingCompleted);
-  const setOnboardingCompleted = useAppStore(state => state.setOnboardingCompleted);
-  const updateOnboardingAnswers = useAppStore(state => state.updateOnboardingAnswers);
-  const resetOnboarding = useAppStore(state => state.resetOnboarding);
+
+  const isOnboardingCompleted = useAppStore((state) => state.isOnboardingCompleted);
+  const setOnboardingCompleted = useAppStore((state) => state.setOnboardingCompleted);
+  const updateOnboardingAnswers = useAppStore((state) => state.updateOnboardingAnswers);
+  const resetOnboarding = useAppStore((state) => state.resetOnboarding);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
@@ -186,7 +202,7 @@ export default function App() {
           dirty = true;
         }
 
-        // Migration B: derive safeFoods via AI (same call as OnboardingTriggers).
+        // Migration B: derive safeFoods via AI.
         // _sfDerived flag ensures this only ever runs once per user.
         if (!answers._sfDerived && answers.knownTriggers?.length) {
           try {
@@ -207,7 +223,6 @@ export default function App() {
               .map((r: any) => r.normalizedName as string);
             answers = { ...answers, safeFoods: safe, _sfDerived: true };
           } catch {
-            // AI unavailable — safe list stays empty; user discovers via scanning
             answers = { ...answers, _sfDerived: true };
           }
           dirty = true;
@@ -238,84 +253,56 @@ export default function App() {
     }
   }, [isReady, fontsLoaded]);
 
-    if (!isReady || !fontsLoaded) {
-
-      return (
-
-        <View style={styles.loadingContainer}>
-
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-
-        </View>
-
-      );
-
-    }
-
-  
-
+  if (!isReady || !fontsLoaded) {
     return (
-
-      <GestureHandlerRootView style={styles.container}>
-
-        <SafeAreaProvider>
-
-          <NavigationContainer theme={GutBuddyTheme}>
-
-            <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: theme.colors.background } }}>
-
-              {!session ? (
-
-                <Stack.Screen name="Auth" component={AuthScreen} />
-
-              ) : !isOnboardingCompleted ? (
-
-                <Stack.Screen name="Onboarding" component={OnboardingStack} />
-
-              ) : (
-
-                <Stack.Screen name="MainTabs" component={MainTabs} />
-
-              )}
-
-            </Stack.Navigator>
-
-            <StatusBar style="light" translucent backgroundColor="transparent" />
-
-          </NavigationContainer>
-
-        </SafeAreaProvider>
-
-      </GestureHandlerRootView>
-
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
     );
-
   }
 
-  
+  return (
+    <GestureHandlerRootView style={styles.container}>
+      <SafeAreaProvider>
+        <ToastProvider>
+          <NavigationContainer theme={GutBuddyTheme}>
+            <Stack.Navigator
+              screenOptions={{
+                headerShown: false,
+                cardStyle: { backgroundColor: theme.colors.background },
+              }}
+            >
+              {!session ? (
+                <>
+                  <Stack.Screen name="Auth" component={AuthScreen} />
+                  <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+                </>
+              ) : !isOnboardingCompleted ? (
+                <Stack.Screen name="Onboarding" component={OnboardingStack} />
+              ) : (
+                <>
+                  <Stack.Screen name="MainTabs" component={MainTabs} />
+                  <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+                </>
+              )}
+            </Stack.Navigator>
+            <StatusBar style="light" translucent backgroundColor="transparent" />
+          </NavigationContainer>
+        </ToastProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}
 
-  const styles = StyleSheet.create({
-
-    container: {
-
-      flex: 1,
-
-      backgroundColor: theme.colors.background,
-
-    },
-
-    loadingContainer: {
-
-      flex: 1,
-
-      alignItems: 'center',
-
-      justifyContent: 'center',
-
-      backgroundColor: theme.colors.background,
-
-    },
-
-  });
-
-  
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.background,
+  },
+});
