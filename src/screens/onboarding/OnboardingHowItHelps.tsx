@@ -6,24 +6,24 @@ import { theme } from '../../theme/theme';
 import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { Icon } from '../../components/Icon';
+import { Icon3D } from '../../components/Icon3D';
 import { useAppStore } from '../../store/useAppStore';
 
 const BENEFITS = [
   {
-    icon: 'Camera' as const,
+    icon: 'magnifying_glass' as const,
     title: 'Scan Any Menu',
     description:
       'Point your camera at any restaurant menu. We instantly tell you what\'s safe.',
   },
   {
-    icon: 'Brain' as const,
+    icon: 'brain' as const,
     title: 'Personalized to You',
     description:
       'Every score is based on YOUR condition, YOUR triggers, YOUR gut.',
   },
   {
-    icon: 'TrendingUp' as const,
+    icon: 'chart_increasing' as const,
     title: 'Find Your Triggers',
     description:
       'Log meals and symptoms. We connect the dots automatically.',
@@ -54,9 +54,7 @@ export const OnboardingHowItHelps: React.FC = () => {
           {BENEFITS.map((benefit, i) => (
             <Card key={i} variant="bordered" style={styles.card}>
               <View style={styles.cardInner}>
-                <View style={styles.iconBadge}>
-                  <Icon name={benefit.icon} size={22} color={theme.colors.primary} />
-                </View>
+                <Icon3D name={benefit.icon} size={48} />
                 <View style={styles.cardText}>
                   <Text variant="h3">{benefit.title}</Text>
                   <Text variant="bodySmall" color={theme.colors.textSecondary} style={styles.desc}>
@@ -104,16 +102,7 @@ const styles = StyleSheet.create({
   cardInner: {
     flexDirection: 'row',
     gap: theme.spacing.md,
-    alignItems: 'flex-start',
-  },
-  iconBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.primaryMuted,
     alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
   },
   cardText: {
     flex: 1,

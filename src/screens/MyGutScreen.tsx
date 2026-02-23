@@ -14,6 +14,7 @@ import { Card } from '../components/Card';
 import { Chip } from '../components/Chip';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
+import { Icon3D } from '../components/Icon3D';
 import { SkeletonCard } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { gutService } from '../services/gutService';
@@ -282,15 +283,18 @@ export const MyGutScreen: React.FC = () => {
                 <SkeletonCard />
               </>
             ) : dateLogs.meals.length === 0 && dateLogs.gutLogs.length === 0 ? (
-              <Text variant="body" color={theme.colors.textTertiary} align="center" style={styles.noLogs}>
-                Nothing logged on this day
-              </Text>
+              <View style={styles.noLogs}>
+                <Icon3D name="spiral_calendar" size={56} animated animationType="float" />
+                <Text variant="body" color={theme.colors.textTertiary} align="center">
+                  Nothing logged on this day
+                </Text>
+              </View>
             ) : (
               <>
                 {dateLogs.meals.map((meal: any) => (
                   <Card key={meal.id} variant="bordered" style={styles.logCard}>
                     <View style={styles.logRow}>
-                      <Icon name="Utensils" size={16} color={theme.colors.safe} />
+                      <Icon3D name="pizza" size={24} />
                       <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
                         {meal.name || 'Meal'}
                       </Text>
@@ -314,10 +318,9 @@ export const MyGutScreen: React.FC = () => {
                   return (
                     <Card key={log.id} variant="bordered" style={styles.logCard}>
                       <View style={styles.logRow}>
-                        <Icon
-                          name={log.mood === 'happy' ? 'Smile' : log.mood === 'neutral' ? 'Meh' : 'Frown'}
-                          size={16}
-                          color={log.mood === 'happy' ? theme.colors.safe : log.mood === 'neutral' ? theme.colors.caution : theme.colors.danger}
+                        <Icon3D
+                          name={log.mood === 'happy' ? 'face_with_smile' : log.mood === 'neutral' ? 'neutral_face' : 'face_with_head_bandage'}
+                          size={24}
                         />
                         <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
                           Gut moment
@@ -357,6 +360,7 @@ export const MyGutScreen: React.FC = () => {
             </View>
           ) : mealCount < MEALS_REQUIRED ? (
             <View style={styles.unlockSection}>
+              <Icon3D name="party_popper" size={64} animated animationType="pulse" />
               <Text variant="h3" align="center">Unlock Trigger Insights</Text>
               <Text variant="body" color={theme.colors.textSecondary} align="center">
                 Log {MEALS_REQUIRED - mealCount} more meal{MEALS_REQUIRED - mealCount !== 1 ? 's' : ''} to unlock trigger insights
@@ -409,7 +413,7 @@ export const MyGutScreen: React.FC = () => {
                           </View>
                           <View style={[styles.confidenceBadge, { backgroundColor: `${CONFIDENCE_COLORS[trigger.confidence] ?? theme.colors.textTertiary}18` }]}>
                             {trigger.confidence === 'High' && (
-                              <Icon name="Flame" size={12} color={CONFIDENCE_COLORS[trigger.confidence]} />
+                              <Icon3D name="fire" size={14} />
                             )}
                             <Text variant="caption" color={CONFIDENCE_COLORS[trigger.confidence] ?? theme.colors.textTertiary} style={styles.confidenceText}>
                               {trigger.confidence}
@@ -436,7 +440,7 @@ export const MyGutScreen: React.FC = () => {
                         )}
                         {trigger.user_confirmed && (
                           <View style={styles.confirmedBadge}>
-                            <Icon name="CheckCircle" size={14} color={theme.colors.safe} />
+                            <Icon3D name="check_mark_button" size={18} />
                             <Text variant="caption" color={theme.colors.safe}>Confirmed by you</Text>
                           </View>
                         )}
@@ -536,6 +540,8 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   noLogs: {
+    alignItems: 'center',
+    gap: theme.spacing.md,
     paddingVertical: theme.spacing.xl,
   },
   logCard: {

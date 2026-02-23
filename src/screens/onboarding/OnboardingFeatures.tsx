@@ -12,32 +12,28 @@ import { OnboardingLayout } from './OnboardingLayout';
 import { theme } from '../../theme/theme';
 import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
-import { Icon } from '../../components/Icon';
+import { Icon3D } from '../../components/Icon3D';
 
 const FEATURES = [
   {
-    icon: 'Camera' as const,
+    icon: 'magnifying_glass' as const,
     title: 'Menu Scanner',
     description: 'Aim. Capture. Know instantly what\'s safe to order.',
-    color: theme.colors.primary,
   },
   {
-    icon: 'ShieldCheck' as const,
+    icon: 'check_mark_button' as const,
     title: 'Safety Scores',
     description: 'Every dish rated: Safe, Caution, or Avoid. No guessing.',
-    color: theme.colors.safe,
   },
   {
-    icon: 'CalendarDays' as const,
+    icon: 'spiral_calendar' as const,
     title: 'Gut Journal',
     description: 'Log meals and feelings. We find the patterns you miss.',
-    color: theme.colors.caution,
   },
   {
-    icon: 'Target' as const,
+    icon: 'bullseye' as const,
     title: 'Trigger Discovery',
     description: 'Your personal trigger foods, learned over time.',
-    color: theme.colors.danger,
   },
 ];
 
@@ -61,9 +57,7 @@ const AnimatedFeature: React.FC<{
 
   return (
     <Animated.View style={[styles.feature, animStyle]}>
-      <View style={[styles.featureIcon, { backgroundColor: `${feature.color}18` }]}>
-        <Icon name={feature.icon} size={24} color={feature.color} />
-      </View>
+      <Icon3D name={feature.icon} size={48} />
       <View style={styles.featureText}>
         <Text variant="h3">{feature.title}</Text>
         <Text variant="bodySmall" color={theme.colors.textSecondary} style={styles.featureDesc}>
@@ -120,20 +114,11 @@ const styles = StyleSheet.create({
   feature: {
     flexDirection: 'row',
     gap: theme.spacing.md,
-    alignItems: 'flex-start',
-  },
-  featureIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: theme.radius.md,
     alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
   },
   featureText: {
     flex: 1,
     gap: 4,
-    paddingTop: 4,
   },
   featureDesc: {
     lineHeight: 20,

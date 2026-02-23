@@ -11,6 +11,7 @@ import Animated, {
 import { theme } from '../theme/theme';
 import { Text } from './Text';
 import { Icon } from './Icon';
+import { Icon3D } from './Icon3D';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -55,18 +56,16 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDone: () => void }> = ({
     opacity: opacity.value,
   }));
 
-  const iconName =
-    toast.type === 'success' ? 'CheckCircle' : toast.type === 'error' ? 'AlertCircle' : 'Info';
-  const iconColor =
-    toast.type === 'success'
-      ? theme.colors.success
-      : toast.type === 'error'
-      ? theme.colors.danger
-      : theme.colors.primary;
+  const icon3DName =
+    toast.type === 'success' ? 'check_mark_button' : toast.type === 'error' ? 'warning' : null;
 
   return (
     <Animated.View style={[styles.toast, animStyle]}>
-      <Icon name={iconName} size={18} color={iconColor} />
+      {icon3DName ? (
+        <Icon3D name={icon3DName} size={22} />
+      ) : (
+        <Icon name="Info" size={18} color={theme.colors.primary} />
+      )}
       <Text variant="bodySmall" style={styles.message} numberOfLines={2}>
         {toast.message}
       </Text>

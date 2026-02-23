@@ -6,6 +6,7 @@ import { theme } from '../../theme/theme';
 import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
 import { Chip } from '../../components/Chip';
+import { Icon3D } from '../../components/Icon3D';
 import { useAppStore } from '../../store/useAppStore';
 
 const CONDITIONS = [
@@ -41,6 +42,7 @@ export const OnboardingCondition: React.FC = () => {
     <OnboardingLayout step={3} scroll>
       <View style={styles.container}>
         <View style={styles.header}>
+          <Icon3D name="test_tube" size={56} animated animationType="float" style={styles.icon} />
           <Text variant="h1">Do you have a diagnosed condition?</Text>
           <Text variant="body" color={theme.colors.textSecondary} style={styles.sub}>
             This helps us tailor your food analysis.
@@ -84,6 +86,10 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: theme.spacing.sm,
+    alignItems: 'flex-start',
+  },
+  icon: {
+    marginBottom: theme.spacing.xs,
   },
   sub: {
     lineHeight: 24,

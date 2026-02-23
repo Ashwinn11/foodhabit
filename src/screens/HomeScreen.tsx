@@ -10,7 +10,6 @@ import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme/theme';
 import { Text } from '../components/Text';
 import { Card } from '../components/Card';
-import { Icon } from '../components/Icon';
 import { Icon3D } from '../components/Icon3D';
 import { EmptyState } from '../components/EmptyState';
 import { SkeletonCard } from '../components/Skeleton';
@@ -167,7 +166,7 @@ export const HomeScreen: React.FC = () => {
             GutBuddy
           </Text>
           <TouchableOpacity hitSlop={12}>
-            <Icon name="Bell" size={22} color={theme.colors.textSecondary} />
+            <Icon3D name="bell" size={28} />
           </TouchableOpacity>
         </View>
 
@@ -185,7 +184,7 @@ export const HomeScreen: React.FC = () => {
         {triggerAlert && (
           <Card variant="bordered" style={styles.triggerAlert}>
             <View style={styles.triggerRow}>
-              <Icon name="AlertTriangle" size={18} color={theme.colors.caution} />
+              <Icon3D name="warning" size={22} />
               <Text variant="bodySmall" style={{ flex: 1 }}>
                 <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
                   {triggerAlert.food}
@@ -258,6 +257,7 @@ export const HomeScreen: React.FC = () => {
               {meals.map((meal: any) => (
                 <Card key={meal.id} variant="bordered" style={styles.mealCard}>
                   <View style={styles.mealRow}>
+                    <Icon3D name="pizza" size={32} />
                     <View style={styles.mealInfo}>
                       <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
                         {meal.name || 'Meal'}

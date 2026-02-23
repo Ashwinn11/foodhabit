@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 export type Icon3DName =
+  // Original set
   | 'magnifying_glass'
   | 'brain'
   | 'salad'
@@ -26,7 +27,30 @@ export type Icon3DName =
   | 'fire'
   | 'bullseye'
   | 'test_tube'
-  | 'thought_balloon';
+  | 'thought_balloon'
+  // Food
+  | 'avocado'
+  | 'hamburger'
+  | 'broccoli'
+  | 'hot_pepper'
+  | 'hot_beverage'
+  | 'bread'
+  | 'glass_of_milk'
+  | 'onion'
+  | 'leafy_green'
+  | 'pizza'
+  // Emotions / symptoms
+  | 'nauseated_face'
+  | 'sleeping_face'
+  // Utility / achievement
+  | 'trophy'
+  | 'star'
+  | 'party_popper'
+  | 'bell'
+  | 'sun'
+  | 'crescent_moon'
+  | 'seedling'
+  | 'heart';
 
 export type AnimationType = 'float' | 'pulse' | 'spin';
 
@@ -56,6 +80,29 @@ const iconMap: Record<Icon3DName, ReturnType<typeof require>> = {
   bullseye: require('../../assets/icons/3d/bullseye.png'),
   test_tube: require('../../assets/icons/3d/test_tube.png'),
   thought_balloon: require('../../assets/icons/3d/thought_balloon.png'),
+  // Food
+  avocado: require('../../assets/icons/3d/avocado.png'),
+  hamburger: require('../../assets/icons/3d/hamburger.png'),
+  broccoli: require('../../assets/icons/3d/broccoli.png'),
+  hot_pepper: require('../../assets/icons/3d/hot_pepper.png'),
+  hot_beverage: require('../../assets/icons/3d/hot_beverage.png'),
+  bread: require('../../assets/icons/3d/bread.png'),
+  glass_of_milk: require('../../assets/icons/3d/glass_of_milk.png'),
+  onion: require('../../assets/icons/3d/onion.png'),
+  leafy_green: require('../../assets/icons/3d/leafy_green.png'),
+  pizza: require('../../assets/icons/3d/pizza.png'),
+  // Emotions / symptoms
+  nauseated_face: require('../../assets/icons/3d/nauseated_face.png'),
+  sleeping_face: require('../../assets/icons/3d/sleeping_face.png'),
+  // Utility / achievement
+  trophy: require('../../assets/icons/3d/trophy.png'),
+  star: require('../../assets/icons/3d/star.png'),
+  party_popper: require('../../assets/icons/3d/party_popper.png'),
+  bell: require('../../assets/icons/3d/bell.png'),
+  sun: require('../../assets/icons/3d/sun.png'),
+  crescent_moon: require('../../assets/icons/3d/crescent_moon.png'),
+  seedling: require('../../assets/icons/3d/seedling.png'),
+  heart: require('../../assets/icons/3d/heart.png'),
 };
 
 export const Icon3D: React.FC<Icon3DProps> = ({

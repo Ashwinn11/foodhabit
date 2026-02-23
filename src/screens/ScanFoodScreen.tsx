@@ -16,6 +16,7 @@ import { Text } from '../components/Text';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Icon } from '../components/Icon';
+import { Icon3D } from '../components/Icon3D';
 import { FunLoader } from '../components/FunLoader';
 import { Input } from '../components/Input';
 import { useToast } from '../components/Toast';
@@ -252,7 +253,7 @@ export const ScanFoodScreen: React.FC = () => {
       return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
           <View style={styles.center}>
-            <Icon name="CameraOff" size={48} color={theme.colors.textTertiary} />
+            <Icon3D name="no_entry" size={64} />
             <Text variant="h3" align="center">Camera Access Needed</Text>
             <Text variant="body" color={theme.colors.textSecondary} align="center">
               Enable camera access in Settings to scan menus.
@@ -337,7 +338,7 @@ export const ScanFoodScreen: React.FC = () => {
 
           {cameraState === 'error' && (
             <View style={styles.errorState}>
-              <Icon name="AlertCircle" size={40} color={theme.colors.danger} />
+              <Icon3D name="warning" size={56} />
               <Text variant="h3" align="center">Couldn't find foods in this image</Text>
               <Text variant="body" color={theme.colors.textSecondary} align="center">
                 Try a clearer photo, or switch to typing
@@ -401,8 +402,10 @@ export const ScanFoodScreen: React.FC = () => {
             </ScrollView>
           ) : (
             <View style={styles.typeEmpty}>
+              <Icon3D name="magnifying_glass" size={72} animated animationType="float" />
+              <Text variant="h3" align="center">What did you eat?</Text>
               <Text variant="body" color={theme.colors.textSecondary} align="center">
-                Add foods to see if they're safe for your gut
+                Add foods above to see if they're safe for your gut
               </Text>
             </View>
           )}
@@ -489,7 +492,7 @@ const styles = StyleSheet.create({
   typeInputRow: { marginBottom: theme.spacing.md },
   typeInputFlex: {},
   typeScrollContent: { gap: theme.spacing.md, paddingBottom: theme.spacing.xxl },
-  typeEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: theme.spacing.xl },
+  typeEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: theme.spacing.xl, gap: theme.spacing.md },
   clearAll: { alignSelf: 'center', padding: theme.spacing.sm },
 
   // FAB

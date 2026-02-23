@@ -113,7 +113,7 @@ Stored in: `assets/icons/3d/` as PNG files, imported as local assets.
 |---|---|
 | `magnifying_glass.png` | Scan screen loading overlay |
 | `brain.png` | AI analysis loading state |
-| `salad.png` | Scan empty state, safe food results |
+| `pizza.png` | Scan empty state, safe food results |
 | `warning.png` | Trigger foods, caution results |
 | `no_entry.png` | Avoid results |
 | `check_mark_button.png` | Safe results highlight |
@@ -143,7 +143,7 @@ Stored in: `assets/icons/3d/` as PNG files, imported as local assets.
 - ALL emoji references in UI copy, buttons, labels, chips, tabs → replaced with lucide icons or Icon3D
 - Tab bar: lucide icons only (Home, ScanLine, BookOpen, User)
 - Mood buttons: Icon3D face assets (smile / neutral / head_bandage)
-- Goal cards: Icon3D bullseye/test_tube/salad/magnifying_glass
+- Goal cards: Icon3D bullseye/test_tube/pizza/magnifying_glass
 - No emoji in any toast, alert, loading copy, or button label
 
 ### Animated Loading Pattern with 3D Icons
