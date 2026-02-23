@@ -5,20 +5,21 @@ import { OnboardingLayout } from './OnboardingLayout';
 import { theme } from '../../theme/theme';
 import { Button } from '../../components/Button';
 import { SelectionCard } from '../../components/SelectionCard';
+import { LucideIconName } from '../../components/Icon';
 import { useAppStore } from '../../store/useAppStore';
 import { analyticsService } from '../../services/analyticsService';
 
 const CONDITIONS = [
-  'IBS-D',
-  'IBS-C',
-  'IBS-M',
-  'GERD',
-  'Celiac Disease',
-  "Crohn's Disease",
-  'Lactose Intolerant',
-  'SIBO',
-  'Gastroparesis',
-  'Just Bloating / Unsure',
+  { id: 'IBS-D', icon: 'Activity' as LucideIconName, color: '#FF4D4D' },
+  { id: 'IBS-C', icon: 'Activity' as LucideIconName, color: '#FF4D4D' },
+  { id: 'IBS-M', icon: 'Activity' as LucideIconName, color: '#FF4D4D' },
+  { id: 'GERD', icon: 'Flame' as LucideIconName, color: '#FF9D4D' },
+  { id: 'Celiac Disease', icon: 'Wheat' as LucideIconName, color: '#F5C97A' },
+  { id: "Crohn's Disease", icon: 'HeartPulse' as LucideIconName, color: '#E05D4C' },
+  { id: 'Lactose Intolerant', icon: 'Milk' as LucideIconName, color: '#8E96A3' },
+  { id: 'SIBO', icon: 'Bacteria' as LucideIconName, color: '#6DBE8C' },
+  { id: 'Gastroparesis', icon: 'Clock' as LucideIconName, color: '#4D94FF' },
+  { id: 'Just Bloating / Unsure', icon: 'HelpCircle' as LucideIconName, color: '#8E96A3' },
 ];
 
 export const OnboardingCondition: React.FC = () => {
@@ -43,18 +44,22 @@ export const OnboardingCondition: React.FC = () => {
     <OnboardingLayout
       step={3}
       scroll
-      icon="test_tube"
+      icon="avocado_scientist"
       title="Do you have a diagnosed condition?"
+      titleIcon="Activity"
+      titleIconColor="#4D94FF"
       subtitle="Select all that apply. This helps us tailor your food analysis."
     >
       <View style={styles.container}>
         <View style={styles.list}>
-          {CONDITIONS.map((condition) => (
+          {CONDITIONS.map((c) => (
             <SelectionCard
-              key={condition}
-              title={condition}
-              selected={selected.includes(condition)}
-              onPress={() => toggle(condition)}
+              key={c.id}
+              title={c.id}
+              lucideIcon={c.icon}
+              lucideColor={c.color}
+              selected={selected.includes(c.id)}
+              onPress={() => toggle(c.id)}
             />
           ))}
         </View>

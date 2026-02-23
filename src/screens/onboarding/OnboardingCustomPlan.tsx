@@ -145,7 +145,7 @@ export const OnboardingCustomPlan: React.FC = () => {
   const goalDisplay = goalLabels[answers.goal ?? ''] ?? answers.goal ?? 'Feel better';
 
   return (
-    <OnboardingLayout step={10} showBack={false} scroll>
+    <OnboardingLayout step={10} showBack={false} icon="avocado_success" scroll>
       <View style={styles.container}>
         {phase === 'loading' ? (
           <View style={styles.loadingSection}>

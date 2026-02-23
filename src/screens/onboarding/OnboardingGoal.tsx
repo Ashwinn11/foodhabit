@@ -3,7 +3,6 @@ import { View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingLayout } from './OnboardingLayout';
 import { theme } from '../../theme/theme';
-import { Text } from '../../components/Text';
 import { SelectionCard } from '../../components/SelectionCard';
 import { useAppStore } from '../../store/useAppStore';
 import { analyticsService } from '../../services/analyticsService';
@@ -11,25 +10,29 @@ import { analyticsService } from '../../services/analyticsService';
 const GOALS = [
   {
     id: 'bloating',
-    icon: 'face_with_sad' as const,
+    lucideIcon: 'Wind' as const,
+    lucideColor: '#6DBE8C', // Safe/Green
     title: 'Stop feeling bloated',
     description: "I'm bloated or gassy after most meals",
   },
   {
     id: 'triggers',
-    icon: 'magnifying_glass' as const,
+    lucideIcon: 'Search' as const,
+    lucideColor: '#4D94FF', // Info/Blue
     title: 'Find my triggers',
     description: 'I suspect certain foods are hurting me',
   },
   {
     id: 'eating_out',
-    icon: 'fork_and_knife' as const,
+    lucideIcon: 'Utensils' as const,
+    lucideColor: '#FF9D4D', // Orange
     title: 'Eat out safely',
     description: 'Restaurants stress me out',
   },
   {
     id: 'condition',
-    icon: 'test_tube' as const,
+    lucideIcon: 'Activity' as const,
+    lucideColor: '#FF4D4D', // Primary/Red
     title: 'Manage my condition',
     description: 'I have IBS, GERD, or similar',
   },
@@ -49,14 +52,15 @@ export const OnboardingGoal: React.FC = () => {
   };
 
   return (
-    <OnboardingLayout step={2}>
+    <OnboardingLayout 
+      step={2} 
+      icon="avocado_thinking" 
+      title="What's bringing you here today?"
+      titleIcon="Target"
+      titleIconColor="#FF4D4D"
+      subtitle="Choose the one that fits best."
+    >
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text variant="h1">What's bringing you here today?</Text>
-          <Text variant="body" color={theme.colors.textSecondary} style={styles.sub}>
-            Choose the one that fits best.
-          </Text>
-        </View>
 
         <View style={styles.goals}>
           {GOALS.map((goal) => (
@@ -64,7 +68,8 @@ export const OnboardingGoal: React.FC = () => {
               key={goal.id}
               title={goal.title}
               description={goal.description}
-              icon={goal.icon}
+              lucideIcon={goal.lucideIcon}
+              lucideColor={goal.lucideColor}
               selected={selected === goal.id}
               onPress={() => handleSelect(goal.id)}
             />

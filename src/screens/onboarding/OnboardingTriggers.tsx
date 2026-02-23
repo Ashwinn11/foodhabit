@@ -7,9 +7,35 @@ import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
 import { Chip } from '../../components/Chip';
 import { Input } from '../../components/Input';
-import { Icon } from '../../components/Icon';
+import { Icon, LucideIconName } from '../../components/Icon';
 import { SelectionCard } from '../../components/SelectionCard';
 import { useAppStore } from '../../store/useAppStore';
+
+const TRIGGER_META: Record<string, { icon: LucideIconName; color: string }> = {
+  'Garlic': { icon: 'Activity', color: '#8E96A3' },
+  'Onion': { icon: 'Activity', color: '#8E96A3' },
+  'Dairy': { icon: 'Milk', color: '#FF9D4D' },
+  'Caffeine': { icon: 'Coffee', color: '#8B4513' },
+  'Spicy foods': { icon: 'Flame', color: '#E05D4C' },
+  'Beans': { icon: 'Leaf', color: '#6DBE8C' },
+  'Alcohol': { icon: 'Beer', color: '#F5C97A' },
+  'Red meat': { icon: 'Beef', color: '#E05D4C' },
+  'Processed foods': { icon: 'Package', color: '#8E96A3' },
+  'White bread': { icon: 'Cloud', color: '#F5C97A' },
+  'Bananas': { icon: 'Citrus', color: '#F5C97A' },
+  'Gluten': { icon: 'Wheat', color: '#F5C97A' },
+  'Artificial sweeteners': { icon: 'Sparkles', color: '#A855F7' },
+  'Coffee': { icon: 'Coffee', color: '#8B4513' },
+  'Citrus': { icon: 'Citrus', color: '#F5C97A' },
+  'Tomatoes': { icon: 'Apple', color: '#E05D4C' },
+  'Chocolate': { icon: 'Egg', color: '#8B4513' },
+  'Wheat': { icon: 'Wheat', color: '#F5C97A' },
+  'Barley': { icon: 'Wheat', color: '#F5C97A' },
+  'Rye': { icon: 'Wheat', color: '#F5C97A' },
+  'Oats': { icon: 'Wheat', color: '#F5C97A' },
+  'High-fiber foods': { icon: 'Leaf', color: '#6DBE8C' },
+  'Raw vegetables': { icon: 'Leaf', color: '#6DBE8C' },
+};
 
 // Suggested triggers by condition/symptom
 const SUGGESTED_TRIGGERS: Record<string, string[]> = {
@@ -67,8 +93,10 @@ export const OnboardingTriggers: React.FC = () => {
     <OnboardingLayout
       step={6}
       scroll
-      icon="warning"
+      icon="avocado_caution"
       title="Common Problem Foods"
+      titleIcon="AlertCircle"
+      titleIconColor="#E05D4C"
       subtitle="Based on your profile, these often cause issues. Select any you suspect."
     >
       <View style={styles.container}>
@@ -78,14 +106,19 @@ export const OnboardingTriggers: React.FC = () => {
             Suggested Triggers
           </Text>
           <View style={styles.list}>
-            {suggested.map((trigger) => (
-              <SelectionCard
-                key={trigger}
-                title={trigger}
-                selected={selected.includes(trigger)}
-                onPress={() => toggleSuggested(trigger)}
-              />
-            ))}
+            {suggested.map((trigger) => {
+              const meta = TRIGGER_META[trigger] || { icon: 'AlertCircle', color: theme.colors.textSecondary };
+              return (
+                <SelectionCard
+                  key={trigger}
+                  title={trigger}
+                  lucideIcon={meta.icon}
+                  lucideColor={meta.color}
+                  selected={selected.includes(trigger)}
+                  onPress={() => toggleSuggested(trigger)}
+                />
+              );
+            })}
           </View>
         </View>
 

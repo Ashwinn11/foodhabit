@@ -8,6 +8,7 @@ import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Icon } from '../../components/Icon';
+import { Icon3D } from '../../components/Icon3D';
 import { useAppStore } from '../../store/useAppStore';
 
 const REVIEWS = [
@@ -53,11 +54,15 @@ export const OnboardingReviews: React.FC = () => {
   }, []);
 
   return (
-    <OnboardingLayout step={8} scroll icon="star" title="Thousands trust their gut to GutBuddy">
+    <OnboardingLayout step={8} scroll icon="avocado_growth" title="Thousands trust their gut to GutBuddy">
       <View style={styles.container}>
         {/* Aggregate rating */}
         <View style={styles.aggregate}>
-          <StarRow count={5} />
+          <View style={styles.stars3d}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Icon3D key={i} name="star" size={24} animated animationType="float" />
+            ))}
+          </View>
           <Text variant="bodySmall" color={theme.colors.textSecondary}>
             4.8 · 2,400+ reviews
           </Text>
@@ -118,6 +123,10 @@ const styles = StyleSheet.create({
   stars: {
     flexDirection: 'row',
     gap: 2,
+  },
+  stars3d: {
+    flexDirection: 'row',
+    gap: 4,
   },
   reviews: {
     gap: theme.spacing.md,

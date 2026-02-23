@@ -13,26 +13,31 @@ import { theme } from '../../theme/theme';
 import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { Icon3D } from '../../components/Icon3D';
+import { LucideIconName } from '../../components/Icon';
+import { IconContainer } from '../../components/IconContainer';
 
 const FEATURES = [
   {
-    icon: 'magnifying_glass' as const,
+    icon: 'Search' as LucideIconName,
+    color: '#4D94FF',
     title: 'Menu Scanner',
     description: 'Aim. Capture. Know instantly what\'s safe to order.',
   },
   {
-    icon: 'check_mark_button' as const,
+    icon: 'CheckCircle' as LucideIconName,
+    color: '#6DBE8C',
     title: 'Safety Scores',
     description: 'Every dish rated: Safe, Caution, or Avoid. No guessing.',
   },
   {
-    icon: 'spiral_calendar' as const,
+    icon: 'Calendar' as LucideIconName,
+    color: '#FF9D4D',
     title: 'Gut Journal',
     description: 'Log meals and feelings. We find the patterns you miss.',
   },
   {
-    icon: 'bullseye' as const,
+    icon: 'Target' as LucideIconName,
+    color: '#FF4D4D',
     title: 'Trigger Discovery',
     description: 'Your personal trigger foods, learned over time.',
   },
@@ -59,7 +64,7 @@ const AnimatedFeature: React.FC<{
   return (
     <Animated.View style={animStyle}>
       <Card variant="glass" style={styles.card}>
-        <Icon3D name={feature.icon} size={42} animated animationType="float" />
+        <IconContainer name={feature.icon} color={feature.color} variant="solid" size={44} iconSize={22} />
         <View style={styles.cardContent}>
           <Text variant="h3" style={styles.title}>{feature.title}</Text>
           <Text variant="bodySmall" color={theme.colors.textSecondary} style={styles.description}>
@@ -75,7 +80,14 @@ export const OnboardingFeatures: React.FC = () => {
   const navigation = useNavigation<any>();
 
   return (
-    <OnboardingLayout step={9} scroll icon="check_mark_button" title="Everything you need">
+    <OnboardingLayout 
+      step={9} 
+      scroll 
+      icon="avocado_success" 
+      title="Everything you need"
+      titleIcon="Sparkles"
+      titleIconColor="#A855F7"
+    >
       <View style={styles.container}>
         <View style={styles.features}>
           {FEATURES.map((feature, i) => (

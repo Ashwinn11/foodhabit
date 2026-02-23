@@ -50,7 +50,18 @@ export type Icon3DName =
   | 'sun'
   | 'crescent_moon'
   | 'seedling'
-  | 'heart';
+  | 'heart'
+  // Character Icons (Mascot)
+  | 'avocado_bloated'
+  | 'avocado_caution'
+  | 'avocado_detective'
+  | 'avocado_growth'
+  | 'avocado_knowledge'
+  | 'avocado_magic'
+  | 'avocado_restaurant'
+  | 'avocado_scientist'
+  | 'avocado_success'
+  | 'avocado_thinking';
 
 export type AnimationType = 'float' | 'pulse' | 'spin';
 
@@ -103,6 +114,17 @@ const iconMap: Record<Icon3DName, ReturnType<typeof require>> = {
   crescent_moon: require('../../assets/icons/3d/crescent_moon.png'),
   seedling: require('../../assets/icons/3d/seedling.png'),
   heart: require('../../assets/icons/3d/heart.png'),
+  // Character Icons
+  avocado_bloated: require('../../assets/onboarding/avocado_bloated.png'),
+  avocado_caution: require('../../assets/onboarding/avocado_caution.png'),
+  avocado_detective: require('../../assets/onboarding/avocado_detective.png'),
+  avocado_growth: require('../../assets/onboarding/avocado_growth.png'),
+  avocado_knowledge: require('../../assets/onboarding/avocado_knowledge.png'),
+  avocado_magic: require('../../assets/onboarding/avocado_magic.png'),
+  avocado_restaurant: require('../../assets/onboarding/avocado_restaurant.png'),
+  avocado_scientist: require('../../assets/onboarding/avocado_scientist.png'),
+  avocado_success: require('../../assets/onboarding/avocado_success.png'),
+  avocado_thinking: require('../../assets/onboarding/avocado_thinking.png'),
 };
 
 export const Icon3D: React.FC<Icon3DProps> = ({

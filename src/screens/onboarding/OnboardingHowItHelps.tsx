@@ -6,24 +6,28 @@ import { theme } from '../../theme/theme';
 import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { Icon3D } from '../../components/Icon3D';
+import { LucideIconName } from '../../components/Icon';
+import { IconContainer } from '../../components/IconContainer';
 import { useAppStore } from '../../store/useAppStore';
 
 const BENEFITS = [
   {
-    icon: 'magnifying_glass' as const,
+    icon: 'Search' as LucideIconName,
+    color: '#4D94FF',
     title: 'Scan Any Menu',
     description:
       'Point your camera at any restaurant menu. We instantly tell you what\'s safe.',
   },
   {
-    icon: 'brain' as const,
+    icon: 'Brain' as LucideIconName,
+    color: '#A855F7', // Purple
     title: 'Personalized to You',
     description:
       'Every score is based on YOUR condition, YOUR triggers, YOUR gut.',
   },
   {
-    icon: 'chart_increasing' as const,
+    icon: 'TrendingUp' as LucideIconName,
+    color: '#6DBE8C',
     title: 'Find Your Triggers',
     description:
       'Log meals and symptoms. We connect the dots automatically.',
@@ -34,7 +38,7 @@ const BenefitCard: React.FC<{
   benefit: typeof BENEFITS[number];
 }> = ({ benefit }) => (
   <Card variant="glass" style={styles.card}>
-    <Icon3D name={benefit.icon} size={42} animated animationType="float" />
+    <IconContainer name={benefit.icon} color={benefit.color} variant="solid" size={44} iconSize={22} />
     <View style={styles.cardContent}>
       <Text variant="h3" style={styles.title}>{benefit.title}</Text>
       <Text variant="bodySmall" color={theme.colors.textSecondary} style={styles.description}>
@@ -54,7 +58,12 @@ export const OnboardingHowItHelps: React.FC = () => {
     : '';
 
   return (
-    <OnboardingLayout step={7} scroll icon="sparkles" title="How GutBuddy Works">
+    <OnboardingLayout 
+      step={7} 
+      scroll 
+      icon="avocado_magic" 
+      title="How GutBuddy Works"
+    >
       <View style={styles.container}>
         {conditionText ? (
           <View style={styles.badge}>

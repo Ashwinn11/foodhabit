@@ -20,6 +20,7 @@ import { BottomSheet } from '../components/BottomSheet';
 import { Skeleton } from '../components/Skeleton';
 import { Input } from '../components/Input';
 import { SelectionCard } from '../components/SelectionCard';
+import { LucideIconName } from '../components/Icon';
 import { useToast } from '../components/Toast';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../config/supabase';
@@ -28,13 +29,30 @@ import { purchasesService } from '../services/purchasesService';
 import { useAppStore } from '../store/useAppStore';
 
 const CONDITIONS = [
-  'IBS-D', 'IBS-C', 'IBS-M', 'GERD', 'Celiac Disease', "Crohn's Disease",
-  'Lactose Intolerant', 'SIBO', 'Gastroparesis', 'Just Bloating / Unsure',
+  { id: 'IBS-D', icon: 'Activity' as LucideIconName, color: '#FF4D4D' },
+  { id: 'IBS-C', icon: 'Activity' as LucideIconName, color: '#FF4D4D' },
+  { id: 'IBS-M', icon: 'Activity' as LucideIconName, color: '#FF4D4D' },
+  { id: 'GERD', icon: 'Flame' as LucideIconName, color: '#FF9D4D' },
+  { id: 'Celiac Disease', icon: 'Wheat' as LucideIconName, color: '#F5C97A' },
+  { id: "Crohn's Disease", icon: 'HeartPulse' as LucideIconName, color: '#E05D4C' },
+  { id: 'Lactose Intolerant', icon: 'Milk' as LucideIconName, color: '#8E96A3' },
+  { id: 'SIBO', icon: 'Bacteria' as LucideIconName, color: '#6DBE8C' },
+  { id: 'Gastroparesis', icon: 'Clock' as LucideIconName, color: '#4D94FF' },
+  { id: 'Just Bloating / Unsure', icon: 'HelpCircle' as LucideIconName, color: '#8E96A3' },
 ];
 
 const SYMPTOMS = [
-  'Bloating', 'Gas', 'Cramping', 'Diarrhea', 'Constipation', 'Nausea',
-  'Heartburn', 'Acid Reflux', 'Brain Fog', 'Fatigue', 'Urgency',
+  { id: 'Bloating', icon: 'Wind' as LucideIconName, color: '#F5C97A' },
+  { id: 'Gas', icon: 'Cloud' as LucideIconName, color: '#8E96A3' },
+  { id: 'Cramping', icon: 'RotateCcw' as LucideIconName, color: '#FF4D4D' },
+  { id: 'Diarrhea', icon: 'ArrowDown' as LucideIconName, color: '#E05D4C' },
+  { id: 'Constipation', icon: 'Lock' as LucideIconName, color: '#8E96A3' },
+  { id: 'Nausea', icon: 'Frown' as LucideIconName, color: '#6DBE8C' },
+  { id: 'Heartburn', icon: 'Flame' as LucideIconName, color: '#FF9D4D' },
+  { id: 'Acid Reflux', icon: 'ArrowUp' as LucideIconName, color: '#FF9D4D' },
+  { id: 'Brain Fog', icon: 'Cloud' as LucideIconName, color: '#A855F7' },
+  { id: 'Fatigue', icon: 'BatteryLow' as LucideIconName, color: '#E05D4C' },
+  { id: 'Urgency', icon: 'Zap' as LucideIconName, color: '#FF4D4D' },
 ];
 
 type EditSheet = 'condition' | 'symptoms' | 'triggers' | null;
@@ -355,12 +373,14 @@ export const ProfileScreen: React.FC = () => {
           <ScrollView contentContainerStyle={styles.editList} showsVerticalScrollIndicator={false}>
             {CONDITIONS.map((c) => (
               <SelectionCard
-                key={c}
-                title={c}
-                selected={editConditions.includes(c)}
+                key={c.id}
+                title={c.id}
+                lucideIcon={c.icon}
+                lucideColor={c.color}
+                selected={editConditions.includes(c.id)}
                 onPress={() =>
                   setEditConditions((prev) =>
-                    prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]
+                    prev.includes(c.id) ? prev.filter((x) => x !== c.id) : [...prev, c.id]
                   )
                 }
               />
@@ -380,12 +400,14 @@ export const ProfileScreen: React.FC = () => {
           <ScrollView contentContainerStyle={styles.editList} showsVerticalScrollIndicator={false}>
             {SYMPTOMS.map((s) => (
               <SelectionCard
-                key={s}
-                title={s}
-                selected={editSymptoms.includes(s)}
+                key={s.id}
+                title={s.id}
+                lucideIcon={s.icon}
+                lucideColor={s.color}
+                selected={editSymptoms.includes(s.id)}
                 onPress={() =>
                   setEditSymptoms((prev) =>
-                    prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+                    prev.includes(s.id) ? prev.filter((x) => x !== s.id) : [...prev, s.id]
                   )
                 }
               />

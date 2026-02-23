@@ -9,13 +9,16 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { theme } from '../theme/theme';
 import { Text } from './Text';
-import { Icon } from './Icon';
+import { Icon, LucideIconName } from './Icon';
+import { IconContainer } from './IconContainer';
 import { Icon3D, Icon3DName } from './Icon3D';
 
 interface SelectionCardProps {
   title: string;
   description?: string;
   icon?: Icon3DName;
+  lucideIcon?: LucideIconName;
+  lucideColor?: string;
   selected?: boolean;
   onPress: () => void;
 }
@@ -26,6 +29,8 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
   title, 
   description, 
   icon, 
+  lucideIcon,
+  lucideColor,
   selected, 
   onPress 
 }) => {
@@ -62,7 +67,14 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
       activeOpacity={1}
     >
       <View style={styles.content}>
-        {icon && (
+        {lucideIcon && (
+          <IconContainer 
+            name={lucideIcon} 
+            color={lucideColor ?? theme.colors.primary}
+            variant={selected ? 'solid' : 'muted'}
+          />
+        )}
+        {icon && !lucideIcon && (
           <View style={styles.iconContainer}>
             <Icon3D name={icon} size={42} animated={selected} animationType="float" />
           </View>

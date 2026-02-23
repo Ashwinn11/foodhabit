@@ -6,20 +6,21 @@ import { theme } from '../../theme/theme';
 import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
 import { SelectionCard } from '../../components/SelectionCard';
+import { LucideIconName } from '../../components/Icon';
 import { useAppStore } from '../../store/useAppStore';
 
 const SYMPTOMS = [
-  'Bloating',
-  'Gas',
-  'Cramping',
-  'Diarrhea',
-  'Constipation',
-  'Nausea',
-  'Heartburn',
-  'Acid Reflux',
-  'Brain Fog',
-  'Fatigue',
-  'Urgency',
+  { id: 'Bloating', icon: 'Wind' as LucideIconName, color: '#F5C97A' },
+  { id: 'Gas', icon: 'Cloud' as LucideIconName, color: '#8E96A3' },
+  { id: 'Cramping', icon: 'RotateCcw' as LucideIconName, color: '#FF4D4D' },
+  { id: 'Diarrhea', icon: 'ArrowDown' as LucideIconName, color: '#E05D4C' },
+  { id: 'Constipation', icon: 'Lock' as LucideIconName, color: '#8E96A3' },
+  { id: 'Nausea', icon: 'Frown' as LucideIconName, color: '#6DBE8C' },
+  { id: 'Heartburn', icon: 'Flame' as LucideIconName, color: '#FF9D4D' },
+  { id: 'Acid Reflux', icon: 'ArrowUp' as LucideIconName, color: '#FF9D4D' },
+  { id: 'Brain Fog', icon: 'Cloud' as LucideIconName, color: '#A855F7' },
+  { id: 'Fatigue', icon: 'BatteryLow' as LucideIconName, color: '#E05D4C' },
+  { id: 'Urgency', icon: 'Zap' as LucideIconName, color: '#FF4D4D' },
 ];
 
 export const OnboardingSymptoms: React.FC = () => {
@@ -42,8 +43,10 @@ export const OnboardingSymptoms: React.FC = () => {
     <OnboardingLayout
       step={4}
       scroll
-      icon="face_with_sad"
+      icon="avocado_bloated"
       title="Which symptoms do you regularly experience?"
+      titleIcon="Flame"
+      titleIconColor="#FF9D4D"
       subtitle="Select all that apply after eating."
     >
       <View style={styles.container}>
@@ -54,12 +57,14 @@ export const OnboardingSymptoms: React.FC = () => {
         )}
 
         <View style={styles.list}>
-          {SYMPTOMS.map((symptom) => (
+          {SYMPTOMS.map((s) => (
             <SelectionCard
-              key={symptom}
-              title={symptom}
-              selected={selected.includes(symptom)}
-              onPress={() => toggle(symptom)}
+              key={s.id}
+              title={s.id}
+              lucideIcon={s.icon}
+              lucideColor={s.color}
+              selected={selected.includes(s.id)}
+              onPress={() => toggle(s.id)}
             />
           ))}
         </View>

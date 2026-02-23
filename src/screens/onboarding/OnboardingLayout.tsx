@@ -13,7 +13,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme/theme';
 import { ProgressBar } from '../../components/ProgressBar';
-import { Icon } from '../../components/Icon';
+import { Icon, LucideIconName } from '../../components/Icon';
+import { IconContainer } from '../../components/IconContainer';
 import { Text } from '../../components/Text';
 import { Icon3D, Icon3DName } from '../../components/Icon3D';
 
@@ -27,6 +28,8 @@ interface OnboardingLayoutProps {
   style?: ViewStyle;
   icon?: Icon3DName;
   title?: string;
+  titleIcon?: LucideIconName;
+  titleIconColor?: string;
   subtitle?: string;
 }
 
@@ -38,6 +41,8 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   style,
   icon,
   title,
+  titleIcon,
+  titleIconColor,
   subtitle,
 }) => {
   const navigation = useNavigation();
@@ -60,19 +65,30 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 
   const body = (
     <>
-      {(title || subtitle || icon) && (
         <View style={styles.headerBlock}>
-          {title && <Text variant="h1">{title}</Text>}
+          {title && (
+            <View style={styles.titleRow}>
+              <Text variant="h1">{title}</Text>
+              {titleIcon && (
+                <IconContainer 
+                  name={titleIcon} 
+                  color={titleIconColor ?? theme.colors.primary} 
+                  size={32} 
+                  iconSize={18}
+                  variant="solid" 
+                />
+              )}
+            </View>
+          )}
           {subtitle && (
             <Text variant="body" color={theme.colors.textSecondary} style={styles.subtitleText}>
               {subtitle}
             </Text>
           )}
           {icon && (
-            <Icon3D name={icon} size={56} animated animationType="float" style={styles.icon} />
+            <Icon3D name={icon} size={300} animated={false} style={styles.icon} />
           )}
         </View>
-      )}
       {children}
     </>
   );
@@ -151,11 +167,17 @@ const styles = StyleSheet.create({
   headerBlock: {
     gap: theme.spacing.sm,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
   subtitleText: {
     lineHeight: 24,
   },
   icon: {
     alignSelf: 'center',
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
 });

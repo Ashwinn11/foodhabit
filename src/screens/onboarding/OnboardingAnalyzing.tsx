@@ -12,7 +12,6 @@ import { OnboardingLayout } from './OnboardingLayout';
 import { theme } from '../../theme/theme';
 import { Text } from '../../components/Text';
 import { Icon } from '../../components/Icon';
-import { Icon3D } from '../../components/Icon3D';
 import { useAppStore } from '../../store/useAppStore';
 
 interface CheckItem {
@@ -78,26 +77,14 @@ export const OnboardingAnalyzing: React.FC = () => {
     : 'Gut health affects millions. You\'re in the right place.';
 
   return (
-    <OnboardingLayout step={5} showBack={false}>
+    <OnboardingLayout 
+      step={5} 
+      showBack={false}
+      icon="avocado_detective"
+      title="Analyzing your profile..."
+      subtitle={personalizedMessage}
+    >
       <View style={styles.container}>
-        <View style={styles.iconSection}>
-          <Icon3D name="thought_balloon" size={80} animated animationType="float" />
-        </View>
-
-        <View style={styles.textSection}>
-          <Text variant="h2" align="center">
-            Analyzing your profile...
-          </Text>
-          <Text
-            variant="body"
-            color={theme.colors.textSecondary}
-            align="center"
-            style={styles.sub}
-          >
-            {personalizedMessage}
-          </Text>
-        </View>
-
         <View style={styles.checklist}>
           {items.map((item, i) => (
             <AnimatedCheckItem key={i} item={item} />

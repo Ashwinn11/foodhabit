@@ -5,7 +5,7 @@ import { theme } from '../theme/theme';
 // Export commonly needed icon types
 export type { LucideIcon } from 'lucide-react-native';
 
-type LucideIconName = keyof typeof LucideIcons;
+export type LucideIconName = keyof typeof LucideIcons;
 
 interface IconProps {
   name: LucideIconName;

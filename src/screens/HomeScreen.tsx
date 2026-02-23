@@ -15,6 +15,7 @@ import { SkeletonCard } from '../components/Skeleton';
 import { BottomSheet } from '../components/BottomSheet';
 import { Button } from '../components/Button';
 import { SelectionCard } from '../components/SelectionCard';
+import { LucideIconName } from '../components/Icon';
 import { useToast } from '../components/Toast';
 import { FluidMoodSlider } from '../components/fluid/FluidMoodSlider';
 import { TimelineLog } from '../components/fluid/TimelineLog';
@@ -32,8 +33,15 @@ const MOODS = [
 ] as const;
 
 const SYMPTOMS = [
-  'Bloating', 'Gas', 'Cramping', 'Nausea', 'Heartburn',
-  'Brain Fog', 'Fatigue', 'Diarrhea', 'Constipation',
+  { id: 'Bloating', icon: 'Wind' as LucideIconName, color: '#F5C97A' },
+  { id: 'Gas', icon: 'Cloud' as LucideIconName, color: '#8E96A3' },
+  { id: 'Cramping', icon: 'RotateCcw' as LucideIconName, color: '#FF4D4D' },
+  { id: 'Nausea', icon: 'Frown' as LucideIconName, color: '#6DBE8C' },
+  { id: 'Heartburn', icon: 'Flame' as LucideIconName, color: '#FF9D4D' },
+  { id: 'Brain Fog', icon: 'Cloud' as LucideIconName, color: '#A855F7' },
+  { id: 'Fatigue', icon: 'BatteryLow' as LucideIconName, color: '#E05D4C' },
+  { id: 'Diarrhea', icon: 'ArrowDown' as LucideIconName, color: '#E05D4C' },
+  { id: 'Constipation', icon: 'Lock' as LucideIconName, color: '#8E96A3' },
 ];
 
 export const HomeScreen: React.FC = () => {
@@ -283,10 +291,12 @@ export const HomeScreen: React.FC = () => {
               </Text>
               {SYMPTOMS.map((s) => (
                 <SelectionCard
-                  key={s}
-                  title={s}
-                  selected={selectedSymptoms.includes(s)}
-                  onPress={() => toggleSymptom(s)}
+                  key={s.id}
+                  title={s.id}
+                  lucideIcon={s.icon}
+                  lucideColor={s.color}
+                  selected={selectedSymptoms.includes(s.id)}
+                  onPress={() => toggleSymptom(s.id)}
                 />
               ))}
             </View>
