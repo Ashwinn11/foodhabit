@@ -39,15 +39,14 @@ export const OnboardingSymptoms: React.FC = () => {
   };
 
   return (
-    <OnboardingLayout step={4} scroll>
+    <OnboardingLayout
+      step={4}
+      scroll
+      icon="face_with_head_bandage"
+      title="Which symptoms do you regularly experience?"
+      subtitle="Select all that apply after eating."
+    >
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text variant="h1">Which symptoms do you regularly experience?</Text>
-          <Text variant="body" color={theme.colors.textSecondary} style={styles.sub}>
-            Select all that apply after eating.
-          </Text>
-        </View>
-
         {selected.length > 0 && (
           <Text variant="caption" color={theme.colors.primary}>
             {selected.length} symptom{selected.length !== 1 ? 's' : ''} selected
@@ -86,14 +85,7 @@ export const OnboardingSymptoms: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: theme.spacing.md,
     gap: theme.spacing.lg,
-  },
-  header: {
-    gap: theme.spacing.sm,
-  },
-  sub: {
-    lineHeight: 24,
   },
   chips: {
     flexDirection: 'row',
