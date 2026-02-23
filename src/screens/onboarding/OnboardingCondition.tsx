@@ -6,6 +6,7 @@ import { theme } from '../../theme/theme';
 import { Button } from '../../components/Button';
 import { SelectionCard } from '../../components/SelectionCard';
 import { useAppStore } from '../../store/useAppStore';
+import { analyticsService } from '../../services/analyticsService';
 
 const CONDITIONS = [
   'IBS-D',
@@ -32,7 +33,9 @@ export const OnboardingCondition: React.FC = () => {
   };
 
   const handleNext = () => {
-    updateOnboardingAnswers({ condition: selected.join(', ') });
+    const condition = selected.join(', ');
+    updateOnboardingAnswers({ condition });
+    analyticsService.logObCondition(condition);
     navigation.navigate('OnboardingSymptoms');
   };
 

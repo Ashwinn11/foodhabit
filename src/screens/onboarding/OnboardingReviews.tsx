@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import * as StoreReview from 'expo-store-review';
 import { View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { OnboardingLayout } from './OnboardingLayout';
@@ -7,6 +8,7 @@ import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Icon } from '../../components/Icon';
+import { useAppStore } from '../../store/useAppStore';
 
 const REVIEWS = [
   {
@@ -42,6 +44,13 @@ const StarRow: React.FC<{ count: number }> = ({ count }) => (
 
 export const OnboardingReviews: React.FC = () => {
   const navigation = useNavigation<any>();
+  const variant = useAppStore((s) => s.onboardingVariant) ?? 'A';
+
+  useEffect(() => {
+    StoreReview.isAvailableAsync().then((available) => {
+      if (available) StoreReview.requestReview();
+    });
+  }, []);
 
   return (
     <OnboardingLayout step={8} scroll icon="star" title="Thousands trust their gut to GutBuddy">
@@ -84,7 +93,8 @@ export const OnboardingReviews: React.FC = () => {
           <Button
             variant="primary"
             size="lg"
-            onPress={() => navigation.navigate('OnboardingFeatures')}
+            // Variant B: this screen is shown after CustomPlan, so go to Paywall
+            onPress={() => navigation.navigate(variant === 'B' ? 'OnboardingPaywall' : 'OnboardingFeatures')}
             fullWidth
           >
             Continue

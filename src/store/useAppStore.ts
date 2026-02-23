@@ -24,12 +24,16 @@ interface AppState {
   // Foods confirmed safe via gut log correlation (good_occurrences >= 5, bad ratio <= 25%)
   learnedSafeFoods: string[];
 
+  // A/B test variant — assigned once on first app open, persisted
+  onboardingVariant: 'A' | 'B' | null;
+
   setOnboardingCompleted: (val: boolean) => void;
   updateOnboardingAnswers: (answers: Partial<OnboardingAnswers>) => void;
   resetOnboarding: () => void;
   setLearnedTriggers: (foods: string[]) => void;
   setLearnedSafeFoods: (foods: string[]) => void;
   setRecentScanAvoidFoods: (foods: string[]) => void;
+  setOnboardingVariant: (variant: 'A' | 'B') => void;
 }
 
 const defaultAnswers: OnboardingAnswers = {
@@ -49,6 +53,7 @@ export const useAppStore = create<AppState>()(
       learnedTriggers: [],
       learnedSafeFoods: [],
       recentScanAvoidFoods: [],
+      onboardingVariant: null,
 
       setOnboardingCompleted: (val) => set({ isOnboardingCompleted: val }),
       updateOnboardingAnswers: (answers) =>
@@ -62,10 +67,12 @@ export const useAppStore = create<AppState>()(
           learnedTriggers: [],
           learnedSafeFoods: [],
           recentScanAvoidFoods: [],
+          onboardingVariant: null,
         }),
       setLearnedTriggers: (foods) => set({ learnedTriggers: foods }),
       setLearnedSafeFoods: (foods) => set({ learnedSafeFoods: foods }),
       setRecentScanAvoidFoods: (foods) => set({ recentScanAvoidFoods: foods }),
+      setOnboardingVariant: (variant) => set({ onboardingVariant: variant }),
     }),
     {
       name: 'gutbuddy-store',

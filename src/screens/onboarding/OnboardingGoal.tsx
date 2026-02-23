@@ -6,6 +6,7 @@ import { theme } from '../../theme/theme';
 import { Text } from '../../components/Text';
 import { SelectionCard } from '../../components/SelectionCard';
 import { useAppStore } from '../../store/useAppStore';
+import { analyticsService } from '../../services/analyticsService';
 
 const GOALS = [
   {
@@ -42,6 +43,8 @@ export const OnboardingGoal: React.FC = () => {
   const handleSelect = (goalId: string) => {
     setSelected(goalId);
     updateOnboardingAnswers({ goal: goalId });
+    analyticsService.logObStart();
+    analyticsService.logObGoal(goalId);
     setTimeout(() => navigation.navigate('OnboardingCondition'), 350);
   };
 

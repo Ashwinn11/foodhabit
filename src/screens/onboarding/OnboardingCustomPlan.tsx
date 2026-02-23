@@ -28,6 +28,7 @@ export const OnboardingCustomPlan: React.FC = () => {
   const navigation = useNavigation<any>();
   const answers = useAppStore((s) => s.onboardingAnswers);
   const updateOnboardingAnswers = useAppStore((s) => s.updateOnboardingAnswers);
+  const variant = useAppStore((s) => s.onboardingVariant) ?? 'A';
 
   const [phase, setPhase] = useState<'loading' | 'reveal'>('loading');
   const [messageIndex, setMessageIndex] = useState(0);
@@ -230,7 +231,8 @@ export const OnboardingCustomPlan: React.FC = () => {
             <Button
               variant="primary"
               size="lg"
-              onPress={() => navigation.navigate('OnboardingPaywall')}
+              // Variant B: show Reviews right before paywall for social proof
+              onPress={() => navigation.navigate(variant === 'B' ? 'OnboardingReviews' : 'OnboardingPaywall')}
               fullWidth
               style={styles.cta}
             >

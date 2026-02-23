@@ -24,6 +24,7 @@ import { useToast } from '../components/Toast';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../config/supabase';
 import { authService } from '../services/authService';
+import { purchasesService } from '../services/purchasesService';
 import { useAppStore } from '../store/useAppStore';
 
 const CONDITIONS = [
@@ -91,20 +92,8 @@ export const ProfileScreen: React.FC = () => {
 
   const loadSubscription = async () => {
     try {
-      let Purchases: any;
-      try { Purchases = require('react-native-purchases').default; } catch {}
-      if (Purchases) {
-        const info = await Purchases.getCustomerInfo();
-        const activeEntitlement = Object.values(info.entitlements.active)[0] as any;
-        if (activeEntitlement) {
-          setSubscription({
-            plan: activeEntitlement.productIdentifier?.includes('yearly') ? 'Pro Yearly' : 'Pro Monthly',
-            renewal: activeEntitlement.expirationDate
-              ? new Date(activeEntitlement.expirationDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-              : 'Active',
-          });
-        }
-      }
+      const info = await purchasesService.getSubscriptionInfo();
+      if (info) setSubscription(info);
     } catch {
       // silent
     } finally {

@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase';
+import { purchasesService } from './purchasesService';
 
 export const authService = {
     signInWithApple: async (identityToken: string) => {
@@ -19,11 +20,15 @@ export const authService = {
         }, { onConflict: 'id' });
         if (error) throw error;
     },
-    signOut: async () => supabase.auth.signOut(),
+    signOut: async () => {
+        await purchasesService.logOut();
+        await supabase.auth.signOut();
+    },
     deleteAccount: async (): Promise<void> => {
         const { data, error } = await supabase.functions.invoke('delete-account', { body: { confirmed: true } });
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || 'Delete failed');
+        await purchasesService.logOut();
         await supabase.auth.signOut();
     },
 };

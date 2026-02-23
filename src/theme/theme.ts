@@ -1,9 +1,9 @@
 export const theme = {
   colors: {
     /* =====================
-       Backgrounds (Nebula)
+       Backgrounds 
        ===================== */
-    background: '#060A14', // ✅ exact nebula background
+    background: '#060A14', // 
     surface: 'rgba(255,255,255,0.03)',
     surfaceElevated: 'rgba(255,255,255,0.05)',
     surfaceHover: 'rgba(255,255,255,0.07)',

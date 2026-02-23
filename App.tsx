@@ -32,6 +32,8 @@ import { useFonts } from 'expo-font';
 // State and Services
 import { useAppStore } from './src/store/useAppStore';
 import { supabase } from './src/config/supabase';
+import { analyticsService } from './src/services/analyticsService';
+import { purchasesService } from './src/services/purchasesService';
 
 // Auth Screen
 import { AuthScreen } from './src/screens/AuthScreen';
@@ -162,11 +164,29 @@ export default function App() {
   const resetOnboarding = useAppStore((state) => state.resetOnboarding);
   const setLearnedTriggers = useAppStore((state) => state.setLearnedTriggers);
   const setLearnedSafeFoods = useAppStore((state) => state.setLearnedSafeFoods);
+  const onboardingVariant = useAppStore((state) => state.onboardingVariant);
+  const setOnboardingVariant = useAppStore((state) => state.setOnboardingVariant);
+
+  // Assign A/B variant once on first launch, persist it
+  useEffect(() => {
+    if (!onboardingVariant) {
+      const variant: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B';
+      setOnboardingVariant(variant);
+      analyticsService.setVariant(variant);
+    } else {
+      analyticsService.setVariant(onboardingVariant);
+    }
+  }, []);
 
   useEffect(() => {
+    // Initialize RevenueCat before checking session so it's ready for paywall
+    purchasesService.configure();
+
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       if (currentSession?.user) {
+        purchasesService.setUserId(currentSession.user.id);
+        analyticsService.setUserId(currentSession.user.id);
         checkOnboarding(currentSession.user.id);
       } else {
         setIsReady(true);
@@ -176,6 +196,8 @@ export default function App() {
     supabase.auth.onAuthStateChange((event, currentSession) => {
       setSession(currentSession);
       if (currentSession?.user) {
+        purchasesService.setUserId(currentSession.user.id);
+        analyticsService.setUserId(currentSession.user.id);
         checkOnboarding(currentSession.user.id);
       } else {
         if (event === 'SIGNED_OUT') {

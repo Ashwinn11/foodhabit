@@ -47,6 +47,7 @@ const BenefitCard: React.FC<{
 export const OnboardingHowItHelps: React.FC = () => {
   const navigation = useNavigation<any>();
   const answers = useAppStore((s) => s.onboardingAnswers);
+  const variant = useAppStore((s) => s.onboardingVariant) ?? 'A';
 
   const conditionText = answers.condition
     ? `Tailored for ${answers.condition.split(',')[0].trim()}...`
@@ -73,7 +74,8 @@ export const OnboardingHowItHelps: React.FC = () => {
           <Button
             variant="primary"
             size="lg"
-            onPress={() => navigation.navigate('OnboardingReviews')}
+            // Variant B: Reviews moved to just before paywall, so skip it here
+            onPress={() => navigation.navigate(variant === 'B' ? 'OnboardingFeatures' : 'OnboardingReviews')}
             fullWidth
           >
             Sounds good
