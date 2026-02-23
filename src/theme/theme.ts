@@ -1,38 +1,49 @@
 export const theme = {
   colors: {
-    // Backgrounds
-    background: '#080A09',
-    surface: '#111410',
-    surfaceElevated: '#1A1E18',
-    surfaceHover: '#212620',
-    border: '#1F2420',
-    borderSubtle: '#161A15',
+    /* =====================
+       Backgrounds (Nebula)
+       ===================== */
+    background: '#060A14', // ✅ exact nebula background
+    surface: 'rgba(255,255,255,0.03)',
+    surfaceElevated: 'rgba(255,255,255,0.05)',
+    surfaceHover: 'rgba(255,255,255,0.07)',
+    border: 'rgba(255,255,255,0.06)',
+    borderSubtle: 'rgba(255,255,255,0.04)',
 
-    // Brand
-    primary: '#D4F870',
-    primaryForeground: '#080A09',
-    primaryMuted: '#D4F87020',
+    /* =====================
+       Brand
+       ===================== */
+    primary: '#FF4D4D',
+    primaryForeground: '#040508',
+    primaryMuted: 'rgba(255,77,77,0.18)',
 
-    // Semantic food safety
+    /* =====================
+       Semantic
+       ===================== */
     safe: '#6DBE8C',
-    safeMuted: '#6DBE8C18',
+    safeMuted: 'rgba(109,190,140,0.18)',
     caution: '#F5C97A',
-    cautionMuted: '#F5C97A18',
+    cautionMuted: 'rgba(245,201,122,0.18)',
     danger: '#E05D4C',
-    dangerMuted: '#E05D4C18',
+    dangerMuted: 'rgba(224,93,76,0.18)',
 
-    // Text
-    text: '#F0F2EE',
-    textSecondary: '#8A9186',
-    textTertiary: '#4A5248',
+    /* =====================
+       Text
+       ===================== */
+    text: '#ECEEF3',
+    textSecondary: '#8E96A3',
+    textTertiary: 'rgba(142,150,163,0.55)',
 
-    // Utility
+    /* =====================
+       Utility
+       ===================== */
     success: '#6DBE8C',
     warning: '#F5C97A',
     error: '#E05D4C',
-    overlay: 'rgba(8,10,9,0.85)',
+    overlay: 'rgba(4,5,8,0.88)',
   },
 
+  /* Fonts intentionally unchanged */
   fonts: {
     regular: 'Inter_400Regular',
     medium: 'Inter_500Medium',
@@ -65,22 +76,22 @@ export const theme = {
     soft: {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.3,
+      shadowOpacity: 0.28,
       shadowRadius: 4,
       elevation: 3,
     },
     medium: {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.4,
+      shadowOpacity: 0.38,
       shadowRadius: 8,
       elevation: 6,
     },
     glow: {
-      shadowColor: '#D4F870',
+      shadowColor: '#FF4D4D',
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.25,
-      shadowRadius: 12,
+      shadowRadius: 14,
       elevation: 10,
     },
   },
