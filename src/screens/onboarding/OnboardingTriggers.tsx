@@ -94,7 +94,7 @@ export const OnboardingTriggers: React.FC = () => {
       step={6}
       scroll
       icon="avocado_caution"
-      title="Common Problem Foods"
+      title="Suspected triggers"
       titleIcon="AlertCircle"
       titleIconColor="#E05D4C"
       subtitle="Based on your profile, these often cause issues. Select any you suspect."
@@ -105,12 +105,13 @@ export const OnboardingTriggers: React.FC = () => {
           <Text variant="label" color={theme.colors.textTertiary} style={styles.sectionLabel}>
             Suggested Triggers
           </Text>
-          <View style={styles.list}>
+          <View style={styles.pillContainer}>
             {suggested.map((trigger) => {
               const meta = TRIGGER_META[trigger] || { icon: 'AlertCircle', color: theme.colors.textSecondary };
               return (
                 <SelectionCard
                   key={trigger}
+                  layout="pill"
                   title={trigger}
                   lucideIcon={meta.icon}
                   lucideColor={meta.color}
@@ -189,8 +190,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     fontSize: 12,
   },
-  list: {
-    gap: theme.spacing.sm,
+  pillContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.xs,
   },
   chips: {
     flexDirection: 'row',

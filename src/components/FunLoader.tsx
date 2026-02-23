@@ -9,13 +9,13 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { theme } from '../theme/theme';
-import { Icon3D, Icon3DName, AnimationType } from './Icon3D';
+import { LucideIconName } from './Icon';
+import { IconContainer } from './IconContainer';
 import { Text } from './Text';
 
 interface FunLoaderProps {
-  icon: Icon3DName;
+  icon: LucideIconName;
   iconSize?: number;
-  animationType?: AnimationType;
   message: string;
   overlay?: boolean;
   style?: ViewStyle;
@@ -43,15 +43,14 @@ const AnimatedDot: React.FC<{ delay: number }> = ({ delay }) => {
 
 export const FunLoader: React.FC<FunLoaderProps> = ({
   icon,
-  iconSize = 72,
-  animationType = 'float',
+  iconSize = 64,
   message,
   overlay = false,
   style,
 }) => {
   const content = (
     <View style={[styles.content, style]}>
-      <Icon3D name={icon} size={iconSize} animated animationType={animationType} />
+      <IconContainer name={icon} size={iconSize} iconSize={iconSize / 2} variant="solid" />
       <Text
         variant="body"
         color={theme.colors.textSecondary}

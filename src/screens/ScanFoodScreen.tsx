@@ -263,7 +263,7 @@ export const ScanFoodScreen: React.FC = () => {
       return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
           <View style={styles.center}>
-            <Icon3D name="no_entry" size={64} />
+            <Icon name="Slash" size={48} color={theme.colors.textSecondary} />
             <Text variant="h3" align="center">Camera Access Needed</Text>
             <Text variant="body" color={theme.colors.textSecondary} align="center">
               Enable camera access in Settings to scan menus.
@@ -339,8 +339,7 @@ export const ScanFoodScreen: React.FC = () => {
               <View style={styles.processingDarken}>
                 <Card variant="bordered" style={styles.loaderCard}>
                   <FunLoader 
-                    icon={cameraState === 'processing_extract' ? "magnifying_glass" : "brain"} 
-                    animationType={cameraState === 'processing_extract' ? "float" : "pulse"} 
+                    icon={cameraState === 'processing_extract' ? "Search" : "Brain"} 
                     message={cameraState === 'processing_extract' ? "Reading your menu..." : "Checking your gut profile..."} 
                   />
                 </Card>
@@ -350,7 +349,7 @@ export const ScanFoodScreen: React.FC = () => {
 
           {cameraState === 'error' && (
             <View style={styles.errorState}>
-              <Icon3D name="warning" size={56} />
+              <Icon name="AlertTriangle" size={48} color={theme.colors.caution} />
               <Text variant="h3" align="center">Couldn't find foods in this image</Text>
               <Text variant="body" color={theme.colors.textSecondary} align="center">
                 Try a clearer photo, or switch to typing
@@ -416,7 +415,7 @@ export const ScanFoodScreen: React.FC = () => {
             </ScrollView>
           ) : (
             <View style={styles.typeEmpty}>
-              <Icon3D name="magnifying_glass" size={72} animated animationType="float" />
+              <Icon name="Search" size={48} color={theme.colors.textSecondary} />
               <Text variant="h3" align="center">What did you eat?</Text>
               <Text variant="body" color={theme.colors.textSecondary} align="center">
                 Add foods above to see if they're safe for your gut

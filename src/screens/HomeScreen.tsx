@@ -209,7 +209,7 @@ export const HomeScreen: React.FC = () => {
         {triggerAlert && (
           <Card variant="bordered" style={styles.triggerAlert}>
             <View style={styles.triggerRow}>
-              <Icon3D name="warning" size={22} />
+              <Icon name="AlertTriangle" size={20} color={theme.colors.caution} />
               <Text variant="bodySmall" style={{ flex: 1 }}>
                 <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
                   {triggerAlert.food}
@@ -289,16 +289,19 @@ export const HomeScreen: React.FC = () => {
               <Text variant="label" color={theme.colors.textTertiary} style={styles.listLabel}>
                 Symptoms
               </Text>
-              {SYMPTOMS.map((s) => (
-                <SelectionCard
-                  key={s.id}
-                  title={s.id}
-                  lucideIcon={s.icon}
-                  lucideColor={s.color}
-                  selected={selectedSymptoms.includes(s.id)}
-                  onPress={() => toggleSymptom(s.id)}
-                />
-              ))}
+              <View style={styles.symptomsPillContainer}>
+                {SYMPTOMS.map((s) => (
+                  <SelectionCard
+                    key={s.id}
+                    layout="pill"
+                    title={s.id}
+                    lucideIcon={s.icon}
+                    lucideColor={s.color}
+                    selected={selectedSymptoms.includes(s.id)}
+                    onPress={() => toggleSymptom(s.id)}
+                  />
+                ))}
+              </View>
             </View>
           </ScrollView>
 
@@ -425,6 +428,11 @@ const styles = StyleSheet.create({
   sheetListInner: {
     gap: theme.spacing.xs,
     paddingBottom: theme.spacing.md,
+  },
+  symptomsPillContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.xs,
   },
   listLabel: {
     marginBottom: theme.spacing.xs,

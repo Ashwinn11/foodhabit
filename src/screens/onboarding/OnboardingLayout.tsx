@@ -65,30 +65,31 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 
   const body = (
     <>
-        <View style={styles.headerBlock}>
-          {title && (
-            <View style={styles.titleRow}>
-              <Text variant="h1">{title}</Text>
-              {titleIcon && (
-                <IconContainer 
-                  name={titleIcon} 
-                  color={titleIconColor ?? theme.colors.primary} 
-                  size={32} 
-                  iconSize={18}
-                  variant="solid" 
-                />
-              )}
+      <View style={styles.headerBlock}>
+        {icon && (
+          <View style={styles.iconWrapper}>
+            <View style={styles.iconGlow} />
+            <Icon3D name={icon} size={140} animated={false} style={styles.icon} />
+          </View>
+        )}
+        <View style={styles.textBlock}>
+          {titleIcon && (
+            <View style={[styles.titleBadge, { backgroundColor: `${titleIconColor ?? theme.colors.primary}15` }]}>
+              <Icon name={titleIcon} color={titleIconColor ?? theme.colors.primary} size={22} />
             </View>
+          )}
+          {title && (
+            <Text variant="h1" style={styles.titleText}>
+              {title}
+            </Text>
           )}
           {subtitle && (
             <Text variant="body" color={theme.colors.textSecondary} style={styles.subtitleText}>
               {subtitle}
             </Text>
           )}
-          {icon && (
-            <Icon3D name={icon} size={300} animated={false} style={styles.icon} />
-          )}
         </View>
+      </View>
       {children}
     </>
   );
@@ -153,31 +154,59 @@ const styles = StyleSheet.create({
   },
   staticBody: {
     flex: 1,
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.sm,
-    gap: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.xl,
+    gap: theme.spacing.xl,
   },
   scrollBody: {
     flexGrow: 1,
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.xxl,
-    gap: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.xl,
+    paddingBottom: theme.spacing.xxxl,
+    gap: theme.spacing.xl,
   },
   headerBlock: {
-    gap: theme.spacing.sm,
-  },
-  titleRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.xl,
   },
-  subtitleText: {
-    lineHeight: 24,
+  iconWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: theme.spacing.xs,
+    minHeight: 140, // Match the Icon3D size to keep layout stable
+  },
+  iconGlow: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: theme.colors.primary,
+    opacity: 0.15,
+    transform: [{ scale: 1.5 }],
   },
   icon: {
-    alignSelf: 'center',
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
+    zIndex: 2,
+  },
+  textBlock: {
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  titleBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  titleText: {
+    textAlign: 'center',
+  },
+  subtitleText: {
+    textAlign: 'center',
+    lineHeight: 24,
+    paddingHorizontal: theme.spacing.md,
   },
 });

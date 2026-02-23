@@ -3,7 +3,8 @@ import { View, StyleSheet, ViewStyle } from 'react-native';
 import { theme } from '../theme/theme';
 import { Text } from './Text';
 import { Button } from './Button';
-import { Icon3D, Icon3DName } from './Icon3D';
+import { LucideIconName } from './Icon';
+import { IconContainer } from './IconContainer';
 
 interface EmptyStateAction {
   label: string;
@@ -12,7 +13,7 @@ interface EmptyStateAction {
 }
 
 interface EmptyStateProps {
-  icon?: Icon3DName;
+  icon?: LucideIconName;
   title: string;
   subtitle?: string;
   action?: EmptyStateAction;
@@ -29,11 +30,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <View style={[styles.container, style]}>
       {icon && (
-        <Icon3D
+        <IconContainer
           name={icon}
-          size={72}
-          animated
-          animationType="float"
+          size={80}
+          iconSize={40}
+          variant="muted"
           style={styles.icon}
         />
       )}

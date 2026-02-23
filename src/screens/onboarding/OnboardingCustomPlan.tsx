@@ -13,7 +13,7 @@ import { theme } from '../../theme/theme';
 import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { Icon3D } from '../../components/Icon3D';
+import { IconContainer } from '../../components/IconContainer';
 import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../config/supabase';
 
@@ -144,33 +144,40 @@ export const OnboardingCustomPlan: React.FC = () => {
   };
   const goalDisplay = goalLabels[answers.goal ?? ''] ?? answers.goal ?? 'Feel better';
 
+  const layoutProps = phase === 'loading'
+    ? {
+        icon: "avocado_thinking" as const, // Consistent icon during loading
+        title: "Building your plan...",
+        subtitle: "Applying GutBuddy intelligence to your profile.",
+      }
+    : {
+        icon: "avocado_success" as const,
+        title: "Your gut plan is ready",
+        titleIcon: "Sparkles" as const,
+        titleIconColor: "#A855F7",
+        subtitle: "Here's a preview of how we'll help you feel better.",
+      };
+
   return (
-    <OnboardingLayout step={10} showBack={false} icon="avocado_success" scroll>
+    <OnboardingLayout step={10} showBack={false} scroll {...layoutProps}>
       <View style={styles.container}>
         {phase === 'loading' ? (
           <View style={styles.loadingSection}>
-            <Animated.View style={sparkleStyle}>
-              <Icon3D name="sparkles" size={64} />
-            </Animated.View>
-
-            <View style={styles.progressTrack}>
-              <Animated.View style={[styles.progressFill, progressStyle]} />
+            <View style={styles.progressContainer}>
+              <View style={styles.progressTrack}>
+                <Animated.View style={[styles.progressFill, progressStyle]} />
+              </View>
+              <Text variant="bodySmall" color={theme.colors.textSecondary} align="center" style={styles.loadingText}>
+                {LOADING_MESSAGES[messageIndex]}
+              </Text>
             </View>
-
-            <Text variant="body" color={theme.colors.textSecondary} align="center">
-              {LOADING_MESSAGES[messageIndex]}
-            </Text>
           </View>
         ) : (
           <Animated.View style={[styles.revealSection, revealStyle]}>
-            <View style={styles.revealHeader}>
-              <Text variant="h1" align="center">Your gut plan is ready</Text>
-            </View>
-
             <View style={styles.summaryCards}>
               <Card variant="bordered" style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
-                  <Icon3D name="test_tube" size={40} />
+                  <IconContainer name="Activity" size={40} iconSize={20} color="#4D94FF" />
                   <View style={styles.summaryText}>
                     <Text variant="caption" color={theme.colors.textTertiary}>Your condition</Text>
                     <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
@@ -182,7 +189,7 @@ export const OnboardingCustomPlan: React.FC = () => {
 
               <Card variant="bordered" style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
-                  <Icon3D name="warning" size={40} />
+                  <IconContainer name="AlertTriangle" size={40} iconSize={20} color="#E05D4C" />
                   <View style={styles.summaryText}>
                     <Text variant="caption" color={theme.colors.textTertiary}>Foods to watch</Text>
                     <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }} numberOfLines={1}>
@@ -195,7 +202,7 @@ export const OnboardingCustomPlan: React.FC = () => {
               {safeFoods.length > 0 && (
                 <Card variant="bordered" style={styles.summaryCard}>
                   <View style={styles.summaryRow}>
-                    <Icon3D name="salad" size={40} />
+                    <IconContainer name="Leaf" size={40} iconSize={20} color="#6DBE8C" />
                     <View style={styles.summaryText}>
                       <Text variant="caption" color={theme.colors.textTertiary}>Safe to eat</Text>
                       <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }} numberOfLines={1}>
@@ -208,7 +215,7 @@ export const OnboardingCustomPlan: React.FC = () => {
 
               <Card variant="bordered" style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
-                  <Icon3D name="bullseye" size={40} />
+                  <IconContainer name="Target" size={40} iconSize={20} color="#FF9D4D" />
                   <View style={styles.summaryText}>
                     <Text variant="caption" color={theme.colors.textTertiary}>Your goal</Text>
                     <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
@@ -248,18 +255,21 @@ export const OnboardingCustomPlan: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    paddingVertical: theme.spacing.xl,
   },
   loadingSection: {
+    flex: 1,
     alignItems: 'center',
     gap: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+  },
+  progressContainer: {
+    width: '100%',
+    gap: theme.spacing.md,
   },
   progressTrack: {
     width: '100%',
     height: 4,
-    backgroundColor: theme.colors.border,
+    backgroundColor: theme.colors.borderSubtle,
     borderRadius: theme.radius.full,
     overflow: 'hidden',
   },
@@ -268,13 +278,12 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     borderRadius: theme.radius.full,
   },
+  loadingText: {
+    fontFamily: theme.fonts.medium,
+    letterSpacing: 0.2,
+  },
   revealSection: {
     gap: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.xs,
-  },
-  revealHeader: {
-    alignItems: 'center',
-    gap: theme.spacing.xs,
   },
   summaryCards: {
     gap: theme.spacing.sm,

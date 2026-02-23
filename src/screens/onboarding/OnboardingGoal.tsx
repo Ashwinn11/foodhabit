@@ -12,29 +12,29 @@ const GOALS = [
     id: 'bloating',
     lucideIcon: 'Wind' as const,
     lucideColor: '#6DBE8C', // Safe/Green
-    title: 'Stop feeling bloated',
-    description: "I'm bloated or gassy after most meals",
+    title: 'Conquer the bloat',
+    description: "I feel constantly bloated or heavy after eating",
   },
   {
     id: 'triggers',
     lucideIcon: 'Search' as const,
     lucideColor: '#4D94FF', // Info/Blue
-    title: 'Find my triggers',
-    description: 'I suspect certain foods are hurting me',
+    title: 'Uncover hidden triggers',
+    description: 'Pinpoint the exact foods that cause discomfort',
   },
   {
     id: 'eating_out',
     lucideIcon: 'Utensils' as const,
     lucideColor: '#FF9D4D', // Orange
-    title: 'Eat out safely',
-    description: 'Restaurants stress me out',
+    title: 'Reclaim dining out',
+    description: 'Navigate restaurant menus without the stress',
   },
   {
     id: 'condition',
     lucideIcon: 'Activity' as const,
     lucideColor: '#FF4D4D', // Primary/Red
-    title: 'Manage my condition',
-    description: 'I have IBS, GERD, or similar',
+    title: 'Manage a condition',
+    description: 'Take control of IBS, GERD, or similar',
   },
 ] as const;
 
@@ -54,25 +54,27 @@ export const OnboardingGoal: React.FC = () => {
   return (
     <OnboardingLayout 
       step={2} 
+      scroll
       icon="avocado_thinking" 
-      title="What's bringing you here today?"
+      title="What brings you to GutBuddy?"
       titleIcon="Target"
       titleIconColor="#FF4D4D"
-      subtitle="Choose the one that fits best."
+      subtitle="Select the journey that aligns with your goals."
     >
       <View style={styles.container}>
-
-        <View style={styles.goals}>
+        <View style={styles.goalsGrid}>
           {GOALS.map((goal) => (
-            <SelectionCard
-              key={goal.id}
-              title={goal.title}
-              description={goal.description}
-              lucideIcon={goal.lucideIcon}
-              lucideColor={goal.lucideColor}
-              selected={selected === goal.id}
-              onPress={() => handleSelect(goal.id)}
-            />
+            <View key={goal.id} style={styles.gridItem}>
+              <SelectionCard
+                layout="grid"
+                title={goal.title}
+                description={goal.description}
+                lucideIcon={goal.lucideIcon}
+                lucideColor={goal.lucideColor}
+                selected={selected === goal.id}
+                onPress={() => handleSelect(goal.id)}
+              />
+            </View>
           ))}
         </View>
       </View>
@@ -86,13 +88,12 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.md,
     gap: theme.spacing.xl,
   },
-  header: {
-    gap: theme.spacing.sm,
+  goalsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -theme.spacing.xxs,
   },
-  sub: {
-    lineHeight: 24,
-  },
-  goals: {
-    gap: theme.spacing.sm,
+  gridItem: {
+    width: '50%',
   },
 });

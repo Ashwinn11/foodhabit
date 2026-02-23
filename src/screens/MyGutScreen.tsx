@@ -443,7 +443,7 @@ export const MyGutScreen: React.FC = () => {
                 <GutTrendChart days={trendDays} weekChange={weekChange} />
               ) : (
                 <Card variant="bordered" style={styles.trendUnlock}>
-                  <Icon3D name="chart_increasing" size={40} animated animationType="float" />
+                  <Icon name="TrendingUp" size={32} color={theme.colors.textSecondary} />
                   <View style={styles.trendUnlockText}>
                     <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
                       Your gut trend chart
@@ -511,7 +511,7 @@ export const MyGutScreen: React.FC = () => {
                           </View>
                           <View style={[styles.confidenceBadge, { backgroundColor: `${CONFIDENCE_COLORS[trigger.confidence] ?? theme.colors.textTertiary}18` }]}>
                             {trigger.confidence === 'High' && (
-                              <Icon3D name="fire" size={14} />
+                              <Icon name="Flame" size={14} color={theme.colors.danger} />
                             )}
                             <Text variant="caption" color={CONFIDENCE_COLORS[trigger.confidence] ?? theme.colors.textTertiary} style={styles.confidenceText}>
                               {trigger.confidence}
@@ -538,7 +538,7 @@ export const MyGutScreen: React.FC = () => {
                         )}
                         {trigger.user_confirmed && (
                           <View style={styles.confirmedBadge}>
-                            <Icon3D name="check_mark_button" size={18} />
+                            <Icon name="CheckCircle2" size={16} color={theme.colors.safe} />
                             <Text variant="caption" color={theme.colors.safe}>Confirmed by you</Text>
                           </View>
                         )}

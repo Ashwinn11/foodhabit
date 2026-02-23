@@ -44,10 +44,10 @@ export const OnboardingSymptoms: React.FC = () => {
       step={4}
       scroll
       icon="avocado_bloated"
-      title="Which symptoms do you regularly experience?"
+      title="What are you feeling?"
       titleIcon="Flame"
       titleIconColor="#FF9D4D"
-      subtitle="Select all that apply after eating."
+      subtitle="Select the symptoms that consistently disrupt your day."
     >
       <View style={styles.container}>
         {selected.length > 0 && (
@@ -56,10 +56,11 @@ export const OnboardingSymptoms: React.FC = () => {
           </Text>
         )}
 
-        <View style={styles.list}>
+        <View style={styles.pillContainer}>
           {SYMPTOMS.map((s) => (
             <SelectionCard
               key={s.id}
+              layout="pill"
               title={s.id}
               lucideIcon={s.icon}
               lucideColor={s.color}
@@ -94,9 +95,13 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.semibold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    textAlign: 'center',
   },
-  list: {
-    gap: theme.spacing.sm,
+  pillContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: theme.spacing.xs,
   },
   footer: {
     paddingBottom: theme.spacing.xl,

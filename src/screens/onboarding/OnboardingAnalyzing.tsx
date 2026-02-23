@@ -42,9 +42,9 @@ const AnimatedCheckItem: React.FC<{ item: CheckItem }> = ({ item }) => {
   return (
     <Animated.View style={[styles.checkItem, animStyle]}>
       <View style={styles.checkIcon}>
-        <Icon name="Check" size={14} color={theme.colors.primaryForeground} strokeWidth={2.5} />
+        <Icon name="Check" size={14} color={theme.colors.primaryForeground} strokeWidth={3} />
       </View>
-      <Text variant="body" color={theme.colors.textSecondary}>
+      <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
         {item.label}
       </Text>
     </Animated.View>
@@ -82,6 +82,8 @@ export const OnboardingAnalyzing: React.FC = () => {
       showBack={false}
       icon="avocado_detective"
       title="Analyzing your profile..."
+      titleIcon="Search"
+      titleIconColor="#4D94FF"
       subtitle={personalizedMessage}
     >
       <View style={styles.container}>
@@ -98,37 +100,28 @@ export const OnboardingAnalyzing: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: theme.spacing.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.xl,
-  },
-  iconSection: {
-    alignItems: 'center',
-  },
-  textSection: {
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  sub: {
-    maxWidth: 280,
-    textAlign: 'center',
+    gap: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
   },
   checklist: {
     width: '100%',
-    gap: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
+    gap: theme.spacing.sm,
   },
   checkItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.md,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    padding: theme.spacing.md,
+    paddingVertical: 14,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   checkIcon: {
     width: 24,
     height: 24,
-    borderRadius: theme.radius.full,
+    borderRadius: 12,
     backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',

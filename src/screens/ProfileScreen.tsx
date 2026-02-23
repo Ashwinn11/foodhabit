@@ -370,10 +370,11 @@ export const ProfileScreen: React.FC = () => {
             <Text variant="h3">Edit Condition</Text>
             <Text variant="caption" color={theme.colors.textSecondary}>Select all that apply</Text>
           </View>
-          <ScrollView contentContainerStyle={styles.editList} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={styles.editPillList} showsVerticalScrollIndicator={false}>
             {CONDITIONS.map((c) => (
               <SelectionCard
                 key={c.id}
+                layout="pill"
                 title={c.id}
                 lucideIcon={c.icon}
                 lucideColor={c.color}
@@ -397,10 +398,11 @@ export const ProfileScreen: React.FC = () => {
             <Text variant="h3">Edit Symptoms</Text>
             <Text variant="caption" color={theme.colors.textSecondary}>Select your regular symptoms</Text>
           </View>
-          <ScrollView contentContainerStyle={styles.editList} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={styles.editPillList} showsVerticalScrollIndicator={false}>
             {SYMPTOMS.map((s) => (
               <SelectionCard
                 key={s.id}
+                layout="pill"
                 title={s.id}
                 lucideIcon={s.icon}
                 lucideColor={s.color}
@@ -589,6 +591,21 @@ const styles = StyleSheet.create({
   },
   editList: {
     gap: theme.spacing.sm,
+    paddingBottom: theme.spacing.md,
+  },
+  editGridList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -theme.spacing.xxs,
+    paddingBottom: theme.spacing.md,
+  },
+  gridItem: {
+    width: '50%',
+  },
+  editPillList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.xs,
     paddingBottom: theme.spacing.md,
   },
   editChips: {

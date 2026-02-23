@@ -10,14 +10,14 @@ import { useAppStore } from '../../store/useAppStore';
 import { analyticsService } from '../../services/analyticsService';
 
 const CONDITIONS = [
-  { id: 'IBS-D', icon: 'Activity' as LucideIconName, color: '#FF4D4D' },
-  { id: 'IBS-C', icon: 'Activity' as LucideIconName, color: '#FF4D4D' },
-  { id: 'IBS-M', icon: 'Activity' as LucideIconName, color: '#FF4D4D' },
+  { id: 'IBS-D', icon: 'ArrowDown' as LucideIconName, color: '#FF4D4D' },
+  { id: 'IBS-C', icon: 'Lock' as LucideIconName, color: '#FF4D4D' },
+  { id: 'IBS-M', icon: 'RefreshCw' as LucideIconName, color: '#FF4D4D' },
   { id: 'GERD', icon: 'Flame' as LucideIconName, color: '#FF9D4D' },
   { id: 'Celiac Disease', icon: 'Wheat' as LucideIconName, color: '#F5C97A' },
-  { id: "Crohn's Disease", icon: 'HeartPulse' as LucideIconName, color: '#E05D4C' },
+  { id: "Crohn's Disease", icon: 'Activity' as LucideIconName, color: '#E05D4C' },
   { id: 'Lactose Intolerant', icon: 'Milk' as LucideIconName, color: '#8E96A3' },
-  { id: 'SIBO', icon: 'Bacteria' as LucideIconName, color: '#6DBE8C' },
+  { id: 'SIBO', icon: 'Microscope' as LucideIconName, color: '#6DBE8C' },
   { id: 'Gastroparesis', icon: 'Clock' as LucideIconName, color: '#4D94FF' },
   { id: 'Just Bloating / Unsure', icon: 'HelpCircle' as LucideIconName, color: '#8E96A3' },
 ];
@@ -45,16 +45,17 @@ export const OnboardingCondition: React.FC = () => {
       step={3}
       scroll
       icon="avocado_scientist"
-      title="Do you have a diagnosed condition?"
+      title="Any known conditions?"
       titleIcon="Activity"
       titleIconColor="#4D94FF"
-      subtitle="Select all that apply. This helps us tailor your food analysis."
+      subtitle="Help us calibrate your analysis by sharing any existing diagnoses."
     >
       <View style={styles.container}>
-        <View style={styles.list}>
+        <View style={styles.pillContainer}>
           {CONDITIONS.map((c) => (
             <SelectionCard
               key={c.id}
+              layout="pill"
               title={c.id}
               lucideIcon={c.icon}
               lucideColor={c.color}
@@ -85,8 +86,11 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: theme.spacing.xl,
   },
-  list: {
-    gap: theme.spacing.sm,
+  pillContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: theme.spacing.xs,
   },
   footer: {
     paddingBottom: theme.spacing.xl,
