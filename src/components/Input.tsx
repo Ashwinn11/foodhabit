@@ -141,11 +141,6 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     minHeight: 50,
   },
-  focusedContainer: {
-    ...theme.shadows.soft,
-    shadowColor: theme.colors.primary,
-    shadowOpacity: 0.1,
-  },
   errorContainer: {
     borderColor: theme.colors.danger,
   },
