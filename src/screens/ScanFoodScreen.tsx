@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Linking,
+  Image,
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,6 +21,7 @@ import { Icon3D } from '../components/Icon3D';
 import { FunLoader } from '../components/FunLoader';
 import { Input } from '../components/Input';
 import { useToast } from '../components/Toast';
+import { AnimatedCameraOverlay } from '../components/fluid/AnimatedCameraOverlay';
 import { fodmapService } from '../services/fodmapService';
 import type { AnalysisResult } from '../services/fodmapService';
 import { gutService } from '../services/gutService';
@@ -164,6 +166,7 @@ export const ScanFoodScreen: React.FC = () => {
   const [results, setResults] = useState<AnalysisResult[]>([]);
   const [selectedFoods, setSelectedFoods] = useState<Set<string>>(new Set());
   const [logging, setLogging] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
   // Type mode
   const [typeInput, setTypeInput] = useState('');
@@ -188,6 +191,7 @@ export const ScanFoodScreen: React.FC = () => {
     if (!cameraRef.current) return;
     try {
       const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.7 });
+      setCapturedImage(photo.uri);
       setCameraState('processing_extract');
 
       const extractResult = await fodmapService.analyzeFoods([], photo.base64, true);
@@ -229,6 +233,7 @@ export const ScanFoodScreen: React.FC = () => {
       setResults([]);
       setSelectedFoods(new Set());
       setCameraState('idle');
+      setCapturedImage(null);
     } catch {
       showToast('Could not log meal. Try again.', 'error');
     } finally {
@@ -284,7 +289,7 @@ export const ScanFoodScreen: React.FC = () => {
             <TouchableOpacity
               key={m}
               style={[styles.segBtn, mode === m && styles.segBtnActive]}
-              onPress={() => { setMode(m); setResults([]); setSelectedFoods(new Set()); setCameraState('idle'); }}
+              onPress={() => { setMode(m); setResults([]); setSelectedFoods(new Set()); setCameraState('idle'); setCapturedImage(null); }}
             >
               <Icon
                 name={m === 'camera' ? 'Camera' : 'PenLine'}
@@ -302,15 +307,14 @@ export const ScanFoodScreen: React.FC = () => {
       {/* ── Camera Mode ─────────────────────────────────────────────────── */}
       {mode === 'camera' && (
         <View style={styles.cameraContainer}>
+          {(cameraState !== 'idle' && capturedImage) && (
+            <Image source={{ uri: capturedImage }} style={StyleSheet.absoluteFill} />
+          )}
+
           {cameraState === 'idle' && (
             <>
               <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing={facing} />
-              <View style={styles.cornerGuides} pointerEvents="none">
-                <View style={[styles.corner, styles.cornerTL]} />
-                <View style={[styles.corner, styles.cornerTR]} />
-                <View style={[styles.corner, styles.cornerBL]} />
-                <View style={[styles.corner, styles.cornerBR]} />
-              </View>
+              
               <View style={styles.cameraOverlay} pointerEvents="none">
                 <Text variant="caption" color="rgba(255,255,255,0.7)" align="center">Point at a menu or meal</Text>
                 <Text variant="caption" color="rgba(255,255,255,0.5)" align="center">Works with menus, receipts, or food photos</Text>
@@ -324,15 +328,18 @@ export const ScanFoodScreen: React.FC = () => {
             </>
           )}
 
-          {cameraState === 'processing_extract' && (
-            <View style={styles.processingOverlay}>
-              <FunLoader icon="magnifying_glass" animationType="float" message="Reading your menu..." />
-            </View>
-          )}
-
-          {cameraState === 'processing_analyze' && (
-            <View style={styles.processingOverlay}>
-              <FunLoader icon="brain" animationType="pulse" message="Checking your gut profile..." />
+          {(cameraState === 'processing_extract' || cameraState === 'processing_analyze') && (
+            <View style={StyleSheet.absoluteFill}>
+              <AnimatedCameraOverlay />
+              <View style={styles.processingDarken}>
+                <Card variant="bordered" style={styles.loaderCard}>
+                  <FunLoader 
+                    icon={cameraState === 'processing_extract' ? "magnifying_glass" : "brain"} 
+                    animationType={cameraState === 'processing_extract' ? "float" : "pulse"} 
+                    message={cameraState === 'processing_extract' ? "Reading your menu..." : "Checking your gut profile..."} 
+                  />
+                </Card>
+              </View>
             </View>
           )}
 
@@ -344,20 +351,22 @@ export const ScanFoodScreen: React.FC = () => {
                 Try a clearer photo, or switch to typing
               </Text>
               <View style={styles.errorActions}>
-                <Button variant="primary" size="md" onPress={() => setCameraState('idle')}>Try Again</Button>
-                <Button variant="secondary" size="md" onPress={() => { setMode('type'); setCameraState('idle'); }}>Type Instead</Button>
+                <Button variant="primary" size="md" onPress={() => { setCameraState('idle'); setCapturedImage(null); }}>Try Again</Button>
+                <Button variant="secondary" size="md" onPress={() => { setMode('type'); setCameraState('idle'); setCapturedImage(null); }}>Type Instead</Button>
               </View>
             </View>
           )}
 
           {cameraState === 'results' && (
-            <ScrollView style={styles.resultsScroll} contentContainerStyle={styles.resultsContent}>
-              <TouchableOpacity style={styles.retakeBtn} onPress={() => { setCameraState('idle'); setResults([]); setSelectedFoods(new Set()); }}>
-                <Icon name="ChevronLeft" size={16} color={theme.colors.primary} />
-                <Text variant="caption" color={theme.colors.primary}>Retake</Text>
-              </TouchableOpacity>
-              <ResultsList results={results} selectedFoods={selectedFoods} onToggle={toggleFood} />
-            </ScrollView>
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]}>
+              <ScrollView style={styles.resultsScroll} contentContainerStyle={styles.resultsContent}>
+                <TouchableOpacity style={styles.retakeBtn} onPress={() => { setCameraState('idle'); setCapturedImage(null); setResults([]); setSelectedFoods(new Set()); }}>
+                  <Icon name="ChevronLeft" size={16} color={theme.colors.primary} />
+                  <Text variant="caption" color={theme.colors.primary}>Retake</Text>
+                </TouchableOpacity>
+                <ResultsList results={results} selectedFoods={selectedFoods} onToggle={toggleFood} />
+              </ScrollView>
+            </View>
           )}
         </View>
       )}
@@ -457,12 +466,6 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: '#000', borderRadius: theme.radius.xl,
     overflow: 'hidden', margin: theme.spacing.md, marginTop: 0,
   },
-  cornerGuides: { ...StyleSheet.absoluteFillObject, padding: 32 },
-  corner: { width: 24, height: 24, borderColor: '#fff', borderWidth: 2, opacity: 0.6, position: 'absolute' },
-  cornerTL: { top: 32, left: 32, borderRightWidth: 0, borderBottomWidth: 0 },
-  cornerTR: { top: 32, right: 32, borderLeftWidth: 0, borderBottomWidth: 0 },
-  cornerBL: { bottom: 100, left: 32, borderRightWidth: 0, borderTopWidth: 0 },
-  cornerBR: { bottom: 100, right: 32, borderLeftWidth: 0, borderTopWidth: 0 },
   cameraOverlay: { position: 'absolute', bottom: 110, left: 0, right: 0, gap: 4 },
   flipBtn: {
     position: 'absolute', top: 16, right: 16, width: 40, height: 40,
@@ -474,16 +477,26 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   captureInner: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#fff' },
-  processingOverlay: {
-    ...StyleSheet.absoluteFillObject, backgroundColor: theme.colors.overlay,
+  processingDarken: {
+    ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)',
     alignItems: 'center', justifyContent: 'center',
   },
+  loaderCard: {
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.xl,
+  },
   errorState: {
-    flex: 1, alignItems: 'center', justifyContent: 'center',
+    ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center',
     padding: theme.spacing.xl, gap: theme.spacing.md, backgroundColor: theme.colors.background,
   },
   errorActions: { flexDirection: 'row', gap: theme.spacing.sm },
-  resultsScroll: { flex: 1, backgroundColor: theme.colors.background },
+  resultsScroll: { flex: 1 },
   resultsContent: { padding: theme.spacing.md, paddingBottom: theme.spacing.xxl, gap: theme.spacing.md },
   retakeBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start' },
 
