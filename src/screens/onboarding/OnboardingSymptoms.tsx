@@ -5,7 +5,7 @@ import { OnboardingLayout } from './OnboardingLayout';
 import { theme } from '../../theme/theme';
 import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
-import { Chip } from '../../components/Chip';
+import { SelectionCard } from '../../components/SelectionCard';
 import { useAppStore } from '../../store/useAppStore';
 
 const SYMPTOMS = [
@@ -48,18 +48,16 @@ export const OnboardingSymptoms: React.FC = () => {
     >
       <View style={styles.container}>
         {selected.length > 0 && (
-          <Text variant="caption" color={theme.colors.primary}>
+          <Text variant="caption" color={theme.colors.primary} style={styles.counter}>
             {selected.length} symptom{selected.length !== 1 ? 's' : ''} selected
           </Text>
         )}
 
-        <View style={styles.chips}>
+        <View style={styles.list}>
           {SYMPTOMS.map((symptom) => (
-            <Chip
+            <SelectionCard
               key={symptom}
-              label={symptom}
-              variant="selectable"
-              size="md"
+              title={symptom}
               selected={selected.includes(symptom)}
               onPress={() => toggle(symptom)}
             />
@@ -85,15 +83,18 @@ export const OnboardingSymptoms: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  counter: {
+    fontFamily: theme.fonts.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  list: {
     gap: theme.spacing.sm,
   },
   footer: {
     paddingBottom: theme.spacing.xl,
-    marginTop: 'auto',
+    marginTop: theme.spacing.md,
   },
 });

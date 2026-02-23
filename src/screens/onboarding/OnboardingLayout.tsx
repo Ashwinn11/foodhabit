@@ -60,13 +60,19 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 
   const body = (
     <>
-      {title && <Text variant="h1">{title}</Text>}
-      {subtitle && (
-        <Text variant="body" color={theme.colors.textSecondary} style={styles.subtitleText}>
-          {subtitle}
-        </Text>
+      {(title || subtitle || icon) && (
+        <View style={styles.headerBlock}>
+          {title && <Text variant="h1">{title}</Text>}
+          {subtitle && (
+            <Text variant="body" color={theme.colors.textSecondary} style={styles.subtitleText}>
+              {subtitle}
+            </Text>
+          )}
+          {icon && (
+            <Icon3D name={icon} size={56} animated animationType="float" style={styles.icon} />
+          )}
+        </View>
       )}
-      {icon && <Icon3D name={icon} size={56} animated animationType="float" style={styles.icon} />}
       {children}
     </>
   );
@@ -129,24 +135,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
+  staticBody: {
+    flex: 1,
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
+    gap: theme.spacing.lg,
+  },
+  scrollBody: {
+    flexGrow: 1,
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
+    paddingBottom: theme.spacing.xxl,
+    gap: theme.spacing.lg,
+  },
+  headerBlock: {
+    gap: theme.spacing.sm,
+  },
   subtitleText: {
     lineHeight: 24,
   },
   icon: {
     alignSelf: 'center',
-    marginVertical: theme.spacing.sm,
-  },
-  staticBody: {
-    flex: 1,
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
-  scrollBody: {
-    flexGrow: 1,
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.xxl,
-    gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
   },
 });

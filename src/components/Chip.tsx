@@ -59,16 +59,27 @@ export const Chip: React.FC<ChipProps> = ({
   const getChipStyle = (): ViewStyle => {
     if (variant === 'status' && status) {
       const statusStyles: Record<ChipStatus, ViewStyle> = {
-        safe: { backgroundColor: theme.colors.safeMuted, borderColor: theme.colors.safe },
-        caution: { backgroundColor: theme.colors.cautionMuted, borderColor: theme.colors.caution },
-        avoid: { backgroundColor: theme.colors.dangerMuted, borderColor: theme.colors.danger },
+        safe: { backgroundColor: 'rgba(109, 190, 140, 0.15)', borderColor: 'rgba(109, 190, 140, 0.4)' },
+        caution: { backgroundColor: 'rgba(245, 201, 122, 0.15)', borderColor: 'rgba(245, 201, 122, 0.4)' },
+        avoid: { backgroundColor: 'rgba(224, 93, 76, 0.15)', borderColor: 'rgba(224, 93, 76, 0.4)' },
       };
       return statusStyles[status];
     }
     if (variant === 'selectable' && selected) {
-      return { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary };
+      return { 
+        backgroundColor: 'rgba(255, 77, 77, 0.15)', 
+        borderColor: theme.colors.primary,
+        shadowColor: theme.colors.primary,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
+      };
     }
-    return {};
+    return {
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      borderColor: 'rgba(255, 255, 255, 0.08)',
+    };
   };
 
   const getTextColor = (): string => {
@@ -81,7 +92,7 @@ export const Chip: React.FC<ChipProps> = ({
       return colors[status];
     }
     if (variant === 'selectable' && selected) {
-      return theme.colors.primaryForeground;
+      return theme.colors.primary;
     }
     return theme.colors.textSecondary;
   };
@@ -103,7 +114,7 @@ export const Chip: React.FC<ChipProps> = ({
       <Text
         variant={size === 'sm' ? 'caption' : 'bodySmall'}
         color={getTextColor()}
-        style={{ fontFamily: theme.fonts.medium }}
+        style={{ fontFamily: selected ? theme.fonts.semibold : theme.fonts.medium }}
       >
         {label}
       </Text>
@@ -122,12 +133,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: theme.radius.full,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
   },
   size_sm: {
     paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xxs + 2,
+    paddingVertical: 3,
     gap: 4,
   },
   size_md: {

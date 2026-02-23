@@ -12,6 +12,7 @@ import { OnboardingLayout } from './OnboardingLayout';
 import { theme } from '../../theme/theme';
 import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
 import { Icon3D } from '../../components/Icon3D';
 
 const FEATURES = [
@@ -56,14 +57,16 @@ const AnimatedFeature: React.FC<{
   }));
 
   return (
-    <Animated.View style={[styles.feature, animStyle]}>
-      <Icon3D name={feature.icon} size={48} />
-      <View style={styles.featureText}>
-        <Text variant="h3">{feature.title}</Text>
-        <Text variant="bodySmall" color={theme.colors.textSecondary} style={styles.featureDesc}>
-          {feature.description}
-        </Text>
-      </View>
+    <Animated.View style={animStyle}>
+      <Card variant="glass" style={styles.card}>
+        <Icon3D name={feature.icon} size={42} animated animationType="float" />
+        <View style={styles.cardContent}>
+          <Text variant="h3" style={styles.title}>{feature.title}</Text>
+          <Text variant="bodySmall" color={theme.colors.textSecondary} style={styles.description}>
+            {feature.description}
+          </Text>
+        </View>
+      </Card>
     </Animated.View>
   );
 };
@@ -72,12 +75,8 @@ export const OnboardingFeatures: React.FC = () => {
   const navigation = useNavigation<any>();
 
   return (
-    <OnboardingLayout step={9} scroll>
+    <OnboardingLayout step={9} scroll icon="check_mark_button" title="Everything you need">
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text variant="h1">Everything your gut needs, in one place</Text>
-        </View>
-
         <View style={styles.features}>
           {FEATURES.map((feature, i) => (
             <AnimatedFeature key={i} feature={feature} index={i} />
@@ -102,26 +101,26 @@ export const OnboardingFeatures: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: theme.spacing.md,
-    gap: theme.spacing.xl,
-  },
-  header: {
-    gap: theme.spacing.sm,
-  },
-  features: {
     gap: theme.spacing.lg,
   },
-  feature: {
+  features: {
+    gap: theme.spacing.sm,
+  },
+  card: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
     alignItems: 'center',
+    gap: theme.spacing.md,
+    padding: theme.spacing.md,
   },
-  featureText: {
+  cardContent: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
-  featureDesc: {
-    lineHeight: 20,
+  title: {
+    fontFamily: theme.fonts.bold,
+  },
+  description: {
+    lineHeight: 18,
   },
   footer: {
     paddingBottom: theme.spacing.xl,

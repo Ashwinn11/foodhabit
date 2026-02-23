@@ -30,39 +30,42 @@ const BENEFITS = [
   },
 ];
 
+const BenefitCard: React.FC<{
+  benefit: typeof BENEFITS[number];
+}> = ({ benefit }) => (
+  <Card variant="glass" style={styles.card}>
+    <Icon3D name={benefit.icon} size={42} animated animationType="float" />
+    <View style={styles.cardContent}>
+      <Text variant="h3" style={styles.title}>{benefit.title}</Text>
+      <Text variant="bodySmall" color={theme.colors.textSecondary} style={styles.description}>
+        {benefit.description}
+      </Text>
+    </View>
+  </Card>
+);
+
 export const OnboardingHowItHelps: React.FC = () => {
   const navigation = useNavigation<any>();
   const answers = useAppStore((s) => s.onboardingAnswers);
 
   const conditionText = answers.condition
-    ? `For people with ${answers.condition.split(',')[0].trim()}...`
+    ? `Tailored for ${answers.condition.split(',')[0].trim()}...`
     : '';
 
   return (
-    <OnboardingLayout step={7} scroll>
+    <OnboardingLayout step={7} scroll icon="sparkles" title="How GutBuddy Works">
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text variant="h1">Here's how GutBuddy works for you</Text>
-          {conditionText ? (
-            <Text variant="body" color={theme.colors.primary} style={styles.personalized}>
+        {conditionText ? (
+          <View style={styles.badge}>
+            <Text variant="caption" color={theme.colors.primary} style={styles.badgeText}>
               {conditionText}
             </Text>
-          ) : null}
-        </View>
+          </View>
+        ) : null}
 
         <View style={styles.cards}>
           {BENEFITS.map((benefit, i) => (
-            <Card key={i} variant="bordered" style={styles.card}>
-              <View style={styles.cardInner}>
-                <Icon3D name={benefit.icon} size={48} />
-                <View style={styles.cardText}>
-                  <Text variant="h3">{benefit.title}</Text>
-                  <Text variant="bodySmall" color={theme.colors.textSecondary} style={styles.desc}>
-                    {benefit.description}
-                  </Text>
-                </View>
-              </View>
-            </Card>
+            <BenefitCard key={i} benefit={benefit} />
           ))}
         </View>
 
@@ -84,32 +87,39 @@ export const OnboardingHowItHelps: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: theme.spacing.md,
-    gap: theme.spacing.xl,
+    gap: theme.spacing.lg,
   },
-  header: {
-    gap: theme.spacing.sm,
+  badge: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255, 77, 77, 0.1)',
+    borderRadius: theme.radius.full,
+    alignSelf: 'flex-start',
+    marginBottom: -8,
   },
-  personalized: {
-    fontFamily: theme.fonts.medium,
+  badgeText: {
+    fontFamily: theme.fonts.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   cards: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
     padding: theme.spacing.md,
   },
-  cardInner: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    alignItems: 'center',
-  },
-  cardText: {
+  cardContent: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
-  desc: {
-    lineHeight: 20,
+  title: {
+    fontFamily: theme.fonts.bold,
+  },
+  description: {
+    lineHeight: 18,
   },
   footer: {
     paddingBottom: theme.spacing.xl,

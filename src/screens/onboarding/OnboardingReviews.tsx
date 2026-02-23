@@ -44,12 +44,8 @@ export const OnboardingReviews: React.FC = () => {
   const navigation = useNavigation<any>();
 
   return (
-    <OnboardingLayout step={8} scroll>
+    <OnboardingLayout step={8} scroll icon="star" title="Thousands trust their gut to GutBuddy">
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text variant="h1">Thousands trust their gut to GutBuddy</Text>
-        </View>
-
         {/* Aggregate rating */}
         <View style={styles.aggregate}>
           <StarRow count={5} />
@@ -102,11 +98,7 @@ export const OnboardingReviews: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: theme.spacing.md,
     gap: theme.spacing.lg,
-  },
-  header: {
-    gap: theme.spacing.sm,
   },
   aggregate: {
     flexDirection: 'row',

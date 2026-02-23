@@ -19,6 +19,7 @@ import { Icon } from '../components/Icon';
 import { BottomSheet } from '../components/BottomSheet';
 import { Skeleton } from '../components/Skeleton';
 import { Input } from '../components/Input';
+import { SelectionCard } from '../components/SelectionCard';
 import { useToast } from '../components/Toast';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../config/supabase';
@@ -328,14 +329,15 @@ export const ProfileScreen: React.FC = () => {
       {/* Edit Condition Sheet */}
       <BottomSheet visible={editSheet === 'condition'} onClose={() => setEditSheet(null)} snapHeight="65%">
         <View style={styles.editSheet}>
-          <Text variant="h3">Edit Condition</Text>
-          <ScrollView contentContainerStyle={styles.editChips}>
+          <View style={styles.sheetHeader}>
+            <Text variant="h3">Edit Condition</Text>
+            <Text variant="caption" color={theme.colors.textSecondary}>Select all that apply</Text>
+          </View>
+          <ScrollView contentContainerStyle={styles.editList} showsVerticalScrollIndicator={false}>
             {CONDITIONS.map((c) => (
-              <Chip
+              <SelectionCard
                 key={c}
-                label={c}
-                variant="selectable"
-                size="md"
+                title={c}
                 selected={editConditions.includes(c)}
                 onPress={() =>
                   setEditConditions((prev) =>
@@ -345,21 +347,22 @@ export const ProfileScreen: React.FC = () => {
               />
             ))}
           </ScrollView>
-          <Button variant="primary" size="lg" onPress={saveEdit} fullWidth>Save</Button>
+          <Button variant="primary" size="lg" onPress={saveEdit} fullWidth>Save Changes</Button>
         </View>
       </BottomSheet>
 
       {/* Edit Symptoms Sheet */}
       <BottomSheet visible={editSheet === 'symptoms'} onClose={() => setEditSheet(null)} snapHeight="65%">
         <View style={styles.editSheet}>
-          <Text variant="h3">Edit Symptoms</Text>
-          <ScrollView contentContainerStyle={styles.editChips}>
+          <View style={styles.sheetHeader}>
+            <Text variant="h3">Edit Symptoms</Text>
+            <Text variant="caption" color={theme.colors.textSecondary}>Select your regular symptoms</Text>
+          </View>
+          <ScrollView contentContainerStyle={styles.editList} showsVerticalScrollIndicator={false}>
             {SYMPTOMS.map((s) => (
-              <Chip
+              <SelectionCard
                 key={s}
-                label={s}
-                variant="selectable"
-                size="md"
+                title={s}
                 selected={editSymptoms.includes(s)}
                 onPress={() =>
                   setEditSymptoms((prev) =>
@@ -369,7 +372,7 @@ export const ProfileScreen: React.FC = () => {
               />
             ))}
           </ScrollView>
-          <Button variant="primary" size="lg" onPress={saveEdit} fullWidth>Save</Button>
+          <Button variant="primary" size="lg" onPress={saveEdit} fullWidth>Save Changes</Button>
         </View>
       </BottomSheet>
 
@@ -513,6 +516,14 @@ const styles = StyleSheet.create({
   editSheet: {
     flex: 1,
     gap: theme.spacing.md,
+  },
+  sheetHeader: {
+    gap: 2,
+    marginBottom: theme.spacing.xs,
+  },
+  editList: {
+    gap: theme.spacing.sm,
+    paddingBottom: theme.spacing.md,
   },
   editChips: {
     flexDirection: 'row',

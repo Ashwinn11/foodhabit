@@ -10,7 +10,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
-import { BlurView } from 'expo-blur';
 import { theme } from '../../theme/theme';
 import { Text } from '../Text';
 import { Icon3D } from '../Icon3D';
@@ -83,16 +82,13 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
       runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
     });
 
-  // Animated background color mapping
-  // happy (left) = neon cyan
-  // neutral (mid) = theme.surface
-  // sad (right) = danger/amber
-  const backgroundStyle = useAnimatedStyle(() => {
+  // Animated trackbar color mapping
+  const trackStyle = useAnimatedStyle(() => {
     return {
       backgroundColor: interpolateColor(
         translateX.value,
         [0, MAX_TRANSLATE / 2, MAX_TRANSLATE],
-        ['rgba(0, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.05)', 'rgba(255, 77, 77, 0.15)']
+        ['rgba(0, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)', 'rgba(255, 77, 77, 0.1)']
       ),
       borderColor: interpolateColor(
         translateX.value,
@@ -112,15 +108,15 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
   });
 
   return (
-    <Animated.View style={[styles.container, backgroundStyle]}>
-      <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="dark" />
-      
+    <Animated.View style={[styles.container]}>
       <View style={styles.content}>
         <Text variant="bodySmall" color={theme.colors.textSecondary} style={styles.title}>
           How's your gut feeling?
         </Text>
 
         <View style={styles.trackContainer}>
+          <Animated.View style={[styles.trackBar, trackStyle]} />
+          
           {/* Static underlay icons so user knows where to drag */}
           <View style={styles.underlayIcons}>
             <Icon3D name="face_with_smile" size={32} style={styles.iconOpac} />
@@ -130,13 +126,16 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
 
           <GestureDetector gesture={gesture}>
             <Animated.View style={[styles.knob, knobStyle]}>
-              <Icon3D 
-                name={
-                  currentMood === 'happy' ? 'face_with_smile' : 
-                  currentMood === 'sad' ? 'face_with_head_bandage' : 'neutral_face'
-                } 
-                size={48} 
-              />
+               <View style={styles.knobInner} />
+               <View style={styles.knobIconWrap}>
+                <Icon3D 
+                  name={
+                    currentMood === 'happy' ? 'face_with_smile' : 
+                    currentMood === 'sad' ? 'face_with_head_bandage' : 'neutral_face'
+                  } 
+                  size={42} 
+                />
+              </View>
             </Animated.View>
           </GestureDetector>
         </View>
@@ -151,14 +150,14 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: theme.radius.xxl,
-    borderWidth: 1,
     marginHorizontal: theme.spacing.md,
-    overflow: 'hidden',
+    marginBottom: theme.spacing.lg,
+    alignItems: 'center',
   },
   content: {
     gap: theme.spacing.lg,
-    padding: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    width: '100%',
   },
   hint: {
     marginTop: -8,
@@ -169,7 +168,7 @@ const styles = StyleSheet.create({
   knob: {
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.05)',
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.3)',
     borderRadius: KNOB_SIZE / 2,
     borderWidth: 1,
     height: KNOB_SIZE,
@@ -179,6 +178,17 @@ const styles = StyleSheet.create({
     width: KNOB_SIZE,
     ...theme.shadows.glow,
   },
+  knobInner: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: KNOB_SIZE / 2,
+    margin: 2,
+  },
+  knobIconWrap: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
     fontFamily: theme.fonts.bold,
     textAlign: 'center',
@@ -187,6 +197,13 @@ const styles = StyleSheet.create({
     height: KNOB_SIZE,
     justifyContent: 'center',
     width: SLIDER_WIDTH,
+  },
+  trackBar: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: KNOB_SIZE / 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   underlayIcons: {
     ...StyleSheet.absoluteFillObject,

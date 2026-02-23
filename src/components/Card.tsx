@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { theme } from '../theme/theme';
 
-export type CardVariant = 'default' | 'elevated' | 'bordered' | 'glow';
+export type CardVariant = 'default' | 'elevated' | 'bordered' | 'glow' | 'glass';
 
 interface CardProps {
   variant?: CardVariant;
@@ -48,7 +48,7 @@ export const Card: React.FC<CardProps> = ({
 
   const cardStyle = [styles.base, styles[`variant_${variant}`], style];
 
-  if (pressable) {
+  if (pressable || onPress) {
     return (
       <AnimatedTouchable
         style={[animatedStyle, cardStyle]}
@@ -72,21 +72,31 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   variant_default: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.04)',
   },
   variant_elevated: {
-    backgroundColor: theme.colors.surfaceElevated,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     ...theme.shadows.medium,
   },
   variant_bordered: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   variant_glow: {
-    backgroundColor: theme.colors.surfaceElevated,
+    backgroundColor: 'rgba(255, 77, 77, 0.08)',
     borderWidth: 1,
     borderColor: theme.colors.primary,
     ...theme.shadows.glow,
+  },
+  variant_glass: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    // Backing blur is handled by the wrapper if needed, but styling provides the visual
   },
 });

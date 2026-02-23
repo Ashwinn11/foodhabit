@@ -8,6 +8,7 @@ import { Button } from '../../components/Button';
 import { Chip } from '../../components/Chip';
 import { Input } from '../../components/Input';
 import { Icon } from '../../components/Icon';
+import { SelectionCard } from '../../components/SelectionCard';
 import { useAppStore } from '../../store/useAppStore';
 
 // Suggested triggers by condition/symptom
@@ -63,27 +64,24 @@ export const OnboardingTriggers: React.FC = () => {
   };
 
   return (
-    <OnboardingLayout step={6} scroll>
+    <OnboardingLayout
+      step={6}
+      scroll
+      icon="warning"
+      title="Common Problem Foods"
+      subtitle="Based on your profile, these often cause issues. Select any you suspect."
+    >
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text variant="h1">Based on your profile, these often cause issues.</Text>
-          <Text variant="body" color={theme.colors.textSecondary} style={styles.sub}>
-            Select the ones you already know are a problem for you.
-          </Text>
-        </View>
-
         {/* Suggested */}
         <View style={styles.section}>
           <Text variant="label" color={theme.colors.textTertiary} style={styles.sectionLabel}>
-            Suggested based on your condition
+            Suggested Triggers
           </Text>
-          <View style={styles.chips}>
+          <View style={styles.list}>
             {suggested.map((trigger) => (
-              <Chip
+              <SelectionCard
                 key={trigger}
-                label={trigger}
-                variant="selectable"
-                size="md"
+                title={trigger}
                 selected={selected.includes(trigger)}
                 onPress={() => toggleSuggested(trigger)}
               />
@@ -91,11 +89,11 @@ export const OnboardingTriggers: React.FC = () => {
           </View>
         </View>
 
-        {/* Custom */}
+        {/* Custom triggers still use chips for compact display since they are added by user */}
         {custom.length > 0 && (
           <View style={styles.section}>
             <Text variant="label" color={theme.colors.textTertiary} style={styles.sectionLabel}>
-              Your custom triggers
+              Your added triggers
             </Text>
             <View style={styles.chips}>
               {custom.map((trigger) => (
@@ -136,7 +134,7 @@ export const OnboardingTriggers: React.FC = () => {
             Next
           </Button>
           <Button variant="ghost" size="md" onPress={handleNext}>
-            Skip
+            Skip for now
           </Button>
         </View>
       </View>
@@ -147,20 +145,19 @@ export const OnboardingTriggers: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: theme.spacing.md,
     gap: theme.spacing.xl,
-  },
-  header: {
-    gap: theme.spacing.sm,
-  },
-  sub: {
-    lineHeight: 24,
   },
   section: {
     gap: theme.spacing.sm,
   },
   sectionLabel: {
-    marginBottom: 4,
+    fontFamily: theme.fonts.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontSize: 12,
+  },
+  list: {
+    gap: theme.spacing.sm,
   },
   chips: {
     flexDirection: 'row',

@@ -7,8 +7,10 @@ export const theme = {
     surface: 'rgba(255,255,255,0.03)',
     surfaceElevated: 'rgba(255,255,255,0.05)',
     surfaceHover: 'rgba(255,255,255,0.07)',
+    surfaceProminent: 'rgba(255,255,255,0.12)',
     border: 'rgba(255,255,255,0.06)',
     borderSubtle: 'rgba(255,255,255,0.04)',
+    borderProminent: 'rgba(255,255,255,0.18)',
 
     /* =====================
        Brand
@@ -32,7 +34,7 @@ export const theme = {
        ===================== */
     text: '#ECEEF3',
     textSecondary: '#8E96A3',
-    textTertiary: 'rgba(142,150,163,0.55)',
+    textTertiary: 'rgba(142,150,163,0.8)',
 
     /* =====================
        Utility
@@ -43,12 +45,11 @@ export const theme = {
     overlay: 'rgba(4,5,8,0.88)',
   },
 
-  /* Fonts intentionally unchanged */
   fonts: {
-    regular: 'Inter_400Regular',
-    medium: 'Inter_500Medium',
-    semibold: 'Inter_600SemiBold',
-    bold: 'Inter_700Bold',
+    regular: 'NunitoSans_400Regular',
+    medium: 'NunitoSans_500Medium',
+    semibold: 'NunitoSans_600SemiBold',
+    bold: 'NunitoSans_700Bold',
     display: 'PlayfairDisplay_700Bold',
   },
 

@@ -14,6 +14,7 @@ import { theme } from '../theme/theme';
 import { Text } from '../components/Text';
 import { Icon } from '../components/Icon';
 import { GoogleIcon } from '../components/GoogleIcon';
+import { AppleIcon } from '../components/AppleIcon';
 import { authService } from '../services/authService';
 import { supabase, getSupabaseRedirectUrl } from '../config/supabase';
 
@@ -102,13 +103,21 @@ export const AuthScreen: React.FC = () => {
       <View style={styles.card}>
         <View style={styles.actions}>
           {Platform.OS === 'ios' && (
-            <AppleAuthentication.AppleAuthenticationButton
-              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-              cornerRadius={theme.radius.full}
-              style={styles.appleButton}
+            <TouchableOpacity
+              style={[styles.appleButton, loading === 'apple' && styles.buttonDisabled]}
               onPress={handleAppleSignIn}
-            />
+              disabled={!!loading}
+              activeOpacity={0.85}
+            >
+              {loading === 'apple' ? (
+                <Icon name="Loader" size={20} color="#fff" />
+              ) : (
+                <AppleIcon size={20} color="#fff" />
+              )}
+              <Text variant="bodySmall" color="#fff" style={styles.appleLabel}>
+                Sign in with Apple
+              </Text>
+            </TouchableOpacity>
           )}
 
           <TouchableOpacity
@@ -199,7 +208,20 @@ const styles = StyleSheet.create({
   },
   appleButton: {
     height: 52,
-    width: '100%',
+    borderRadius: theme.radius.full,
+    backgroundColor: '#000',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  appleLabel: {
+    fontFamily: theme.fonts.semibold,
   },
   googleButton: {
     height: 52,

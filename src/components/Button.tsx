@@ -96,10 +96,11 @@ export const Button: React.FC<ButtonProps> = ({
 };
 
 function getTextColor(variant: ButtonVariant, disabled: boolean): string {
+  // Primary (coral) buttons always need dark text for contrast, even in disabled/loading states
+  if (variant === 'primary') return theme.colors.primaryForeground;
+  
   if (disabled) return theme.colors.textTertiary;
   switch (variant) {
-    case 'primary':
-      return theme.colors.primaryForeground;
     case 'danger':
       return '#fff';
     default:

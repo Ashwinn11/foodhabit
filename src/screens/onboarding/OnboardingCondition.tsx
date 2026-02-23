@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { OnboardingLayout } from './OnboardingLayout';
 import { theme } from '../../theme/theme';
 import { Button } from '../../components/Button';
-import { Chip } from '../../components/Chip';
+import { SelectionCard } from '../../components/SelectionCard';
 import { useAppStore } from '../../store/useAppStore';
 
 const CONDITIONS = [
@@ -42,16 +42,14 @@ export const OnboardingCondition: React.FC = () => {
       scroll
       icon="test_tube"
       title="Do you have a diagnosed condition?"
-      subtitle="This helps us tailor your food analysis."
+      subtitle="Select all that apply. This helps us tailor your food analysis."
     >
       <View style={styles.container}>
-        <View style={styles.chips}>
+        <View style={styles.list}>
           {CONDITIONS.map((condition) => (
-            <Chip
+            <SelectionCard
               key={condition}
-              label={condition}
-              variant="selectable"
-              size="md"
+              title={condition}
               selected={selected.includes(condition)}
               onPress={() => toggle(condition)}
             />
@@ -79,13 +77,11 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: theme.spacing.xl,
   },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  list: {
     gap: theme.spacing.sm,
   },
   footer: {
     paddingBottom: theme.spacing.xl,
-    marginTop: 'auto',
+    marginTop: theme.spacing.md,
   },
 });

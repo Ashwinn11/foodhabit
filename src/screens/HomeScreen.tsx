@@ -11,12 +11,13 @@ import { theme } from '../theme/theme';
 import { Text } from '../components/Text';
 import { Card } from '../components/Card';
 import { Icon3D } from '../components/Icon3D';
-import { EmptyState } from '../components/EmptyState';
 import { SkeletonCard } from '../components/Skeleton';
 import { BottomSheet } from '../components/BottomSheet';
-import { Chip } from '../components/Chip';
 import { Button } from '../components/Button';
+import { SelectionCard } from '../components/SelectionCard';
 import { useToast } from '../components/Toast';
+import { FluidMoodSlider } from '../components/fluid/FluidMoodSlider';
+import { TimelineLog } from '../components/fluid/TimelineLog';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../config/supabase';
@@ -204,27 +205,8 @@ export const HomeScreen: React.FC = () => {
           </Card>
         )}
 
-        {/* Mood card */}
-        <Card variant="bordered" style={styles.moodCard}>
-          <Text variant="bodySmall" color={theme.colors.textSecondary} style={styles.moodQuestion}>
-            How's your gut feeling right now?
-          </Text>
-          <View style={styles.moodButtons}>
-            {MOODS.map((m) => (
-              <TouchableOpacity
-                key={m.id}
-                style={[
-                  styles.moodBtn,
-                  selectedMood === m.id && styles.moodBtnSelected,
-                ]}
-                onPress={() => handleMoodTap(m.id)}
-                activeOpacity={0.7}
-              >
-                <Icon3D name={m.icon} size={40} />
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Card>
+        {/* Mood slider */}
+        <FluidMoodSlider onMoodSelect={handleMoodTap} />
 
         {/* Today's Meals */}
         <View style={styles.section}>
@@ -242,102 +224,70 @@ export const HomeScreen: React.FC = () => {
               <SkeletonCard />
               <SkeletonCard />
             </View>
-          ) : meals.length === 0 ? (
-            <EmptyState
-              icon="fork_and_knife"
-              title="Nothing logged yet today"
-              subtitle="Scan a menu or log what you ate to start tracking"
-              action={{
-                label: 'Scan a Menu',
-                onPress: () => navigation.navigate('ScanFood'),
-              }}
-            />
           ) : (
-            <View style={styles.mealCards}>
-              {meals.map((meal: any) => (
-                <Card key={meal.id} variant="bordered" style={styles.mealCard}>
-                  <View style={styles.mealRow}>
-                    <Icon3D name="pizza" size={32} />
-                    <View style={styles.mealInfo}>
-                      <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
-                        {meal.name || 'Meal'}
-                      </Text>
-                      <Text variant="caption" color={theme.colors.textSecondary}>
-                        {new Date(meal.timestamp).toLocaleTimeString('en-US', {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
-                      </Text>
-                    </View>
-                  </View>
-                  {meal.foods?.length > 0 && (
-                    <View style={styles.mealFoods}>
-                      {meal.foods.slice(0, 3).map((food: string, i: number) => (
-                        <Chip key={i} label={food} size="sm" variant="selectable" />
-                      ))}
-                      {meal.foods.length > 3 && (
-                        <Text variant="caption" color={theme.colors.textTertiary}>
-                          +{meal.foods.length - 3} more
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                </Card>
-              ))}
-            </View>
+            <TimelineLog logs={{ meals, gutLogs: [] }} />
           )}
         </View>
       </ScrollView>
 
       {/* Mood log bottom sheet */}
-      <BottomSheet visible={sheetVisible} onClose={() => setSheetVisible(false)} snapHeight="65%">
+      <BottomSheet visible={sheetVisible} onClose={() => setSheetVisible(false)} snapHeight="75%">
         <View style={styles.sheetContent}>
-          <Text variant="h3">How are you feeling?</Text>
-          <Text variant="bodySmall" color={theme.colors.textSecondary}>
-            Any symptoms to note?
-          </Text>
+          <View style={styles.sheetHeader}>
+            <Text variant="h3">How are you feeling?</Text>
+            <Text variant="bodySmall" color={theme.colors.textSecondary}>
+              Select your mood and any active symptoms
+            </Text>
+          </View>
 
           <View style={styles.sheetMoods}>
             {MOODS.map((m) => (
-              <TouchableOpacity
+              <Card
                 key={m.id}
-                style={[styles.sheetMoodBtn, selectedMood === m.id && styles.sheetMoodSelected]}
+                variant={selectedMood === m.id ? 'glow' : 'bordered'}
+                pressable
                 onPress={() => {
                   Haptics.selectionAsync();
                   setSelectedMood(m.id);
                 }}
+                style={styles.sheetMoodCard}
               >
-                <Icon3D name={m.icon} size={36} />
+                <Icon3D name={m.icon} size={38} animated={selectedMood === m.id} animationType="float" />
                 <Text variant="caption" color={selectedMood === m.id ? theme.colors.primary : theme.colors.textSecondary}>
                   {m.label}
                 </Text>
-              </TouchableOpacity>
+              </Card>
             ))}
           </View>
 
-          <View style={styles.symptomsGrid}>
-            {SYMPTOMS.map((s) => (
-              <Chip
-                key={s}
-                label={s}
-                variant="selectable"
-                size="sm"
-                selected={selectedSymptoms.includes(s)}
-                onPress={() => toggleSymptom(s)}
-              />
-            ))}
-          </View>
+          <ScrollView style={styles.sheetList} showsVerticalScrollIndicator={false}>
+            <View style={styles.sheetListInner}>
+              <Text variant="label" color={theme.colors.textTertiary} style={styles.listLabel}>
+                Symptoms
+              </Text>
+              {SYMPTOMS.map((s) => (
+                <SelectionCard
+                  key={s}
+                  title={s}
+                  selected={selectedSymptoms.includes(s)}
+                  onPress={() => toggleSymptom(s)}
+                />
+              ))}
+            </View>
+          </ScrollView>
 
-          <Button
-            variant="primary"
-            size="lg"
-            onPress={handleLogMood}
-            loading={loggingMood}
-            disabled={!selectedMood}
-            fullWidth
-          >
-            Log This
-          </Button>
+          <View style={styles.sheetFooter}>
+            <Button
+              variant="primary"
+              size="lg"
+              onPress={handleLogMood}
+              loading={loggingMood}
+              disabled={!selectedMood}
+              fullWidth
+            >
+              Log This Moment
+            </Button>
+          </View>
         </View>
       </BottomSheet>
     </SafeAreaView>
@@ -422,49 +372,42 @@ const styles = StyleSheet.create({
   skeletons: {
     gap: theme.spacing.sm,
   },
-  mealCards: {
-    gap: theme.spacing.sm,
-  },
-  mealCard: {},
-  mealRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: theme.spacing.sm,
-  },
-  mealInfo: {
-    gap: 2,
-  },
-  mealFoods: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.xs,
-    alignItems: 'center',
-  },
   sheetContent: {
     flex: 1,
     gap: theme.spacing.md,
   },
+  sheetHeader: {
+    gap: 4,
+    marginBottom: theme.spacing.xs,
+  },
   sheetMoods: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: theme.spacing.xl,
+    gap: theme.spacing.md,
   },
-  sheetMoodBtn: {
+  sheetMoodCard: {
+    flex: 1,
     alignItems: 'center',
     gap: theme.spacing.xs,
-    padding: theme.spacing.sm,
-    borderRadius: theme.radius.lg,
+    paddingVertical: theme.spacing.sm,
   },
-  sheetMoodSelected: {
-    backgroundColor: theme.colors.primaryMuted,
-    borderWidth: 1.5,
-    borderColor: theme.colors.primary,
-  },
-  symptomsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+  sheetList: {
     flex: 1,
+    marginHorizontal: -theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+  },
+  sheetListInner: {
+    gap: theme.spacing.xs,
+    paddingBottom: theme.spacing.md,
+  },
+  listLabel: {
+    marginBottom: theme.spacing.xs,
+    fontFamily: theme.fonts.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontSize: 11,
+  },
+  sheetFooter: {
+    paddingTop: theme.spacing.sm,
   },
 });

@@ -13,7 +13,6 @@ import { theme } from '../../theme/theme';
 import { Text } from '../../components/Text';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { Icon } from '../../components/Icon';
 import { Icon3D } from '../../components/Icon3D';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -119,9 +118,7 @@ export const OnboardingCustomPlan: React.FC = () => {
             <View style={styles.summaryCards}>
               <Card variant="bordered" style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
-                  <View style={[styles.summaryIcon, { backgroundColor: theme.colors.safeMuted }]}>
-                    <Icon name="Activity" size={18} color={theme.colors.safe} />
-                  </View>
+                  <Icon3D name="test_tube" size={40} />
                   <View style={styles.summaryText}>
                     <Text variant="caption" color={theme.colors.textTertiary}>Your condition</Text>
                     <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
@@ -133,9 +130,7 @@ export const OnboardingCustomPlan: React.FC = () => {
 
               <Card variant="bordered" style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
-                  <View style={[styles.summaryIcon, { backgroundColor: theme.colors.cautionMuted }]}>
-                    <Icon name="AlertTriangle" size={18} color={theme.colors.caution} />
-                  </View>
+                  <Icon3D name="warning" size={40} />
                   <View style={styles.summaryText}>
                     <Text variant="caption" color={theme.colors.textTertiary}>Foods to watch</Text>
                     <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }} numberOfLines={1}>
@@ -147,9 +142,7 @@ export const OnboardingCustomPlan: React.FC = () => {
 
               <Card variant="bordered" style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
-                  <View style={[styles.summaryIcon, { backgroundColor: theme.colors.primaryMuted }]}>
-                    <Icon name="Target" size={18} color={theme.colors.primary} />
-                  </View>
+                  <Icon3D name="bullseye" size={40} />
                   <View style={styles.summaryText}>
                     <Text variant="caption" color={theme.colors.textTertiary}>Your goal</Text>
                     <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
@@ -226,14 +219,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.md,
-  },
-  summaryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
   },
   summaryText: {
     flex: 1,

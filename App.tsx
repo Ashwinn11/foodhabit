@@ -19,11 +19,11 @@ import { ToastProvider } from './src/components/Toast';
 
 // Fonts
 import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from '@expo-google-fonts/inter';
+  NunitoSans_400Regular,
+  NunitoSans_500Medium,
+  NunitoSans_600SemiBold,
+  NunitoSans_700Bold,
+} from '@expo-google-fonts/nunito-sans';
 import {
   PlayfairDisplay_700Bold,
 } from '@expo-google-fonts/playfair-display';
@@ -146,10 +146,10 @@ const OnboardingStack = () => (
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
+    NunitoSans_400Regular,
+    NunitoSans_500Medium,
+    NunitoSans_600SemiBold,
+    NunitoSans_700Bold,
     PlayfairDisplay_700Bold,
   });
 
