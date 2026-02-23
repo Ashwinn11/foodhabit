@@ -6,7 +6,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { AlertTriangle, Edit3, CheckCircle, XCircle, Utensils } from 'lucide-react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
+import { AlertTriangle, Edit3, Utensils } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
 import { Button } from '../components/Button';
@@ -19,14 +26,21 @@ import { gutService, TriggerFood } from '../services/gutService';
 const SYMPTOM_CHIPS = ['Bloating', 'Gas', 'Nausea', 'Cramping', 'Constipation', 'Diarrhea'];
 
 const MOOD_COLOR: Record<string, string> = {
-  sad:     theme.colors.coral,
-  neutral: theme.colors.amber,
-  happy:   theme.colors.lime,
+  sad:     theme.colors.secondary,
+  neutral: theme.colors.accent,
+  happy:   theme.colors.primary,
 };
 const MOOD_LABEL: Record<string, string> = {
   sad:     'Bad',
   neutral: 'Okay',
   happy:   'Good',
+};
+
+const DOT_COLOR: Record<string, string> = {
+  happy:   '#D4F870',
+  neutral: '#F5C97A',
+  sad:     '#E05D4C',
+  none:    '#2A322E',
 };
 
 const formatDate = (ts: string) => {
@@ -40,23 +54,337 @@ const formatDate = (ts: string) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
+// ── Data helpers ───────────────────────────────────────────────────────────
+
+function toDateKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+type MoodValue = 'sad' | 'neutral' | 'happy' | null;
+
+function buildDayData(logs: any[]): { day: string; mood: MoodValue; isToday: boolean }[] {
+  const byDay: Record<string, Record<string, number>> = {};
+  for (const log of logs) {
+    const key = toDateKey(new Date(log.timestamp));
+    if (!byDay[key]) byDay[key] = { sad: 0, neutral: 0, happy: 0 };
+    const m = log.mood as string;
+    if (m in byDay[key]) byDay[key][m]++;
+  }
+
+  const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const result: { day: string; mood: MoodValue; isToday: boolean }[] = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = toDateKey(d);
+    const counts = byDay[key];
+    let mood: MoodValue = null;
+
+    if (counts) {
+      if (counts.happy >= counts.sad && counts.happy >= counts.neutral) mood = 'happy';
+      else if (counts.sad >= counts.neutral) mood = 'sad';
+      else mood = 'neutral';
+    }
+
+    result.push({ day: DAY_NAMES[d.getDay()], mood, isToday: i === 0 });
+  }
+
+  return result;
+}
+
+function countSymptoms(logs: any[]): { name: string; count: number }[] {
+  const freq: Record<string, number> = {};
+  for (const log of logs) {
+    for (const tag of (log.tags ?? []) as string[]) {
+      freq[tag] = (freq[tag] ?? 0) + 1;
+    }
+  }
+  return Object.entries(freq)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+}
+
+// ── MoodTrendChart ─────────────────────────────────────────────────────────
+
+const AnimatedDot = ({
+  mood,
+  isToday,
+  delay,
+}: {
+  mood: MoodValue;
+  isToday: boolean;
+  delay: number;
+}) => {
+  const scale = useSharedValue(0);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  useEffect(() => {
+    scale.value = withDelay(
+      delay,
+      withTiming(1, { duration: 400, easing: Easing.out(Easing.back(1.4)) }),
+    );
+  }, []);
+
+  const color = mood ? DOT_COLOR[mood] : DOT_COLOR.none;
+
+  return (
+    <Animated.View style={animStyle}>
+      <View style={[chartStyles.dot, { backgroundColor: color }, isToday && chartStyles.dotToday]} />
+    </Animated.View>
+  );
+};
+
+const MoodTrendChart = ({ logHistory }: { logHistory: any[] }) => {
+  const dayData = buildDayData(logHistory);
+  const goodDays = dayData.filter(d => d.mood === 'happy').length;
+  const hasAnyData = dayData.some(d => d.mood !== null);
+
+  return (
+    <Card variant="glass" padding="xl" style={chartStyles.trendCard} glow>
+      <View style={chartStyles.trendHeader}>
+        <Text variant="subtitle" weight="bold">7-Day Gut Trend</Text>
+        <View style={chartStyles.scoreBadge}>
+          <Text variant="caption" weight="bold" color={theme.colors.primary}>
+            {hasAnyData ? `${goodDays}/7 good` : 'No logs yet'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={chartStyles.columns}>
+        {dayData.map((item, i) => (
+          <View key={i} style={chartStyles.column}>
+            <AnimatedDot mood={item.mood} isToday={item.isToday} delay={i * 60} />
+            <Text
+              variant="caption"
+              color={item.isToday ? theme.colors.text.primary : theme.colors.text.tertiary}
+              style={[chartStyles.dayLabel, item.isToday && chartStyles.dayLabelToday]}
+            >
+              {item.day}
+            </Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={chartStyles.legend}>
+        {[
+          { label: 'Good', color: DOT_COLOR.happy },
+          { label: 'Okay', color: DOT_COLOR.neutral },
+          { label: 'Bad',  color: DOT_COLOR.sad },
+        ].map(item => (
+          <View key={item.label} style={chartStyles.legendItem}>
+            <View style={[chartStyles.legendDot, { backgroundColor: item.color }]} />
+            <Text variant="caption" color={theme.colors.text.tertiary}>{item.label}</Text>
+          </View>
+        ))}
+      </View>
+    </Card>
+  );
+};
+
+const chartStyles = StyleSheet.create({
+  trendCard: {
+    marginBottom: theme.spacing.giant,
+  },
+  trendHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  scoreBadge: {
+    backgroundColor: theme.colors.primaryMuted,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.radii.full,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  columns: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.lg,
+  },
+  column: {
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    flex: 1,
+  },
+  dot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
+  dotToday: {
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  dayLabel: {
+    fontSize: 10,
+  },
+  dayLabelToday: {
+    fontWeight: '700',
+  },
+  legend: {
+    flexDirection: 'row',
+    gap: theme.spacing.lg,
+    marginTop: theme.spacing.sm,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+});
+
+// ── TriggerBar ─────────────────────────────────────────────────────────────
+
+const TriggerBar = ({ bad, good }: { bad: number; good: number }) => {
+  const total = bad + good;
+  const badRatio = total > 0 ? bad / total : 0;
+
+  const widthAnim = useSharedValue(0);
+
+  const badBarStyle = useAnimatedStyle(() => ({ flex: widthAnim.value }));
+  const goodBarStyle = useAnimatedStyle(() => ({ flex: Math.max(0, 1 - widthAnim.value) }));
+
+  useEffect(() => {
+    widthAnim.value = withTiming(badRatio, { duration: 800, easing: Easing.out(Easing.cubic) });
+  }, [badRatio]);
+
+  if (total === 0) return null;
+
+  return (
+    <View style={barStyles.wrapper}>
+      <View style={barStyles.track}>
+        <Animated.View style={[barStyles.barBad, badBarStyle]} />
+        <Animated.View style={[barStyles.barGood, goodBarStyle]} />
+      </View>
+      <Text variant="caption" color={theme.colors.text.tertiary} style={{ marginTop: theme.spacing.xs }}>
+        Bad {bad}× / Good {good}×
+      </Text>
+    </View>
+  );
+};
+
+const barStyles = StyleSheet.create({
+  wrapper: {
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  track: {
+    height: 6,
+    borderRadius: 3,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    backgroundColor: theme.colors.surfaceElevated,
+  },
+  barBad: {
+    backgroundColor: theme.colors.secondary,
+    borderRadius: 3,
+  },
+  barGood: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: 3,
+  },
+});
+
+// ── SymptomFrequency ───────────────────────────────────────────────────────
+
+const SymptomFrequency = ({ logHistory }: { logHistory: any[] }) => {
+  const symptoms = countSymptoms(logHistory);
+  if (symptoms.length === 0) return null;
+
+  const maxCount = symptoms[0].count;
+
+  return (
+    <View style={sympStyles.container}>
+      <Text variant="label" color={theme.colors.text.tertiary} style={sympStyles.label}>
+        Top Symptoms
+      </Text>
+      <Card variant="surface" padding="lg">
+        {symptoms.map((item, i) => {
+          const ratio = item.count / maxCount;
+          const dotSize = 8 + ratio * 10;
+          return (
+            <View key={i} style={sympStyles.row}>
+              <View
+                style={[
+                  sympStyles.dot,
+                  {
+                    width: dotSize,
+                    height: dotSize,
+                    borderRadius: dotSize / 2,
+                    opacity: 0.4 + ratio * 0.6,
+                  },
+                ]}
+              />
+              <Text variant="bodySmall" weight="medium" style={sympStyles.name}>
+                {item.name}
+              </Text>
+              <Text variant="caption" color={theme.colors.text.tertiary}>
+                {item.count}×
+              </Text>
+            </View>
+          );
+        })}
+      </Card>
+    </View>
+  );
+};
+
+const sympStyles = StyleSheet.create({
+  container: {
+    marginBottom: theme.spacing.giant,
+  },
+  label: {
+    marginBottom: theme.spacing.lg,
+    letterSpacing: theme.typography.letterSpacing.extraWide,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+  },
+  dot: {
+    backgroundColor: theme.colors.accent,
+  },
+  name: {
+    flex: 1,
+  },
+});
+
+// ── Main Screen ────────────────────────────────────────────────────────────
+
 export const MyGutScreen = () => {
   const { onboardingAnswers, setLearnedTriggers } = useAppStore();
 
-  const [timeline, setTimeline]           = useState<any[]>([]);
-  const [triggerFoods, setTriggerFoods]   = useState<TriggerFood[]>([]);
-  const [loading, setLoading]             = useState(true);
-  const [showLog, setShowLog]             = useState(false);
-  const [mood, setMood]                   = useState<'sad' | 'neutral' | 'happy' | null>(null);
-  const [symptoms, setSymptoms]           = useState<string[]>([]);
-  const [submitting, setSubmitting]       = useState(false);
+  const [timeline, setTimeline]         = useState<any[]>([]);
+  const [logHistory, setLogHistory]     = useState<any[]>([]);
+  const [triggerFoods, setTriggerFoods] = useState<TriggerFood[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [showLog, setShowLog]           = useState(false);
+  const [mood, setMood]                 = useState<'sad' | 'neutral' | 'happy' | null>(null);
+  const [symptoms, setSymptoms]         = useState<string[]>([]);
+  const [submitting, setSubmitting]     = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      // Run independently so a trigger_foods error never hides logs/meals
       const [logsResult, mealsResult, triggersResult] = await Promise.allSettled([
-        gutService.getRecentLogs(10),
+        gutService.getRecentLogs(30),
         gutService.getRecentMeals(10),
         gutService.getTriggerFoods(),
       ]);
@@ -65,13 +393,10 @@ export const MyGutScreen = () => {
       const mealsData    = mealsResult.status    === 'fulfilled' ? mealsResult.value    : [];
       const triggersData = triggersResult.status === 'fulfilled' ? triggersResult.value : [];
 
-      if (triggersResult.status === 'rejected') {
-        console.warn('getTriggerFoods failed:', triggersResult.reason);
-      }
+      setLogHistory(logsData);
 
-      // Merge gut logs + meals into a single chronological timeline
       const merged = [
-        ...logsData.map((l: any)  => ({ ...l, _type: 'log'  })),
+        ...logsData.slice(0, 10).map((l: any)  => ({ ...l, _type: 'log'  })),
         ...mealsData.map((m: any) => ({ ...m, _type: 'meal' })),
       ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
@@ -89,22 +414,17 @@ export const MyGutScreen = () => {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Split triggers into confirmed and suspected
   const confirmedTriggers = triggerFoods.filter(
     t => t.user_confirmed === true || t.confidence === 'High'
   );
-  // Suspected = has evidence (confidence not null) but not yet confirmed/high
   const suspectedTriggers = triggerFoods.filter(
     t => t.user_confirmed !== true && t.confidence !== null && t.confidence !== 'High'
   );
 
-  // All confirmed trigger names including onboarding known triggers
   const allConfirmedNames = [
     ...onboardingAnswers.knownTriggers,
     ...confirmedTriggers.map(t => t.food_name),
-  ].filter((v, i, a) => a.indexOf(v) === i); // dedupe
-
-  // ── Log gut moment ───────────────────────────────────────────────────────
+  ].filter((v, i, a) => a.indexOf(v) === i);
 
   const toggleSymptom = (s: string) =>
     setSymptoms(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
@@ -121,17 +441,13 @@ export const MyGutScreen = () => {
     try {
       await gutService.logGutMoment({ mood, symptoms });
       setShowLog(false);
-      setMood(null);
-      setSymptoms([]);
-      await loadData(); // reload — correlation may have added suspected triggers
+      await loadData();
     } catch (e) {
       console.error(e);
     } finally {
       setSubmitting(false);
     }
   };
-
-  // ── Trigger actions ──────────────────────────────────────────────────────
 
   const handleConfirm = async (foodName: string) => {
     await gutService.confirmTrigger(foodName);
@@ -143,201 +459,157 @@ export const MyGutScreen = () => {
     await loadData();
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────
-
   return (
-    <Screen padding scroll>
-      <Text variant="hero" style={[styles.title, { lineHeight: 64 }]}>
-        My Gut.
-      </Text>
+    <Screen scroll padding={false}>
+      <View style={styles.header}>
+        <Text variant="display">My Gut.</Text>
+        <Text variant="body" color={theme.colors.text.secondary}>
+          Track your triggers and decode your comfort.
+        </Text>
+      </View>
 
-      {/* ── Confirmed Triggers ── */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <AlertTriangle color={theme.colors.amber} size={18} strokeWidth={2} />
-          <Text style={styles.sectionHeaderLabel}>
-            {allConfirmedNames.length} Trigger{allConfirmedNames.length !== 1 ? 's' : ''} Found
-          </Text>
-        </View>
+      <View style={styles.content}>
+        {/* ── 7-Day Gut Trend ── */}
+        <MoodTrendChart logHistory={logHistory} />
 
-        {allConfirmedNames.length > 0 ? (
-          <View style={styles.chipRow}>
-            {allConfirmedNames.map((name, i) => (
-              <Chip key={i} status="risky" label={name.charAt(0).toUpperCase() + name.slice(1)} />
+        {/* ── Trigger Summary Card ── */}
+        <Card variant="glass" padding="xl" style={styles.summaryCard} glow>
+          <View style={styles.sectionHeader}>
+            <AlertTriangle color={theme.colors.accent} size={20} strokeWidth={2} />
+            <Text variant="subtitle" weight="bold">
+              {allConfirmedNames.length} Confirmed Triggers
+            </Text>
+          </View>
+
+          {allConfirmedNames.length > 0 ? (
+            <View style={styles.chipRow}>
+              {allConfirmedNames.map((name, i) => (
+                <Chip key={i} status="risky" label={name.charAt(0).toUpperCase() + name.slice(1)} />
+              ))}
+            </View>
+          ) : (
+            <Text variant="bodySmall" color={theme.colors.text.tertiary}>
+              No triggers confirmed yet. Your profile evolves as you log meals.
+            </Text>
+          )}
+        </Card>
+
+        {/* ── Suspected Triggers ── */}
+        {suspectedTriggers.length > 0 && (
+          <View style={styles.section}>
+            <Text variant="label" color={theme.colors.text.tertiary} style={styles.sectionLabel}>Suspected Triggers</Text>
+            {suspectedTriggers.map((t, i) => (
+              <Card key={i} variant="surface" padding="lg" style={styles.suspectedCard}>
+                <View style={styles.suspectedHeader}>
+                  <Text variant="body" weight="medium">{t.food_name.charAt(0).toUpperCase() + t.food_name.slice(1)}</Text>
+                  <View style={[styles.confidencePill, { backgroundColor: t.confidence === 'Medium' ? theme.colors.accent + '20' : theme.colors.text.tertiary + '20' }]}>
+                    <Text variant="caption" color={t.confidence === 'Medium' ? theme.colors.accent : theme.colors.text.tertiary}>
+                      {t.confidence} Confidence
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Animated risk bar */}
+                <TriggerBar bad={t.bad_occurrences} good={t.good_occurrences} />
+
+                <View style={styles.suspectedActions}>
+                  <Button label="Confirm" onPress={() => handleConfirm(t.food_name)} variant="soft" size="sm" style={{ flex: 1 }} />
+                  <Button label="Dismiss" onPress={() => handleDismiss(t.food_name)} variant="ghost" size="sm" style={{ flex: 1 }} />
+                </View>
+              </Card>
             ))}
           </View>
-        ) : (
-          <Card style={styles.emptyCard}>
-            <Text variant="body" style={styles.emptyCardText}>
-              No triggers confirmed yet. Scan food, log meals, and log how you feel — we'll find them for you.
-            </Text>
-          </Card>
         )}
-      </View>
 
-      {/* ── Suspected Triggers ── */}
-      {suspectedTriggers.length > 0 && (
-        <View style={styles.section}>
-          <Text variant="caption" style={styles.suspectedLabel}>Suspected — confirm or dismiss:</Text>
-          {suspectedTriggers.map((t, i) => (
-            <Card key={i} elevated style={styles.suspectedCard}>
-              <View style={styles.suspectedRow}>
-                <View style={[styles.confidenceDot, {
-                  backgroundColor: t.confidence === 'Medium' ? theme.colors.amber : theme.colors.textSecondary
-                }]} />
-                <Text style={styles.suspectedName}>
-                  {t.food_name.charAt(0).toUpperCase() + t.food_name.slice(1)}
-                </Text>
-                <Text style={styles.confidenceLabel}>
-                  bad {t.bad_occurrences}× / good {t.good_occurrences}×
-                </Text>
-              </View>
-              <View style={styles.suspectedActions}>
-                <TouchableOpacity
-                  style={styles.confirmBtn}
-                  onPress={() => handleConfirm(t.food_name)}
-                  activeOpacity={0.8}
-                >
-                  <CheckCircle color={theme.colors.lime} size={16} strokeWidth={2} />
-                  <Text style={[styles.actionLabel, { color: theme.colors.lime }]}>Confirm</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.dismissBtn}
-                  onPress={() => handleDismiss(t.food_name)}
-                  activeOpacity={0.8}
-                >
-                  <XCircle color={theme.colors.textSecondary} size={16} strokeWidth={2} />
-                  <Text style={[styles.actionLabel, { color: theme.colors.textSecondary }]}>Dismiss</Text>
-                </TouchableOpacity>
-              </View>
-            </Card>
-          ))}
-        </View>
-      )}
-
-      {/* ── Log Button ── */}
-      <View style={styles.logBtnContainer}>
         <Button
-          label="Log How I Feel"
+          label="Log how you feel"
           onPress={openLog}
           variant="primary"
-          leftIcon={<Edit3 color={theme.colors.bg} size={18} strokeWidth={2} />}
+          style={styles.mainLogBtn}
+          leftIcon={<Edit3 color={theme.colors.text.inverse} size={18} strokeWidth={2.5} />}
         />
-      </View>
 
-      {/* ── Recent Logs ── */}
-      <View style={styles.section}>
-        <View style={styles.dividerRow}>
-          <Text variant="caption" style={styles.dividerLabel}>Recent Logs</Text>
-          <View style={styles.divider} />
-        </View>
+        {/* ── Symptom Frequency ── */}
+        {logHistory.length > 0 && <SymptomFrequency logHistory={logHistory} />}
 
-        {loading ? (
-          <View style={styles.loader}>
-            <ActivityIndicator color={theme.colors.coral} />
-          </View>
-        ) : timeline.length > 0 ? (
-          timeline.map((entry, i) => {
-            if (entry._type === 'meal') {
-              return (
-                <Card key={`meal-${i}`} style={styles.timelineCard}>
-                  <View style={styles.timelineRow}>
-                    <View style={styles.mealIconWrap}>
-                      <Utensils color={theme.colors.textSecondary} size={16} strokeWidth={1.5} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text variant="caption" style={styles.timelineDate}>{formatDate(entry.timestamp)}</Text>
-                      <Text style={styles.mealFoods} numberOfLines={2}>
-                        {(entry.foods as string[]).join(', ')}
-                      </Text>
-                    </View>
-                  </View>
-                </Card>
-              );
-            }
-            // gut log entry
-            return (
-              <Card key={`log-${i}`} elevated style={styles.timelineCard}>
+        {/* ── Recent Timeline ── */}
+        <View style={styles.section}>
+          <Text variant="label" color={theme.colors.text.tertiary} style={styles.sectionLabel}>Recent Timeline</Text>
+
+          {loading ? (
+            <ActivityIndicator color={theme.colors.primary} style={{ marginTop: 20 }} />
+          ) : timeline.length > 0 ? (
+            timeline.map((entry, i) => (
+              <Card key={i} variant="outline" padding="md" style={styles.timelineCard}>
                 <View style={styles.timelineRow}>
-                  <View style={[styles.moodDot, { backgroundColor: MOOD_COLOR[entry.mood ?? 'neutral'] ?? theme.colors.textSecondary }]} />
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.logTopRow}>
-                      <Text variant="caption" style={styles.timelineDate}>{formatDate(entry.timestamp)}</Text>
-                      <Text style={[styles.moodLabel, { color: MOOD_COLOR[entry.mood ?? 'neutral'] }]}>
-                        {MOOD_LABEL[entry.mood ?? 'neutral']}
-                      </Text>
+                  {entry._type === 'meal' ? (
+                    <View style={styles.typeIcon}>
+                      <Utensils color={theme.colors.text.secondary} size={16} />
                     </View>
-                    {entry.tags && entry.tags.length > 0 && (
-                      <View style={styles.logChipRow}>
-                        {entry.tags.map((s: string, j: number) => (
-                          <Chip key={j} label={s} status="neutral" />
-                        ))}
-                      </View>
-                    )}
+                  ) : (
+                    <View style={[styles.moodDot, { backgroundColor: MOOD_COLOR[entry.mood ?? 'neutral'] }]} />
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.timelineTopRow}>
+                      <Text variant="caption">{formatDate(entry.timestamp)}</Text>
+                      {entry._type === 'log' && (
+                        <Text variant="caption" color={MOOD_COLOR[entry.mood ?? 'neutral']} weight="bold">
+                          {MOOD_LABEL[entry.mood ?? 'neutral']}
+                        </Text>
+                      )}
+                    </View>
+                    <Text variant="bodySmall" weight="medium" numberOfLines={1}>
+                      {entry._type === 'meal'
+                        ? (entry.foods as string[]).join(', ')
+                        : (entry.tags ?? []).join(' · ')}
+                    </Text>
                   </View>
                 </View>
               </Card>
-            );
-          })
-        ) : (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyCircle} />
-            <Text variant="label" style={styles.emptyTitle}>Awaiting Data</Text>
-            <Text variant="body" style={styles.emptyBody}>
-              Log meals and how you feel to build your timeline.
+            ))
+          ) : (
+            <Text variant="bodySmall" color={theme.colors.text.tertiary} align="center" style={{ marginTop: 20 }}>
+              Your timeline is empty. Start logging to see insights.
             </Text>
-          </View>
-        )}
+          )}
+        </View>
       </View>
 
-      {/* ── Log Bottom Sheet Modal ── */}
       <Modal visible={showLog} animationType="slide" transparent>
         <View style={styles.overlay}>
           <View style={styles.sheet}>
             <View style={styles.dragHandle} />
-            <Text variant="title" style={styles.sheetTitle}>
-              How did it go?
+            <Text variant="title">How are you feeling?</Text>
+            <Text variant="bodySmall" color={theme.colors.text.secondary} style={{ marginBottom: theme.spacing.xxxl }}>
+              Your mood and symptoms help us identify triggers.
             </Text>
 
-            {/* Mood */}
             <View style={styles.moodRow}>
               {(['sad', 'neutral', 'happy'] as const).map(m => (
-                <TouchableOpacity
-                  key={m}
-                  onPress={() => setMood(m)}
-                  style={styles.moodBtn}
-                  activeOpacity={0.8}
-                >
-                  <View style={{ opacity: mood === m ? 1 : 0.35 }}>
-                    <View style={[styles.modalMoodDot, { backgroundColor: MOOD_COLOR[m], transform: [{ scale: mood === m ? 1.2 : 1 }] }]} />
-                  </View>
-                  <Text
-                    variant="caption"
-                    style={[styles.moodBtnLabel, { color: mood === m ? MOOD_COLOR[m] : theme.colors.textSecondary }]}
-                  >
+                <TouchableOpacity key={m} onPress={() => setMood(m)} style={styles.moodBtn}>
+                  <View style={[styles.modalMoodDot, {
+                    backgroundColor: MOOD_COLOR[m],
+                    opacity: mood === m ? 1 : 0.3,
+                    borderWidth: mood === m ? 2 : 0,
+                    borderColor: theme.colors.text.primary,
+                  }]} />
+                  <Text variant="caption" color={mood === m ? theme.colors.text.primary : theme.colors.text.tertiary}>
                     {MOOD_LABEL[m]}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            {/* Symptoms */}
-            <Text variant="caption" style={styles.anyLabel}>Any of these?</Text>
+            <Text variant="label" style={{ marginBottom: theme.spacing.md }}>Symptoms</Text>
             <View style={styles.symptomChips}>
               {SYMPTOM_CHIPS.map(s => (
-                <Chip
-                  key={s}
-                  label={s}
-                  selected={symptoms.includes(s)}
-                  onPress={() => toggleSymptom(s)}
-                />
+                <Chip key={s} label={s} selected={symptoms.includes(s)} onPress={() => toggleSymptom(s)} />
               ))}
             </View>
 
-            <Button label="Save" onPress={handleSave} loading={submitting} disabled={!mood} />
-
-            <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowLog(false)} activeOpacity={0.7}>
-              <Text variant="label" style={{ color: theme.colors.textSecondary }}>Cancel</Text>
+            <Button label="Save Entry" onPress={handleSave} loading={submitting} disabled={!mood} />
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowLog(false)}>
+              <Text variant="label" color={theme.colors.text.tertiary}>Dismiss</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -347,174 +619,127 @@ export const MyGutScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  title: { marginTop: theme.spacing.lg, marginBottom: theme.spacing.xxxl },
-  section: { marginBottom: theme.spacing.xxxl },
-
+  header: {
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
+  },
+  content: {
+    paddingHorizontal: theme.spacing.xl,
+    paddingBottom: theme.spacing.colossal,
+  },
+  summaryCard: {
+    marginBottom: theme.spacing.giant,
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
   },
-  sectionHeaderLabel: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 14,
-    color: theme.colors.textPrimary,
+  section: {
+    marginBottom: theme.spacing.giant,
   },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
-  emptyCard: { borderWidth: 1, borderColor: theme.colors.border, borderStyle: 'dashed' },
-  emptyCardText: { color: theme.colors.textSecondary, lineHeight: 22 },
-
-  // Suspected triggers
-  suspectedLabel: { color: theme.colors.textSecondary, marginBottom: theme.spacing.md },
+  sectionLabel: {
+    marginBottom: theme.spacing.lg,
+    letterSpacing: theme.typography.letterSpacing.extraWide,
+  },
   suspectedCard: {
     marginBottom: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(245,201,122,0.2)',
-    gap: theme.spacing.md,
   },
-  suspectedRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
-  confidenceDot: { width: 8, height: 8, borderRadius: 4 },
-  suspectedName: {
-    flex: 1,
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 14,
-    color: theme.colors.textPrimary,
-  },
-  confidenceLabel: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-  },
-  suspectedActions: { flexDirection: 'row', gap: theme.spacing.md },
-  confirmBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.radii.md,
-    backgroundColor: 'rgba(212,248,112,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(212,248,112,0.2)',
-  },
-  dismissBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.radii.md,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  actionLabel: { fontFamily: 'Inter_500Medium', fontSize: 12 },
-
-  // Log button
-  logBtnContainer: { marginBottom: theme.spacing.giant },
-
-  // Recent logs
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: theme.spacing.lg,
-    gap: theme.spacing.md,
-  },
-  dividerLabel: { color: theme.colors.textSecondary },
-  divider: { flex: 1, height: 1, backgroundColor: theme.colors.border },
-  loader: { alignItems: 'center', paddingVertical: theme.spacing.xxxl },
-
-  timelineCard: {
-    marginBottom: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  timelineRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.md,
-  },
-  timelineDate: { color: theme.colors.textSecondary, marginBottom: 3 },
-  logTopRow: {
+  suspectedHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: theme.spacing.xs,
   },
-  moodLabel: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 12,
+  confidencePill: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 2,
+    borderRadius: theme.radii.full,
   },
-  logChipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
-
-  mealIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: theme.colors.surfaceHigh,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
+  suspectedActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.sm,
   },
-  mealFoods: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-    lineHeight: 18,
+  mainLogBtn: {
+    marginBottom: theme.spacing.giant,
   },
-
-  // Empty state
-  emptyState: { alignItems: 'center', paddingVertical: theme.spacing.giant, gap: theme.spacing.md },
-  emptyCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+  timelineCard: {
     marginBottom: theme.spacing.sm,
   },
-  emptyTitle: { color: theme.colors.textPrimary, marginTop: theme.spacing.sm },
-  emptyBody: { color: theme.colors.textSecondary, textAlign: 'center', lineHeight: 24, paddingHorizontal: theme.spacing.xxxl },
-
-  // Timeline specific additions
-  moodDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginTop: 4,
-    ...theme.shadows.glow,
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
   },
-
-  // Modal
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  typeIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: theme.radii.sm,
+    backgroundColor: theme.colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moodDot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  timelineTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
   sheet: {
     backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: theme.radii.xl,
-    borderTopRightRadius: theme.radii.xl,
-    padding: theme.spacing.xxxl,
-    paddingTop: theme.spacing.xl,
-    borderTopWidth: 1,
-    borderColor: theme.colors.border,
+    borderTopLeftRadius: theme.radii.xxl,
+    borderTopRightRadius: theme.radii.xxl,
+    padding: theme.spacing.xl,
+    paddingBottom: theme.spacing.giant,
   },
   dragHandle: {
-    width: 40, height: 4, borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignSelf: 'center', marginBottom: theme.spacing.xxl,
+    width: 40,
+    height: 4,
+    backgroundColor: theme.colors.divider,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: theme.spacing.xl,
   },
-  sheetTitle: { marginBottom: theme.spacing.xxxl },
   moodRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: theme.spacing.xxxl,
-    alignItems: 'flex-end',
+    marginBottom: theme.spacing.giant,
   },
-  moodBtn: { alignItems: 'center', gap: theme.spacing.sm, minHeight: 80, justifyContent: 'flex-end' },
-  moodBtnLabel: { fontSize: 12, fontFamily: 'Inter_400Regular' },
-  modalMoodDot: { width: 44, height: 44, borderRadius: 22 },
-  anyLabel: { color: theme.colors.textSecondary, marginBottom: theme.spacing.md },
-  symptomChips: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm, marginBottom: theme.spacing.xxxl },
-  cancelBtn: { alignItems: 'center', marginTop: theme.spacing.lg, paddingVertical: theme.spacing.md },
+  moodBtn: {
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  modalMoodDot: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  symptomChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.giant,
+  },
+  cancelBtn: {
+    marginTop: theme.spacing.lg,
+    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+  },
 });

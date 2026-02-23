@@ -14,12 +14,12 @@ const TRACK_W  = SCREEN_W - theme.spacing.xl * 2 - 56;
 const PROGRESS = TRACK_W * 0.42;
 
 const SYMPTOMS = [
-  { id: 'bloating',  iconName: 'bloating', color: theme.colors.amber, label: 'Bloating' },
-  { id: 'gas',       iconName: 'gas',      color: theme.colors.amber, label: 'Gas' },
-  { id: 'cramping',  iconName: 'cramping', color: theme.colors.coral, label: 'Cramping' },
-  { id: 'nausea',    iconName: 'nausea',   color: theme.colors.coral, label: 'Nausea' },
-  { id: 'ibs_d',     iconName: 'ibs_d',   color: theme.colors.coral, label: 'Diarrhea' },
-  { id: 'ibs_c',     iconName: 'ibs_c',   color: theme.colors.amber, label: 'Constipation' },
+  { id: 'bloating',  iconName: 'bloating', color: theme.colors.accent, label: 'Bloating' },
+  { id: 'gas',       iconName: 'gas',      color: theme.colors.accent, label: 'Gas' },
+  { id: 'cramping',  iconName: 'cramping', color: theme.colors.secondary, label: 'Cramping' },
+  { id: 'nausea',    iconName: 'nausea',   color: theme.colors.secondary, label: 'Nausea' },
+  { id: 'ibs_d',     iconName: 'ibs_d',   color: theme.colors.secondary, label: 'Diarrhea' },
+  { id: 'ibs_c',     iconName: 'ibs_c',   color: theme.colors.accent, label: 'Constipation' },
 ];
 
 export const OnboardingSymptoms = ({ navigation }: any) => {
@@ -65,10 +65,10 @@ export const OnboardingSymptoms = ({ navigation }: any) => {
               onPress={() => toggle(s.id)}
               style={[styles.card, active && styles.cardActive]}
             >
-              <Icon name={s.iconName} size={26} color={active ? s.color : theme.colors.textSecondary} />
+              <Icon name={s.iconName} size={26} color={active ? s.color : theme.colors.text.secondary} />
               <Text
                 variant="label"
-                style={[styles.cardLabel, active && { color: theme.colors.textPrimary }]}
+                style={[styles.cardLabel, active && { color: theme.colors.text.primary }]}
               >
                 {s.label}
               </Text>
@@ -103,12 +103,12 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: theme.colors.coral,
+    backgroundColor: theme.colors.secondary,
     borderRadius: theme.radii.full,
   },
-  stepText: { color: theme.colors.textPrimary, fontFamily: 'Inter_700Bold' },
+  stepText: { color: theme.colors.text.primary, fontFamily: 'Inter_700Bold' },
   title: { marginBottom: theme.spacing.md },
-  sub: { color: theme.colors.textSecondary, marginBottom: theme.spacing.xxxl },
+  sub: { color: theme.colors.text.secondary, marginBottom: theme.spacing.xxxl },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -135,12 +135,12 @@ const styles = StyleSheet.create({
   cardActive: {
     // Tint bg + coral border — icons stay fully visible
     backgroundColor: 'rgba(224,93,76,0.08)',
-    borderColor: theme.colors.coral,
-    shadowColor: theme.colors.coral,
+    borderColor: theme.colors.secondary,
+    shadowColor: theme.colors.secondary,
     shadowOpacity: 0.18,
     shadowRadius: 10,
   },
-  cardLabel: { color: theme.colors.textSecondary, textAlign: 'center' },
+  cardLabel: { color: theme.colors.text.secondary, textAlign: 'center' },
   activePip: {
     position: 'absolute',
     top: 10,
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: theme.colors.coral,
+    backgroundColor: theme.colors.secondary,
   },
   footer: { paddingTop: theme.spacing.xl, paddingBottom: theme.spacing.sm },
 });

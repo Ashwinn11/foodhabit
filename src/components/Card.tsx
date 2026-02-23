@@ -1,37 +1,72 @@
 import React from 'react';
-import { View, StyleSheet, ViewProps } from 'react-native';
+import { View, StyleSheet, ViewProps, ViewStyle } from 'react-native';
 import { theme } from '../theme/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export interface CardProps extends ViewProps {
   elevated?: boolean;
-  glow?: 'coral' | 'lime' | 'amber';
+  glow?: boolean;
+  variant?: 'default' | 'glass' | 'outline' | 'surface';
+  padding?: keyof typeof theme.spacing;
 }
 
 export const Card: React.FC<CardProps> = ({
   elevated = false,
-  glow,
+  glow = false,
+  variant = 'default',
+  padding = 'lg',
   style,
   children,
   ...props
 }) => {
-  const glowColor = glow === 'coral'
-    ? 'rgba(224,93,76,0.18)'
-    : glow === 'lime'
-    ? 'rgba(212,248,112,0.18)'
-    : glow === 'amber'
-    ? 'rgba(245,201,122,0.18)'
-    : undefined;
+  const getVariantStyles = (): ViewStyle => {
+    switch (variant) {
+      case 'glass':
+        return {
+          backgroundColor: theme.colors.glass,
+          borderColor: theme.colors.glassBorder,
+          borderWidth: 1,
+        };
+      case 'outline':
+        return {
+          backgroundColor: 'transparent',
+          borderColor: theme.colors.border,
+          borderWidth: 1,
+        };
+      case 'surface':
+        return {
+          backgroundColor: theme.colors.surfaceElevated,
+          borderWidth: 0,
+        };
+      default:
+        return {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.borderLight,
+          borderWidth: 1,
+        };
+    }
+  };
 
   return (
     <View
       style={[
         styles.card,
-        elevated && styles.elevated,
-        glow && { borderColor: glowColor, borderWidth: 1.5 },
+        { padding: theme.spacing[padding] },
+        getVariantStyles(),
+        elevated && theme.shadows.medium,
+        glow && theme.shadows.glowSmall,
         style,
       ]}
       {...props}
     >
+      {variant === 'glass' && (
+        <LinearGradient
+          colors={['rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.01)']}
+          style={StyleSheet.absoluteFillObject}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+      )}
       {children}
     </View>
   );
@@ -39,20 +74,7 @@ export const Card: React.FC<CardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    padding: theme.spacing.lg,
-    borderRadius: theme.radii.lg,
-    backgroundColor: 'rgba(21, 25, 22, 0.45)', // very subtle, letting Pine bleed through
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  elevated: {
-    backgroundColor: 'rgba(30, 36, 31, 0.65)', // slightly brighter frosted glass
-    ...theme.shadows.minimal,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 0,
-    borderBottomWidth: 0,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    borderLeftColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: theme.radii.xl,
+    overflow: 'hidden',
   },
 });

@@ -1,20 +1,28 @@
 import React from 'react';
-import { StyleSheet, ActivityIndicator, Pressable, View } from 'react-native';
+import { StyleSheet, ActivityIndicator, Pressable, View, ViewStyle, TextStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { theme } from '../theme/theme';
 import { Text } from './Text';
+
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'soft' | 'danger';
+export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'ghost' | 'danger';
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   disabled?: boolean;
   loading?: boolean;
   leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  style?: ViewStyle;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -23,52 +31,124 @@ export const Button: React.FC<ButtonProps> = ({
   label,
   onPress,
   variant = 'primary',
+  size = 'md',
   disabled = false,
   loading = false,
   leftIcon,
+  rightIcon,
+  style,
 }) => {
-  const isPressed = useSharedValue(0);
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+
+  const handlePressIn = () => {
+    if (disabled || loading) return;
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+    opacity.value = withTiming(0.8, { duration: 100 });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handlePressOut = () => {
+    if (disabled || loading) return;
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    opacity.value = withTiming(1, { duration: 100 });
+  };
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: withSpring(isPressed.value ? 0.96 : 1, { damping: 15, stiffness: 200 }) },
-    ],
-    opacity: disabled ? 0.5 : 1,
+    transform: [{ scale: scale.value }],
+    opacity: disabled ? 0.5 : opacity.value,
   }));
 
-  const bgColor = variant === 'primary' ? theme.colors.coral : 'transparent';
-  const textColor = variant === 'primary' ? theme.colors.bg
-    : variant === 'danger' ? theme.colors.coral
-    : theme.colors.textPrimary;
-  const borderColor = variant === 'ghost' ? theme.colors.border
-    : variant === 'danger' ? theme.colors.coral
-    : 'transparent';
-  const borderWidth = variant === 'ghost' || variant === 'danger' ? 1 : 0;
+  const getVariantStyles = (): { button: ViewStyle; text: TextStyle; iconColor: string } => {
+    switch (variant) {
+      case 'primary':
+        return {
+          button: { backgroundColor: theme.colors.primary },
+          text: { color: theme.colors.text.inverse },
+          iconColor: theme.colors.text.inverse,
+        };
+      case 'secondary':
+        return {
+          button: { backgroundColor: theme.colors.secondary },
+          text: { color: theme.colors.text.primary },
+          iconColor: theme.colors.text.primary,
+        };
+      case 'soft':
+        return {
+          button: { backgroundColor: theme.colors.primaryMuted },
+          text: { color: theme.colors.primary },
+          iconColor: theme.colors.primary,
+        };
+      case 'ghost':
+        return {
+          button: { 
+            backgroundColor: 'transparent', 
+            borderWidth: 1, 
+            borderColor: theme.colors.border 
+          },
+          text: { color: theme.colors.text.primary },
+          iconColor: theme.colors.text.primary,
+        };
+      case 'danger':
+        return {
+          button: { backgroundColor: theme.colors.error + '20', borderWidth: 1, borderColor: theme.colors.error },
+          text: { color: theme.colors.error },
+          iconColor: theme.colors.error,
+        };
+      default:
+        return {
+          button: { backgroundColor: theme.colors.primary },
+          text: { color: theme.colors.text.inverse },
+          iconColor: theme.colors.text.inverse,
+        };
+    }
+  };
+
+  const getSizeStyles = (): ViewStyle => {
+    switch (size) {
+      case 'sm':
+        return { paddingVertical: theme.spacing.sm, paddingHorizontal: theme.spacing.md };
+      case 'lg':
+        return { paddingVertical: theme.spacing.xl, paddingHorizontal: theme.spacing.xxxl };
+      default:
+        return { paddingVertical: theme.spacing.lg, paddingHorizontal: theme.spacing.xxl };
+    }
+  };
+
+  const { button: variantButtonStyle, text: variantTextStyle } = getVariantStyles();
 
   return (
     <AnimatedPressable
-      onPress={onPress}
+      onPress={() => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        onPress();
+      }}
       disabled={disabled || loading}
-      onPressIn={() => (isPressed.value = 1)}
-      onPressOut={() => (isPressed.value = 0)}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       style={[
         styles.button,
+        getSizeStyles(),
+        variantButtonStyle,
         animatedStyle,
-        {
-          backgroundColor: bgColor,
-          borderColor,
-          borderWidth,
-        },
+        style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={textColor} />
+        <ActivityIndicator color={variantTextStyle.color} />
       ) : (
         <View style={styles.contentRow}>
           {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
-          <Text style={[styles.label, { color: textColor }]}>
+          <Text 
+            style={[
+              styles.label, 
+              variantTextStyle,
+              { fontSize: size === 'sm' ? 14 : 16 }
+            ]}
+          >
             {label}
           </Text>
+          {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
         </View>
       )}
     </AnimatedPressable>
@@ -77,12 +157,11 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: theme.spacing.lg, // Sleek, reduced height
-    paddingHorizontal: theme.spacing.xxl, // Base horizontal padding
-    borderRadius: theme.radii.full,
+    borderRadius: theme.radii.full, // Pill shape
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    height: 52, // Slightly sleeker height
   },
   contentRow: {
     flexDirection: 'row',
@@ -90,13 +169,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   leftIcon: {
-    marginRight: theme.spacing.sm, // slight margin between icon and text
+    marginRight: theme.spacing.md,
+  },
+  rightIcon: {
+    marginLeft: theme.spacing.md,
   },
   label: {
-    fontFamily: 'Inter_500Medium',
-    textTransform: 'uppercase',
-    letterSpacing: 1.5, // Increased letter spacing for sophisticated feel
-    fontSize: 12,       // Pulled down to 12 for elegance
+    fontFamily: theme.typography.fonts.bold,
     textAlign: 'center',
   }
 });

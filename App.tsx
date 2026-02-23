@@ -53,12 +53,12 @@ const GutBuddyTheme = {
   dark: true,
   colors: {
     ...DefaultTheme.colors,
-    primary: theme.colors.coral,
-    background: theme.colors.bg,
+    primary: theme.colors.primary,
+    background: theme.colors.background,
     card: theme.colors.surface,
-    text: theme.colors.textPrimary,
+    text: theme.colors.text.primary,
     border: theme.colors.border,
-    notification: theme.colors.coral,
+    notification: theme.colors.secondary,
   },
 };
 
@@ -66,15 +66,15 @@ const MainTabs = () => (
   <Tab.Navigator
     screenOptions={{
       headerShown: false,
-      tabBarActiveTintColor: theme.colors.coral,
-      tabBarInactiveTintColor: theme.colors.textSecondary,
-      tabBarLabelStyle: { fontFamily: 'Inter_500Medium', fontSize: 11 },
+      tabBarActiveTintColor: theme.colors.primary,
+      tabBarInactiveTintColor: theme.colors.text.secondary,
+      tabBarLabelStyle: { fontFamily: theme.typography.fonts.medium, fontSize: 11 },
       tabBarStyle: {
-        backgroundColor: theme.colors.surface,
-        borderTopColor: theme.colors.border,
-        height: 60,
-        paddingBottom: 8,
+        backgroundColor: theme.colors.background,
+        borderTopColor: theme.colors.divider,
         paddingTop: 8,
+        elevation: 0,
+        shadowOpacity: 0,
       },
     }}
   >
@@ -113,7 +113,8 @@ const MainTabs = () => (
 );
 
 const OnboardingStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: theme.colors.bg } }}>
+            <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: theme.colors.background } }}>
+  
     <Stack.Screen name="OnboardingGoal" component={OnboardingGoal} />
     <Stack.Screen name="OnboardingCondition" component={OnboardingCondition} />
     <Stack.Screen name="OnboardingSymptoms" component={OnboardingSymptoms} />
@@ -237,43 +238,84 @@ export default function App() {
     }
   }, [isReady, fontsLoaded]);
 
-  if (!isReady || !fontsLoaded) {
+    if (!isReady || !fontsLoaded) {
+
+      return (
+
+        <View style={styles.loadingContainer}>
+
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+
+        </View>
+
+      );
+
+    }
+
+  
+
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.coral} />
-      </View>
+
+      <GestureHandlerRootView style={styles.container}>
+
+        <SafeAreaProvider>
+
+          <NavigationContainer theme={GutBuddyTheme}>
+
+            <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: theme.colors.background } }}>
+
+              {!session ? (
+
+                <Stack.Screen name="Auth" component={AuthScreen} />
+
+              ) : !isOnboardingCompleted ? (
+
+                <Stack.Screen name="Onboarding" component={OnboardingStack} />
+
+              ) : (
+
+                <Stack.Screen name="MainTabs" component={MainTabs} />
+
+              )}
+
+            </Stack.Navigator>
+
+            <StatusBar style="light" translucent backgroundColor="transparent" />
+
+          </NavigationContainer>
+
+        </SafeAreaProvider>
+
+      </GestureHandlerRootView>
+
     );
+
   }
 
-  return (
-    <GestureHandlerRootView style={styles.container}>
-      <SafeAreaProvider>
-        <NavigationContainer theme={GutBuddyTheme}>
-          <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: theme.colors.bg } }}>
-            {!session ? (
-              <Stack.Screen name="Auth" component={AuthScreen} />
-            ) : !isOnboardingCompleted ? (
-              <Stack.Screen name="Onboarding" component={OnboardingStack} />
-            ) : (
-              <Stack.Screen name="MainTabs" component={MainTabs} />
-            )}
-          </Stack.Navigator>
-          <StatusBar style="light" translucent backgroundColor="transparent" />
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
-  );
-}
+  
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.bg,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.bg,
-  },
-});
+  const styles = StyleSheet.create({
+
+    container: {
+
+      flex: 1,
+
+      backgroundColor: theme.colors.background,
+
+    },
+
+    loadingContainer: {
+
+      flex: 1,
+
+      alignItems: 'center',
+
+      justifyContent: 'center',
+
+      backgroundColor: theme.colors.background,
+
+    },
+
+  });
+
+  

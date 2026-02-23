@@ -29,9 +29,9 @@ import { useAppStore } from '../store/useAppStore';
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<string, string> = {
-  safe:    theme.colors.lime,
-  caution: theme.colors.amber,
-  avoid:   theme.colors.coral,
+  safe:    theme.colors.primary,
+  caution: theme.colors.accent,
+  avoid:   theme.colors.secondary,
 };
 const STATUS_LABEL: Record<string, string> = {
   safe:    'Safe',
@@ -98,7 +98,7 @@ const ScanningLoader = () => {
         <Animated.View style={[loaderStyles.ring, s1]} />
         {/* Core dot */}
         <View style={loaderStyles.core}>
-          <ScanLine color={theme.colors.lime} size={22} strokeWidth={1.5} />
+          <ScanLine color={theme.colors.primary} size={22} strokeWidth={1.5} />
         </View>
       </View>
 
@@ -129,7 +129,7 @@ const loaderStyles = StyleSheet.create({
     height: 96,
     borderRadius: 48,
     borderWidth: 1.5,
-    borderColor: theme.colors.lime,
+    borderColor: theme.colors.primary,
   },
   core: {
     width: 56,
@@ -145,12 +145,12 @@ const loaderStyles = StyleSheet.create({
   phaseTitle: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
-    color: theme.colors.textPrimary,
+    color: theme.colors.text.primary,
   },
   phaseSub: {
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
   },
 });
 
@@ -181,8 +181,6 @@ export const ScanFoodScreen = () => {
   const [loggedFoods, setLoggedFoods] = useState<string[]>([]);
   const [mealLogged, setMealLogged]   = useState(false);
 
-  // ── Shared result/reset ───────────────────────────────────────────────────
-
   const applyResults = (res: AnalysisResult[]) => {
     setResults(res);
     setRecentScanAvoidFoods(res.filter(r => r.level === 'avoid').map(r => r.normalizedName));
@@ -204,8 +202,6 @@ export const ScanFoodScreen = () => {
     resetAll();
   };
 
-  // ── Text mode ─────────────────────────────────────────────────────────────
-
   const analyzeText = async () => {
     const foods = textInput.split(',').map(f => f.trim()).filter(Boolean);
     if (!foods.length) return;
@@ -220,20 +216,16 @@ export const ScanFoodScreen = () => {
     }
   };
 
-  // ── Camera mode: extract + analyze in one shot ───────────────────────────
-
   const scanAndAnalyze = async (base64: string) => {
     setStage('scanning');
     setError(null);
     try {
-      // Step 1: extract food names from image
       const foods = await fodmapService.analyzeFoods([], base64, true) as string[];
       if (!foods.length) {
         setError("Couldn't find any food items. Try a clearer photo of a menu or plate.");
         setStage('input');
         return;
       }
-      // Step 2: immediately analyze — no confirm step
       const res = await fodmapService.analyzeFoods(foods) as AnalysisResult[];
       applyResults(res);
     } catch {
@@ -272,8 +264,6 @@ export const ScanFoodScreen = () => {
     }
   };
 
-  // ── Meal logging ──────────────────────────────────────────────────────────
-
   const toggleLogFood = (name: string) =>
     setLoggedFoods(prev =>
       prev.includes(name) ? prev.filter(f => f !== name) : [...prev, name]
@@ -290,8 +280,6 @@ export const ScanFoodScreen = () => {
     }
   };
 
-  // ── Result card ───────────────────────────────────────────────────────────
-
   const healthiest = findHealthiest(results);
 
   const renderResultCard = (item: AnalysisResult, index: number) => {
@@ -304,358 +292,287 @@ export const ScanFoodScreen = () => {
         key={index}
         activeOpacity={0.85}
         onPress={() => toggleLogFood(item.normalizedName)}
-        style={[styles.resultCard, { borderLeftColor: color }, isSelected && styles.resultCardSelected]}
+        style={[styles.resultCard, isSelected && { borderColor: theme.colors.primary }]}
       >
-        {isHealthiest && (
-          <View style={styles.healthiestBadge}>
-            <Crown color={theme.colors.amber} size={11} strokeWidth={2.5} />
-            <Text style={styles.healthiestLabel}>HEALTHIEST CHOICE</Text>
-          </View>
-        )}
-        <View style={styles.resultRow}>
-          <View style={styles.resultMain}>
-            <View style={[styles.statusDot, { backgroundColor: color }]} />
+        <Card variant={isSelected ? 'surface' : 'outline'} padding="lg" style={{ borderLeftWidth: 4, borderLeftColor: color }}>
+          {isHealthiest && (
+            <View style={styles.healthiestBadge}>
+              <Crown color={theme.colors.accent} size={11} strokeWidth={2.5} />
+              <Text variant="caption" color={theme.colors.accent} weight="bold">Healthiest Choice</Text>
+            </View>
+          )}
+          <View style={styles.resultRow}>
             <View style={{ flex: 1 }}>
-              <Text variant="label" style={styles.resultName}>{item.normalizedName}</Text>
-              <Text variant="caption" style={styles.resultExplanation}>{item.explanation}</Text>
+              <Text variant="body" weight="bold">{item.normalizedName}</Text>
+              <Text variant="bodySmall" color={theme.colors.text.secondary} style={{ marginTop: 2 }}>{item.explanation}</Text>
+            </View>
+            <View style={styles.resultRight}>
+              <Text variant="caption" color={color} weight="bold">{STATUS_LABEL[item.level]}</Text>
+              <View style={[styles.checkbox, isSelected && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }]}>
+                {isSelected && <Check color={theme.colors.text.inverse} size={12} strokeWidth={3} />}
+              </View>
             </View>
           </View>
-          <View style={styles.resultRight}>
-            <Text style={[styles.statusLabel, { color }]}>{STATUS_LABEL[item.level]}</Text>
-            <View style={[styles.checkbox, isSelected && styles.checkboxActive]}>
-              {isSelected && <Check color={theme.colors.bg} size={12} strokeWidth={3} />}
-            </View>
-          </View>
-        </View>
+        </Card>
       </TouchableOpacity>
     );
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
-
   return (
-    <Screen padding scroll>
-      <Text variant="hero" style={[styles.title, { lineHeight: 64 }]}>
-        Scan Food.
-      </Text>
-
-      {/* Mode switcher — hidden while scanning */}
-      {stage !== 'scanning' && (
-        <View style={styles.modeSwitcher}>
-          {(['text', 'camera'] as Mode[]).map(m => (
-            <TouchableOpacity
-              key={m}
-              onPress={() => switchMode(m)}
-              style={[styles.modeTab, mode === m && styles.modeTabActive]}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.modeTabLabel, mode === m && styles.modeTabLabelActive]}>
-                {m === 'text' ? 'Type Foods' : 'Scan Menu'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-      {/* ── TEXT MODE input ── */}
-      {mode === 'text' && stage === 'input' && (
-        <View style={styles.section}>
-          <View style={styles.textBox}>
-            <ScanLine color={theme.colors.textSecondary} size={18} strokeWidth={1.5} />
-            <TextInput
-              style={styles.textInput}
-              placeholder="e.g. garlic bread, pasta, caesar salad"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={textInput}
-              onChangeText={setTextInput}
-              multiline
-            />
-          </View>
-          <Button
-            label="Analyze"
-            onPress={analyzeText}
-            disabled={!textInput.trim()}
-          />
-        </View>
-      )}
-
-      {/* ── CAMERA MODE input ── */}
-      {mode === 'camera' && stage === 'input' && (
-        <View style={styles.section}>
-          <View style={styles.cameraRow}>
-            <TouchableOpacity style={styles.cameraCard} onPress={takePhoto} activeOpacity={0.8}>
-              <Camera color={theme.colors.coral} size={28} strokeWidth={1.5} />
-              <Text style={styles.cameraLabel}>Take Photo</Text>
-              <Text variant="caption" style={styles.cameraSub}>Point at a menu or plate</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.cameraCard} onPress={pickImage} activeOpacity={0.8}>
-              <ImageIcon color={theme.colors.amber} size={28} strokeWidth={1.5} />
-              <Text style={styles.cameraLabel}>From Gallery</Text>
-              <Text variant="caption" style={styles.cameraSub}>Pick an existing photo</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* ── SCANNING / loading ── */}
-      {stage === 'scanning' && <ScanningLoader />}
-
-      {/* ── Error ── */}
-      {!!error && (
-        <Card style={styles.errorCard}>
-          <Text style={styles.errorText}>{error}</Text>
-        </Card>
-      )}
-
-      {/* ── RESULTS ── */}
-      {results.length > 0 && stage === 'results' && (
-        <View style={styles.results}>
-          {/* Summary counts */}
-          <View style={styles.summaryRow}>
-            {(['safe', 'caution', 'avoid'] as const).map(level => {
-              const count = results.filter(r => r.level === level).length;
-              if (!count) return null;
-              return (
-                <View key={level} style={styles.summaryItem}>
-                  <View style={[styles.summaryDot, { backgroundColor: STATUS_COLOR[level] }]} />
-                  <Text style={[styles.summaryCount, { color: STATUS_COLOR[level] }]}>{count}</Text>
-                  <Text style={styles.summaryLevel}>{STATUS_LABEL[level]}</Text>
-                </View>
-              );
-            })}
-            <TouchableOpacity onPress={resetAll} style={styles.scanAgain} activeOpacity={0.7}>
-              <Text style={styles.scanAgainLabel}>Scan again</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Cards sorted: safe → caution → avoid */}
-          {[...results]
-            .sort((a, b) => ({ safe: 0, caution: 1, avoid: 2 }[a.level] - { safe: 0, caution: 1, avoid: 2 }[b.level]))
-            .map((item, i) => renderResultCard(item, i))
-          }
-
-          {/* Log prompt */}
-          {!mealLogged ? (
-            <View style={styles.logSection}>
-              <Text variant="caption" style={styles.logHint}>
-                {loggedFoods.length
-                  ? `${loggedFoods.length} selected — tap to toggle`
-                  : "Tap foods above to select what you're eating"}
-              </Text>
-              {loggedFoods.length > 0 && (
-                <Button
-                  label={`Log ${loggedFoods.length} Food${loggedFoods.length > 1 ? 's' : ''}`}
-                  onPress={logMeal}
-                />
-              )}
-            </View>
-          ) : (
-            <Card style={styles.loggedCard}>
-              <Check color={theme.colors.lime} size={18} strokeWidth={2.5} />
-              <Text style={styles.loggedLabel}>Meal logged</Text>
-              <Text variant="caption" style={styles.loggedSub}>
-                Go to My Gut → Log How I Feel after eating.
-              </Text>
-            </Card>
-          )}
-        </View>
-      )}
-
-      {/* Empty hint */}
-      {mode === 'text' && stage === 'input' && !error && (
-        <Text variant="caption" style={styles.emptyHint}>
-          Enter one food or a full meal — separate multiple items with commas
+    <Screen padding={false} scroll>
+      <View style={styles.header}>
+        <Text variant="display">Scan Food.</Text>
+        <Text variant="body" color={theme.colors.text.secondary}>
+          Analyse meals to check FODMAP compatibility.
         </Text>
-      )}
+      </View>
+
+      <View style={styles.content}>
+        {/* Mode switcher */}
+        {stage !== 'scanning' && (
+          <View style={styles.modeSwitcher}>
+            {(['text', 'camera'] as Mode[]).map(m => (
+              <TouchableOpacity
+                key={m}
+                onPress={() => switchMode(m)}
+                style={[styles.modeTab, mode === m && styles.modeTabActive]}
+              >
+                <Text variant="label" color={mode === m ? theme.colors.text.inverse : theme.colors.text.secondary}>
+                  {m === 'text' ? 'Type foods' : 'Scan menu'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* ── TEXT MODE ── */}
+        {mode === 'text' && stage === 'input' && (
+          <View style={styles.section}>
+            <Card variant="surface" padding="md" style={styles.textBox}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="e.g. garlic bread, pasta, caesar salad"
+                placeholderTextColor={theme.colors.text.tertiary}
+                value={textInput}
+                onChangeText={setTextInput}
+                multiline
+              />
+            </Card>
+            <Button
+              label="Analyse Meal"
+              onPress={analyzeText}
+              disabled={!textInput.trim()}
+              variant="primary"
+            />
+            <Text variant="caption" color={theme.colors.text.tertiary} align="center" style={{ marginTop: 8 }}>
+              Separate multiple items with commas
+            </Text>
+          </View>
+        )}
+
+        {/* ── CAMERA MODE ── */}
+        {mode === 'camera' && stage === 'input' && (
+          <View style={styles.section}>
+            <View style={styles.cameraRow}>
+              <Card variant="surface" padding="xl" style={styles.cameraCard}>
+                <TouchableOpacity onPress={takePhoto} style={styles.cameraBtn}>
+                  <Camera color={theme.colors.primary} size={32} />
+                  <Text variant="body" weight="bold">Take Photo</Text>
+                  <Text variant="caption" color={theme.colors.text.tertiary} align="center">Point at a menu or plate</Text>
+                </TouchableOpacity>
+              </Card>
+              <Card variant="surface" padding="xl" style={styles.cameraCard}>
+                <TouchableOpacity onPress={pickImage} style={styles.cameraBtn}>
+                  <ImageIcon color={theme.colors.accent} size={32} />
+                  <Text variant="body" weight="bold">Gallery</Text>
+                  <Text variant="caption" color={theme.colors.text.tertiary} align="center">Pick an existing photo</Text>
+                </TouchableOpacity>
+              </Card>
+            </View>
+          </View>
+        )}
+
+        {/* ── SCANNING ── */}
+        {stage === 'scanning' && <ScanningLoader />}
+
+        {/* ── Error ── */}
+        {!!error && (
+          <Card variant="outline" padding="lg" style={styles.errorCard}>
+            <Text variant="bodySmall" color={theme.colors.error}>{error}</Text>
+          </Card>
+        )}
+
+        {/* ── RESULTS ── */}
+        {results.length > 0 && stage === 'results' && (
+          <View style={styles.results}>
+            <View style={styles.resultsHeader}>
+              <View style={styles.summaryRow}>
+                {(['safe', 'caution', 'avoid'] as const).map(level => {
+                  const count = results.filter(r => r.level === level).length;
+                  if (!count) return null;
+                  return (
+                    <View key={level} style={styles.summaryItem}>
+                      <View style={[styles.summaryDot, { backgroundColor: STATUS_COLOR[level] }]} />
+                      <Text variant="caption" color={STATUS_COLOR[level]} weight="bold">{count}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+              <TouchableOpacity onPress={resetAll}>
+                <Text variant="label" color={theme.colors.text.tertiary}>Scan again</Text>
+              </TouchableOpacity>
+            </View>
+
+            {[...results]
+              .sort((a, b) => ({ safe: 0, caution: 1, avoid: 2 }[a.level] - { safe: 0, caution: 1, avoid: 2 }[b.level]))
+              .map((item, i) => renderResultCard(item, i))
+            }
+
+            {!mealLogged ? (
+              <View style={styles.logAction}>
+                <Text variant="caption" color={theme.colors.text.tertiary} align="center" style={{ marginBottom: 12 }}>
+                  {loggedFoods.length > 0 ? `${loggedFoods.length} items selected` : 'Select items you are eating to log'}
+                </Text>
+                <Button
+                  label={loggedFoods.length > 0 ? `Log ${loggedFoods.length} Items` : 'Log Meal'}
+                  onPress={logMeal}
+                  disabled={loggedFoods.length === 0}
+                  variant="primary"
+                />
+              </View>
+            ) : (
+              <Card variant="glass" padding="lg" style={styles.loggedCard} glow>
+                <View style={styles.loggedContent}>
+                  <Check color={theme.colors.primary} size={20} strokeWidth={3} />
+                  <View>
+                    <Text variant="body" weight="bold">Meal Logged</Text>
+                    <Text variant="caption" color={theme.colors.text.tertiary}>Check My Gut later to log symptoms.</Text>
+                  </View>
+                </View>
+              </Card>
+            )}
+          </View>
+        )}
+      </View>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  title: { marginTop: theme.spacing.lg, marginBottom: theme.spacing.xl },
-
+  header: {
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.md,
+    marginBottom: theme.spacing.xl, // Reduced from giant
+  },
+  content: {
+    paddingHorizontal: theme.spacing.xl,
+    paddingBottom: theme.spacing.colossal,
+  },
   modeSwitcher: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceElevated,
     borderRadius: theme.radii.full,
-    padding: 3,
-    marginBottom: theme.spacing.xxxl,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    padding: 4,
+    marginBottom: theme.spacing.giant,
   },
   modeTab: {
     flex: 1,
-    paddingVertical: theme.spacing.sm + 2,
+    paddingVertical: theme.spacing.md,
     borderRadius: theme.radii.full,
     alignItems: 'center',
   },
-  modeTabActive: { backgroundColor: theme.colors.coral },
-  modeTabLabel: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 13,
-    color: theme.colors.textSecondary,
+  modeTabActive: {
+    backgroundColor: theme.colors.primary,
   },
-  modeTabLabelActive: { color: theme.colors.bg },
-
-  section: { gap: theme.spacing.xl, marginBottom: theme.spacing.xl },
-
+  section: {
+    marginBottom: theme.spacing.giant,
+  },
   textBox: {
-    flexDirection: 'row',
-    alignItems: 'center', // Changed from flex-start to vertically center icon and text
-    gap: theme.spacing.md,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radii.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: theme.spacing.lg,
-    minHeight: 60,
+    minHeight: 120,
+    marginBottom: theme.spacing.lg,
   },
   textInput: {
     flex: 1,
-    padding: 0,
-    margin: 0,
-    color: theme.colors.textPrimary,
-    fontFamily: 'Inter_400Regular',
-    fontSize: 15,
-    lineHeight: 22,
+    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fonts.body,
+    fontSize: 16,
+    textAlignVertical: 'top',
   },
-
-  cameraRow: { flexDirection: 'row', gap: theme.spacing.md },
+  cameraRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
   cameraCard: {
     flex: 1,
-    backgroundColor: 'rgba(21, 25, 22, 0.45)',
-    borderRadius: theme.radii.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-    padding: theme.spacing.xl,
+  },
+  cameraBtn: {
     alignItems: 'center',
     gap: theme.spacing.sm,
-    ...theme.shadows.minimal,
   },
-  cameraLabel: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 13,
-    color: theme.colors.textPrimary,
-  },
-  cameraSub: { color: theme.colors.textSecondary, textAlign: 'center', fontSize: 11 },
-
   errorCard: {
-    backgroundColor: 'rgba(224, 93, 76, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(224, 93, 76, 0.15)',
-    marginTop: theme.spacing.xl,
+    borderColor: theme.colors.error + '30',
+    backgroundColor: theme.colors.error + '10',
+    marginBottom: theme.spacing.lg,
   },
-  errorText: { color: theme.colors.coral, fontFamily: 'Inter_400Regular', fontSize: 14 },
-
-  results: { gap: theme.spacing.md },
-
+  results: {
+    gap: theme.spacing.md,
+  },
+  resultsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
   summaryRow: {
     flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  summaryItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xl,
-    paddingBottom: theme.spacing.sm,
-    flexWrap: 'wrap',
+    gap: 6,
   },
-  summaryItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  summaryDot: { width: 8, height: 8, borderRadius: 4 },
-  summaryCount: { fontFamily: 'Inter_700Bold', fontSize: 14 },
-  summaryLevel: { color: theme.colors.textSecondary, fontSize: 12, fontFamily: 'Inter_400Regular' },
-  scanAgain: { marginLeft: 'auto' },
-  scanAgainLabel: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 13,
-    color: theme.colors.textSecondary,
-    textDecorationLine: 'underline',
+  summaryDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-
   resultCard: {
-    backgroundColor: 'rgba(21, 25, 22, 0.45)',
-    borderRadius: theme.radii.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-    borderLeftWidth: 4,
-    padding: theme.spacing.lg,
-    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
-  resultCardSelected: {
-    borderColor: theme.colors.coral,
-    backgroundColor: 'rgba(224,93,76,0.06)',
-  },
-  healthiestBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  healthiestLabel: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 10,
-    color: theme.colors.amber,
-    letterSpacing: 0.8,
+  healthiestBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
   },
   resultRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     gap: theme.spacing.md,
   },
-  resultMain: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.md,
+  resultRight: {
+    alignItems: 'flex-end',
+    gap: theme.spacing.sm,
   },
-  statusDot: { width: 10, height: 10, borderRadius: 5, marginTop: 4 },
-  resultName: {
-    color: theme.colors.textPrimary,
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-    marginBottom: 3,
-  },
-  resultExplanation: {
-    color: theme.colors.textSecondary,
-    fontSize: 12,
-    fontStyle: 'italic',
-    lineHeight: 18,
-  },
-  resultRight: { alignItems: 'flex-end', gap: theme.spacing.sm },
-  statusLabel: { fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 0.5 },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 5,
+    width: 22,
+    height: 22,
+    borderRadius: 6,
     borderWidth: 1.5,
-    borderColor: theme.colors.border,
+    borderColor: theme.colors.divider,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxActive: {
-    backgroundColor: theme.colors.coral,
-    borderColor: theme.colors.coral,
+  logAction: {
+    marginTop: theme.spacing.giant,
   },
-
-  logSection: {
-    gap: theme.spacing.md,
-    paddingTop: theme.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-  },
-  logHint: { color: theme.colors.textSecondary, textAlign: 'center' },
   loggedCard: {
+    marginTop: theme.spacing.giant,
+  },
+  loggedContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.md,
-    backgroundColor: 'rgba(21, 25, 22, 0.45)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 248, 112, 0.15)',
-    padding: theme.spacing.lg,
-    borderRadius: theme.radii.lg,
-    flexWrap: 'wrap',
-  },
-  loggedLabel: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 14,
-    color: theme.colors.lime,
-  },
-  loggedSub: { color: theme.colors.textSecondary, flex: 1 },
-
-  emptyHint: {
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginTop: theme.spacing.giant,
   },
 });

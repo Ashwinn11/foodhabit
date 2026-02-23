@@ -69,129 +69,122 @@ export const ProfileScreen = () => {
   const initials = getInitials(displayName);
 
   return (
-    <Screen padding scroll>
-
-      {/* ── Avatar + Name + Email Header ── */}
-      <View style={styles.avatarSection}>
-        <View style={styles.avatarCircle}>
-          <Text variant="title" style={styles.avatarInitials}>{initials}</Text>
-        </View>
-        {!!displayName && (
-          <Text variant="body" style={styles.displayName}>{displayName}</Text>
-        )}
-        {!!email && (
-          <Text style={styles.emailText}>{email}</Text>
-        )}
+    <Screen padding={false} scroll>
+      <View style={styles.header}>
+        <Text variant="display">Profile.</Text>
+        <Text variant="body" color={theme.colors.text.secondary}>
+          Manage your account and gut health profile.
+        </Text>
       </View>
 
-      {/* ── Profile Card ── */}
-      <Card elevated style={styles.card}>
-        <View style={styles.row}>
-          <Text variant="caption" style={styles.rowLabel}>Condition</Text>
-          <Text variant="body" style={styles.rowValue}>
-            {conditionLabel(onboardingAnswers?.condition || '')}
-          </Text>
-        </View>
-        <View style={[styles.row, styles.lastRow]}>
-          <Text variant="caption" style={styles.rowLabel}>Triggers</Text>
-          <Text variant="body" style={styles.rowValue}>
-            {triggers.length} identified
-          </Text>
-        </View>
-      </Card>
-
-      {/* ── Subscription Card ── */}
-      <Card elevated style={styles.card}>
-        <View style={[styles.row, styles.lastRow]}>
-          <View style={styles.proRow}>
-            <View style={styles.proDot} />
-            <Text variant="label" style={styles.proLabel}>Pro · Active</Text>
+      <View style={styles.content}>
+        {/* ── Avatar Section ── */}
+        <View style={styles.avatarSection}>
+          <View style={styles.avatarCircle}>
+            <Text variant="title" color={theme.colors.secondary}>{initials}</Text>
           </View>
-          <TouchableOpacity
-            onPress={() => Purchases.showManageSubscriptions()}
-            activeOpacity={0.7}
-          >
-            <Text variant="label" style={styles.manageLink}>Manage →</Text>
+          <View>
+            {!!displayName && (
+              <Text variant="subtitle" weight="bold">{displayName}</Text>
+            )}
+            {!!email && (
+              <Text variant="bodySmall" color={theme.colors.text.tertiary}>{email}</Text>
+            )}
+          </View>
+        </View>
+
+        {/* ── Profile Stats Card ── */}
+        <Card variant="glass" padding="xl" style={styles.card} glow>
+          <View style={styles.row}>
+            <Text variant="label" color={theme.colors.text.tertiary}>Condition</Text>
+            <Text variant="body" weight="medium">
+              {conditionLabel(onboardingAnswers?.condition || '')}
+            </Text>
+          </View>
+          <View style={[styles.row, styles.lastRow]}>
+            <Text variant="label" color={theme.colors.text.tertiary}>Triggers</Text>
+            <Text variant="body" weight="medium">
+              {triggers.length} identified
+            </Text>
+          </View>
+        </Card>
+
+        {/* ── Subscription Card ── */}
+        <Card variant="surface" padding="lg" style={styles.card}>
+          <View style={styles.proHeader}>
+            <View style={styles.proTitleRow}>
+              <View style={styles.proDot} />
+              <Text variant="body" weight="bold">Pro Access Active</Text>
+            </View>
+            <TouchableOpacity onPress={() => Purchases.showManageSubscriptions()}>
+              <Text variant="label" color={theme.colors.secondary}>Manage →</Text>
+            </TouchableOpacity>
+          </View>
+          <Text variant="bodySmall" color={theme.colors.text.tertiary} style={{ marginTop: 4 }}>
+            Enjoy unlimited scans and deep gut health insights.
+          </Text>
+        </Card>
+
+        {/* ── Legal & About ── */}
+        <View style={styles.legalSection}>
+          <TouchableOpacity onPress={() => Linking.openURL('https://gutbuddy.app/terms')} style={styles.legalLinkRow}>
+            <Text variant="label" color={theme.colors.text.tertiary}>Terms of Service</Text>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity onPress={() => Linking.openURL('https://gutbuddy.app/privacy')} style={styles.legalLinkRow}>
+            <Text variant="label" color={theme.colors.text.tertiary}>Privacy Policy</Text>
           </TouchableOpacity>
         </View>
-      </Card>
 
-      {/* ── Legal Links ── */}
-      <View style={styles.legalRow}>
-        <TouchableOpacity
-          onPress={() => Linking.openURL('https://gutbuddy.app/terms')}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.legalLink}>Terms of Use</Text>
-        </TouchableOpacity>
-        <Text style={styles.legalDot}> · </Text>
-        <TouchableOpacity
-          onPress={() => Linking.openURL('https://gutbuddy.app/privacy')}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.legalLink}>Privacy Policy</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* ── Bottom Actions ── */}
-      <View style={styles.actions}>
-        <Button
-          label="Sign Out"
-          variant="ghost"
-          onPress={() => authService.signOut()}
-        />
-        <Button
-          label={isDeleting ? 'Deleting…' : 'Delete Account'}
-          variant="danger"
-          onPress={confirmDelete}
-          disabled={isDeleting}
-          loading={isDeleting}
-        />
+        {/* ── Actions ── */}
+        <View style={styles.actions}>
+          <Button
+            label="Sign Out"
+            variant="ghost"
+            onPress={() => authService.signOut()}
+            style={styles.signOutBtn}
+          />
+          <Button
+            label={isDeleting ? 'Deleting…' : 'Delete Account Permanently'}
+            variant="danger"
+            onPress={confirmDelete}
+            disabled={isDeleting}
+            loading={isDeleting}
+          />
+        </View>
       </View>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  // Avatar header
+  header: {
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.md,
+    marginBottom: theme.spacing.xl, // Reduced from giant
+  },
+  content: {
+    paddingHorizontal: theme.spacing.xl,
+    paddingBottom: theme.spacing.colossal,
+  },
   avatarSection: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.spacing.xxxl,
-    marginBottom: theme.spacing.xxxl,
-    gap: theme.spacing.sm,
+    gap: theme.spacing.xl,
+    marginBottom: theme.spacing.giant,
   },
   avatarCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(224,93,76,0.12)',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: theme.colors.secondary + '15',
     borderWidth: 1.5,
-    borderColor: theme.colors.coral,
+    borderColor: theme.colors.secondary + '30',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.sm,
   },
-  avatarInitials: {
-    color: theme.colors.coral,
-    lineHeight: undefined,
-  },
-  displayName: {
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
-  },
-  emailText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    textTransform: 'none',
-    letterSpacing: 0,
-  },
-
-  // Cards
   card: {
-    marginBottom: theme.spacing.xl,
-    borderRadius: theme.radii.xl,
+    marginBottom: theme.spacing.lg,
   },
   row: {
     flexDirection: 'row',
@@ -199,23 +192,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    borderBottomColor: theme.colors.divider,
   },
   lastRow: {
     borderBottomWidth: 0,
-    paddingBottom: 0,
   },
-  rowLabel: {
-    color: theme.colors.textSecondary,
+  proHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  rowValue: {
-    color: theme.colors.textPrimary,
-    flex: 1,
-    textAlign: 'right',
-  },
-
-  // Subscription row
-  proRow: {
+  proTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
@@ -224,39 +211,30 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.colors.lime,
+    backgroundColor: theme.colors.primary,
   },
-  proLabel: {
-    color: theme.colors.textPrimary,
+  legalSection: {
+    marginTop: theme.spacing.giant,
+    marginBottom: theme.spacing.giant,
+    backgroundColor: theme.colors.surfaceElevated + '30',
+    borderRadius: theme.radii.lg,
+    padding: theme.spacing.md,
   },
-  manageLink: {
-    color: theme.colors.coral,
+  legalLinkRow: {
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
   },
-
-  // Legal
-  legalRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: theme.spacing.xxl,
-    marginTop: theme.spacing.sm,
+  divider: {
+    height: 1,
+    backgroundColor: theme.colors.divider,
+    marginHorizontal: theme.spacing.sm,
   },
-  legalLink: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-    textTransform: 'none',
-    letterSpacing: 0,
-  },
-  legalDot: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-  },
-
-  // Bottom actions
   actions: {
     marginTop: theme.spacing.xl,
-    alignItems: 'center',
+    gap: theme.spacing.lg,
   },
-});
+    signOutBtn: {
+      borderColor: theme.colors.divider,
+    },
+  });
+  

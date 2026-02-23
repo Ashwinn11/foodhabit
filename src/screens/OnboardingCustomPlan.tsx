@@ -66,7 +66,7 @@ export const OnboardingCustomPlan = ({ navigation }: any) => {
       {/* Hero icon in coral-tint circle */}
       <View style={styles.heroIconContainer}>
         <View style={styles.heroIconRing}>
-          <Icon name="understand" size={36} color={theme.colors.coral} />
+          <Icon name="understand" size={36} color={theme.colors.secondary} />
         </View>
       </View>
 
@@ -121,10 +121,10 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: theme.colors.coral,
+    backgroundColor: theme.colors.secondary,
     borderRadius: theme.radii.full,
   },
-  stepText: { color: theme.colors.textPrimary, fontFamily: 'Inter_700Bold' },
+  stepText: { color: theme.colors.text.primary, fontFamily: 'Inter_700Bold' },
   heroIconContainer: {
     alignItems: 'center',
     marginBottom: theme.spacing.xxxl,
@@ -154,11 +154,11 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   planSection: {
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     marginBottom: theme.spacing.sm,
   },
   planCondition: {
-    color: theme.colors.textPrimary,
+    color: theme.colors.text.primary,
     marginBottom: theme.spacing.xl,
   },
   planDivider: {
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
   learningText: {
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: theme.spacing.xxxl,
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   },
   disclaimer: {
     textAlign: 'center',
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     marginTop: theme.spacing.lg,
     textTransform: 'none',
     letterSpacing: 0,

@@ -24,14 +24,14 @@ const TRACK_W  = SCREEN_W - theme.spacing.xl * 2 - 56;
 const PROGRESS = TRACK_W * 0.56;
 
 const PRESET_TRIGGERS = [
-  { id: 'dairy',    iconName: 'dairy',    color: theme.colors.amber, label: 'Dairy' },
-  { id: 'garlic',   iconName: 'garlic',   color: theme.colors.coral, label: 'Garlic' },
-  { id: 'onion',    iconName: 'onion',    color: theme.colors.coral, label: 'Onion' },
-  { id: 'gluten',   iconName: 'gluten',   color: theme.colors.amber, label: 'Gluten' },
-  { id: 'caffeine', iconName: 'caffeine', color: theme.colors.amber, label: 'Caffeine' },
-  { id: 'spicy',    iconName: 'spicy',    color: theme.colors.coral, label: 'Spicy food' },
-  { id: 'alcohol',  iconName: 'alcohol',  color: theme.colors.coral, label: 'Alcohol' },
-  { id: 'beans',    iconName: 'beans',    color: theme.colors.amber, label: 'Beans' },
+  { id: 'dairy',    iconName: 'dairy',    color: theme.colors.accent, label: 'Dairy' },
+  { id: 'garlic',   iconName: 'garlic',   color: theme.colors.secondary, label: 'Garlic' },
+  { id: 'onion',    iconName: 'onion',    color: theme.colors.secondary, label: 'Onion' },
+  { id: 'gluten',   iconName: 'gluten',   color: theme.colors.accent, label: 'Gluten' },
+  { id: 'caffeine', iconName: 'caffeine', color: theme.colors.accent, label: 'Caffeine' },
+  { id: 'spicy',    iconName: 'spicy',    color: theme.colors.secondary, label: 'Spicy food' },
+  { id: 'alcohol',  iconName: 'alcohol',  color: theme.colors.secondary, label: 'Alcohol' },
+  { id: 'beans',    iconName: 'beans',    color: theme.colors.accent, label: 'Beans' },
 ];
 
 const PRESET_IDS = new Set(PRESET_TRIGGERS.map(t => t.id));
@@ -114,7 +114,7 @@ export const OnboardingTriggers = ({ navigation }: any) => {
           <Chip
             key={t.id}
             label={t.label}
-            icon={<Icon name={t.iconName} size={14} color={selected.includes(t.id) ? t.color : theme.colors.textSecondary} />}
+            icon={<Icon name={t.iconName} size={14} color={selected.includes(t.id) ? t.color : theme.colors.text.secondary} />}
             selected={selected.includes(t.id)}
             onPress={() => togglePreset(t.id)}
           />
@@ -128,7 +128,7 @@ export const OnboardingTriggers = ({ navigation }: any) => {
           ref={inputRef}
           style={styles.input}
           placeholder="e.g. lentils, fried food, red wine…"
-          placeholderTextColor={theme.colors.textSecondary}
+          placeholderTextColor={theme.colors.text.secondary}
           value={customInput}
           onChangeText={setCustomInput}
           onSubmitEditing={addCustom}
@@ -142,7 +142,7 @@ export const OnboardingTriggers = ({ navigation }: any) => {
           activeOpacity={0.7}
           disabled={!customInput.trim()}
         >
-          <Plus color={customInput.trim() ? theme.colors.bg : theme.colors.textSecondary} size={16} strokeWidth={2.5} />
+          <Plus color={customInput.trim() ? theme.colors.background : theme.colors.text.secondary} size={16} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
@@ -159,7 +159,7 @@ export const OnboardingTriggers = ({ navigation }: any) => {
               <Text style={styles.customChipLabel}>
                 {val.charAt(0).toUpperCase() + val.slice(1)}
               </Text>
-              <X color={theme.colors.coral} size={12} strokeWidth={2.5} />
+              <X color={theme.colors.secondary} size={12} strokeWidth={2.5} />
             </TouchableOpacity>
           ))}
         </View>
@@ -167,7 +167,7 @@ export const OnboardingTriggers = ({ navigation }: any) => {
 
       {loading && (
         <View style={styles.loadingRow}>
-          <ActivityIndicator color={theme.colors.coral} size="small" />
+          <ActivityIndicator color={theme.colors.secondary} size="small" />
           <Text variant="caption" style={styles.loadingText}>Building your gut model…</Text>
         </View>
       )}
@@ -200,12 +200,12 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: theme.colors.coral,
+    backgroundColor: theme.colors.secondary,
     borderRadius: theme.radii.full,
   },
-  stepText: { color: theme.colors.textPrimary, fontFamily: 'Inter_700Bold' },
+  stepText: { color: theme.colors.text.primary, fontFamily: 'Inter_700Bold' },
   title: { marginBottom: theme.spacing.md },
-  sub: { color: theme.colors.textSecondary, marginBottom: theme.spacing.xxxl, lineHeight: 26 },
+  sub: { color: theme.colors.text.secondary, marginBottom: theme.spacing.xxxl, lineHeight: 26 },
 
   chipGrid: {
     flexDirection: 'row',
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
   },
 
   addLabel: {
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     marginBottom: theme.spacing.md,
   },
   inputRow: {
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: theme.colors.textPrimary,
+    color: theme.colors.text.primary,
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     paddingVertical: theme.spacing.sm,
@@ -242,12 +242,12 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: theme.colors.coral,
+    backgroundColor: theme.colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addBtnDisabled: {
-    backgroundColor: theme.colors.surfaceHigh,
+    backgroundColor: theme.colors.surfaceElevated,
   },
 
   customChips: {
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   customChipLabel: {
     fontFamily: 'Inter_500Medium',
     fontSize: 13,
-    color: theme.colors.coral,
+    color: theme.colors.secondary,
   },
 
   loadingRow: {
@@ -280,6 +280,6 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
     marginBottom: theme.spacing.xl,
   },
-  loadingText: { color: theme.colors.textSecondary },
+  loadingText: { color: theme.colors.text.secondary },
   footer: { paddingBottom: theme.spacing.sm },
 });

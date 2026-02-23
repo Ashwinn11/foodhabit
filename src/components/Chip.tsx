@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { theme } from '../theme/theme';
 import { Text } from './Text';
 
@@ -13,6 +19,8 @@ export interface ChipProps {
   icon?: React.ReactNode;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 export const Chip: React.FC<ChipProps> = ({ 
   label, 
   status = 'neutral',
@@ -20,55 +28,69 @@ export const Chip: React.FC<ChipProps> = ({
   onPress,
   icon
 }) => {
-  const getStatusColor = () => {
+  const isPressed = useSharedValue(0);
+
+  const getStatusColors = () => {
     switch (status) {
-      case 'safe': return theme.colors.lime;
-      case 'caution': return theme.colors.amber;
-      case 'risky': return theme.colors.coral;
-      default: return theme.colors.surfaceHigh;
+      case 'safe': return { 
+        bg: theme.colors.success + '20', 
+        border: theme.colors.success + '40', 
+        text: theme.colors.success 
+      };
+      case 'caution': return { 
+        bg: theme.colors.warning + '20', 
+        border: theme.colors.warning + '40', 
+        text: theme.colors.warning 
+      };
+      case 'risky': return { 
+        bg: theme.colors.error + '20', 
+        border: theme.colors.error + '40', 
+        text: theme.colors.error 
+      };
+      default: return { 
+        bg: 'transparent', 
+        border: theme.colors.border, 
+        text: theme.colors.text.secondary 
+      };
     }
   };
 
-  const getBackgroundColor = () => {
-    if (status !== 'neutral') return `${getStatusColor()}15`; // 15% opacity background
-    if (selected) return theme.colors.surfaceHigh;
-    return 'transparent';
-  };
+  const colors = getStatusColors();
 
-  const getBorderColor = () => {
-    if (status !== 'neutral') return `${getStatusColor()}40`; // 40% opacity border
-    if (selected) return theme.colors.textSecondary;
-    return theme.colors.border;
-  };
+  const animatedStyle = useAnimatedStyle(() => {
+    const scale = withSpring(isPressed.value ? 0.95 : 1);
+    return {
+      transform: [{ scale }],
+      backgroundColor: selected ? (status === 'neutral' ? theme.colors.primaryMuted : colors.bg) : 'transparent',
+      borderColor: selected ? (status === 'neutral' ? theme.colors.primary : colors.text) : colors.border,
+    };
+  });
 
-  const getTextColor = () => {
-    if (status !== 'neutral') return getStatusColor();
-    if (selected) return theme.colors.textPrimary;
-    return theme.colors.textSecondary;
+  const handlePress = () => {
+    if (onPress) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onPress();
+    }
   };
-
-  const Container = onPress ? TouchableOpacity : View;
 
   return (
-    <Container 
-      onPress={onPress}
-      activeOpacity={0.8}
-      style={[
-        styles.chip,
-        { 
-          backgroundColor: getBackgroundColor(),
-          borderColor: getBorderColor(),
-        }
-      ]}
+    <AnimatedPressable
+      onPress={handlePress}
+      onPressIn={() => (isPressed.value = 1)}
+      onPressOut={() => (isPressed.value = 0)}
+      style={[styles.chip, animatedStyle]}
     >
       {icon && <View style={styles.iconContainer}>{icon}</View>}
       <Text 
         variant="label" 
-        style={{ color: getTextColor() }}
+        style={{ 
+          color: selected ? (status === 'neutral' ? theme.colors.primary : colors.text) : colors.text,
+          fontSize: 13,
+        }}
       >
         {label}
       </Text>
-    </Container>
+    </AnimatedPressable>
   );
 };
 
@@ -77,12 +99,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.lg, // slightly wider
+    paddingHorizontal: theme.spacing.lg,
     borderRadius: theme.radii.full,
     alignSelf: 'flex-start',
-    borderWidth: 1, // Always have a border for structure
+    borderWidth: 1,
   },
   iconContainer: {
-    marginRight: theme.spacing.sm,
+    marginRight: theme.spacing.xs,
   }
 });

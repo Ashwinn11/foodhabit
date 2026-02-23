@@ -38,12 +38,12 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.lg,
   },
   sectionHeading: {
-    color: theme.colors.textPrimary,
+    color: theme.colors.text.primary,
     marginTop: theme.spacing.xl,
     marginBottom: theme.spacing.md,
   },
   text: {
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     lineHeight: 24,
   }
 });

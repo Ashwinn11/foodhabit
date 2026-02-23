@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, StyleSheet, TouchableOpacity, Linking, Alert, Platform,
-  Image, ActivityIndicator, Pressable,
+  Image, Dimensions,
 } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
@@ -9,10 +9,12 @@ import * as Crypto from 'expo-crypto';
 import Svg, { Path } from 'react-native-svg';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
+import { Button } from '../components/Button';
 import { theme } from '../theme/theme';
 import { supabase } from '../config/supabase';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 
+const { width, height } = Dimensions.get('window');
 const REDIRECT_URI = 'foodhabit://auth/callback';
 
 const GoogleIcon = () => (
@@ -24,41 +26,13 @@ const GoogleIcon = () => (
   </Svg>
 );
 
-const AppleIcon = () => (
+const AppleIcon = ({ color }: { color: string }) => (
   <Svg width={18} height={22} viewBox="0 0 384 512">
     <Path
-      fill={theme.colors.bg}
+      fill={color}
       d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"
     />
   </Svg>
-);
-
-const AuthButton = ({
-  onPress, loading, label, icon, primary,
-}: {
-  onPress: () => void; loading: boolean; label: string;
-  icon?: React.ReactNode; primary?: boolean;
-}) => (
-  <Pressable
-    onPress={onPress}
-    disabled={loading}
-    style={[styles.authBtn, primary ? styles.authBtnPrimary : styles.authBtnGhost]}
-  >
-    {loading
-      ? <ActivityIndicator color={primary ? theme.colors.bg : theme.colors.textPrimary} size="small" />
-      : (
-        <>
-          {icon && <View>{icon}</View>}
-          <Text
-            variant="label"
-            style={{ color: primary ? theme.colors.bg : theme.colors.textPrimary, fontSize: 15, letterSpacing: 0.2 }}
-          >
-            {label}
-          </Text>
-        </>
-      )
-    }
-  </Pressable>
 );
 
 export const AuthScreen = () => {
@@ -113,41 +87,57 @@ export const AuthScreen = () => {
 
   return (
     <Screen padding={true}>
+      
+      {/* Decorative background element */}
+      <View style={styles.backgroundElement} />
 
-      {/* Brand — small, confident, top-left */}
-      <Animated.View entering={FadeIn.delay(200).duration(600)} style={styles.brand}>
+      {/* Brand */}
+      <Animated.View entering={FadeIn.delay(200).duration(800)} style={styles.brand}>
         <View style={styles.logoRing}>
           <Image source={require('../../assets/icon.png')} style={styles.logo} />
         </View>
         <Text variant="caption" style={styles.wordmark}>GUTBUDDY</Text>
       </Animated.View>
 
-      {/* Hero — owns the vertical space */}
-      <Animated.View entering={FadeInDown.delay(300).duration(900).springify()} style={styles.hero}>
-        <Text variant="hero" style={styles.headline}>
+      {/* Hero */}
+      <Animated.View entering={FadeInDown.delay(300).duration(1000).springify()} style={styles.hero}>
+        <Text variant="display" style={styles.headline}>
           Eat freely.
         </Text>
-        <Text variant="body" style={styles.sub}>
+        <Text variant="body" color={theme.colors.text.secondary} style={styles.sub}>
           Your body leaves clues. We decode them, so you know exactly what's safe before every bite.
         </Text>
       </Animated.View>
 
       {/* Proof strip */}
-      <Animated.View entering={FadeIn.delay(900).duration(600)} style={styles.proof}>
+      <Animated.View entering={FadeIn.delay(900).duration(800)} style={styles.proof}>
         <View style={styles.proofDot} />
-        <Text style={styles.proofText}>2,400+ people eating freely  </Text>
-        {[0,1,2,3,4].map(i => <Text key={i} style={styles.star}>★</Text>)}
+        <Text variant="bodySmall" color={theme.colors.text.secondary}>2,400+ people eating freely  </Text>
+        <View style={styles.stars}>
+          {[0,1,2,3,4].map(i => <Text key={i} style={styles.star}>★</Text>)}
+        </View>
       </Animated.View>
 
       {/* Auth buttons */}
-      <Animated.View entering={FadeInUp.delay(1100).duration(700).springify()} style={styles.bottom}>
+      <Animated.View entering={FadeInUp.delay(1100).duration(800).springify()} style={styles.bottom}>
         {Platform.OS === 'ios' && (
-          <>
-            <AuthButton primary onPress={handleAppleSignIn} loading={appleLoading} label="Continue with Apple" icon={<AppleIcon />} />
-            <View style={{ height: theme.spacing.md }} />
-          </>
+          <Button 
+            variant="secondary"
+            onPress={handleAppleSignIn} 
+            loading={appleLoading} 
+            label="Continue with Apple" 
+            leftIcon={<AppleIcon color={theme.colors.text.primary} />} 
+            style={styles.appleBtn}
+          />
         )}
-        <AuthButton onPress={handleGoogleSignIn} loading={googleLoading} label="Continue with Google" icon={<GoogleIcon />} />
+        
+        <Button 
+          variant="ghost"
+          onPress={handleGoogleSignIn} 
+          loading={googleLoading} 
+          label="Continue with Google" 
+          leftIcon={<GoogleIcon />} 
+        />
 
         <View style={styles.terms}>
           <Text variant="caption" style={styles.termsText}>By continuing you agree to our </Text>
@@ -166,6 +156,16 @@ export const AuthScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  backgroundElement: {
+    position: 'absolute',
+    top: -height * 0.1,
+    right: -width * 0.2,
+    width: width,
+    height: width,
+    borderRadius: width / 2,
+    backgroundColor: theme.colors.primaryMuted,
+    opacity: 0.15,
+  },
   brand: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -173,17 +173,17 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.md,
   },
   logoRing: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(224,93,76,0.3)',
+    borderColor: theme.colors.border,
   },
-  logo: { width: 40, height: 40 },
+  logo: { width: 42, height: 42 },
   wordmark: {
-    color: theme.colors.textSecondary,
-    letterSpacing: 3,
+    color: theme.colors.text.secondary,
+    letterSpacing: 4,
   },
   hero: {
     flex: 1,
@@ -191,55 +191,35 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xl,
   },
   headline: {
-    marginBottom: theme.spacing.lg, // slightly tighter spacing
-    lineHeight: 64, // Let Playfair breathe and avoid clipping
+    marginBottom: theme.spacing.md,
   },
   sub: {
-    color: theme.colors.textSecondary,
-    lineHeight: 28, // slightly taller line height for elegance
-    maxWidth: 290,
-    fontFamily: 'Inter_400Regular',
-    letterSpacing: 0.2,
+    lineHeight: 28,
+    maxWidth: 300,
   },
   proof: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: theme.spacing.xxxl,
+    gap: theme.spacing.xs,
   },
   proofDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: theme.colors.coral,
-    marginRight: theme.spacing.sm,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: theme.colors.primary,
   },
-  proofText: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  star: { color: theme.colors.amber, fontSize: 12 },
-  bottom: { paddingBottom: theme.spacing.sm },
-  authBtn: {
+  stars: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginLeft: theme.spacing.xs,
+  },
+  star: { color: theme.colors.accent, fontSize: 12 },
+  bottom: { 
+    paddingBottom: theme.spacing.md,
     gap: theme.spacing.md,
-    paddingVertical: theme.spacing.lg + 2,
-    paddingHorizontal: theme.spacing.xxxl,
-    borderRadius: theme.radii.full,
   },
-  authBtnPrimary: {
-    backgroundColor: theme.colors.coral,
-    shadowColor: theme.colors.coral,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 8,
-  },
-  authBtnGhost: {
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+  appleBtn: {
+    backgroundColor: theme.colors.surfaceElevated,
   },
   terms: {
     flexDirection: 'row',
@@ -247,6 +227,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginTop: theme.spacing.xxxl,
   },
-  termsText: { color: theme.colors.textSecondary, textTransform: 'none', letterSpacing: 0, fontSize: 11 },
-  termsLink: { color: theme.colors.coral, textTransform: 'none', letterSpacing: 0, fontSize: 11 },
+  termsText: { color: theme.colors.text.tertiary, textTransform: 'none', letterSpacing: 0, fontSize: 11 },
+  termsLink: { color: theme.colors.primary, textTransform: 'none', letterSpacing: 0, fontSize: 11 },
 });

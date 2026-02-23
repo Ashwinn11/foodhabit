@@ -14,10 +14,10 @@ const TRACK_W  = SCREEN_W - theme.spacing.xl * 2 - 56;
 const PROGRESS = TRACK_W * 0.28;
 
 const CONDITIONS = [
-  { id: 'ibs_d',    iconName: 'ibs_d',    color: theme.colors.coral, label: 'Mostly diarrhea',     sub: 'Urgent runs, loose stools, cramping' },
-  { id: 'ibs_c',    iconName: 'ibs_c',    color: theme.colors.amber, label: 'Mostly constipated',  sub: 'Straining, incomplete feeling, bloat' },
-  { id: 'bloating', iconName: 'bloating', color: theme.colors.amber, label: 'Bloating & gas',      sub: 'Pressure, distension, discomfort' },
-  { id: 'unsure',   iconName: 'unsure',   color: theme.colors.textSecondary, label: 'Not sure yet', sub: 'Gut issues but no clear pattern' },
+  { id: 'ibs_d',    iconName: 'ibs_d',    color: theme.colors.secondary, label: 'Mostly diarrhea',     sub: 'Urgent runs, loose stools, cramping' },
+  { id: 'ibs_c',    iconName: 'ibs_c',    color: theme.colors.accent, label: 'Mostly constipated',  sub: 'Straining, incomplete feeling, bloat' },
+  { id: 'bloating', iconName: 'bloating', color: theme.colors.accent, label: 'Bloating & gas',      sub: 'Pressure, distension, discomfort' },
+  { id: 'unsure',   iconName: 'unsure',   color: theme.colors.text.secondary, label: 'Not sure yet', sub: 'Gut issues but no clear pattern' },
 ];
 
 export const OnboardingCondition = ({ navigation }: any) => {
@@ -64,12 +64,12 @@ export const OnboardingCondition = ({ navigation }: any) => {
               onPress={() => handleSelect(c.id)}
               style={[styles.card, active && styles.cardActive]}
             >
-              <Icon name={c.iconName} size={26} color={active ? c.color : theme.colors.textSecondary} />
+              <Icon name={c.iconName} size={26} color={active ? c.color : theme.colors.text.secondary} />
               <View style={styles.cardText}>
-                <Text variant="label" style={[styles.cardLabel, active && { color: theme.colors.textPrimary }]}>
+                <Text variant="label" style={[styles.cardLabel, active && { color: theme.colors.text.primary }]}>
                   {c.label}
                 </Text>
-                <Text variant="caption" style={[styles.cardSub, active && { color: theme.colors.textSecondary }]}>
+                <Text variant="caption" style={[styles.cardSub, active && { color: theme.colors.text.secondary }]}>
                   {c.sub}
                 </Text>
               </View>
@@ -104,12 +104,12 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: theme.colors.coral,
+    backgroundColor: theme.colors.secondary,
     borderRadius: theme.radii.full,
   },
-  stepText: { color: theme.colors.textPrimary, fontFamily: 'Inter_700Bold' },
+  stepText: { color: theme.colors.text.primary, fontFamily: 'Inter_700Bold' },
   title: { marginBottom: theme.spacing.md },
-  sub: { color: theme.colors.textSecondary, marginBottom: theme.spacing.xxxl },
+  sub: { color: theme.colors.text.secondary, marginBottom: theme.spacing.xxxl },
   options: { flex: 1, gap: theme.spacing.md },
   card: {
     flexDirection: 'row',
@@ -129,13 +129,13 @@ const styles = StyleSheet.create({
   },
   cardActive: {
     backgroundColor: 'rgba(224,93,76,0.08)',
-    borderColor: theme.colors.coral,
-    shadowColor: theme.colors.coral,
+    borderColor: theme.colors.secondary,
+    shadowColor: theme.colors.secondary,
     shadowOpacity: 0.2,
     shadowRadius: 12,
   },
   cardText: { flex: 1 },
-  cardLabel: { color: theme.colors.textSecondary, fontSize: 14, marginBottom: 3 },
+  cardLabel: { color: theme.colors.text.secondary, fontSize: 14, marginBottom: 3 },
   cardSub: {
     color: 'rgba(163,168,164,0.6)',
     textTransform: 'none',
@@ -147,11 +147,11 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: theme.colors.coral,
+    borderColor: theme.colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioActive: { backgroundColor: theme.colors.coral },
-  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.bg },
+  radioActive: { backgroundColor: theme.colors.secondary },
+  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.background },
   footer: { paddingTop: theme.spacing.xl, paddingBottom: theme.spacing.sm },
 });

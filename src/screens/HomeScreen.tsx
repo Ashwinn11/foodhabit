@@ -1,15 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
-import { ScanLine } from 'lucide-react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import Animated, { 
+  FadeInDown, 
+  useAnimatedScrollHandler,
+  useSharedValue,
+  useAnimatedStyle,
+  interpolate,
+  Extrapolate
+} from 'react-native-reanimated';
+import { ScanLine, ArrowRight } from 'lucide-react-native';
 import { Screen } from '../components/Screen';
 import { Text } from '../components/Text';
 import { Button } from '../components/Button';
 import { Chip } from '../components/Chip';
+import { Card } from '../components/Card';
 import { theme } from '../theme/theme';
 import { useAppStore } from '../store/useAppStore';
 import { supabase } from '../config/supabase';
-
 
 const getTimeOfDay = () => {
   const h = new Date().getHours();
@@ -21,6 +28,7 @@ const getTimeOfDay = () => {
 export const HomeScreen = ({ navigation }: any) => {
   const { onboardingAnswers } = useAppStore();
   const [firstName, setFirstName] = useState('');
+  const scrollY = useSharedValue(0);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -30,8 +38,10 @@ export const HomeScreen = ({ navigation }: any) => {
     });
   }, []);
 
-  // avoidFoods = AI-confirmed from results screen (new users)
-  //              falls back to knownTriggers (existing users / skip flow)
+  const onScroll = useAnimatedScrollHandler((event) => {
+    scrollY.value = event.contentOffset.y;
+  });
+
   const avoids = onboardingAnswers.avoidFoods?.length > 0
     ? onboardingAnswers.avoidFoods
     : onboardingAnswers.knownTriggers ?? [];
@@ -43,190 +53,221 @@ export const HomeScreen = ({ navigation }: any) => {
   };
   const condition = conditionLabel[onboardingAnswers.condition] ?? '';
 
+  const headerStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(scrollY.value, [0, 80], [1, 0], Extrapolate.CLAMP),
+      transform: [
+        { translateY: interpolate(scrollY.value, [0, 80], [0, -10], Extrapolate.CLAMP) }
+      ]
+    };
+  });
+
   return (
-    <Screen padding scroll>
-      {/* Greeting */}
-      <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.greetingBlock}>
-        <Text variant="caption" style={styles.timeOfDay}>{getTimeOfDay()}</Text>
-        <Text variant="hero" style={[styles.name, { lineHeight: 64 }]}>
-          {firstName ? `${firstName}.` : 'Welcome.'}
-        </Text>
-        {condition ? (
-          <View style={styles.conditionBadge}>
-            <View style={styles.conditionDot} />
-            <Text style={styles.conditionText}>{condition} · personalized profile active</Text>
-          </View>
-        ) : null}
-      </Animated.View>
-
-      {/* AVOID + SAFE wrapped in one card — the daily safety brief */}
-      <Animated.View entering={FadeInDown.delay(200).duration(600).springify()}>
-        <View style={styles.safetyCard}>
-
-          {/* AVOID section */}
-          <View style={styles.safetySection}>
-            <View style={styles.safetySectionHeader}>
-              <View style={[styles.sectionDot, { backgroundColor: theme.colors.coral }]} />
-              <Text variant="caption" style={[styles.sectionLabel, { color: theme.colors.coral }]}>
-                AVOID TODAY
+    <Screen padding={false} backgroundColor={theme.colors.background}>
+      <Animated.ScrollView 
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Header Section */}
+        <Animated.View style={[styles.header, headerStyle]}>
+          <Text variant="caption" color={theme.colors.text.secondary}>
+            {getTimeOfDay()}
+          </Text>
+          <Text variant="display" style={styles.name}>
+            {firstName ? `${firstName}.` : 'Welcome.'}
+          </Text>
+          {condition ? (
+            <View style={styles.conditionBadge}>
+              <View style={styles.conditionDot} />
+              <Text variant="bodySmall" color={theme.colors.text.secondary}>
+                {condition} personalized profile
               </Text>
-              {avoids.length > 0 && (
-                <Text style={styles.triggerCount}>{avoids.length} triggers</Text>
-              )}
             </View>
-            {avoids.length > 0 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-                <View style={styles.chipRow}>
-                  {avoids.map((item: string, i: number) => (
+          ) : null}
+        </Animated.View>
+
+        {/* Scan Food CTA Card - Standardized spacing */}
+        <Animated.View entering={FadeInDown.delay(200).duration(800)}>
+          <Card variant="glass" padding="none" style={styles.ctaCard} glow>
+            <View style={styles.ctaContent}>
+              <View style={styles.ctaTextContainer}>
+                <Text variant="subtitle" color={theme.colors.primary} weight="bold">
+                  Know your food.
+                </Text>
+                <Text variant="bodySmall" color={theme.colors.text.secondary} style={{ marginTop: 2 }}>
+                  Scan to check if a meal is safe.
+                </Text>
+              </View>
+              <Button
+                label="Scan"
+                onPress={() => navigation.navigate('ScanFood')}
+                variant="primary"
+                size="sm"
+                leftIcon={<ScanLine color={theme.colors.text.inverse} size={16} strokeWidth={2.5} />}
+              />
+            </View>
+          </Card>
+        </Animated.View>
+
+        {/* Daily Safety Brief - Standardized spacing */}
+        <View style={styles.sectionHeader}>
+          <Text variant="label" color={theme.colors.text.tertiary}>Daily Safety Brief</Text>
+        </View>
+
+        <View style={styles.cardsContainer}>
+          {/* AVOID Card */}
+          <Animated.View entering={FadeInDown.delay(400).duration(800)}>
+            <Card variant="surface" style={styles.briefCard}>
+              <View style={styles.briefHeader}>
+                <View style={[styles.statusDot, { backgroundColor: theme.colors.secondary }]} />
+                <Text variant="caption" color={theme.colors.secondary} weight="bold">Avoid Today</Text>
+              </View>
+              
+              {avoids.length > 0 ? (
+                <View style={styles.chipContainer}>
+                  {avoids.slice(0, 6).map((item: string, i: number) => (
                     <Chip
                       key={i}
                       status="risky"
                       label={item.charAt(0).toUpperCase() + item.slice(1)}
                     />
                   ))}
+                  {avoids.length > 6 && (
+                    <Text variant="caption" color={theme.colors.text.tertiary}>
+                      +{avoids.length - 6} more
+                    </Text>
+                  )}
                 </View>
-              </ScrollView>
-            ) : (
-              <Text style={styles.safeNote}>No triggers set — tap Scan Food to analyse a meal</Text>
-            )}
-          </View>
+              ) : (
+                <Text variant="bodySmall" color={theme.colors.text.tertiary}>
+                  No specific triggers identified yet.
+                </Text>
+              )}
+            </Card>
+          </Animated.View>
 
-          {/* Divider */}
-          <View style={styles.cardDivider} />
-
-          {/* SAFE section */}
-          <View style={styles.safetySection}>
-            <View style={styles.safetySectionHeader}>
-              <View style={[styles.sectionDot, { backgroundColor: theme.colors.lime }]} />
-              <Text variant="caption" style={[styles.sectionLabel, { color: theme.colors.lime }]}>
-                SAFE CHOICES
-              </Text>
-              <Text style={styles.safeNote}>based on your profile</Text>
-            </View>
-            {safePicks.length > 0 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-                <View style={styles.chipRow}>
-                  {safePicks.map((item, i) => (
+          {/* SAFE Card */}
+          <Animated.View entering={FadeInDown.delay(600).duration(800)}>
+            <Card variant="surface" style={styles.briefCard}>
+              <View style={styles.briefHeader}>
+                <View style={[styles.statusDot, { backgroundColor: theme.colors.primary }]} />
+                <Text variant="caption" color={theme.colors.primary} weight="bold">Safe Choices</Text>
+              </View>
+              
+              {safePicks.length > 0 ? (
+                <View style={styles.chipContainer}>
+                  {safePicks.slice(0, 6).map((item, i) => (
                     <Chip key={i} status="safe" label={item} />
                   ))}
                 </View>
-              </ScrollView>
-            ) : (
-              <Text style={styles.safeNote}>Scan food to discover what's safe for you</Text>
-            )}
-          </View>
+              ) : (
+                <Text variant="bodySmall" color={theme.colors.text.tertiary}>
+                  Scan food to discover what's safe for you.
+                </Text>
+              )}
+            </Card>
+          </Animated.View>
         </View>
-      </Animated.View>
 
-      {/* Primary CTA — the whole point of the app */}
-      <Animated.View entering={FadeIn.delay(400).duration(700)} style={styles.actions}>
-        <Button
-          label="Scan Food"
-          onPress={() => navigation.navigate('ScanFood')}
-          variant="primary"
-          leftIcon={<ScanLine color={theme.colors.bg} size={20} strokeWidth={2} />}
-        />
+        {/* Log Feeling Footer - Refined spacing */}
+        <Animated.View entering={FadeInDown.delay(800).duration(800)} style={styles.footer}>
+          <TouchableOpacity 
+            style={styles.logFeeling}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('MyGut')}
+          >
+            <View style={styles.logFeelingContent}>
+              <Text variant="body" color={theme.colors.text.secondary}>
+                Feeling different? <Text variant="body" color={theme.colors.primary} weight="medium">Log your gut health</Text>
+              </Text>
+              <ArrowRight color={theme.colors.primary} size={18} strokeWidth={2} />
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
 
-        <TouchableOpacity
-          style={styles.logBtn}
-          onPress={() => navigation.navigate('MyGut')}
-        >
-          <Text style={styles.logBtnText}>Log how I feel →</Text>
-        </TouchableOpacity>
-      </Animated.View>
+      </Animated.ScrollView>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  greetingBlock: {
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.xxxl,
+  scrollContent: {
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.xl,
+    paddingBottom: theme.spacing.lg, // Reduced drastically to fit closely to the bottom tab bar
   },
-  timeOfDay: {
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.xs,
+  header: {
+    marginBottom: theme.spacing.xl, // Reduced from giant/xxxl
+    marginTop: theme.spacing.md,
   },
   name: {
-    color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.xs,
   },
   conditionBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
   },
   conditionDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: theme.colors.coral,
+    backgroundColor: theme.colors.secondary,
   },
-  conditionText: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-  },
-  safetyCard: {
-    backgroundColor: 'rgba(21, 25, 22, 0.45)', // very subtle, letting Pine bleed through
-    borderRadius: theme.radii.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+  ctaCard: {
     marginBottom: theme.spacing.xxxl,
-    ...theme.shadows.minimal,
+    overflow: 'hidden',
   },
-  safetySection: {
-    padding: theme.spacing.lg,
-  },
-  safetySectionHeader: {
+  ctaContent: {
+    padding: theme.spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
-    gap: theme.spacing.sm,
+    justifyContent: 'space-between',
   },
-  sectionDot: {
-    width: 7,
-    height: 7,
+  ctaTextContainer: {
+    flex: 1,
+    marginRight: theme.spacing.md,
+  },
+  sectionHeader: {
+    marginBottom: theme.spacing.lg,
+  },
+  cardsContainer: {
+    gap: theme.spacing.lg,
+  },
+  briefCard: {
+    minHeight: 120,
+  },
+  briefHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
     borderRadius: 4,
   },
-  sectionLabel: {
-    flex: 1,
-    fontFamily: 'Inter_700Bold',
-    fontSize: 10,
-    letterSpacing: 1.5,
-  },
-  triggerCount: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-  },
-  safeNote: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-  },
-  chipScroll: { marginHorizontal: -2 },
-  chipRow: {
+  chipContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: theme.spacing.sm,
-    paddingHorizontal: 2,
-  },
-  cardDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    marginHorizontal: theme.spacing.lg,
-  },
-  actions: {
-    paddingBottom: theme.spacing.xl,
-  },
-  logBtn: {
     alignItems: 'center',
-    marginTop: theme.spacing.xl,
-    paddingVertical: theme.spacing.sm,
   },
-  logBtnText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 14,
-    color: theme.colors.textSecondary,
+  footer: {
+    marginTop: theme.spacing.colossal,
   },
+  logFeeling: {
+    backgroundColor: theme.colors.surfaceElevated,
+    padding: theme.spacing.xl,
+    borderRadius: theme.radii.lg,
+  },
+  logFeelingContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  }
 });

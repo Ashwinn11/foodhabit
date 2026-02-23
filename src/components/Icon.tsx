@@ -1,32 +1,30 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { getLucideIcon } from '../utils/iconMap';
 import { theme } from '../theme/theme';
+
+export type IconContainer = 'circle' | 'pill' | 'none' | 'square';
 
 export interface IconProps {
   name?: string;
   source?: any;
   animation?: any;
   size?: number;
-  style?: any;
+  style?: ViewStyle;
   color?: string;
+  container?: IconContainer;
+  glow?: boolean;
 }
-
-const getTintBg = (color: string) => {
-  if (color === theme.colors.coral)  return 'rgba(224,93,76,0.12)';
-  if (color === theme.colors.lime)   return 'rgba(212,248,112,0.12)';
-  if (color === theme.colors.amber)  return 'rgba(245,201,122,0.12)';
-  return theme.colors.surface;
-};
 
 export const Icon: React.FC<IconProps> = ({
   name,
-  source,
   animation,
   size = 24,
   style,
-  color = theme.colors.textPrimary,
+  color = theme.colors.text.primary,
+  container = 'none',
+  glow = false,
 }) => {
   if (animation) {
     return (
@@ -38,20 +36,42 @@ export const Icon: React.FC<IconProps> = ({
 
   if (name) {
     const LucideComponent = getLucideIcon(name);
-    const boxSize = size * 1.75;
-    const bg = getTintBg(color);
+    const boxSize = size * 1.8;
+    
+    const containerStyle: ViewStyle = {
+      width: container !== 'none' ? boxSize : size,
+      height: container !== 'none' ? boxSize : size,
+      justifyContent: 'center',
+      alignItems: 'center',
+    };
+
+    if (container === 'circle') {
+      containerStyle.borderRadius = boxSize / 2;
+      containerStyle.backgroundColor = theme.colors.surface;
+      containerStyle.borderWidth = 1;
+      containerStyle.borderColor = theme.colors.borderLight;
+    } else if (container === 'pill') {
+      containerStyle.borderRadius = boxSize / 2.5;
+      containerStyle.backgroundColor = theme.colors.surface;
+      containerStyle.borderWidth = 1;
+      containerStyle.borderColor = theme.colors.borderLight;
+    } else if (container === 'square') {
+      containerStyle.borderRadius = theme.radii.md;
+      containerStyle.backgroundColor = theme.colors.surface;
+      containerStyle.borderWidth = 1;
+      containerStyle.borderColor = theme.colors.borderLight;
+    }
+
     return (
       <View
         style={[
-          styles.pill,
-          {
-            width: boxSize,
-            height: boxSize,
-            borderRadius: boxSize / 3,
-            backgroundColor: bg,
-            borderColor: color === theme.colors.textPrimary
-              ? 'rgba(255,255,255,0.06)'
-              : `${bg}`,
+          containerStyle,
+          glow && {
+            shadowColor: color,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.3,
+            shadowRadius: 10,
+            elevation: 5,
           },
           style,
         ]}
@@ -61,32 +81,9 @@ export const Icon: React.FC<IconProps> = ({
     );
   }
 
-  if (source) {
-    return (
-      <View style={[{ width: size, height: size }, style]}>
-        {/* image fallback intentionally empty — keep app icon via source prop */}
-      </View>
-    );
-  }
-
   return <View style={[{ width: size, height: size }, style]} />;
 };
 
 const styles = StyleSheet.create({
   container: { justifyContent: 'center', alignItems: 'center' },
-  pill: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 3 },
-    shadowOpacity: 0.5,
-    shadowRadius: 5,
-    elevation: 5,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 0,
-    borderBottomWidth: 0,
-    borderTopColor: 'rgba(255,255,255,0.08)',
-    borderLeftColor: 'rgba(255,255,255,0.05)',
-  },
 });

@@ -43,8 +43,8 @@ export const OnboardingResults = ({ route, navigation }: any) => {
         {/* AVOID card */}
         <View style={styles.avoidCard}>
           <View style={styles.cardHeader}>
-            <View style={[styles.statusDot, { backgroundColor: theme.colors.coral }]} />
-            <Text variant="caption" style={[styles.cardHeaderLabel, { color: theme.colors.coral }]}>AVOID</Text>
+            <View style={[styles.statusDot, { backgroundColor: theme.colors.secondary }]} />
+            <Text variant="caption" style={[styles.cardHeaderLabel, { color: theme.colors.secondary }]}>AVOID</Text>
             <View style={styles.countBadge}>
               <Text variant="caption" style={styles.countText}>{displayAvoid.length}</Text>
             </View>
@@ -59,10 +59,10 @@ export const OnboardingResults = ({ route, navigation }: any) => {
         {/* SAFE card */}
         <View style={styles.safeCard}>
           <View style={styles.cardHeader}>
-            <View style={[styles.statusDot, { backgroundColor: theme.colors.lime }]} />
-            <Text variant="caption" style={[styles.cardHeaderLabel, { color: theme.colors.lime }]}>SAFE FOR YOU</Text>
+            <View style={[styles.statusDot, { backgroundColor: theme.colors.primary }]} />
+            <Text variant="caption" style={[styles.cardHeaderLabel, { color: theme.colors.primary }]}>SAFE FOR YOU</Text>
             <View style={[styles.countBadge, styles.countBadgeSafe]}>
-              <Text variant="caption" style={[styles.countText, { color: theme.colors.lime }]}>{displaySafe.length}</Text>
+              <Text variant="caption" style={[styles.countText, { color: theme.colors.primary }]}>{displaySafe.length}</Text>
             </View>
           </View>
           <View style={styles.chipRow}>
@@ -102,12 +102,12 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: theme.colors.coral,
+    backgroundColor: theme.colors.secondary,
     borderRadius: theme.radii.full,
   },
-  stepText: { color: theme.colors.textPrimary, fontFamily: 'Inter_700Bold' },
+  stepText: { color: theme.colors.text.primary, fontFamily: 'Inter_700Bold' },
   title: { marginBottom: theme.spacing.md },
-  sub: { color: theme.colors.textSecondary, marginBottom: theme.spacing.xxxl },
+  sub: { color: theme.colors.text.secondary, marginBottom: theme.spacing.xxxl },
   cards: { flex: 1, gap: theme.spacing.md },
   avoidCard: {
     backgroundColor: theme.colors.surface,
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   countText: {
     fontFamily: 'Inter_700Bold',
     fontSize: 11,
-    color: theme.colors.coral,
+    color: theme.colors.secondary,
     textTransform: 'none',
     letterSpacing: 0,
   },

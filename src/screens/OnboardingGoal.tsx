@@ -51,7 +51,7 @@ export const OnboardingGoal = ({ navigation }: any) => {
       {/* Header */}
       <Animated.View entering={FadeInDown.duration(600).springify()}>
         <Text variant="hero" style={[styles.title, { lineHeight: 64 }]}>
-           What's <Text style={{ color: theme.colors.coral }}>holding</Text>{'\n'}you back?
+           What's <Text style={{ color: theme.colors.secondary }}>holding</Text>{'\n'}you back?
         </Text>
         <Text variant="body" style={styles.sub}>We'll build your profile around this.</Text>
       </Animated.View>
@@ -68,10 +68,10 @@ export const OnboardingGoal = ({ navigation }: any) => {
                 style={[styles.card, active && styles.cardActive]}
               >
                 <View style={styles.cardText}>
-                  <Text variant="label" style={[styles.cardLabel, active && { color: theme.colors.textPrimary }]}>
+                  <Text variant="label" style={[styles.cardLabel, active && { color: theme.colors.text.primary }]}>
                     {g.label}
                   </Text>
-                  <Text variant="caption" style={[styles.cardSub, active && { color: theme.colors.textSecondary }]}>
+                  <Text variant="caption" style={[styles.cardSub, active && { color: theme.colors.text.secondary }]}>
                     {g.sub}
                   </Text>
                 </View>
@@ -108,12 +108,12 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: theme.colors.coral,
+    backgroundColor: theme.colors.secondary,
     borderRadius: theme.radii.full,
   },
-  stepText: { color: theme.colors.textPrimary, fontFamily: 'Inter_700Bold' },
+  stepText: { color: theme.colors.text.primary, fontFamily: 'Inter_700Bold' },
   title: { marginBottom: theme.spacing.md },
-  sub: { color: theme.colors.textSecondary, marginBottom: theme.spacing.xxxl },
+  sub: { color: theme.colors.text.secondary, marginBottom: theme.spacing.xxxl },
   options: { flex: 1, gap: theme.spacing.md },
   card: {
     flexDirection: 'row',
@@ -128,12 +128,12 @@ const styles = StyleSheet.create({
   },
   cardActive: {
     backgroundColor: 'rgba(30, 36, 31, 0.65)',
-    borderColor: theme.colors.coral,
-    ...theme.shadows.minimal,
+    borderColor: theme.colors.secondary,
+    ...theme.shadows.soft,
   },
   cardText: { flex: 1 },
   cardLabel: {
-    color: theme.colors.textSecondary,
+    color: theme.colors.text.secondary,
     fontSize: 14,
     marginBottom: 3,
   },
@@ -148,19 +148,19 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: theme.colors.coral,
+    borderColor: theme.colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   radioActive: {
-    backgroundColor: theme.colors.coral,
-    borderColor: theme.colors.coral,
+    backgroundColor: theme.colors.secondary,
+    borderColor: theme.colors.secondary,
   },
   radioDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.colors.bg,
+    backgroundColor: theme.colors.background,
   },
   footer: { paddingTop: theme.spacing.xl, paddingBottom: theme.spacing.sm },
 });
