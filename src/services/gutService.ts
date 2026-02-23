@@ -109,7 +109,7 @@ export const gutService = {
     mood: GutLogPayload['mood'],
     symptoms: string[]
   ): Promise<void> => {
-    const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+    const sixHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const { data: recentMeals } = await supabase
       .from('meals')
@@ -172,6 +172,20 @@ export const gutService = {
     return ((data ?? []) as TriggerFood[]).filter(
       t => t.user_confirmed === true || t.confidence !== null
     );
+  },
+
+  // Foods the user tolerates well — high good occurrences, low bad ratio
+  getSafeFoods: async (): Promise<string[]> => {
+    const { data } = await supabase
+      .from('trigger_foods')
+      .select('food_name, good_occurrences, bad_occurrences')
+      .gte('good_occurrences', 5);
+    return (data ?? [])
+      .filter((f: any) => {
+        const total = f.good_occurrences + f.bad_occurrences;
+        return total > 0 && f.bad_occurrences / total <= 0.25;
+      })
+      .map((f: any) => f.food_name as string);
   },
 
   confirmTrigger: async (foodName: string): Promise<void> => {

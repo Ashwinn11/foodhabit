@@ -19,11 +19,61 @@ import { SkeletonCard } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { gutService } from '../services/gutService';
 import { supabase } from '../config/supabase';
+import { useAppStore } from '../store/useAppStore';
+import { GutTrendChart, TrendDay } from '../components/GutTrendChart';
 
 type Tab = 'calendar' | 'insights';
 
 // Simple calendar month view
 const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+function buildTrendData(logs: { mood: string; timestamp: string }[]): {
+  days: TrendDay[];
+  weekChange: number | null;
+} {
+  const now = Date.now();
+  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
+
+  // Group by calendar day
+  const dayMap: Record<string, { good: number; total: number }> = {};
+  logs.forEach(log => {
+    const key = new Date(log.timestamp).toDateString();
+    if (!dayMap[key]) dayMap[key] = { good: 0, total: 0 };
+    dayMap[key].total++;
+    if (log.mood !== 'sad') dayMap[key].good++;
+  });
+
+  // Past 7 days array
+  const days: TrendDay[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    date.setHours(0, 0, 0, 0);
+    const key = date.toDateString();
+    const data = dayMap[key];
+    days.push({
+      label: date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 3),
+      score: data ? data.good / data.total : null,
+      isToday: i === 0,
+    });
+  }
+
+  // Week-over-week comparison
+  const thisWeek = logs.filter(l => new Date(l.timestamp).getTime() >= sevenDaysAgo);
+  const lastWeek = logs.filter(l => {
+    const t = new Date(l.timestamp).getTime();
+    return t >= fourteenDaysAgo && t < sevenDaysAgo;
+  });
+  const thisScore = thisWeek.length > 0
+    ? thisWeek.filter(l => l.mood !== 'sad').length / thisWeek.length : null;
+  const lastScore = lastWeek.length > 0
+    ? lastWeek.filter(l => l.mood !== 'sad').length / lastWeek.length : null;
+  const weekChange = thisScore !== null && lastScore !== null
+    ? Math.round((thisScore - lastScore) * 100) : null;
+
+  return { days, weekChange };
+}
 
 function getMonthDays(year: number, month: number) {
   const firstDay = new Date(year, month, 1).getDay();
@@ -33,6 +83,8 @@ function getMonthDays(year: number, month: number) {
 
 export const MyGutScreen: React.FC = () => {
   const { showToast } = useToast();
+  const learnedTriggers = useAppStore((s) => s.learnedTriggers);
+  const setLearnedTriggers = useAppStore((s) => s.setLearnedTriggers);
   const [tab, setTab] = useState<Tab>('calendar');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,23 +104,41 @@ export const MyGutScreen: React.FC = () => {
   // Insights state
   const [triggerFoods, setTriggerFoods] = useState<any[]>([]);
   const [mealCount, setMealCount] = useState(0);
+  const [gutLogCount, setGutLogCount] = useState(0);
+  const [trendDays, setTrendDays] = useState<TrendDay[]>([]);
+  const [weekChange, setWeekChange] = useState<number | null>(null);
   const MEALS_REQUIRED = 5;
+  const LOGS_FOR_TREND = 3;
 
   useEffect(() => {
     loadAll();
+    loadDateLogs(today.toDateString());
   }, []);
 
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [meals, logs, triggers] = await Promise.all([
+      const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+      const [meals, logs, triggers, trendResult] = await Promise.all([
         gutService.getRecentMeals(50),
         gutService.getRecentLogs(50),
         gutService.getTriggerFoods(),
+        supabase
+          .from('gut_logs')
+          .select('mood, timestamp')
+          .gte('timestamp', fourteenDaysAgo)
+          .order('timestamp', { ascending: true }),
       ]);
 
       setMealCount(meals.length);
+      setGutLogCount(logs.length);
       setTriggerFoods(triggers);
+
+      if (trendResult.data?.length) {
+        const { days, weekChange: change } = buildTrendData(trendResult.data);
+        setTrendDays(days);
+        setWeekChange(change);
+      }
 
       const mSet = new Set(meals.map((m: any) => new Date(m.timestamp).toDateString()));
       const lSet = new Set(logs.map((l: any) => new Date(l.timestamp).toDateString()));
@@ -133,6 +203,9 @@ export const MyGutScreen: React.FC = () => {
       setTriggerFoods((prev) =>
         prev.map((t) => t.food_name === food ? { ...t, user_confirmed: true } : t)
       );
+      if (!learnedTriggers.includes(food)) {
+        setLearnedTriggers([...learnedTriggers, food]);
+      }
       showToast(`${food} confirmed as trigger`, 'success');
     } catch {
       showToast('Could not confirm trigger', 'error');
@@ -143,6 +216,7 @@ export const MyGutScreen: React.FC = () => {
     try {
       await gutService.dismissTrigger(food);
       setTriggerFoods((prev) => prev.filter((t) => t.food_name !== food));
+      setLearnedTriggers(learnedTriggers.filter((f) => f !== food));
       showToast(`${food} removed`, 'info');
     } catch {
       showToast('Could not dismiss trigger', 'error');
@@ -291,54 +365,58 @@ export const MyGutScreen: React.FC = () => {
               </View>
             ) : (
               <>
-                {dateLogs.meals.map((meal: any) => (
-                  <Card key={meal.id} variant="bordered" style={styles.logCard}>
-                    <View style={styles.logRow}>
-                      <Icon3D name="pizza" size={24} />
-                      <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
-                        {meal.name || 'Meal'}
-                      </Text>
-                      <Text variant="caption" color={theme.colors.textTertiary} style={styles.logTime}>
-                        {new Date(meal.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                      </Text>
-                    </View>
-                    {meal.foods?.length > 0 && (
-                      <View style={styles.logChips}>
-                        {meal.foods.slice(0, 4).map((f: string) => (
-                          <Chip key={f} label={f} size="sm" variant="selectable" />
-                        ))}
-                        {meal.foods.length > 4 && (
-                          <Text variant="caption" color={theme.colors.textTertiary}>+{meal.foods.length - 4}</Text>
-                        )}
-                      </View>
-                    )}
-                  </Card>
-                ))}
-                {dateLogs.gutLogs.map((log: any) => {
-                  return (
-                    <Card key={log.id} variant="bordered" style={styles.logCard}>
-                      <View style={styles.logRow}>
-                        <Icon3D
-                          name={log.mood === 'happy' ? 'face_with_smile' : log.mood === 'neutral' ? 'neutral_face' : 'face_with_head_bandage'}
-                          size={24}
-                        />
-                        <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
-                          Gut moment
-                        </Text>
-                        <Text variant="caption" color={theme.colors.textTertiary} style={styles.logTime}>
-                          {new Date(log.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                        </Text>
-                      </View>
-                      {log.tags?.length > 0 && (
-                        <View style={styles.logChips}>
-                          {log.tags.map((t: string) => (
-                            <Chip key={t} label={t} size="sm" variant="selectable" />
-                          ))}
+                {[
+                  ...dateLogs.meals.map((m: any) => ({ type: 'meal' as const, ts: new Date(m.timestamp).getTime(), data: m })),
+                  ...dateLogs.gutLogs.map((g: any) => ({ type: 'gut' as const, ts: new Date(g.timestamp).getTime(), data: g })),
+                ]
+                  .sort((a, b) => a.ts - b.ts)
+                  .map((event) =>
+                    event.type === 'meal' ? (
+                      <Card key={`meal-${event.data.id}`} variant="bordered" style={styles.logCard}>
+                        <View style={styles.logRow}>
+                          <Icon3D name="pizza" size={24} />
+                          <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
+                            {event.data.name || 'Meal'}
+                          </Text>
+                          <Text variant="caption" color={theme.colors.textTertiary} style={styles.logTime}>
+                            {new Date(event.data.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                          </Text>
                         </View>
-                      )}
-                    </Card>
-                  );
-                })}
+                        {event.data.foods?.length > 0 && (
+                          <View style={styles.logChips}>
+                            {event.data.foods.slice(0, 4).map((f: string) => (
+                              <Chip key={f} label={f} size="sm" variant="selectable" />
+                            ))}
+                            {event.data.foods.length > 4 && (
+                              <Text variant="caption" color={theme.colors.textTertiary}>+{event.data.foods.length - 4}</Text>
+                            )}
+                          </View>
+                        )}
+                      </Card>
+                    ) : (
+                      <Card key={`gut-${event.data.id}`} variant="bordered" style={styles.logCard}>
+                        <View style={styles.logRow}>
+                          <Icon3D
+                            name={event.data.mood === 'happy' ? 'face_with_smile' : event.data.mood === 'neutral' ? 'neutral_face' : 'face_with_sad'}
+                            size={24}
+                          />
+                          <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
+                            Gut moment
+                          </Text>
+                          <Text variant="caption" color={theme.colors.textTertiary} style={styles.logTime}>
+                            {new Date(event.data.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                          </Text>
+                        </View>
+                        {event.data.tags?.length > 0 && (
+                          <View style={styles.logChips}>
+                            {event.data.tags.map((t: string) => (
+                              <Chip key={t} label={t} size="sm" variant="selectable" />
+                            ))}
+                          </View>
+                        )}
+                      </Card>
+                    )
+                  )}
               </>
             )}
           </View>
@@ -358,26 +436,26 @@ export const MyGutScreen: React.FC = () => {
               <SkeletonCard lines={4} />
               <SkeletonCard lines={3} />
             </View>
-          ) : mealCount < MEALS_REQUIRED ? (
-            <View style={styles.unlockSection}>
-              <Icon3D name="party_popper" size={64} animated animationType="pulse" />
-              <Text variant="h3" align="center">Unlock Trigger Insights</Text>
-              <Text variant="body" color={theme.colors.textSecondary} align="center">
-                Log {MEALS_REQUIRED - mealCount} more meal{MEALS_REQUIRED - mealCount !== 1 ? 's' : ''} to unlock trigger insights
-              </Text>
-              <View style={styles.unlockBar}>
-                <View style={[styles.unlockFill, { width: `${(mealCount / MEALS_REQUIRED) * 100}%` }]} />
-              </View>
-              <Text variant="caption" color={theme.colors.textTertiary}>
-                {mealCount} / {MEALS_REQUIRED} meals tracked
-              </Text>
-              <Text variant="bodySmall" color={theme.colors.textTertiary} align="center">
-                GutBuddy needs a few data points before patterns emerge
-              </Text>
-            </View>
           ) : (
             <>
-              {/* Trigger Foods */}
+              {/* ── Gut Trend ─────────────────────────────── */}
+              {gutLogCount >= LOGS_FOR_TREND ? (
+                <GutTrendChart days={trendDays} weekChange={weekChange} />
+              ) : (
+                <Card variant="bordered" style={styles.trendUnlock}>
+                  <Icon3D name="chart_increasing" size={40} animated animationType="float" />
+                  <View style={styles.trendUnlockText}>
+                    <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
+                      Your gut trend chart
+                    </Text>
+                    <Text variant="caption" color={theme.colors.textSecondary}>
+                      Log {LOGS_FOR_TREND - gutLogCount} more gut moment{LOGS_FOR_TREND - gutLogCount !== 1 ? 's' : ''} to see how your week looks
+                    </Text>
+                  </View>
+                </Card>
+              )}
+
+              {/* ── Potential Triggers ────────────────────── */}
               <View style={styles.insightSection}>
                 <View style={styles.sectionHeader}>
                   <Text variant="h3">Potential Triggers</Text>
@@ -390,7 +468,16 @@ export const MyGutScreen: React.FC = () => {
                   )}
                 </View>
 
-                {triggerFoods.length === 0 ? (
+                {mealCount < MEALS_REQUIRED ? (
+                  <Card variant="bordered" style={styles.triggersUnlock}>
+                    <View style={styles.unlockBar}>
+                      <View style={[styles.unlockFill, { width: `${(mealCount / MEALS_REQUIRED) * 100}%` }]} />
+                    </View>
+                    <Text variant="caption" color={theme.colors.textSecondary}>
+                      {mealCount} / {MEALS_REQUIRED} meals logged · log {MEALS_REQUIRED - mealCount} more to detect triggers
+                    </Text>
+                  </Card>
+                ) : triggerFoods.length === 0 ? (
                   <Text variant="body" color={theme.colors.textTertiary}>
                     No triggers detected yet — keep logging!
                   </Text>
@@ -410,6 +497,17 @@ export const MyGutScreen: React.FC = () => {
                             <Text variant="caption" color={theme.colors.textSecondary}>
                               {trigger.bad_occurrences}× linked to symptoms
                             </Text>
+                            {trigger.symptoms && Object.keys(trigger.symptoms).length > 0 && (
+                              <View style={styles.symptomChips}>
+                                {Object.keys(trigger.symptoms).slice(0, 3).map((s) => (
+                                  <View key={s} style={styles.symptomChip}>
+                                    <Text variant="caption" color={theme.colors.textTertiary} style={styles.symptomText}>
+                                      {s}
+                                    </Text>
+                                  </View>
+                                ))}
+                              </View>
+                            )}
                           </View>
                           <View style={[styles.confidenceBadge, { backgroundColor: `${CONFIDENCE_COLORS[trigger.confidence] ?? theme.colors.textTertiary}18` }]}>
                             {trigger.confidence === 'High' && (
@@ -564,10 +662,17 @@ const styles = StyleSheet.create({
   skeletons: {
     gap: theme.spacing.sm,
   },
-  unlockSection: {
+  trendUnlock: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.md,
-    padding: theme.spacing.lg,
+  },
+  trendUnlockText: {
+    flex: 1,
+    gap: 4,
+  },
+  triggersUnlock: {
+    gap: theme.spacing.sm,
   },
   unlockBar: {
     width: '100%',
@@ -610,8 +715,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   triggerInfo: {
-    gap: 2,
+    gap: 4,
     flex: 1,
+  },
+  symptomChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginTop: 2,
+  },
+  symptomChip: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.sm,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  symptomText: {
+    fontSize: 10,
   },
   confidenceBadge: {
     flexDirection: 'row',

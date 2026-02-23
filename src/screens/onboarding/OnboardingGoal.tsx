@@ -10,7 +10,7 @@ import { useAppStore } from '../../store/useAppStore';
 const GOALS = [
   {
     id: 'bloating',
-    icon: 'face_with_head_bandage' as const,
+    icon: 'face_with_sad' as const,
     title: 'Stop feeling bloated',
     description: "I'm bloated or gassy after most meals",
   },

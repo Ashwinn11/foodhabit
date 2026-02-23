@@ -21,7 +21,7 @@ export type Icon3DName =
   | 'fork_and_knife'
   | 'face_with_smile'
   | 'neutral_face'
-  | 'face_with_head_bandage'
+  | 'face_with_sad'
   | 'sparkles'
   | 'chart_increasing'
   | 'fire'
@@ -73,7 +73,7 @@ const iconMap: Record<Icon3DName, ReturnType<typeof require>> = {
   fork_and_knife: require('../../assets/icons/3d/fork_and_knife.png'),
   face_with_smile: require('../../assets/icons/3d/face_with_smile.png'),
   neutral_face: require('../../assets/icons/3d/neutral_face.png'),
-  face_with_head_bandage: require('../../assets/icons/3d/face_with_head_bandage.png'),
+  face_with_sad: require('../../assets/icons/3d/face_with_sad.png'),
   sparkles: require('../../assets/icons/3d/sparkles.png'),
   chart_increasing: require('../../assets/icons/3d/chart_increasing.png'),
   fire: require('../../assets/icons/3d/fire.png'),

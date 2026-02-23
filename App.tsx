@@ -160,6 +160,8 @@ export default function App() {
   const setOnboardingCompleted = useAppStore((state) => state.setOnboardingCompleted);
   const updateOnboardingAnswers = useAppStore((state) => state.updateOnboardingAnswers);
   const resetOnboarding = useAppStore((state) => state.resetOnboarding);
+  const setLearnedTriggers = useAppStore((state) => state.setLearnedTriggers);
+  const setLearnedSafeFoods = useAppStore((state) => state.setLearnedSafeFoods);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
@@ -218,10 +220,25 @@ export default function App() {
                 userTriggers: answers.knownTriggers.join(', '),
               },
             });
-            const safe = (fn?.results ?? [])
+            const results: any[] = fn?.results ?? [];
+            const triggerCount = (answers.knownTriggers ?? []).length;
+
+            const normalizedTriggers = results
+              .slice(0, triggerCount)
+              .map((r: any) => r.normalizedName as string)
+              .filter(Boolean);
+
+            const safe = results
               .filter((r: any) => r.level === 'safe')
               .map((r: any) => r.normalizedName as string);
-            answers = { ...answers, safeFoods: safe, _sfDerived: true };
+
+            answers = {
+              ...answers,
+              safeFoods: safe,
+              knownTriggers: normalizedTriggers.length ? normalizedTriggers : answers.knownTriggers,
+              avoidFoods: normalizedTriggers.length ? normalizedTriggers : answers.avoidFoods,
+              _sfDerived: true,
+            };
           } catch {
             answers = { ...answers, _sfDerived: true };
           }
@@ -239,6 +256,31 @@ export default function App() {
         const { _sfDerived: _ignored, ...storeAnswers } = answers;
         updateOnboardingAnswers(storeAnswers);
         setOnboardingCompleted(true);
+
+        // Load confirmed triggers + safe foods into store so Scan analysis uses them
+        const { data: confirmedTriggers } = await supabase
+          .from('trigger_foods')
+          .select('food_name')
+          .eq('user_id', userId)
+          .eq('user_confirmed', true);
+        if (confirmedTriggers?.length) {
+          setLearnedTriggers(confirmedTriggers.map((t: any) => t.food_name as string));
+        }
+
+        const { data: safeFoodRows } = await supabase
+          .from('trigger_foods')
+          .select('food_name, good_occurrences, bad_occurrences')
+          .eq('user_id', userId)
+          .gte('good_occurrences', 5);
+        if (safeFoodRows?.length) {
+          const safe = safeFoodRows
+            .filter((f: any) => {
+              const total = f.good_occurrences + f.bad_occurrences;
+              return total > 0 && f.bad_occurrences / total <= 0.25;
+            })
+            .map((f: any) => f.food_name as string);
+          if (safe.length) setLearnedSafeFoods(safe);
+        }
       }
     } catch (e) {
       console.error(e);

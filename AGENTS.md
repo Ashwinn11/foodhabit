@@ -121,7 +121,7 @@ Stored in: `assets/icons/3d/` as PNG files, imported as local assets.
 | `fork_and_knife.png` | Home empty meals state |
 | `face_with_smile.png` | Mood: good (Home + Log) |
 | `neutral_face.png` | Mood: ok |
-| `face_with_head_bandage.png` | Mood: rough |
+| `face_with_sad.png` | Mood: rough |
 | `sparkles.png` | Loading states, custom plan reveal |
 | `chart_increasing.png` | Insights section header |
 | `fire.png` | High-confidence trigger badge |
@@ -343,7 +343,7 @@ STATES:
 HEADLINE: "What's bringing you here today?"
 SUB: "Choose the one that fits best."
 UI: 4 large tappable cards (full-width):
-  [Icon3D: face_with_head_bandage] "Stop feeling bloated" — I'm bloated or gassy after most meals
+  [Icon3D: face_with_sad] "Stop feeling bloated" — I'm bloated or gassy after most meals
   [Icon3D: magnifying_glass]       "Find my triggers" — I suspect certain foods are hurting me
   [Icon3D: fork_and_knife]         "Eat out safely" — Restaurants stress me out
   [Icon3D: test_tube]              "Manage my condition" — I have IBS, GERD, or similar
@@ -561,7 +561,7 @@ SafeArea
 ├── MOOD CHECK CARD (always visible, even after logging)
 │   "How's your gut feeling right now?"
 │   3 tappable icon buttons (no labels, icon speaks for itself):
-│   [Icon3D: face_with_smile 40px]  [Icon3D: neutral_face 40px]  [Icon3D: face_with_head_bandage 40px]
+│   [Icon3D: face_with_smile 40px]  [Icon3D: neutral_face 40px]  [Icon3D: face_with_sad 40px]
 │   Tap → selected icon scales up (spring), ring border appears, haptic → opens BottomSheet
 │   After tap → opens BottomSheet for full symptom log
 │

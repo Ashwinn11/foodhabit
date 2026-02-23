@@ -1,18 +1,20 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme/theme';
 import { Text } from '../Text';
 import { Icon3D } from '../Icon3D';
+import { Icon } from '../Icon';
 import { Card } from '../Card';
 import { Chip } from '../Chip';
 
 interface TimelineLogProps {
   logs: { meals: any[]; gutLogs: any[] };
+  onReLog?: (meal: any) => void;
 }
 
-export const TimelineLog: React.FC<TimelineLogProps> = ({ logs }) => {
+export const TimelineLog: React.FC<TimelineLogProps> = ({ logs, onReLog }) => {
   // Combine, sort, and format
   const allEvents = [
     ...logs.meals.map(m => ({ type: 'meal', time: new Date(m.timestamp), data: m })),
@@ -66,21 +68,29 @@ export const TimelineLog: React.FC<TimelineLogProps> = ({ logs }) => {
               <Card variant="bordered" style={styles.eventCard}>
                 <View style={styles.cardHeader}>
                   <View style={styles.titleRow}>
-                    <Icon3D 
+                    <Icon3D
                       name={
-                        isMeal ? 'pizza' : 
-                        event.data.mood === 'happy' ? 'face_with_smile' : 
-                        event.data.mood === 'sad' ? 'face_with_head_bandage' : 'neutral_face'
-                      } 
-                      size={24} 
+                        isMeal ? 'pizza' :
+                        event.data.mood === 'happy' ? 'face_with_smile' :
+                        event.data.mood === 'sad' ? 'face_with_sad' : 'neutral_face'
+                      }
+                      size={24}
                     />
                     <Text variant="bodySmall" style={styles.titleText}>
                       {isMeal ? (event.data.name || 'Meal') : 'Gut Moment'}
                     </Text>
                   </View>
-                  <Text variant="caption" color={theme.colors.textTertiary}>
-                    {event.time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                  </Text>
+                  <View style={styles.cardHeaderRight}>
+                    <Text variant="caption" color={theme.colors.textTertiary}>
+                      {event.time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                    </Text>
+                    {isMeal && onReLog && (
+                      <TouchableOpacity onPress={() => onReLog(event.data)} hitSlop={8} style={styles.reLogBtn}>
+                        <Icon name="RotateCcw" size={13} color={theme.colors.primary} />
+                        <Text variant="caption" color={theme.colors.primary}>Re-log</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
 
                 {isMeal && event.data.foods?.length > 0 && (
@@ -170,6 +180,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     width: 2,
+  },
+  cardHeaderRight: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  reLogBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
   titleRow: {
     alignItems: 'center',

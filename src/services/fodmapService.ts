@@ -15,7 +15,6 @@ export const fodmapService = {
   ): Promise<AnalysisResult[] | string[]> => {
     const { onboardingAnswers, learnedTriggers } = useAppStore.getState();
 
-    // Merge onboarding known triggers + DB-confirmed learned triggers for richer context
     const allTriggers = [
       ...onboardingAnswers.knownTriggers,
       ...learnedTriggers,

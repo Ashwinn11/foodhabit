@@ -25,6 +25,7 @@ import { AnimatedCameraOverlay } from '../components/fluid/AnimatedCameraOverlay
 import { fodmapService } from '../services/fodmapService';
 import type { AnalysisResult } from '../services/fodmapService';
 import { gutService } from '../services/gutService';
+import { notificationService } from '../services/notificationService';
 
 type Mode = 'camera' | 'type';
 type CameraState = 'idle' | 'processing_extract' | 'processing_analyze' | 'error' | 'results';
@@ -50,47 +51,50 @@ const ResultsList: React.FC<ResultsListProps> = ({ results, selectedFoods, onTog
     return order[a.level] - order[b.level];
   });
 
-  // Always pick the best available — safe first, then caution, then avoid
-  const best = sorted[0];
-  const rest = sorted.slice(1);
+  // Only promote to "Healthiest Pick" if there are multiple foods and the best isn't avoid
+  const best = sorted.length > 1 && sorted[0]?.level !== 'avoid' ? sorted[0] : null;
+  const rest = best ? sorted.slice(1) : sorted;
 
-  if (!best) return null;
-
-  const bestLvl = getLevelStyle(best.level);
-  const bestChecked = selectedFoods.has(best.normalizedName);
+  if (sorted.length === 0) return null;
 
   return (
     <View style={listStyles.container}>
 
-      {/* ── Healthiest Pick — always visible, always prominent ── */}
-      <TouchableOpacity activeOpacity={0.75} onPress={() => onToggle(best.normalizedName)}>
-        <Card variant="glow" style={listStyles.bestCard}>
-          <View style={listStyles.bestTopRow}>
-            <View style={listStyles.bestBadge}>
-              <Icon name="Star" size={11} color={theme.colors.primaryForeground} />
-              <Text variant="caption" color={theme.colors.primaryForeground} style={listStyles.bestBadgeText}>
-                Healthiest Pick
-              </Text>
-            </View>
-            <Icon
-              name={bestChecked ? 'CheckCircle2' : 'Circle'}
-              size={22}
-              color={bestChecked ? theme.colors.primary : theme.colors.textTertiary}
-            />
-          </View>
-          <View style={listStyles.nameRow}>
-            <Text variant="h3" style={listStyles.bestFoodName}>{best.normalizedName}</Text>
-            <View style={[listStyles.levelBadge, { backgroundColor: bestLvl.bg }]}>
-              <Text variant="caption" color={bestLvl.text} style={listStyles.levelText}>{bestLvl.label}</Text>
-            </View>
-          </View>
-          {best.explanation && (
-            <Text variant="caption" color={theme.colors.textSecondary} style={listStyles.explanation}>
-              {best.explanation}
-            </Text>
-          )}
-        </Card>
-      </TouchableOpacity>
+      {/* ── Healthiest Pick — only shown when there's a non-avoid option ── */}
+      {best && (() => {
+        const bestLvl = getLevelStyle(best.level);
+        const bestChecked = selectedFoods.has(best.normalizedName);
+        return (
+          <TouchableOpacity activeOpacity={0.75} onPress={() => onToggle(best.normalizedName)}>
+            <Card variant="glow" style={listStyles.bestCard}>
+              <View style={listStyles.bestTopRow}>
+                <View style={listStyles.bestBadge}>
+                  <Icon name="Star" size={11} color={theme.colors.primaryForeground} />
+                  <Text variant="caption" color={theme.colors.primaryForeground} style={listStyles.bestBadgeText}>
+                    Healthiest Pick
+                  </Text>
+                </View>
+                <Icon
+                  name={bestChecked ? 'CheckCircle2' : 'Circle'}
+                  size={22}
+                  color={bestChecked ? theme.colors.primary : theme.colors.textTertiary}
+                />
+              </View>
+              <View style={listStyles.nameRow}>
+                <Text variant="h3" style={listStyles.bestFoodName}>{best.normalizedName}</Text>
+                <View style={[listStyles.levelBadge, { backgroundColor: bestLvl.bg }]}>
+                  <Text variant="caption" color={bestLvl.text} style={listStyles.levelText}>{bestLvl.label}</Text>
+                </View>
+              </View>
+              {best.explanation && (
+                <Text variant="caption" color={theme.colors.textSecondary} style={listStyles.explanation}>
+                  {best.explanation}
+                </Text>
+              )}
+            </Card>
+          </TouchableOpacity>
+        );
+      })()}
 
       {/* ── Rest of foods ── */}
       {rest.map((r) => {
@@ -229,6 +233,7 @@ export const ScanFoodScreen: React.FC = () => {
       const foods = Array.from(selectedFoods);
       const name = `Meal at ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
       await gutService.logMeal({ foods, name });
+      notificationService.schedulePostMealCheckIn(name);
       showToast('Meal logged!', 'success');
       setResults([]);
       setSelectedFoods(new Set());

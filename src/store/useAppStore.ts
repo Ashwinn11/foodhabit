@@ -21,10 +21,14 @@ interface AppState {
   // Avoid-level foods from the most recent scan — used for gut log correlation hint
   recentScanAvoidFoods: string[];
 
+  // Foods confirmed safe via gut log correlation (good_occurrences >= 5, bad ratio <= 25%)
+  learnedSafeFoods: string[];
+
   setOnboardingCompleted: (val: boolean) => void;
   updateOnboardingAnswers: (answers: Partial<OnboardingAnswers>) => void;
   resetOnboarding: () => void;
   setLearnedTriggers: (foods: string[]) => void;
+  setLearnedSafeFoods: (foods: string[]) => void;
   setRecentScanAvoidFoods: (foods: string[]) => void;
 }
 
@@ -43,6 +47,7 @@ export const useAppStore = create<AppState>()(
       isOnboardingCompleted: false,
       onboardingAnswers: defaultAnswers,
       learnedTriggers: [],
+      learnedSafeFoods: [],
       recentScanAvoidFoods: [],
 
       setOnboardingCompleted: (val) => set({ isOnboardingCompleted: val }),
@@ -55,9 +60,11 @@ export const useAppStore = create<AppState>()(
           onboardingAnswers: defaultAnswers,
           isOnboardingCompleted: false,
           learnedTriggers: [],
+          learnedSafeFoods: [],
           recentScanAvoidFoods: [],
         }),
       setLearnedTriggers: (foods) => set({ learnedTriggers: foods }),
+      setLearnedSafeFoods: (foods) => set({ learnedSafeFoods: foods }),
       setRecentScanAvoidFoods: (foods) => set({ recentScanAvoidFoods: foods }),
     }),
     {

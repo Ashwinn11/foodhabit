@@ -7,6 +7,9 @@ import Animated, {
   interpolateColor,
   runOnJS,
   useAnimatedReaction,
+  withRepeat,
+  withSequence,
+  withTiming,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
@@ -33,6 +36,20 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
   // We start in the middle ('neutral')
   const translateX = useSharedValue(MAX_TRANSLATE / 2);
   const context = useSharedValue({ x: 0 });
+  
+  // Breathing animation for when the slider is inactive to invite interaction
+  const pulse = useSharedValue(1);
+
+  React.useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1.05, { duration: 1500 }),
+        withTiming(1, { duration: 1500 })
+      ),
+      -1,
+      true
+    );
+  }, []);
 
   // Update React state when crossing thresholds, trigger haptics
   useAnimatedReaction(
@@ -88,12 +105,7 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
       backgroundColor: interpolateColor(
         translateX.value,
         [0, MAX_TRANSLATE / 2, MAX_TRANSLATE],
-        ['rgba(0, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)', 'rgba(255, 77, 77, 0.1)']
-      ),
-      borderColor: interpolateColor(
-        translateX.value,
-        [0, MAX_TRANSLATE / 2, MAX_TRANSLATE],
-        ['rgba(0, 255, 255, 0.3)', 'rgba(255, 255, 255, 0.1)', 'rgba(255, 77, 77, 0.3)']
+        ['rgba(109, 190, 140, 0.4)', 'rgba(255, 255, 255, 0.15)', 'rgba(255, 77, 77, 0.4)']
       ),
     };
   });
@@ -102,8 +114,23 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
     return {
       transform: [
         { translateX: translateX.value },
-        { scale: withSpring(isDragging ? 1.1 : 1, { damping: 15 }) }
+        { scale: isDragging ? withSpring(1.1) : pulse.value }
       ],
+      backgroundColor: interpolateColor(
+        translateX.value,
+        [0, MAX_TRANSLATE / 2, MAX_TRANSLATE],
+        ['rgba(109, 190, 140, 0.2)', 'rgba(255, 255, 255, 0.15)', 'rgba(255, 77, 77, 0.2)']
+      ),
+      borderColor: interpolateColor(
+        translateX.value,
+        [0, MAX_TRANSLATE / 2, MAX_TRANSLATE],
+        ['rgba(109, 190, 140, 0.8)', 'rgba(255, 255, 255, 0.5)', 'rgba(255, 77, 77, 0.8)']
+      ),
+      shadowColor: interpolateColor(
+        translateX.value,
+        [0, MAX_TRANSLATE / 2, MAX_TRANSLATE],
+        ['rgb(109, 190, 140)', 'rgb(255, 255, 255)', 'rgb(255, 77, 77)']
+      ),
     };
   });
 
@@ -119,19 +146,18 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
           
           {/* Static underlay icons so user knows where to drag */}
           <View style={styles.underlayIcons}>
-            <Icon3D name="face_with_smile" size={32} style={styles.iconOpac} />
-            <Icon3D name="neutral_face" size={32} style={styles.iconOpac} />
-            <Icon3D name="face_with_head_bandage" size={32} style={styles.iconOpac} />
+            <Icon3D name="face_with_smile" size={42} style={styles.iconOpac} />
+            <Icon3D name="neutral_face" size={42} style={styles.iconOpac} />
+            <Icon3D name="face_with_sad" size={42} style={styles.iconOpac} />
           </View>
 
           <GestureDetector gesture={gesture}>
             <Animated.View style={[styles.knob, knobStyle]}>
-               <View style={styles.knobInner} />
                <View style={styles.knobIconWrap}>
                 <Icon3D 
                   name={
                     currentMood === 'happy' ? 'face_with_smile' : 
-                    currentMood === 'sad' ? 'face_with_head_bandage' : 'neutral_face'
+                    currentMood === 'sad' ? 'face_with_sad' : 'neutral_face'
                   } 
                   size={42} 
                 />
@@ -163,14 +189,14 @@ const styles = StyleSheet.create({
     marginTop: -8,
   },
   iconOpac: {
-    opacity: 0.3,
+    opacity: 1,
   },
   knob: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderColor: 'rgba(255,255,255,0.4)',
     borderRadius: KNOB_SIZE / 2,
-    borderWidth: 1,
+    borderWidth: 2,
     height: KNOB_SIZE,
     justifyContent: 'center',
     left: 0,
@@ -179,10 +205,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.glow,
   },
   knobInner: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: KNOB_SIZE / 2,
-    margin: 2,
+    display: 'none',
   },
   knobIconWrap: {
     position: 'absolute',
@@ -199,17 +222,20 @@ const styles = StyleSheet.create({
     width: SLIDER_WIDTH,
   },
   trackBar: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: KNOB_SIZE / 2,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    height: 3,
+    width: MAX_TRANSLATE,
+    left: KNOB_SIZE / 2,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 1.5,
+    position: 'absolute',
+    top: (KNOB_SIZE - 3) / 2,
+    zIndex: -1,
   },
   underlayIcons: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 11,
   }
 });

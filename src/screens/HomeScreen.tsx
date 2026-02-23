@@ -22,12 +22,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../config/supabase';
 import { gutService } from '../services/gutService';
+import { useAppStore } from '../store/useAppStore';
 import * as Haptics from 'expo-haptics';
 
 const MOODS = [
   { id: 'happy', icon: 'face_with_smile' as const, label: 'Good' },
   { id: 'neutral', icon: 'neutral_face' as const, label: 'OK' },
-  { id: 'sad', icon: 'face_with_head_bandage' as const, label: 'Rough' },
+  { id: 'sad', icon: 'face_with_sad' as const, label: 'Rough' },
 ] as const;
 
 const SYMPTOMS = [
@@ -38,6 +39,7 @@ const SYMPTOMS = [
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { showToast } = useToast();
+  const setLearnedSafeFoods = useAppStore((s) => s.setLearnedSafeFoods);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -125,10 +127,24 @@ export const HomeScreen: React.FC = () => {
       setSelectedMood(null);
       setSelectedSymptoms([]);
       showToast('Gut moment logged!', 'success');
+      // Refresh safe foods — good_occurrences may have just crossed the threshold
+      gutService.getSafeFoods().then(setLearnedSafeFoods).catch(() => {});
     } catch {
       showToast('Could not log. Try again.', 'error');
     } finally {
       setLoggingMood(false);
+    }
+  };
+
+  const handleReLog = async (meal: any) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      const name = `Meal at ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+      await gutService.logMeal({ foods: meal.foods, name });
+      showToast('Meal logged!', 'success');
+      loadData();
+    } catch {
+      showToast('Could not log meal', 'error');
     }
   };
 
@@ -225,7 +241,7 @@ export const HomeScreen: React.FC = () => {
               <SkeletonCard />
             </View>
           ) : (
-            <TimelineLog logs={{ meals, gutLogs: [] }} />
+            <TimelineLog logs={{ meals, gutLogs: [] }} onReLog={handleReLog} />
           )}
         </View>
       </ScrollView>

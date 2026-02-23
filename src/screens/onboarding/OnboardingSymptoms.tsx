@@ -42,7 +42,7 @@ export const OnboardingSymptoms: React.FC = () => {
     <OnboardingLayout
       step={4}
       scroll
-      icon="face_with_head_bandage"
+      icon="face_with_sad"
       title="Which symptoms do you regularly experience?"
       subtitle="Select all that apply after eating."
     >

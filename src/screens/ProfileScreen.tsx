@@ -44,6 +44,8 @@ export const ProfileScreen: React.FC = () => {
 
   const answers = useAppStore((s) => s.onboardingAnswers);
   const updateOnboardingAnswers = useAppStore((s) => s.updateOnboardingAnswers);
+  const learnedTriggers = useAppStore((s) => s.learnedTriggers);
+  const safeFoods = useAppStore((s) => s.onboardingAnswers.safeFoods);
 
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -246,11 +248,39 @@ export const ProfileScreen: React.FC = () => {
             <View style={styles.divider} />
             <ProfileRow
               label="My Triggers"
-              value={answers.knownTriggers?.join(', ') || 'None set'}
+              value={
+                (() => {
+                  const all = [...new Set([...(answers.knownTriggers ?? []), ...learnedTriggers])];
+                  return all.length ? all.join(', ') : 'None set';
+                })()
+              }
               onPress={() => openEditSheet('triggers')}
             />
           </Card>
         </View>
+
+        {/* Safe Foods */}
+        {safeFoods?.length > 0 && (
+          <View style={styles.section}>
+            <Text variant="label" color={theme.colors.textTertiary} style={styles.sectionTitle}>
+              Safe for Me
+            </Text>
+            <Card variant="bordered" style={styles.safeFoodsCard}>
+              <Text variant="caption" color={theme.colors.textSecondary} style={styles.safeFoodsHint}>
+                Foods consistently safe based on your profile
+              </Text>
+              <View style={styles.safeFoodsChips}>
+                {safeFoods.map((food) => (
+                  <View key={food} style={styles.safeChip}>
+                    <Text variant="caption" color={theme.colors.safe} style={styles.safeChipText}>
+                      {food}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </Card>
+          </View>
+        )}
 
         {/* Subscription */}
         <View style={styles.section}>
@@ -377,33 +407,58 @@ export const ProfileScreen: React.FC = () => {
       </BottomSheet>
 
       {/* Edit Triggers Sheet */}
-      <BottomSheet visible={editSheet === 'triggers'} onClose={() => setEditSheet(null)} snapHeight="65%">
+      <BottomSheet visible={editSheet === 'triggers'} onClose={() => setEditSheet(null)} snapHeight="70%">
         <View style={styles.editSheet}>
-          <Text variant="h3">Edit Triggers</Text>
-          <Input
-            placeholder="Add a trigger food..."
-            value={triggerInput}
-            onChangeText={setTriggerInput}
-            onSubmitEditing={() => {
-              const t = triggerInput.trim();
-              if (t && !editTriggers.includes(t)) {
-                setEditTriggers((prev) => [...prev, t]);
-              }
-              setTriggerInput('');
-            }}
-            returnKeyType="done"
-          />
-          <ScrollView contentContainerStyle={styles.editChips}>
-            {editTriggers.map((t) => (
-              <Chip
-                key={t}
-                label={t}
-                variant="dismissible"
-                size="md"
-                onDismiss={() => setEditTriggers((prev) => prev.filter((x) => x !== t))}
-              />
-            ))}
-          </ScrollView>
+          <View style={styles.sheetHeader}>
+            <Text variant="h3">My Triggers</Text>
+            <Text variant="caption" color={theme.colors.textSecondary}>
+              Foods that don't agree with you
+            </Text>
+          </View>
+
+          {learnedTriggers.length > 0 && (
+            <View style={styles.triggersSection}>
+              <Text variant="label" color={theme.colors.textTertiary} style={styles.triggersSectionLabel}>
+                Confirmed by GutBuddy
+              </Text>
+              <View style={styles.editChips}>
+                {learnedTriggers.map((t) => (
+                  <Chip key={t} label={t} size="md" variant="selectable" />
+                ))}
+              </View>
+            </View>
+          )}
+
+          <View style={styles.triggersSection}>
+            <Text variant="label" color={theme.colors.textTertiary} style={styles.triggersSectionLabel}>
+              Added by you
+            </Text>
+            <Input
+              placeholder="Add a trigger food..."
+              value={triggerInput}
+              onChangeText={setTriggerInput}
+              onSubmitEditing={() => {
+                const t = triggerInput.trim();
+                if (t && !editTriggers.includes(t)) {
+                  setEditTriggers((prev) => [...prev, t]);
+                }
+                setTriggerInput('');
+              }}
+              returnKeyType="done"
+            />
+            <ScrollView contentContainerStyle={styles.editChips} style={styles.chipsScroll}>
+              {editTriggers.map((t) => (
+                <Chip
+                  key={t}
+                  label={t}
+                  variant="dismissible"
+                  size="md"
+                  onDismiss={() => setEditTriggers((prev) => prev.filter((x) => x !== t))}
+                />
+              ))}
+            </ScrollView>
+          </View>
+
           <Button variant="primary" size="lg" onPress={saveEdit} fullWidth>Save</Button>
         </View>
       </BottomSheet>
@@ -529,7 +584,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.sm,
-    flex: 1,
     alignContent: 'flex-start',
+  },
+  chipsScroll: {
+    maxHeight: 100,
+  },
+  triggersSection: {
+    gap: theme.spacing.sm,
+  },
+  triggersSectionLabel: {
+    fontFamily: theme.fonts.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    fontSize: 11,
+  },
+  safeFoodsCard: {
+    gap: theme.spacing.sm,
+  },
+  safeFoodsHint: {
+    lineHeight: 18,
+  },
+  safeFoodsChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+  },
+  safeChip: {
+    backgroundColor: theme.colors.safeMuted,
+    borderRadius: theme.radius.full,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+  },
+  safeChipText: {
+    fontFamily: theme.fonts.semibold,
   },
 });
