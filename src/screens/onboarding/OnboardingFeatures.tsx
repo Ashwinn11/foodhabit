@@ -18,28 +18,22 @@ import { IconContainer } from '../../components/IconContainer';
 
 const FEATURES = [
   {
-    icon: 'Search' as LucideIconName,
-    color: '#4D94FF',
-    title: 'Menu Scanner',
-    description: 'Aim. Capture. Know what\'s safe to order in seconds.',
+    icon: 'Camera' as LucideIconName,
+    color: '#5AAF7B',
+    title: 'Scan any menu',
+    description: 'Point your camera at a restaurant menu — safe items light up instantly.',
   },
   {
-    icon: 'CheckCircle' as LucideIconName,
-    color: '#6DBE8C',
-    title: 'Safety Scores',
-    description: 'Safe, Caution, or Avoid — for every dish, personalized to you.',
+    icon: 'PenLine' as LucideIconName,
+    color: '#C98A45',
+    title: 'Type any dish',
+    description: 'Ordering delivery? Type the dish name and we\'ll tell you if it\'s safe.',
   },
   {
-    icon: 'Calendar' as LucideIconName,
-    color: '#FF9D4D',
-    title: 'Gut Journal',
-    description: 'Log meals and symptoms. We find the connections you\'d never catch.',
-  },
-  {
-    icon: 'Target' as LucideIconName,
-    color: '#FF4D4D',
-    title: 'Trigger Discovery',
-    description: 'Your personal food triggers, learned from your own data over time.',
+    icon: 'TrendingUp' as LucideIconName,
+    color: '#4A84D4',
+    title: 'Track & discover triggers',
+    description: 'Log what you eat. We find patterns and uncover triggers you didn\'t know about.',
   },
 ];
 
@@ -81,12 +75,11 @@ export const OnboardingFeatures: React.FC = () => {
 
   return (
     <OnboardingLayout
-      step={9}
+      step={6}
       scroll
       icon="avocado_success"
-      title="Know exactly what to order."
-      titleIcon="Sparkles"
-      titleIconColor="#A855F7"
+      title="Here's how you'll use it"
+      subtitle="Three powerful ways to know what's safe for you."
     >
       <View style={styles.container}>
         <View style={styles.features}>
@@ -99,10 +92,10 @@ export const OnboardingFeatures: React.FC = () => {
           <Button
             variant="primary"
             size="lg"
-            onPress={() => navigation.navigate('OnboardingCustomPlan')}
+            onPress={() => navigation.navigate('OnboardingReviews')}
             fullWidth
           >
-            Build My Plan
+            Continue
           </Button>
         </View>
       </View>

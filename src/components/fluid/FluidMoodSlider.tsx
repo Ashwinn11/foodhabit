@@ -36,7 +36,7 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
   // We start in the middle ('neutral')
   const translateX = useSharedValue(MAX_TRANSLATE / 2);
   const context = useSharedValue({ x: 0 });
-  
+
   // Breathing animation for when the slider is inactive to invite interaction
   const pulse = useSharedValue(1);
 
@@ -57,11 +57,11 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
     (current, prev) => {
       if (prev === null) return;
       const progress = current / MAX_TRANSLATE;
-      
+
       let newMood: Mood = 'neutral';
       if (progress < 0.25) newMood = 'happy';
       else if (progress > 0.75) newMood = 'sad';
-      
+
       // If mood changed during drag
       if (currentMood !== newMood) {
         runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
@@ -85,7 +85,7 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
       const progress = translateX.value / MAX_TRANSLATE;
       let targetX = MAX_TRANSLATE / 2; // neutral
       let finalMood: Mood = 'neutral';
-      
+
       if (progress < 0.33) {
         targetX = 0; // happy
         finalMood = 'happy';
@@ -93,7 +93,7 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
         targetX = MAX_TRANSLATE; // sad
         finalMood = 'sad';
       }
-      
+
       translateX.value = withSpring(targetX, { damping: 20, stiffness: 200 });
       runOnJS(onMoodSelect)(finalMood);
       runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
@@ -105,7 +105,7 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
       backgroundColor: interpolateColor(
         translateX.value,
         [0, MAX_TRANSLATE / 2, MAX_TRANSLATE],
-        ['rgba(109, 190, 140, 0.4)', 'rgba(255, 255, 255, 0.15)', 'rgba(255, 77, 77, 0.4)']
+        ['rgba(90, 175, 123, 0.35)', 'rgba(255, 255, 255, 0.12)', 'rgba(199, 80, 80, 0.35)']
       ),
     };
   });
@@ -119,17 +119,17 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
       backgroundColor: interpolateColor(
         translateX.value,
         [0, MAX_TRANSLATE / 2, MAX_TRANSLATE],
-        ['rgba(109, 190, 140, 0.2)', 'rgba(255, 255, 255, 0.15)', 'rgba(255, 77, 77, 0.2)']
+        ['rgba(90, 175, 123, 0.18)', 'rgba(255, 255, 255, 0.12)', 'rgba(199, 80, 80, 0.18)']
       ),
       borderColor: interpolateColor(
         translateX.value,
         [0, MAX_TRANSLATE / 2, MAX_TRANSLATE],
-        ['rgba(109, 190, 140, 0.8)', 'rgba(255, 255, 255, 0.5)', 'rgba(255, 77, 77, 0.8)']
+        ['rgba(90, 175, 123, 0.7)', 'rgba(255, 255, 255, 0.4)', 'rgba(199, 80, 80, 0.7)']
       ),
       shadowColor: interpolateColor(
         translateX.value,
         [0, MAX_TRANSLATE / 2, MAX_TRANSLATE],
-        ['rgb(109, 190, 140)', 'rgb(255, 255, 255)', 'rgb(255, 77, 77)']
+        ['rgb(90, 175, 123)', 'rgb(255, 255, 255)', 'rgb(199, 80, 80)']
       ),
     };
   });
@@ -143,7 +143,7 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
 
         <View style={styles.trackContainer}>
           <Animated.View style={[styles.trackBar, trackStyle]} />
-          
+
           {/* Static underlay icons so user knows where to drag */}
           <View style={styles.underlayIcons}>
             <Icon3D name="face_with_smile" size={42} style={styles.iconOpac} />
@@ -153,13 +153,13 @@ export const FluidMoodSlider: React.FC<FluidMoodSliderProps> = ({ onMoodSelect }
 
           <GestureDetector gesture={gesture}>
             <Animated.View style={[styles.knob, knobStyle]}>
-               <View style={styles.knobIconWrap}>
-                <Icon3D 
+              <View style={styles.knobIconWrap}>
+                <Icon3D
                   name={
-                    currentMood === 'happy' ? 'face_with_smile' : 
-                    currentMood === 'sad' ? 'face_with_sad' : 'neutral_face'
-                  } 
-                  size={42} 
+                    currentMood === 'happy' ? 'face_with_smile' :
+                      currentMood === 'sad' ? 'face_with_sad' : 'neutral_face'
+                  }
+                  size={42}
                 />
               </View>
             </Animated.View>

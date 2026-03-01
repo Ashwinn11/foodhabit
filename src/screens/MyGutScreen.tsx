@@ -21,6 +21,7 @@ import { gutService } from '../services/gutService';
 import { supabase } from '../config/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { GutTrendChart, TrendDay } from '../components/GutTrendChart';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 type Tab = 'calendar' | 'insights';
 
@@ -254,30 +255,32 @@ export const MyGutScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar style="light" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <Text variant="h3">My Gut Journal</Text>
-        <View style={styles.tabs}>
-          <TouchableOpacity
-            style={[styles.tabBtn, tab === 'calendar' && styles.tabBtnActive]}
-            onPress={() => setTab('calendar')}
-          >
-            <Icon name="CalendarDays" size={14} color={tab === 'calendar' ? theme.colors.primaryForeground : theme.colors.textSecondary} />
-            <Text variant="caption" color={tab === 'calendar' ? theme.colors.primaryForeground : theme.colors.textSecondary}>
-              Calendar
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tabBtn, tab === 'insights' && styles.tabBtnActive]}
-            onPress={() => setTab('insights')}
-          >
-            <Icon name="TrendingUp" size={14} color={tab === 'insights' ? theme.colors.primaryForeground : theme.colors.textSecondary} />
-            <Text variant="caption" color={tab === 'insights' ? theme.colors.primaryForeground : theme.colors.textSecondary}>
-              Insights
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      {/* Header with segmented tabs */}
+      <ScreenHeader
+        title="My Gut Journal"
+        below={
+          <View style={styles.tabs}>
+            <TouchableOpacity
+              style={[styles.tabBtn, tab === 'calendar' && styles.tabBtnActive]}
+              onPress={() => setTab('calendar')}
+            >
+              <Icon name="CalendarDays" size={14} color={tab === 'calendar' ? theme.colors.primaryForeground : theme.colors.textSecondary} />
+              <Text variant="caption" color={tab === 'calendar' ? theme.colors.primaryForeground : theme.colors.textSecondary}>
+                Calendar
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabBtn, tab === 'insights' && styles.tabBtnActive]}
+              onPress={() => setTab('insights')}
+            >
+              <Icon name="TrendingUp" size={14} color={tab === 'insights' ? theme.colors.primaryForeground : theme.colors.textSecondary} />
+              <Text variant="caption" color={tab === 'insights' ? theme.colors.primaryForeground : theme.colors.textSecondary}>
+                Insights
+              </Text>
+            </TouchableOpacity>
+          </View>
+        }
+      />
 
       {tab === 'calendar' ? (
         <ScrollView
@@ -571,11 +574,7 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xxl,
     gap: theme.spacing.lg,
   },
-  header: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    gap: theme.spacing.md,
-  },
+  // header style now handled by ScreenHeader component
   tabs: {
     flexDirection: 'row',
     backgroundColor: theme.colors.surface,

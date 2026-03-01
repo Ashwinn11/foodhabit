@@ -11,17 +11,17 @@ import { useAppStore } from '../../store/useAppStore';
 import { analyticsService } from '../../services/analyticsService';
 
 const SYMPTOMS = [
-  { id: 'Bloating', icon: 'Wind' as LucideIconName, color: '#F5C97A' },
-  { id: 'Gas', icon: 'Cloud' as LucideIconName, color: '#8E96A3' },
-  { id: 'Cramping', icon: 'RotateCcw' as LucideIconName, color: '#FF4D4D' },
-  { id: 'Diarrhea', icon: 'ArrowDown' as LucideIconName, color: '#E05D4C' },
-  { id: 'Constipation', icon: 'Lock' as LucideIconName, color: '#8E96A3' },
-  { id: 'Nausea', icon: 'Frown' as LucideIconName, color: '#6DBE8C' },
-  { id: 'Heartburn', icon: 'Flame' as LucideIconName, color: '#FF9D4D' },
-  { id: 'Acid Reflux', icon: 'ArrowUp' as LucideIconName, color: '#FF9D4D' },
-  { id: 'Brain Fog', icon: 'Cloud' as LucideIconName, color: '#A855F7' },
-  { id: 'Fatigue', icon: 'BatteryLow' as LucideIconName, color: '#E05D4C' },
-  { id: 'Urgency', icon: 'Zap' as LucideIconName, color: '#FF4D4D' },
+  { id: 'Bloating', icon: 'Wind' as LucideIconName, color: '#D4A95A' },
+  { id: 'Gas', icon: 'Cloud' as LucideIconName, color: '#7E8A9A' },
+  { id: 'Cramping', icon: 'RotateCcw' as LucideIconName, color: '#C75050' },
+  { id: 'Diarrhea', icon: 'ArrowDown' as LucideIconName, color: '#B55050' },
+  { id: 'Constipation', icon: 'Lock' as LucideIconName, color: '#7E8A9A' },
+  { id: 'Nausea', icon: 'Frown' as LucideIconName, color: '#5AAF7B' },
+  { id: 'Heartburn', icon: 'Flame' as LucideIconName, color: '#C98A45' },
+  { id: 'Acid Reflux', icon: 'ArrowUp' as LucideIconName, color: '#C98A45' },
+  { id: 'Brain Fog', icon: 'Cloud' as LucideIconName, color: '#8B6CC4' },
+  { id: 'Fatigue', icon: 'BatteryLow' as LucideIconName, color: '#B55050' },
+  { id: 'Urgency', icon: 'Zap' as LucideIconName, color: '#C75050' },
 ];
 
 export const OnboardingSymptoms: React.FC = () => {
@@ -38,18 +38,16 @@ export const OnboardingSymptoms: React.FC = () => {
   const handleNext = () => {
     updateOnboardingAnswers({ symptoms: selected });
     analyticsService.logObSymptoms(selected);
-    navigation.navigate('OnboardingAnalyzing');
+    navigation.navigate('OnboardingTriggers');
   };
 
   return (
     <OnboardingLayout
-      step={4}
+      step={3}
       scroll
       icon="avocado_bloated"
-      title="What does a rough day feel like?"
-      titleIcon="Flame"
-      titleIconColor="#FF9D4D"
-      subtitle="We'll connect these symptoms to what you're eating, automatically."
+      title="Which reactions should we help you avoid?"
+      subtitle="We'll connect these to specific foods so you know what causes what."
     >
       <View style={styles.container}>
         {selected.length > 0 && (

@@ -44,9 +44,7 @@ import { AuthScreen } from './src/screens/AuthScreen';
 import { OnboardingGoal } from './src/screens/onboarding/OnboardingGoal';
 import { OnboardingCondition } from './src/screens/onboarding/OnboardingCondition';
 import { OnboardingSymptoms } from './src/screens/onboarding/OnboardingSymptoms';
-import { OnboardingAnalyzing } from './src/screens/onboarding/OnboardingAnalyzing';
 import { OnboardingTriggers } from './src/screens/onboarding/OnboardingTriggers';
-import { OnboardingHowItHelps } from './src/screens/onboarding/OnboardingHowItHelps';
 import { OnboardingReviews } from './src/screens/onboarding/OnboardingReviews';
 import { OnboardingFeatures } from './src/screens/onboarding/OnboardingFeatures';
 import { OnboardingCustomPlan } from './src/screens/onboarding/OnboardingCustomPlan';
@@ -138,12 +136,10 @@ const OnboardingStack = () => (
     <Stack.Screen name="OnboardingGoal" component={OnboardingGoal} />
     <Stack.Screen name="OnboardingCondition" component={OnboardingCondition} />
     <Stack.Screen name="OnboardingSymptoms" component={OnboardingSymptoms} />
-    <Stack.Screen name="OnboardingAnalyzing" component={OnboardingAnalyzing} />
     <Stack.Screen name="OnboardingTriggers" component={OnboardingTriggers} />
-    <Stack.Screen name="OnboardingHowItHelps" component={OnboardingHowItHelps} />
-    <Stack.Screen name="OnboardingReviews" component={OnboardingReviews} />
-    <Stack.Screen name="OnboardingFeatures" component={OnboardingFeatures} />
     <Stack.Screen name="OnboardingCustomPlan" component={OnboardingCustomPlan} />
+    <Stack.Screen name="OnboardingFeatures" component={OnboardingFeatures} />
+    <Stack.Screen name="OnboardingReviews" component={OnboardingReviews} />
     <Stack.Screen name="OnboardingPaywall" component={OnboardingPaywall} />
   </Stack.Navigator>
 );

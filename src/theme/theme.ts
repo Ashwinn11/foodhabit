@@ -1,48 +1,48 @@
 export const theme = {
   colors: {
     /* =====================
-       Backgrounds 
+       Backgrounds
        ===================== */
-    background: '#060A14', // 
-    surface: 'rgba(255,255,255,0.03)',
-    surfaceElevated: 'rgba(255,255,255,0.05)',
-    surfaceHover: 'rgba(255,255,255,0.07)',
+    background: '#0B1219',
+    surface: 'rgba(255,255,255,0.035)',
+    surfaceElevated: 'rgba(255,255,255,0.055)',
+    surfaceHover: 'rgba(255,255,255,0.075)',
     surfaceProminent: 'rgba(255,255,255,0.12)',
-    border: 'rgba(255,255,255,0.06)',
+    border: 'rgba(255,255,255,0.07)',
     borderSubtle: 'rgba(255,255,255,0.04)',
-    borderProminent: 'rgba(255,255,255,0.18)',
+    borderProminent: 'rgba(255,255,255,0.16)',
 
     /* =====================
        Brand
        ===================== */
-    primary: '#FF4D4D',
-    primaryForeground: '#040508',
-    primaryMuted: 'rgba(255,77,77,0.18)',
+    primary: '#2EBD81',
+    primaryForeground: '#0B1219',
+    primaryMuted: 'rgba(46,189,129,0.15)',
 
     /* =====================
        Semantic
        ===================== */
-    safe: '#6DBE8C',
-    safeMuted: 'rgba(109,190,140,0.18)',
-    caution: '#F5C97A',
-    cautionMuted: 'rgba(245,201,122,0.18)',
-    danger: '#E05D4C',
-    dangerMuted: 'rgba(224,93,76,0.18)',
+    safe: '#5AAF7B',
+    safeMuted: 'rgba(90,175,123,0.14)',
+    caution: '#D4A95A',
+    cautionMuted: 'rgba(212,169,90,0.14)',
+    danger: '#C75050',
+    dangerMuted: 'rgba(199,80,80,0.14)',
 
     /* =====================
        Text
        ===================== */
-    text: '#ECEEF3',
-    textSecondary: '#8E96A3',
-    textTertiary: 'rgba(142,150,163,0.8)',
+    text: '#E2E6ED',
+    textSecondary: '#7E8A9A',
+    textTertiary: 'rgba(126,138,154,0.7)',
 
     /* =====================
        Utility
        ===================== */
-    success: '#6DBE8C',
-    warning: '#F5C97A',
-    error: '#E05D4C',
-    overlay: 'rgba(4,5,8,0.88)',
+    success: '#5AAF7B',
+    warning: '#D4A95A',
+    error: '#C75050',
+    overlay: 'rgba(8,14,20,0.88)',
   },
 
   fonts: {
@@ -77,21 +77,21 @@ export const theme = {
     soft: {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.28,
+      shadowOpacity: 0.32,
       shadowRadius: 4,
       elevation: 3,
     },
     medium: {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.38,
+      shadowOpacity: 0.42,
       shadowRadius: 8,
       elevation: 6,
     },
     glow: {
-      shadowColor: '#FF4D4D',
+      shadowColor: '#2EBD81',
       shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.25,
+      shadowOpacity: 0.22,
       shadowRadius: 14,
       elevation: 10,
     },

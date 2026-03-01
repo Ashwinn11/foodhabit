@@ -13,12 +13,11 @@ import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../../theme/theme';
 import { ProgressBar } from '../../components/ProgressBar';
-import { Icon, LucideIconName } from '../../components/Icon';
-import { IconContainer } from '../../components/IconContainer';
+import { Icon } from '../../components/Icon';
 import { Text } from '../../components/Text';
 import { Icon3D, Icon3DName } from '../../components/Icon3D';
 
-const TOTAL_STEPS = 10;
+const TOTAL_STEPS = 7;
 
 interface OnboardingLayoutProps {
   step: number;
@@ -28,8 +27,6 @@ interface OnboardingLayoutProps {
   style?: ViewStyle;
   icon?: Icon3DName;
   title?: string;
-  titleIcon?: LucideIconName;
-  titleIconColor?: string;
   subtitle?: string;
 }
 
@@ -41,8 +38,6 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   style,
   icon,
   title,
-  titleIcon,
-  titleIconColor,
   subtitle,
 }) => {
   const navigation = useNavigation();
@@ -73,11 +68,6 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
           </View>
         )}
         <View style={styles.textBlock}>
-          {titleIcon && (
-            <View style={[styles.titleBadge, { backgroundColor: `${titleIconColor ?? theme.colors.primary}15` }]}>
-              <Icon name={titleIcon} color={titleIconColor ?? theme.colors.primary} size={22} />
-            </View>
-          )}
           {title && (
             <Text variant="h1" style={styles.titleText}>
               {title}
@@ -167,15 +157,13 @@ const styles = StyleSheet.create({
   },
   headerBlock: {
     alignItems: 'center',
-    gap: theme.spacing.lg,
+    gap: theme.spacing.md,
     marginBottom: theme.spacing.md,
-    marginTop: theme.spacing.xl,
   },
   iconWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: theme.spacing.xs,
-    minHeight: 140, // Match the Icon3D size to keep layout stable
+    minHeight: 140,
   },
   iconGlow: {
     position: 'absolute',
@@ -192,14 +180,6 @@ const styles = StyleSheet.create({
   textBlock: {
     alignItems: 'center',
     gap: theme.spacing.xs,
-  },
-  titleBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.xs,
   },
   titleText: {
     textAlign: 'center',

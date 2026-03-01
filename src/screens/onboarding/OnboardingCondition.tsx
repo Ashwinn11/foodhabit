@@ -10,16 +10,16 @@ import { useAppStore } from '../../store/useAppStore';
 import { analyticsService } from '../../services/analyticsService';
 
 const CONDITIONS = [
-  { id: 'IBS-D', icon: 'ArrowDown' as LucideIconName, color: '#FF4D4D' },
-  { id: 'IBS-C', icon: 'Lock' as LucideIconName, color: '#FF4D4D' },
-  { id: 'IBS-M', icon: 'RefreshCw' as LucideIconName, color: '#FF4D4D' },
-  { id: 'GERD', icon: 'Flame' as LucideIconName, color: '#FF9D4D' },
-  { id: 'Celiac Disease', icon: 'Wheat' as LucideIconName, color: '#F5C97A' },
-  { id: "Crohn's Disease", icon: 'Activity' as LucideIconName, color: '#E05D4C' },
-  { id: 'Lactose Intolerant', icon: 'Milk' as LucideIconName, color: '#8E96A3' },
-  { id: 'SIBO', icon: 'Microscope' as LucideIconName, color: '#6DBE8C' },
-  { id: 'Gastroparesis', icon: 'Clock' as LucideIconName, color: '#4D94FF' },
-  { id: 'Just Bloating / Unsure', icon: 'HelpCircle' as LucideIconName, color: '#8E96A3' },
+  { id: 'IBS-D', icon: 'ArrowDown' as LucideIconName, color: '#C75050' },
+  { id: 'IBS-C', icon: 'Lock' as LucideIconName, color: '#C75050' },
+  { id: 'IBS-M', icon: 'RefreshCw' as LucideIconName, color: '#C75050' },
+  { id: 'GERD', icon: 'Flame' as LucideIconName, color: '#C98A45' },
+  { id: 'Celiac Disease', icon: 'Wheat' as LucideIconName, color: '#D4A95A' },
+  { id: "Crohn's Disease", icon: 'Activity' as LucideIconName, color: '#B55050' },
+  { id: 'Lactose Intolerant', icon: 'Milk' as LucideIconName, color: '#7E8A9A' },
+  { id: 'SIBO', icon: 'Microscope' as LucideIconName, color: '#5AAF7B' },
+  { id: 'Gastroparesis', icon: 'Clock' as LucideIconName, color: '#4A84D4' },
+  { id: 'Just Bloating / Unsure', icon: 'HelpCircle' as LucideIconName, color: '#7E8A9A' },
 ];
 
 export const OnboardingCondition: React.FC = () => {
@@ -42,13 +42,11 @@ export const OnboardingCondition: React.FC = () => {
 
   return (
     <OnboardingLayout
-      step={3}
+      step={2}
       scroll
       icon="avocado_scientist"
-      title="What are you dealing with?"
-      titleIcon="Activity"
-      titleIconColor="#4D94FF"
-      subtitle="The more you tell us, the more precisely we can tell you what's safe to order."
+      title="What should we watch out for?"
+      subtitle="This determines which foods we'll flag as risky for you."
     >
       <View style={styles.container}>
         <View style={styles.pillContainer}>

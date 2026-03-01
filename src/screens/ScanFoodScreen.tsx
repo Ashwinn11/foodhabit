@@ -22,6 +22,7 @@ import { FunLoader } from '../components/FunLoader';
 import { Input } from '../components/Input';
 import { useToast } from '../components/Toast';
 import { AnimatedCameraOverlay } from '../components/fluid/AnimatedCameraOverlay';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { fodmapService } from '../services/fodmapService';
 import type { AnalysisResult, AnalysisResponse } from '../services/fodmapService';
 import { gutService } from '../services/gutService';
@@ -32,9 +33,9 @@ type CameraState = 'idle' | 'processing_extract' | 'processing_analyze' | 'error
 
 function getLevelStyle(level: AnalysisResult['level']): { bg: string; text: string; label: string } {
   switch (level) {
-    case 'safe':    return { bg: theme.colors.safeMuted,   text: theme.colors.safe,    label: 'SAFE' };
+    case 'safe': return { bg: theme.colors.safeMuted, text: theme.colors.safe, label: 'SAFE' };
     case 'caution': return { bg: theme.colors.cautionMuted, text: theme.colors.caution, label: 'CAUTION' };
-    case 'avoid':   return { bg: theme.colors.dangerMuted,  text: theme.colors.danger,  label: 'AVOID' };
+    case 'avoid': return { bg: theme.colors.dangerMuted, text: theme.colors.danger, label: 'AVOID' };
   }
 }
 
@@ -297,27 +298,29 @@ export const ScanFoodScreen: React.FC = () => {
       <StatusBar style="light" />
 
       {/* Header */}
-      <View style={styles.header}>
-        <Text variant="h3">Is This Safe for Me?</Text>
-        <View style={styles.segmented}>
-          {(['camera', 'type'] as Mode[]).map((m) => (
-            <TouchableOpacity
-              key={m}
-              style={[styles.segBtn, mode === m && styles.segBtnActive]}
-              onPress={() => { setMode(m); setResults([]); setRecommendedPick(null); setSelectedFoods(new Set()); setCameraState('idle'); setCapturedImage(null); }}
-            >
-              <Icon
-                name={m === 'camera' ? 'Camera' : 'PenLine'}
-                size={14}
-                color={mode === m ? theme.colors.primaryForeground : theme.colors.textSecondary}
-              />
-              <Text variant="caption" color={mode === m ? theme.colors.primaryForeground : theme.colors.textSecondary}>
-                {m === 'camera' ? 'Camera' : 'Type'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+      <ScreenHeader
+        title="Is This Safe for Me?"
+        below={
+          <View style={styles.segmented}>
+            {(['camera', 'type'] as Mode[]).map((m) => (
+              <TouchableOpacity
+                key={m}
+                style={[styles.segBtn, mode === m && styles.segBtnActive]}
+                onPress={() => { setMode(m); setResults([]); setRecommendedPick(null); setSelectedFoods(new Set()); setCameraState('idle'); setCapturedImage(null); }}
+              >
+                <Icon
+                  name={m === 'camera' ? 'Camera' : 'PenLine'}
+                  size={14}
+                  color={mode === m ? theme.colors.primaryForeground : theme.colors.textSecondary}
+                />
+                <Text variant="caption" color={mode === m ? theme.colors.primaryForeground : theme.colors.textSecondary}>
+                  {m === 'camera' ? 'Camera' : 'Type'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        }
+      />
 
       {/* ── Camera Mode ─────────────────────────────────────────────────── */}
       {mode === 'camera' && (
@@ -329,7 +332,7 @@ export const ScanFoodScreen: React.FC = () => {
           {cameraState === 'idle' && (
             <>
               <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing={facing} />
-              
+
               <View style={styles.cameraOverlay} pointerEvents="none">
                 <Text variant="caption" color="rgba(255,255,255,0.7)" align="center">Point at a menu — we'll tell you what's safe</Text>
                 <Text variant="caption" color="rgba(255,255,255,0.5)" align="center">Works with menus, receipts, and food photos</Text>
@@ -348,9 +351,9 @@ export const ScanFoodScreen: React.FC = () => {
               <AnimatedCameraOverlay />
               <View style={styles.processingDarken}>
                 <Card variant="bordered" style={styles.loaderCard}>
-                  <FunLoader 
-                    icon={cameraState === 'processing_extract' ? "Search" : "Brain"} 
-                    message={cameraState === 'processing_extract' ? "Reading your menu..." : "Checking your gut profile..."} 
+                  <FunLoader
+                    icon={cameraState === 'processing_extract' ? "Search" : "Brain"}
+                    message={cameraState === 'processing_extract' ? "Reading your menu..." : "Checking your gut profile..."}
                   />
                 </Card>
               </View>
@@ -459,8 +462,8 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: theme.spacing.md, padding: theme.spacing.xl },
   flex: { flex: 1 },
 
-  // Header
-  header: { paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.sm, gap: theme.spacing.md },
+  // Header styles handled by ScreenHeader component
+  // Segmented tabs
   segmented: {
     flexDirection: 'row',
     backgroundColor: theme.colors.surface,

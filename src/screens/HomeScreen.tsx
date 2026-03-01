@@ -18,6 +18,7 @@ import { SelectionCard } from '../components/SelectionCard';
 import { Icon, LucideIconName } from '../components/Icon';
 import { useToast } from '../components/Toast';
 import { FluidMoodSlider } from '../components/fluid/FluidMoodSlider';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { TimelineLog } from '../components/fluid/TimelineLog';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -33,15 +34,15 @@ const MOODS = [
 ] as const;
 
 const SYMPTOMS = [
-  { id: 'Bloating', icon: 'Wind' as LucideIconName, color: '#F5C97A' },
-  { id: 'Gas', icon: 'Cloud' as LucideIconName, color: '#8E96A3' },
-  { id: 'Cramping', icon: 'RotateCcw' as LucideIconName, color: '#FF4D4D' },
-  { id: 'Nausea', icon: 'Frown' as LucideIconName, color: '#6DBE8C' },
-  { id: 'Heartburn', icon: 'Flame' as LucideIconName, color: '#FF9D4D' },
-  { id: 'Brain Fog', icon: 'Cloud' as LucideIconName, color: '#A855F7' },
-  { id: 'Fatigue', icon: 'BatteryLow' as LucideIconName, color: '#E05D4C' },
-  { id: 'Diarrhea', icon: 'ArrowDown' as LucideIconName, color: '#E05D4C' },
-  { id: 'Constipation', icon: 'Lock' as LucideIconName, color: '#8E96A3' },
+  { id: 'Bloating', icon: 'Wind' as LucideIconName, color: '#D4A95A' },
+  { id: 'Gas', icon: 'Cloud' as LucideIconName, color: '#7E8A9A' },
+  { id: 'Cramping', icon: 'RotateCcw' as LucideIconName, color: '#C75050' },
+  { id: 'Nausea', icon: 'Frown' as LucideIconName, color: '#5AAF7B' },
+  { id: 'Heartburn', icon: 'Flame' as LucideIconName, color: '#C98A45' },
+  { id: 'Brain Fog', icon: 'Cloud' as LucideIconName, color: '#8B6CC4' },
+  { id: 'Fatigue', icon: 'BatteryLow' as LucideIconName, color: '#B55050' },
+  { id: 'Diarrhea', icon: 'ArrowDown' as LucideIconName, color: '#B55050' },
+  { id: 'Constipation', icon: 'Lock' as LucideIconName, color: '#7E8A9A' },
 ];
 
 export const HomeScreen: React.FC = () => {
@@ -85,12 +86,12 @@ export const HomeScreen: React.FC = () => {
         gutService.getRecentMeals(5),
         user
           ? supabase
-              .from('trigger_foods')
-              .select('food_name, bad_occurrences, confidence')
-              .eq('user_id', user.id)
-              .in('confidence', ['High', 'Medium'])
-              .order('bad_occurrences', { ascending: false })
-              .limit(1)
+            .from('trigger_foods')
+            .select('food_name, bad_occurrences, confidence')
+            .eq('user_id', user.id)
+            .in('confidence', ['High', 'Medium'])
+            .order('bad_occurrences', { ascending: false })
+            .limit(1)
           : Promise.resolve({ data: [] }),
       ]);
 
@@ -140,7 +141,7 @@ export const HomeScreen: React.FC = () => {
       setSelectedSymptoms([]);
       showToast('Gut moment logged!', 'success');
       // Refresh safe foods — good_occurrences may have just crossed the threshold
-      gutService.getSafeFoods().then(setLearnedSafeFoods).catch(() => {});
+      gutService.getSafeFoods().then(setLearnedSafeFoods).catch(() => { });
     } catch {
       showToast('Could not log. Try again.', 'error');
     } finally {
@@ -190,20 +191,17 @@ export const HomeScreen: React.FC = () => {
         }
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Text variant="bodySmall" style={styles.logoText} color={theme.colors.primary}>
-            GutBuddy
-          </Text>
-          <TouchableOpacity hitSlop={12}>
-            <Icon3D name="bell" size={28} />
-          </TouchableOpacity>
-        </View>
+        <ScreenHeader
+          title={`${greeting()}${userName ? `, ${userName}` : ''}`}
+          right={
+            <TouchableOpacity hitSlop={12}>
+              <Icon3D name="bell" size={28} />
+            </TouchableOpacity>
+          }
+        />
 
-        {/* Greeting */}
-        <View style={styles.greeting}>
-          <Text variant="h2">
-            {greeting()}{userName ? `, ${userName}` : ''}
-          </Text>
+        {/* Date subtitle */}
+        <View style={styles.dateRow}>
           <Text variant="caption" color={theme.colors.textSecondary}>
             {todayLabel}
           </Text>
@@ -339,23 +337,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: theme.spacing.xxl,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  dateRow: {
     paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.md,
-  },
-  logoText: {
-    fontFamily: theme.fonts.bold,
-    fontSize: 16,
-    letterSpacing: 0.5,
-  },
-  greeting: {
-    paddingHorizontal: theme.spacing.md,
-    gap: theme.spacing.xxs,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
   triggerAlert: {
     marginHorizontal: theme.spacing.md,

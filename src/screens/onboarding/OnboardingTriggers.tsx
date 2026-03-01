@@ -13,29 +13,29 @@ import { useAppStore } from '../../store/useAppStore';
 import { analyticsService } from '../../services/analyticsService';
 
 const TRIGGER_META: Record<string, { icon: LucideIconName; color: string }> = {
-  'Garlic': { icon: 'Activity', color: '#8E96A3' },
-  'Onion': { icon: 'Activity', color: '#8E96A3' },
-  'Dairy': { icon: 'Milk', color: '#FF9D4D' },
+  'Garlic': { icon: 'Activity', color: '#7E8A9A' },
+  'Onion': { icon: 'Activity', color: '#7E8A9A' },
+  'Dairy': { icon: 'Milk', color: '#C98A45' },
   'Caffeine': { icon: 'Coffee', color: '#8B4513' },
-  'Spicy foods': { icon: 'Flame', color: '#E05D4C' },
-  'Beans': { icon: 'Leaf', color: '#6DBE8C' },
-  'Alcohol': { icon: 'Beer', color: '#F5C97A' },
-  'Red meat': { icon: 'Beef', color: '#E05D4C' },
-  'Processed foods': { icon: 'Package', color: '#8E96A3' },
-  'White bread': { icon: 'Cloud', color: '#F5C97A' },
-  'Bananas': { icon: 'Citrus', color: '#F5C97A' },
-  'Gluten': { icon: 'Wheat', color: '#F5C97A' },
-  'Artificial sweeteners': { icon: 'Sparkles', color: '#A855F7' },
+  'Spicy foods': { icon: 'Flame', color: '#B55050' },
+  'Beans': { icon: 'Leaf', color: '#5AAF7B' },
+  'Alcohol': { icon: 'Beer', color: '#D4A95A' },
+  'Red meat': { icon: 'Beef', color: '#B55050' },
+  'Processed foods': { icon: 'Package', color: '#7E8A9A' },
+  'White bread': { icon: 'Cloud', color: '#D4A95A' },
+  'Bananas': { icon: 'Citrus', color: '#D4A95A' },
+  'Gluten': { icon: 'Wheat', color: '#D4A95A' },
+  'Artificial sweeteners': { icon: 'Sparkles', color: '#8B6CC4' },
   'Coffee': { icon: 'Coffee', color: '#8B4513' },
-  'Citrus': { icon: 'Citrus', color: '#F5C97A' },
-  'Tomatoes': { icon: 'Apple', color: '#E05D4C' },
+  'Citrus': { icon: 'Citrus', color: '#D4A95A' },
+  'Tomatoes': { icon: 'Apple', color: '#B55050' },
   'Chocolate': { icon: 'Egg', color: '#8B4513' },
-  'Wheat': { icon: 'Wheat', color: '#F5C97A' },
-  'Barley': { icon: 'Wheat', color: '#F5C97A' },
-  'Rye': { icon: 'Wheat', color: '#F5C97A' },
-  'Oats': { icon: 'Wheat', color: '#F5C97A' },
-  'High-fiber foods': { icon: 'Leaf', color: '#6DBE8C' },
-  'Raw vegetables': { icon: 'Leaf', color: '#6DBE8C' },
+  'Wheat': { icon: 'Wheat', color: '#D4A95A' },
+  'Barley': { icon: 'Wheat', color: '#D4A95A' },
+  'Rye': { icon: 'Wheat', color: '#D4A95A' },
+  'Oats': { icon: 'Wheat', color: '#D4A95A' },
+  'High-fiber foods': { icon: 'Leaf', color: '#5AAF7B' },
+  'Raw vegetables': { icon: 'Leaf', color: '#5AAF7B' },
 };
 
 // Suggested triggers by condition/symptom
@@ -88,18 +88,16 @@ export const OnboardingTriggers: React.FC = () => {
     const allTriggers = [...selected, ...custom];
     updateOnboardingAnswers({ knownTriggers: allTriggers });
     analyticsService.logObTriggers(allTriggers);
-    navigation.navigate('OnboardingHowItHelps');
+    navigation.navigate('OnboardingCustomPlan');
   };
 
   return (
     <OnboardingLayout
-      step={6}
+      step={4}
       scroll
       icon="avocado_caution"
-      title="Foods that fight back?"
-      titleIcon="AlertCircle"
-      titleIconColor="#E05D4C"
-      subtitle="Select what you already suspect. We'll confirm or clear them over time."
+      title="Any foods you already know are bad?"
+      subtitle="We'll auto-flag these every time you scan a menu or check a dish."
     >
       <View style={styles.container}>
         {/* Suggested */}

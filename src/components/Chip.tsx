@@ -59,19 +59,19 @@ export const Chip: React.FC<ChipProps> = ({
   const getChipStyle = (): ViewStyle => {
     if (variant === 'status' && status) {
       const statusStyles: Record<ChipStatus, ViewStyle> = {
-        safe: { backgroundColor: 'rgba(109, 190, 140, 0.15)', borderColor: 'rgba(109, 190, 140, 0.4)' },
-        caution: { backgroundColor: 'rgba(245, 201, 122, 0.15)', borderColor: 'rgba(245, 201, 122, 0.4)' },
-        avoid: { backgroundColor: 'rgba(224, 93, 76, 0.15)', borderColor: 'rgba(224, 93, 76, 0.4)' },
+        safe: { backgroundColor: 'rgba(90, 175, 123, 0.12)', borderColor: 'rgba(90, 175, 123, 0.35)' },
+        caution: { backgroundColor: 'rgba(212, 169, 90, 0.12)', borderColor: 'rgba(212, 169, 90, 0.35)' },
+        avoid: { backgroundColor: 'rgba(199, 80, 80, 0.12)', borderColor: 'rgba(199, 80, 80, 0.35)' },
       };
       return statusStyles[status];
     }
     if (variant === 'selectable' && selected) {
-      return { 
-        backgroundColor: 'rgba(255, 77, 77, 0.15)', 
+      return {
+        backgroundColor: 'rgba(46, 189, 129, 0.12)',
         borderColor: theme.colors.primary,
         shadowColor: theme.colors.primary,
         shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.18,
         shadowRadius: 8,
         elevation: 4,
       };

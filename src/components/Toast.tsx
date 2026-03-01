@@ -24,7 +24,7 @@ interface ToastContextValue {
   showToast: (message: string, type?: ToastType) => void;
 }
 
-const ToastContext = createContext<ToastContextValue>({ showToast: () => {} });
+const ToastContext = createContext<ToastContextValue>({ showToast: () => { } });
 
 export const useToast = () => useContext(ToastContext);
 
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#111624',
+    backgroundColor: '#111A26',
     borderRadius: theme.radius.lg,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm + 2,

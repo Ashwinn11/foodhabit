@@ -13,21 +13,21 @@ import { useAppStore } from '../../store/useAppStore';
 const BENEFITS = [
   {
     icon: 'Search' as LucideIconName,
-    color: '#4D94FF',
+    color: '#4A84D4',
     title: 'Instant menu scan',
     description:
       'Point your camera at any restaurant menu — we tell you exactly what to order.',
   },
   {
     icon: 'Brain' as LucideIconName,
-    color: '#A855F7',
+    color: '#8B6CC4',
     title: 'Built for your gut, not everyone\'s',
     description:
       'Every rating is based on your condition, your triggers, and your history.',
   },
   {
     icon: 'TrendingUp' as LucideIconName,
-    color: '#6DBE8C',
+    color: '#5AAF7B',
     title: 'Triggers revealed automatically',
     description:
       'Log meals and how you feel. We find the patterns so you don\'t have to.',
@@ -63,8 +63,6 @@ export const OnboardingHowItHelps: React.FC = () => {
       scroll
       icon="avocado_magic"
       title="GutBuddy learns your gut"
-      titleIcon="Sparkles"
-      titleIconColor="#A855F7"
     >
       <View style={styles.container}>
         {conditionText ? (
@@ -105,7 +103,7 @@ const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: 4,
-    backgroundColor: 'rgba(255, 77, 77, 0.1)',
+    backgroundColor: 'rgba(46, 189, 129, 0.1)',
     borderRadius: theme.radius.full,
     alignSelf: 'flex-start',
     marginBottom: -8,

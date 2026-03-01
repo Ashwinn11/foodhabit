@@ -18,6 +18,7 @@ import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { BottomSheet } from '../components/BottomSheet';
 import { Skeleton } from '../components/Skeleton';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { Input } from '../components/Input';
 import { SelectionCard } from '../components/SelectionCard';
 import { LucideIconName } from '../components/Icon';
@@ -29,30 +30,30 @@ import { purchasesService } from '../services/purchasesService';
 import { useAppStore } from '../store/useAppStore';
 
 const CONDITIONS = [
-  { id: 'IBS-D', icon: 'Activity' as LucideIconName, color: '#FF4D4D' },
-  { id: 'IBS-C', icon: 'Activity' as LucideIconName, color: '#FF4D4D' },
-  { id: 'IBS-M', icon: 'Activity' as LucideIconName, color: '#FF4D4D' },
-  { id: 'GERD', icon: 'Flame' as LucideIconName, color: '#FF9D4D' },
-  { id: 'Celiac Disease', icon: 'Wheat' as LucideIconName, color: '#F5C97A' },
-  { id: "Crohn's Disease", icon: 'HeartPulse' as LucideIconName, color: '#E05D4C' },
-  { id: 'Lactose Intolerant', icon: 'Milk' as LucideIconName, color: '#8E96A3' },
-  { id: 'SIBO', icon: 'Bacteria' as LucideIconName, color: '#6DBE8C' },
-  { id: 'Gastroparesis', icon: 'Clock' as LucideIconName, color: '#4D94FF' },
-  { id: 'Just Bloating / Unsure', icon: 'HelpCircle' as LucideIconName, color: '#8E96A3' },
+  { id: 'IBS-D', icon: 'Activity' as LucideIconName, color: '#C75050' },
+  { id: 'IBS-C', icon: 'Activity' as LucideIconName, color: '#C75050' },
+  { id: 'IBS-M', icon: 'Activity' as LucideIconName, color: '#C75050' },
+  { id: 'GERD', icon: 'Flame' as LucideIconName, color: '#C98A45' },
+  { id: 'Celiac Disease', icon: 'Wheat' as LucideIconName, color: '#D4A95A' },
+  { id: "Crohn's Disease", icon: 'HeartPulse' as LucideIconName, color: '#B55050' },
+  { id: 'Lactose Intolerant', icon: 'Milk' as LucideIconName, color: '#7E8A9A' },
+  { id: 'SIBO', icon: 'Bacteria' as LucideIconName, color: '#5AAF7B' },
+  { id: 'Gastroparesis', icon: 'Clock' as LucideIconName, color: '#4A84D4' },
+  { id: 'Just Bloating / Unsure', icon: 'HelpCircle' as LucideIconName, color: '#7E8A9A' },
 ];
 
 const SYMPTOMS = [
-  { id: 'Bloating', icon: 'Wind' as LucideIconName, color: '#F5C97A' },
-  { id: 'Gas', icon: 'Cloud' as LucideIconName, color: '#8E96A3' },
-  { id: 'Cramping', icon: 'RotateCcw' as LucideIconName, color: '#FF4D4D' },
-  { id: 'Diarrhea', icon: 'ArrowDown' as LucideIconName, color: '#E05D4C' },
-  { id: 'Constipation', icon: 'Lock' as LucideIconName, color: '#8E96A3' },
-  { id: 'Nausea', icon: 'Frown' as LucideIconName, color: '#6DBE8C' },
-  { id: 'Heartburn', icon: 'Flame' as LucideIconName, color: '#FF9D4D' },
-  { id: 'Acid Reflux', icon: 'ArrowUp' as LucideIconName, color: '#FF9D4D' },
-  { id: 'Brain Fog', icon: 'Cloud' as LucideIconName, color: '#A855F7' },
-  { id: 'Fatigue', icon: 'BatteryLow' as LucideIconName, color: '#E05D4C' },
-  { id: 'Urgency', icon: 'Zap' as LucideIconName, color: '#FF4D4D' },
+  { id: 'Bloating', icon: 'Wind' as LucideIconName, color: '#D4A95A' },
+  { id: 'Gas', icon: 'Cloud' as LucideIconName, color: '#7E8A9A' },
+  { id: 'Cramping', icon: 'RotateCcw' as LucideIconName, color: '#C75050' },
+  { id: 'Diarrhea', icon: 'ArrowDown' as LucideIconName, color: '#B55050' },
+  { id: 'Constipation', icon: 'Lock' as LucideIconName, color: '#7E8A9A' },
+  { id: 'Nausea', icon: 'Frown' as LucideIconName, color: '#5AAF7B' },
+  { id: 'Heartburn', icon: 'Flame' as LucideIconName, color: '#C98A45' },
+  { id: 'Acid Reflux', icon: 'ArrowUp' as LucideIconName, color: '#C98A45' },
+  { id: 'Brain Fog', icon: 'Cloud' as LucideIconName, color: '#8B6CC4' },
+  { id: 'Fatigue', icon: 'BatteryLow' as LucideIconName, color: '#B55050' },
+  { id: 'Urgency', icon: 'Zap' as LucideIconName, color: '#C75050' },
 ];
 
 type EditSheet = 'condition' | 'symptoms' | 'triggers' | null;
@@ -214,14 +215,13 @@ export const ProfileScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar style="light" />
+      <ScreenHeader title="My Profile" />
 
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <Text variant="h3" style={styles.pageTitle}>My Profile</Text>
 
         {/* User section */}
         <Card variant="bordered" style={styles.userCard}>
@@ -532,9 +532,6 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     paddingBottom: theme.spacing.xxxl,
     gap: theme.spacing.lg,
-  },
-  pageTitle: {
-    marginBottom: theme.spacing.xs,
   },
   userCard: {},
   userRow: {

@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   variant_glow: {
-    backgroundColor: 'rgba(255, 77, 77, 0.08)',
+    backgroundColor: 'rgba(46, 189, 129, 0.06)',
     borderWidth: 1,
     borderColor: theme.colors.primary,
     ...theme.shadows.glow,

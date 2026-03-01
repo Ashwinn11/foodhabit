@@ -28,7 +28,6 @@ export const OnboardingCustomPlan: React.FC = () => {
   const navigation = useNavigation<any>();
   const answers = useAppStore((s) => s.onboardingAnswers);
   const updateOnboardingAnswers = useAppStore((s) => s.updateOnboardingAnswers);
-  const variant = useAppStore((s) => s.onboardingVariant) ?? 'A';
 
   const [phase, setPhase] = useState<'loading' | 'reveal'>('loading');
   const [messageIndex, setMessageIndex] = useState(0);
@@ -137,29 +136,27 @@ export const OnboardingCustomPlan: React.FC = () => {
   const conditionDisplay = answers.condition?.split(',')[0]?.trim() || 'your gut';
   const triggersDisplay = answers.knownTriggers?.slice(0, 3).join(', ') || 'None yet';
   const goalLabels: Record<string, string> = {
-    bloating: 'Stop feeling bloated',
+    eating_out: 'Know what to order',
     triggers: 'Find my triggers',
-    eating_out: 'Eat out safely',
+    ordering: 'Check if my order is safe',
     condition: 'Manage my condition',
   };
   const goalDisplay = goalLabels[answers.goal ?? ''] ?? answers.goal ?? 'Feel better';
 
   const layoutProps = phase === 'loading'
     ? {
-        icon: "avocado_thinking" as const, // Consistent icon during loading
-        title: "Building your plan...",
-        subtitle: "Applying GutBuddy intelligence to your profile.",
-      }
+      icon: "avocado_thinking" as const,
+      title: "Building your food safety profile...",
+      subtitle: "Matching foods against your condition and triggers.",
+    }
     : {
-        icon: "avocado_success" as const,
-        title: "Your gut plan is ready",
-        titleIcon: "Sparkles" as const,
-        titleIconColor: "#A855F7",
-        subtitle: "Here's your personal guide to eating out safely.",
-      };
+      icon: "avocado_success" as const,
+      title: "Your food safety profile is ready",
+      subtitle: `Personalized for ${conditionDisplay}. Here's your profile and how you'll use it.`,
+    };
 
   return (
-    <OnboardingLayout step={10} showBack={false} scroll {...layoutProps}>
+    <OnboardingLayout step={6} showBack={false} scroll {...layoutProps}>
       <View style={styles.container}>
         {phase === 'loading' ? (
           <View style={styles.loadingSection}>
@@ -177,7 +174,7 @@ export const OnboardingCustomPlan: React.FC = () => {
             <View style={styles.summaryCards}>
               <Card variant="bordered" style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
-                  <IconContainer name="Activity" size={40} iconSize={20} color="#4D94FF" />
+                  <IconContainer name="Activity" size={40} iconSize={20} color="#4A84D4" />
                   <View style={styles.summaryText}>
                     <Text variant="caption" color={theme.colors.textTertiary}>Your condition</Text>
                     <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
@@ -189,7 +186,7 @@ export const OnboardingCustomPlan: React.FC = () => {
 
               <Card variant="bordered" style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
-                  <IconContainer name="AlertTriangle" size={40} iconSize={20} color="#E05D4C" />
+                  <IconContainer name="AlertTriangle" size={40} iconSize={20} color="#B55050" />
                   <View style={styles.summaryText}>
                     <Text variant="caption" color={theme.colors.textTertiary}>Foods to watch</Text>
                     <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }} numberOfLines={1}>
@@ -202,7 +199,7 @@ export const OnboardingCustomPlan: React.FC = () => {
               {safeFoods.length > 0 && (
                 <Card variant="bordered" style={styles.summaryCard}>
                   <View style={styles.summaryRow}>
-                    <IconContainer name="Leaf" size={40} iconSize={20} color="#6DBE8C" />
+                    <IconContainer name="Leaf" size={40} iconSize={20} color="#5AAF7B" />
                     <View style={styles.summaryText}>
                       <Text variant="caption" color={theme.colors.textTertiary}>Safe to eat</Text>
                       <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }} numberOfLines={1}>
@@ -215,7 +212,7 @@ export const OnboardingCustomPlan: React.FC = () => {
 
               <Card variant="bordered" style={styles.summaryCard}>
                 <View style={styles.summaryRow}>
-                  <IconContainer name="Target" size={40} iconSize={20} color="#FF9D4D" />
+                  <IconContainer name="Target" size={40} iconSize={20} color="#C98A45" />
                   <View style={styles.summaryText}>
                     <Text variant="caption" color={theme.colors.textTertiary}>Your goal</Text>
                     <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
@@ -238,12 +235,11 @@ export const OnboardingCustomPlan: React.FC = () => {
             <Button
               variant="primary"
               size="lg"
-              // Variant B: show Reviews right before paywall for social proof
-              onPress={() => navigation.navigate(variant === 'B' ? 'OnboardingReviews' : 'OnboardingPaywall')}
+              onPress={() => navigation.navigate('OnboardingFeatures')}
               fullWidth
               style={styles.cta}
             >
-              Start My Free Trial
+              See How It Works
             </Button>
           </Animated.View>
         )}
@@ -303,6 +299,28 @@ const styles = StyleSheet.create({
   motivational: {
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  featuresSection: {
+    gap: theme.spacing.sm,
+  },
+  featuresLabel: {
+    fontFamily: theme.fonts.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontSize: 11,
+    marginBottom: theme.spacing.xs,
+  },
+  featureCard: {
+    padding: theme.spacing.md,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  featureText: {
+    flex: 1,
+    gap: 2,
   },
   cta: {
     marginTop: theme.spacing.sm,

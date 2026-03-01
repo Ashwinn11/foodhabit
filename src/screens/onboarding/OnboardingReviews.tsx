@@ -9,7 +9,6 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Icon } from '../../components/Icon';
 import { Icon3D } from '../../components/Icon3D';
-import { useAppStore } from '../../store/useAppStore';
 
 const REVIEWS = [
   {
@@ -45,7 +44,6 @@ const StarRow: React.FC<{ count: number }> = ({ count }) => (
 
 export const OnboardingReviews: React.FC = () => {
   const navigation = useNavigation<any>();
-  const variant = useAppStore((s) => s.onboardingVariant) ?? 'A';
 
   useEffect(() => {
     StoreReview.isAvailableAsync().then((available) => {
@@ -54,7 +52,7 @@ export const OnboardingReviews: React.FC = () => {
   }, []);
 
   return (
-    <OnboardingLayout step={8} scroll icon="avocado_growth" title="Thousands trust their gut to GutBuddy">
+    <OnboardingLayout step={7} scroll icon="avocado_growth" title="Thousands trust their gut to GutBuddy">
       <View style={styles.container}>
         {/* Aggregate rating */}
         <View style={styles.aggregate}>
@@ -99,7 +97,7 @@ export const OnboardingReviews: React.FC = () => {
             variant="primary"
             size="lg"
             // Variant B: this screen is shown after CustomPlan, so go to Paywall
-            onPress={() => navigation.navigate(variant === 'B' ? 'OnboardingPaywall' : 'OnboardingFeatures')}
+            onPress={() => navigation.navigate('OnboardingPaywall')}
             fullWidth
           >
             Continue

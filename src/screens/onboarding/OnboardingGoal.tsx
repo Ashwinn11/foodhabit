@@ -9,32 +9,32 @@ import { analyticsService } from '../../services/analyticsService';
 
 const GOALS = [
   {
-    id: 'bloating',
-    lucideIcon: 'Wind' as const,
-    lucideColor: '#6DBE8C',
-    title: 'Stop feeling bloated',
-    description: 'That heavy, tight feeling after every meal ends here.',
+    id: 'eating_out',
+    lucideIcon: 'Camera' as const,
+    lucideColor: '#5AAF7B',
+    title: 'Know what to order at restaurants',
+    description: 'Scan any menu and instantly see what\'s safe for you.',
   },
   {
     id: 'triggers',
     lucideIcon: 'Search' as const,
-    lucideColor: '#4D94FF',
-    title: "Find what's hurting me",
-    description: 'Pinpoint the exact foods behind your symptoms.',
+    lucideColor: '#4A84D4',
+    title: 'Find out which foods hurt me',
+    description: 'We\'ll track patterns and uncover your hidden triggers.',
   },
   {
-    id: 'eating_out',
-    lucideIcon: 'Utensils' as const,
-    lucideColor: '#FF9D4D',
-    title: 'Eat out confidently',
-    description: 'Order without anxiety at any restaurant.',
+    id: 'ordering',
+    lucideIcon: 'PenLine' as const,
+    lucideColor: '#C98A45',
+    title: 'Check if my order is safe',
+    description: 'Type any dish before ordering — we\'ll tell you if it\'s okay.',
   },
   {
     id: 'condition',
     lucideIcon: 'Activity' as const,
-    lucideColor: '#FF4D4D',
-    title: 'Control my condition',
-    description: 'IBS, GERD, Celiac — backed by dietary science.',
+    lucideColor: '#C75050',
+    title: 'Manage my gut condition',
+    description: 'IBS, GERD, Celiac — eat based on what works for your body.',
   },
 ] as const;
 
@@ -56,28 +56,25 @@ export const OnboardingGoal: React.FC = () => {
 
   return (
     <OnboardingLayout
-      step={2}
+      step={1}
       scroll
       icon="avocado_thinking"
-      title="What's your gut holding you back from?"
-      titleIcon="Target"
-      titleIconColor="#FF4D4D"
-      subtitle="Pick your biggest challenge — we'll build everything around it."
+      title="What would help you the most?"
+      subtitle="We'll personalize everything around your answer."
     >
       <View style={styles.container}>
-        <View style={styles.goalsGrid}>
+        <View style={styles.goalsList}>
           {GOALS.map((goal) => (
-            <View key={goal.id} style={styles.gridItem}>
-              <SelectionCard
-                layout="grid"
-                title={goal.title}
-                description={goal.description}
-                lucideIcon={goal.lucideIcon}
-                lucideColor={goal.lucideColor}
-                selected={selected === goal.id}
-                onPress={() => handleSelect(goal.id)}
-              />
-            </View>
+            <SelectionCard
+              key={goal.id}
+              layout="row"
+              title={goal.title}
+              description={goal.description}
+              lucideIcon={goal.lucideIcon}
+              lucideColor={goal.lucideColor}
+              selected={selected === goal.id}
+              onPress={() => handleSelect(goal.id)}
+            />
           ))}
         </View>
       </View>
@@ -88,15 +85,10 @@ export const OnboardingGoal: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
     gap: theme.spacing.xl,
   },
-  goalsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -theme.spacing.xxs,
-  },
-  gridItem: {
-    width: '50%',
+  goalsList: {
+    gap: theme.spacing.sm,
   },
 });

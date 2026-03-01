@@ -57,17 +57,18 @@ export const OnboardingAnalyzing: React.FC = () => {
 
   const conditionLabel = answers.condition || 'your condition';
   const symptomCount = answers.symptoms?.length ?? 0;
+  const triggerCount = answers.knownTriggers?.length ?? 0;
 
   const items: CheckItem[] = [
     { label: `Condition: ${conditionLabel} noted`, delay: 300 },
-    { label: `${symptomCount} symptom${symptomCount !== 1 ? 's' : ''} mapped`, delay: 900 },
-    { label: 'Mapping foods to your condition...', delay: 1500 },
-    { label: 'Compiling your safe-to-eat list...', delay: 2100 },
+    { label: `${symptomCount} symptom${symptomCount !== 1 ? 's' : ''} mapped to foods`, delay: 900 },
+    { label: `${triggerCount} known trigger${triggerCount !== 1 ? 's' : ''} will be auto-flagged`, delay: 1500 },
+    { label: 'Building your safe-to-eat profile...', delay: 2100 },
   ];
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.navigate('OnboardingTriggers');
+      navigation.navigate('OnboardingCustomPlan');
     }, 3800);
     return () => clearTimeout(timer);
   }, []);
@@ -77,13 +78,11 @@ export const OnboardingAnalyzing: React.FC = () => {
     : 'Gut issues affect millions — but your triggers are unique to you.';
 
   return (
-    <OnboardingLayout 
-      step={5} 
+    <OnboardingLayout
+      step={5}
       showBack={false}
       icon="avocado_detective"
-      title="Analyzing your profile..."
-      titleIcon="Search"
-      titleIconColor="#4D94FF"
+      title="Building your food safety profile..."
       subtitle={personalizedMessage}
     >
       <View style={styles.container}>

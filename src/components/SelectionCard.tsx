@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
   withSpring,
   withTiming,
   interpolateColor,
@@ -29,13 +29,13 @@ interface SelectionCardProps {
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
-export const SelectionCard: React.FC<SelectionCardProps> = ({ 
-  title, 
-  description, 
-  icon, 
+export const SelectionCard: React.FC<SelectionCardProps> = ({
+  title,
+  description,
+  icon,
   lucideIcon,
   lucideColor,
-  selected, 
+  selected,
   onPress,
   layout = 'row'
 }) => {
@@ -109,17 +109,17 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
       >
         <View style={styles.pillContent}>
           {lucideIcon && (
-            <Icon 
-              name={lucideIcon} 
-              color={selected ? theme.colors.primaryForeground : (lucideColor ?? theme.colors.primary)} 
-              size={18} 
+            <Icon
+              name={lucideIcon}
+              color={selected ? theme.colors.primaryForeground : (lucideColor ?? theme.colors.primary)}
+              size={18}
               strokeWidth={2.5}
             />
           )}
-          <Text 
-            variant="bodySmall" 
+          <Text
+            variant="bodySmall"
             style={[
-              { fontFamily: theme.fonts.semibold }, 
+              { fontFamily: theme.fonts.semibold },
               selected ? { color: theme.colors.primaryForeground } : {}
             ]}
           >
@@ -133,7 +133,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
   return (
     <AnimatedTouchable
       style={[
-        layout === 'grid' ? styles.gridCard : styles.rowCard, 
+        layout === 'grid' ? styles.gridCard : styles.rowCard,
         animatedStyle
       ]}
       onPress={handlePress}
@@ -143,7 +143,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
     >
       <Animated.View style={[StyleSheet.absoluteFill, gradientOpacityStyle]} pointerEvents="none">
         <LinearGradient
-          colors={['rgba(255, 77, 77, 0.15)', 'rgba(255, 77, 77, 0.02)']}
+          colors={['rgba(46, 189, 129, 0.12)', 'rgba(46, 189, 129, 0.02)']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -152,12 +152,12 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
 
       <View style={layout === 'grid' ? styles.gridContent : styles.rowContent}>
         {layout === 'grid' && (
-           <Animated.View style={[styles.gridCheckContainer, checkStyle]}>
+          <Animated.View style={[styles.gridCheckContainer, checkStyle]}>
             {selected && (
-              <Icon 
-                name="Check" 
-                size={12} 
-                color={theme.colors.primaryForeground} 
+              <Icon
+                name="Check"
+                size={12}
+                color={theme.colors.primaryForeground}
                 strokeWidth={3}
               />
             )}
@@ -166,8 +166,8 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
 
         {lucideIcon && (
           <View style={styles.iconWrapper}>
-             <IconContainer 
-              name={lucideIcon} 
+            <IconContainer
+              name={lucideIcon}
               color={lucideColor ?? theme.colors.primary}
               variant={selected ? 'solid' : 'muted'}
               size={layout === 'grid' ? 48 : 42}
@@ -194,17 +194,17 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
         {layout === 'row' && (
           <Animated.View style={[styles.checkContainer, checkStyle]}>
             {selected && (
-              <Icon 
-                name="Check" 
-                size={14} 
-                color={theme.colors.primaryForeground} 
+              <Icon
+                name="Check"
+                size={14}
+                color={theme.colors.primaryForeground}
                 strokeWidth={3}
               />
             )}
           </Animated.View>
         )}
       </View>
-      
+
       {/* Glow Effect */}
       {selected && layout !== 'pill' && <View style={styles.glow} pointerEvents="none" />}
     </AnimatedTouchable>
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   },
   glow: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 77, 77, 0.05)',
+    backgroundColor: 'rgba(46, 189, 129, 0.04)',
     zIndex: 1,
   },
 });

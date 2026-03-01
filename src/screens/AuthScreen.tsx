@@ -97,10 +97,10 @@ export const AuthScreen: React.FC = () => {
           GutBuddy
         </Text>
         <Text variant="display" align="center" style={styles.headline}>
-          Eat out freely.{'\n'}Feel good after.
+          Know what's safe{'\n'}before you order.
         </Text>
         <Text variant="body" color={theme.colors.textSecondary} align="center" style={styles.sub}>
-          GutBuddy learns your gut and tells you exactly what to order.
+          Scan a restaurant menu or type any dish. We'll tell you what's safe for your gut.
         </Text>
       </View>
 
