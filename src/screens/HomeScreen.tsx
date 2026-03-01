@@ -17,7 +17,7 @@ import { Button } from '../components/Button';
 import { SelectionCard } from '../components/SelectionCard';
 import { Icon, LucideIconName } from '../components/Icon';
 import { useToast } from '../components/Toast';
-import { FluidMoodSlider } from '../components/fluid/FluidMoodSlider';
+import { MoodCards } from '../components/fluid/MoodCards';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TimelineLog } from '../components/fluid/TimelineLog';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,6 +49,8 @@ export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const { showToast } = useToast();
   const setLearnedSafeFoods = useAppStore((s) => s.setLearnedSafeFoods);
+  const answers = useAppStore((s) => s.onboardingAnswers);
+  const learnedTriggers = useAppStore((s) => s.learnedTriggers);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -207,6 +209,43 @@ export const HomeScreen: React.FC = () => {
           </Text>
         </View>
 
+        {/* Hero Action Card */}
+        <Card variant="glass" style={styles.heroCard}>
+          <Text variant="h3" style={styles.heroTitle}>What are you eating?</Text>
+          <View style={styles.heroActions}>
+            <TouchableOpacity
+              style={styles.heroActionBtn}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate('ScanFood'); }}
+            >
+              <View style={styles.heroIconCircle}>
+                <Icon name="Camera" size={22} color={theme.colors.primary} />
+              </View>
+              <Text variant="caption" color={theme.colors.textSecondary} style={styles.heroActionLabel}>Scan{"\n"}Menu</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.heroActionBtn}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate('ScanFood'); }}
+            >
+              <View style={styles.heroIconCircle}>
+                <Icon name="PenLine" size={22} color={theme.colors.primary} />
+              </View>
+              <Text variant="caption" color={theme.colors.textSecondary} style={styles.heroActionLabel}>Type{"\n"}a Dish</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.heroActionBtn}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate('ScanFood'); }}
+            >
+              <View style={styles.heroIconCircle}>
+                <Icon name="ChefHat" size={22} color={theme.colors.primary} />
+              </View>
+              <Text variant="caption" color={theme.colors.textSecondary} style={styles.heroActionLabel}>Check{"\n"}Recipe</Text>
+            </TouchableOpacity>
+          </View>
+          <Text variant="caption" color={theme.colors.textTertiary} align="center">
+            Personalized for {answers.condition || 'your gut'} · {new Set([...(answers.knownTriggers ?? []), ...learnedTriggers]).size} trigger{new Set([...(answers.knownTriggers ?? []), ...learnedTriggers]).size !== 1 ? 's' : ''} set
+          </Text>
+        </Card>
+
         {/* Trigger alert */}
         {triggerAlert && (
           <Card variant="bordered" style={styles.triggerAlert}>
@@ -216,11 +255,11 @@ export const HomeScreen: React.FC = () => {
                 <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
                   {triggerAlert.food}
                 </Text>{' '}
-                has triggered symptoms{' '}
+                triggered symptoms{' '}
                 <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }}>
                   {triggerAlert.count}×
                 </Text>{' '}
-                recently
+                — auto-flagged on scans
               </Text>
               <TouchableOpacity onPress={() => navigation.navigate('MyGut')}>
                 <Text variant="caption" color={theme.colors.primary}>
@@ -231,16 +270,16 @@ export const HomeScreen: React.FC = () => {
           </Card>
         )}
 
-        {/* Mood slider */}
-        <FluidMoodSlider onMoodSelect={handleMoodTap} />
+        {/* Mood cards */}
+        <MoodCards onMoodSelect={handleMoodTap} />
 
         {/* Today's Meals */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text variant="h3">Today's Meals</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('ScanFood')}>
+            <Text variant="h3">Today</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('MyGut')}>
               <Text variant="caption" color={theme.colors.primary}>
-                Scan Menu
+                See all
               </Text>
             </TouchableOpacity>
           </View>
@@ -250,6 +289,21 @@ export const HomeScreen: React.FC = () => {
               <SkeletonCard />
               <SkeletonCard />
             </View>
+          ) : meals.length === 0 ? (
+            <Card variant="glass" style={styles.emptyState}>
+              <Icon name="Camera" size={36} color={theme.colors.textTertiary} />
+              <Text variant="body" color={theme.colors.textSecondary} align="center">
+                Scan your first menu to get started{"\n"}or type a dish you're about to eat
+              </Text>
+              <View style={styles.emptyActions}>
+                <Button variant="primary" size="sm" onPress={() => navigation.navigate('ScanFood')}>
+                  Scan a Menu
+                </Button>
+                <Button variant="secondary" size="sm" onPress={() => navigation.navigate('ScanFood')}>
+                  Type a Dish
+                </Button>
+              </View>
+            </Card>
           ) : (
             <TimelineLog logs={{ meals, gutLogs: [] }} onReLog={handleReLog} />
           )}
@@ -340,7 +394,42 @@ const styles = StyleSheet.create({
   dateRow: {
     paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  heroCard: {
+    marginHorizontal: theme.spacing.md,
     marginBottom: theme.spacing.md,
+    borderColor: 'rgba(46, 189, 129, 0.20)',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  heroTitle: {
+    textAlign: 'center',
+  },
+  heroActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: theme.spacing.xl,
+  },
+  heroActionBtn: {
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    width: 72,
+  },
+  heroIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: theme.radius.full,
+    backgroundColor: 'rgba(46, 189, 129, 0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(46, 189, 129, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroActionLabel: {
+    textAlign: 'center',
+    fontFamily: theme.fonts.medium,
+    lineHeight: 16,
   },
   triggerAlert: {
     marginHorizontal: theme.spacing.md,
@@ -380,6 +469,7 @@ const styles = StyleSheet.create({
   },
   section: {
     paddingHorizontal: theme.spacing.md,
+    marginTop: theme.spacing.md,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -388,6 +478,15 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   skeletons: {
+    gap: theme.spacing.sm,
+  },
+  emptyState: {
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    paddingVertical: theme.spacing.xl,
+  },
+  emptyActions: {
+    flexDirection: 'row',
     gap: theme.spacing.sm,
   },
   sheetContent: {

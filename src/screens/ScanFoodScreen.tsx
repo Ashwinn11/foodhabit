@@ -17,7 +17,6 @@ import { Text } from '../components/Text';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Icon } from '../components/Icon';
-import { Icon3D } from '../components/Icon3D';
 import { FunLoader } from '../components/FunLoader';
 import { Input } from '../components/Input';
 import { useToast } from '../components/Toast';
@@ -61,9 +60,15 @@ const ResultsList: React.FC<ResultsListProps> = ({ results, selectedFoods, onTog
 
   if (sorted.length === 0) return null;
 
+  const safeCount = results.filter(r => r.level === 'safe').length;
+
   return (
     <View style={listStyles.container}>
 
+      {/* Summary line */}
+      <Text variant="caption" color={theme.colors.textSecondary} style={listStyles.summary}>
+        {results.length} item{results.length !== 1 ? 's' : ''} found · {safeCount} safe for you
+      </Text>
       {/* ── Healthiest Pick — only shown when there's a non-avoid option ── */}
       {best && (() => {
         const bestLvl = getLevelStyle(best.level);
@@ -140,6 +145,7 @@ const ResultsList: React.FC<ResultsListProps> = ({ results, selectedFoods, onTog
 
 const listStyles = StyleSheet.create({
   container: { gap: theme.spacing.sm },
+  summary: { fontFamily: theme.fonts.medium, marginBottom: theme.spacing.xxs },
   // Best card
   bestCard: { gap: theme.spacing.xs },
   bestTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.xs },
@@ -390,14 +396,10 @@ export const ScanFoodScreen: React.FC = () => {
 
       {/* ── Type Mode ───────────────────────────────────────────────────── */}
       {mode === 'type' && (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.typeContainer}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        >
+        <View style={styles.typeContainer}>
           <View style={styles.typeInputRow}>
             <Input
-              placeholder="Type a food and press +"
+              placeholder="e.g. butter chicken, pad thai"
               value={typeInput}
               onChangeText={setTypeInput}
               onSubmitEditing={handleAddFood}
@@ -429,13 +431,16 @@ export const ScanFoodScreen: React.FC = () => {
           ) : (
             <View style={styles.typeEmpty}>
               <Icon name="Search" size={48} color={theme.colors.textSecondary} />
-              <Text variant="h3" align="center">What are you about to eat?</Text>
+              <Text variant="h3" align="center">Type what you're ordering</Text>
               <Text variant="body" color={theme.colors.textSecondary} align="center">
-                Type any dish or ingredient to see if it's safe for YOUR gut.
+                We'll check if it's safe for your gut.
+              </Text>
+              <Text variant="caption" color={theme.colors.textTertiary} align="center">
+                Try: "butter chicken", "pad thai", "gluten free pizza"
               </Text>
             </View>
           )}
-        </KeyboardAvoidingView>
+        </View>
       )}
 
       {/* ── Log FAB ─────────────────────────────────────────────────────── */}

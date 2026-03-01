@@ -352,6 +352,18 @@ export const MyGutScreen: React.FC = () => {
             })}
           </View>
 
+          {/* Dot legend */}
+          <View style={styles.dotLegend}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: theme.colors.safe }]} />
+              <Text variant="caption" color={theme.colors.textTertiary}>Meal</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: theme.colors.caution }]} />
+              <Text variant="caption" color={theme.colors.textTertiary}>Gut log</Text>
+            </View>
+          </View>
+
           {/* Selected date logs */}
           <View style={styles.dateLogs}>
             <Text variant="bodySmall" style={{ fontFamily: theme.fonts.semibold }} color={theme.colors.textSecondary}>
@@ -368,6 +380,9 @@ export const MyGutScreen: React.FC = () => {
                 <Icon3D name="spiral_calendar" size={56} animated animationType="float" />
                 <Text variant="body" color={theme.colors.textTertiary} align="center">
                   Nothing logged on this day
+                </Text>
+                <Text variant="caption" color={theme.colors.textTertiary} align="center">
+                  Scan a menu or log how you felt
                 </Text>
               </View>
             ) : (
@@ -644,6 +659,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.md,
     paddingVertical: theme.spacing.xl,
+  },
+  dotLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: theme.spacing.lg,
+    paddingVertical: theme.spacing.xs,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xxs,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   logCard: {
     gap: theme.spacing.sm,

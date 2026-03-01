@@ -58,8 +58,8 @@ export const Input: React.FC<InputProps> = ({
   const borderColor = error
     ? theme.colors.danger
     : focused
-    ? theme.colors.primary
-    : theme.colors.border;
+      ? theme.colors.primary
+      : theme.colors.border;
 
   return (
     <View style={[styles.container, style]}>
@@ -100,7 +100,6 @@ export const Input: React.FC<InputProps> = ({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           selectionColor={theme.colors.primary}
-          cursorColor={theme.colors.primary}
         />
         {secure && (
           <TouchableOpacity

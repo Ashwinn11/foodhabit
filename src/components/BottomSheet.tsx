@@ -127,32 +127,32 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   sheet: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#0E1520',
     borderTopLeftRadius: theme.radius.xxl,
     borderTopRightRadius: theme.radius.xxl,
     borderTopWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
     ...theme.shadows.medium,
   },
   handleArea: {
-    paddingTop: theme.spacing.sm,
+    paddingTop: theme.spacing.sm + 2,
     paddingBottom: theme.spacing.xs,
     alignItems: 'center',
   },
   handle: {
-    width: 36,
+    width: 44,
     height: 4,
     borderRadius: theme.radius.full,
-    backgroundColor: theme.colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.20)',
   },
   content: {
     flex: 1,

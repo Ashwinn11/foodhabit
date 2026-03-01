@@ -72,31 +72,29 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   variant_default: {
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.04)',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   variant_elevated: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     ...theme.shadows.medium,
   },
   variant_bordered: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.10)',
   },
   variant_glow: {
-    backgroundColor: 'rgba(46, 189, 129, 0.06)',
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
-    ...theme.shadows.glow,
+    backgroundColor: 'rgba(46, 189, 129, 0.07)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(46, 189, 129, 0.5)',
   },
   variant_glass: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    // Backing blur is handled by the wrapper if needed, but styling provides the visual
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
 });

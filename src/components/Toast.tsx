@@ -57,12 +57,13 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDone: () => void }> = ({
 
   const iconName =
     toast.type === 'success' ? 'CheckCircle2' : toast.type === 'error' ? 'AlertCircle' : 'Info';
-  const iconColor =
+  const accentColor =
     toast.type === 'success' ? theme.colors.safe : toast.type === 'error' ? theme.colors.danger : theme.colors.primary;
 
   return (
     <Animated.View style={[styles.toast, animStyle]}>
-      <Icon name={iconName as any} size={20} color={iconColor} />
+      <View style={[styles.accentBar, { backgroundColor: accentColor }]} />
+      <Icon name={iconName as any} size={20} color={accentColor} />
       <Text variant="bodySmall" style={styles.message} numberOfLines={2}>
         {toast.message}
       </Text>
@@ -109,17 +110,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#111A26',
     borderRadius: theme.radius.lg,
-    paddingHorizontal: theme.spacing.md,
+    paddingLeft: 0,
+    paddingRight: theme.spacing.md,
     paddingVertical: theme.spacing.sm + 2,
     maxWidth: '85%',
     gap: theme.spacing.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.6,
     shadowRadius: 15,
     elevation: 10,
+    overflow: 'hidden',
+  },
+  accentBar: {
+    width: 4,
+    alignSelf: 'stretch',
+    borderTopLeftRadius: theme.radius.lg,
+    borderBottomLeftRadius: theme.radius.lg,
+    marginRight: theme.spacing.sm,
   },
   message: {
     flex: 1,

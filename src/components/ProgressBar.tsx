@@ -49,5 +49,10 @@ const styles = StyleSheet.create({
   fill: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.radius.full,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 2,
   },
 });

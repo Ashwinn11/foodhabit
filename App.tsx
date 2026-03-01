@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
@@ -64,16 +64,45 @@ const Tab = createBottomTabNavigator();
 
 const GutBuddyTheme = {
   ...DefaultTheme,
-  dark: true,
   colors: {
     ...DefaultTheme.colors,
     primary: theme.colors.primary,
     background: theme.colors.background,
-    card: theme.colors.surface,
+    card: theme.colors.background,
     text: theme.colors.text,
     border: theme.colors.border,
     notification: theme.colors.primary,
   },
+};
+
+const ScanTabButton: React.FC<any> = ({ children, onPress, accessibilityState }) => {
+  const focused = accessibilityState?.selected;
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      style={{
+        top: -12,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <View
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          backgroundColor: focused ? theme.colors.primary : 'rgba(46, 189, 129, 0.15)',
+          borderWidth: focused ? 0 : 1.5,
+          borderColor: 'rgba(46, 189, 129, 0.4)',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        {children}
+      </View>
+    </TouchableOpacity>
+  );
 };
 
 const MainTabs = () => (
@@ -364,7 +393,7 @@ export default function App() {
                 </>
               )}
             </Stack.Navigator>
-            <StatusBar style="light" translucent backgroundColor="transparent" />
+            <StatusBar style="light" />
           </NavigationContainer>
         </ToastProvider>
       </SafeAreaProvider>

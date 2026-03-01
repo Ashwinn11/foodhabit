@@ -142,10 +142,20 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const saveEdit = async () => {
+    // Flush any pending trigger input that wasn't submitted via Return key
+    let finalTriggers = editTriggers;
+    if (editSheet === 'triggers' && triggerInput.trim()) {
+      const t = triggerInput.trim();
+      if (!editTriggers.includes(t)) {
+        finalTriggers = [...editTriggers, t];
+      }
+      setTriggerInput('');
+    }
+
     const updates: any = {};
     if (editSheet === 'condition') updates.condition = editConditions.join(', ');
     if (editSheet === 'symptoms') updates.symptoms = editSymptoms;
-    if (editSheet === 'triggers') updates.knownTriggers = editTriggers;
+    if (editSheet === 'triggers') updates.knownTriggers = finalTriggers;
 
     updateOnboardingAnswers(updates);
 
@@ -248,7 +258,7 @@ export const ProfileScreen: React.FC = () => {
         {/* Health Profile */}
         <View style={styles.section}>
           <Text variant="label" color={theme.colors.textTertiary} style={styles.sectionTitle}>
-            My Gut Profile
+            My Food Safety Profile
           </Text>
           <Card variant="bordered" style={styles.listCard}>
             <ProfileRow
@@ -547,6 +557,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    borderWidth: 2.5,
+    borderColor: 'rgba(46, 189, 129, 0.5)',
   },
   userInfo: {
     flex: 1,
