@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, TrendingDown, UtensilsCrossed } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
-import { GutBuddyMascot } from '@/components/mascot/GutBuddy';
+import AnimatedMascot from '@/components/AnimatedMascot';
 import { ProgressDots } from '@/components/ui/ProgressDots';
 import { colors } from '@/theme';
 
@@ -34,7 +34,7 @@ export default function WelcomeScreen(): React.JSX.Element {
                         paddingBottom: 32,
                     }}
                 >
-                    <GutBuddyMascot expression="happy" size={100} />
+                    <AnimatedMascot expression="happy" size={100} />
 
                     <Text
                         variant="heading"

@@ -13,7 +13,7 @@ import Animated, { useAnimatedProps, useSharedValue, withTiming, Easing } from '
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
-import { GutBuddyMascot } from '@/components/mascot/GutBuddy';
+import AnimatedMascot from '@/components/AnimatedMascot';
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuthStore } from '@/store/authStore';
@@ -57,10 +57,10 @@ export default function HomeScreen(): React.JSX.Element {
 
     const firstName = profile?.full_name?.split(' ')[0] || 'there';
 
-    const getMascotExpression = (): 'happy' | 'neutral' | 'sad' => {
-        if (gutScore === null) return 'neutral';
+    const getMascotExpression = (): 'happy' | 'okay' | 'sad' => {
+        if (gutScore === null) return 'okay';
         if (gutScore >= 70) return 'happy';
-        if (gutScore >= 40) return 'neutral';
+        if (gutScore >= 40) return 'okay';
         return 'sad';
     };
 
@@ -214,9 +214,9 @@ export default function HomeScreen(): React.JSX.Element {
 
                     {/* Mascot */}
                     <View style={{ alignItems: 'center', marginTop: 20 }}>
-                        <GutBuddyMascot
+                        <AnimatedMascot
                             expression={getMascotExpression()}
-                            size={100}
+                            size={120}
                             message={getMascotMessage()}
                             showBubble={true}
                         />

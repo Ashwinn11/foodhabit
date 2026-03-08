@@ -129,7 +129,7 @@ function InsightsSegment(): React.JSX.Element {
             <EmptyState
                 title="No insights yet"
                 message="Log for a few more days to unlock your first insight. Every meal and symptom log helps."
-                mascotExpression="neutral"
+                mascotExpression="okay"
             />
         );
     }

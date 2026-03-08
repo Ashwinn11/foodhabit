@@ -1,27 +1,52 @@
 import React, { useEffect } from 'react';
-import { ViewStyle, ImageStyle } from 'react-native';
+import { View, ImageStyle } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
     withRepeat,
     withTiming,
     withSequence,
+    withSpring,
     Easing,
 } from 'react-native-reanimated';
+import { Text } from '@/components/ui/Text';
+import { colors } from '@/theme';
 
-// Load the newly generated transparent background mascot
-const MascotImage = require('../../assets/happy.webp');
+// Load assets
+const HAPPY = require('../../assets/happy.webp');
+const OKAY = require('../../assets/okay.webp');
+const SAD = require('../../assets/sad.webp');
+
+export type MascotExpression = 'happy' | 'okay' | 'sad';
 
 interface AnimatedMascotProps {
+    expression?: MascotExpression;
     size?: number;
+    message?: string;
+    showBubble?: boolean;
     style?: ImageStyle;
 }
 
-export default function AnimatedMascot({ size = 150, style }: AnimatedMascotProps) {
+export default function AnimatedMascot({
+    expression = 'happy',
+    size = 150,
+    message,
+    showBubble = false,
+    style
+}: AnimatedMascotProps) {
     // Shared values for creating a smooth floating / breathing effect
     const translateY = useSharedValue(0);
     const scale = useSharedValue(1);
     const rotate = useSharedValue(0);
+    const bubbleScale = useSharedValue(0);
+
+    const getMascotImage = () => {
+        switch (expression) {
+            case 'okay': return OKAY;
+            case 'sad': return SAD;
+            default: return HAPPY;
+        }
+    };
 
     useEffect(() => {
         // Initial "Hi" Waving Gesture
@@ -52,7 +77,13 @@ export default function AnimatedMascot({ size = 150, style }: AnimatedMascotProp
             -1,
             true
         );
-    }, []);
+
+        if (showBubble && message) {
+            bubbleScale.value = withSpring(1, { damping: 14, stiffness: 160 });
+        } else {
+            bubbleScale.value = withTiming(0);
+        }
+    }, [showBubble, message]);
 
     const animatedStyle = useAnimatedStyle(() => {
         return {
@@ -61,19 +92,49 @@ export default function AnimatedMascot({ size = 150, style }: AnimatedMascotProp
                 { scale: scale.value },
                 { rotateZ: `${rotate.value}deg` }
             ],
-            // Transform origin near the bottom center feels more natural for a full body wave
             transformOrigin: 'bottom center',
         };
     });
 
+    const bubbleStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: bubbleScale.value }],
+    }));
+
     return (
-        <Animated.Image
-            source={MascotImage}
-            style={[
-                { width: size, height: size, resizeMode: 'contain' },
-                animatedStyle,
-                style,
-            ]}
-        />
+        <View style={{ alignItems: 'center' }}>
+            {showBubble && message && (
+                <Animated.View
+                    style={[
+                        {
+                            backgroundColor: colors.surface,
+                            borderRadius: 14,
+                            borderBottomRightRadius: 0,
+                            paddingHorizontal: 14,
+                            paddingVertical: 10,
+                            marginBottom: 8,
+                            maxWidth: 200,
+                            shadowColor: 'rgba(44,120,70,0.08)',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 1,
+                            shadowRadius: 8,
+                            elevation: 2,
+                        },
+                        bubbleStyle,
+                    ]}
+                >
+                    <Text variant="caption" color={colors.text2} style={{ lineHeight: 14 }}>
+                        {message}
+                    </Text>
+                </Animated.View>
+            )}
+            <Animated.Image
+                source={getMascotImage()}
+                style={[
+                    { width: size, height: size, resizeMode: 'contain' },
+                    animatedStyle,
+                    style,
+                ]}
+            />
+        </View>
     );
 }

@@ -1,21 +1,21 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/ui/Text';
-import { GutBuddyMascot } from '@/components/mascot/GutBuddy';
+import AnimatedMascot, { MascotExpression } from '@/components/AnimatedMascot';
 import { colors } from '@/theme';
 
 interface EmptyStateProps {
     icon?: React.ReactNode;
     title: string;
     message: string;
-    mascotExpression?: 'happy' | 'neutral' | 'sad';
+    mascotExpression?: MascotExpression;
     action?: React.ReactNode;
 }
 
-export function EmptyState({ icon, title, message, mascotExpression = 'neutral', action }: EmptyStateProps): React.JSX.Element {
+export function EmptyState({ icon, title, message, mascotExpression = 'okay', action }: EmptyStateProps): React.JSX.Element {
     return (
         <View style={{ alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 }}>
-            <GutBuddyMascot expression={mascotExpression} size={80} />
+            <AnimatedMascot expression={mascotExpression} size={80} />
             {icon && (
                 <View style={{ marginTop: 8 }}>{icon}</View>
             )}
