@@ -34,7 +34,7 @@ module.exports = {
 
     // Enforce theme usage
     '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/explicit-function-return-types': [
+    '@typescript-eslint/explicit-function-return-type': [
       'warn',
       {
         allowExpressions: true,

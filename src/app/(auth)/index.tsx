@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Link } from 'expo-router';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
-import { GutBuddyMascot } from '@/components/mascot/GutBuddy';
+import AnimatedMascot from '@/components/AnimatedMascot';
 import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme';
 import Svg, { Path, Rect } from 'react-native-svg';
@@ -68,13 +68,7 @@ export default function AuthScreen(): React.JSX.Element {
                     }}
                 >
                     {/* Mascot */}
-                    <GutBuddyMascot expression="happy" size={140} />
-
-                    {/* App icon */}
-                    <Image
-                        source={require('../../../assets/icon.webp')}
-                        style={{ width: 60, height: 60, borderRadius: 14, marginTop: 16 }}
-                    />
+                    <AnimatedMascot size={140} />
 
                     {/* App Name */}
                     <Text

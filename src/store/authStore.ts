@@ -183,7 +183,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error('No active session');
 
-            const { data, error } = await supabase.functions.invoke('delete-account', {
+            const { data: _, error } = await supabase.functions.invoke('delete-account', {
                 body: { confirmed: true },
             });
 

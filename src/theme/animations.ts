@@ -5,8 +5,6 @@ import {
     withSequence,
     withDelay,
     Easing,
-    type SharedValue,
-    type AnimationCallback,
 } from 'react-native-reanimated';
 
 // Card entrance: translateY 16→0, opacity 0→1, 0.3s
