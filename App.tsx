@@ -31,7 +31,7 @@ import { useFonts } from 'expo-font';
 
 // State and Services
 import { useAppStore } from './src/store/useAppStore';
-import { supabase } from './src/config/supabase';
+import { supabase } from './src/supabase';
 import { analyticsService } from './src/services/analyticsService';
 import { purchasesService, ENTITLEMENT_ID } from './src/services/purchasesService';
 import RevenueCatUI from 'react-native-purchases-ui';
