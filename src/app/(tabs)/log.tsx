@@ -669,7 +669,7 @@ export default function LogScreen(): React.JSX.Element {
 
     return (
         <LinearGradient colors={[colors.gradient.start, colors.gradient.mid]} style={{ flex: 1 }}>
-            <SafeAreaView style={{ flex: 1 }}>
+            <SafeAreaView edges={['top']} style={{ flex: 1 }}>
                 <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
                     <SegmentedControl
                         segments={['Meal', 'Symptoms', 'Today']}

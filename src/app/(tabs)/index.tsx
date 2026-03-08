@@ -169,7 +169,7 @@ export default function HomeScreen(): React.JSX.Element {
     if (loading) {
         return (
             <LinearGradient colors={[colors.gradient.start, colors.gradient.mid, colors.gradient.end]} style={{ flex: 1 }}>
-                <SafeAreaView style={{ flex: 1, paddingHorizontal: 20, gap: 16, paddingTop: 16 }}>
+                <SafeAreaView edges={['top']} style={{ flex: 1, paddingHorizontal: 20, gap: 16, paddingTop: 16 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                         <View style={{ gap: 4 }}>
                             <Skeleton width={120} height={12} />
@@ -191,7 +191,7 @@ export default function HomeScreen(): React.JSX.Element {
             locations={[0, 0.6, 1]}
             style={{ flex: 1 }}
         >
-            <SafeAreaView style={{ flex: 1 }}>
+            <SafeAreaView edges={['top']} style={{ flex: 1 }}>
                 <ScrollView
                     contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary.DEFAULT} />}
@@ -267,8 +267,8 @@ export default function HomeScreen(): React.JSX.Element {
                                             width: '48%',
                                             flexGrow: 1,
                                             padding: 14,
-                                            borderWidth: tile.done ? 1.5 : 0,
-                                            borderColor: tile.done ? colors.primary.DEFAULT : 'transparent',
+                                            borderWidth: 1,
+                                            borderColor: tile.done ? colors.primary.DEFAULT : colors.border,
                                         }}
                                     >
                                         <Pressable

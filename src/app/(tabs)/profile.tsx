@@ -5,7 +5,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     User, Bell, ChevronRight, Shield, Trash2, LogOut,
-    Star, Heart, HelpCircle,
+    Star, Heart, HelpCircle, Activity, Salad, CreditCard,
+    RefreshCcw,
 } from 'lucide-react-native';
 import Purchases from 'react-native-purchases';
 import RevenueCatUI from 'react-native-purchases-ui';
@@ -56,7 +57,12 @@ export default function ProfileScreen(): React.JSX.Element {
     const router = useRouter();
     const { profile, user, signOut, deleteAccount, updateProfile } = useAuthStore();
     const [editingTriggers, setEditingTriggers] = useState(false);
+    const [editingConditions, setEditingConditions] = useState(false);
+    const [editingDiet, setEditingDiet] = useState(false);
+
     const [triggerInput, setTriggerInput] = useState(profile?.known_triggers?.join(', ') || '');
+    const [conditionInput, setConditionInput] = useState(profile?.diagnosed_conditions?.join(', ') || '');
+    const [dietInput, setDietInput] = useState(profile?.diet_type || '');
     const [saving, setSaving] = useState(false);
 
     const handleSignOut = (): void => {
@@ -116,14 +122,50 @@ export default function ProfileScreen(): React.JSX.Element {
     const handleUpdateTriggers = async (): Promise<void> => {
         setSaving(true);
         try {
-            const triggers = triggerInput.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+            const triggers = triggerInput.split(',').map(t => t.trim()).filter(Boolean);
             await updateProfile({ known_triggers: triggers });
             setEditingTriggers(false);
-            haptics.mealLogged();
+            haptics.buttonTap();
         } catch (error) {
             console.error('Update triggers error:', error);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleUpdateConditions = async (): Promise<void> => {
+        setSaving(true);
+        try {
+            const conditions = conditionInput.split(',').map(c => c.trim()).filter(Boolean);
+            await updateProfile({ diagnosed_conditions: conditions });
+            setEditingConditions(false);
+            haptics.buttonTap();
+        } catch (error) {
+            console.error('Update conditions error:', error);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleUpdateDiet = async (): Promise<void> => {
+        setSaving(true);
+        try {
+            await updateProfile({ diet_type: dietInput.trim().toLowerCase() });
+            setEditingDiet(false);
+            haptics.buttonTap();
+        } catch (error) {
+            console.error('Update diet error:', error);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleToggleNotifications = async (val: boolean): Promise<void> => {
+        try {
+            await updateProfile({ notifications_enabled: val });
+            haptics.sliderTick();
+        } catch (error) {
+            console.error('Toggle notifications error:', error);
         }
     };
 
@@ -146,17 +188,25 @@ export default function ProfileScreen(): React.JSX.Element {
 
     return (
         <LinearGradient colors={[colors.gradient.start, colors.gradient.mid]} style={{ flex: 1 }}>
-            <SafeAreaView style={{ flex: 1 }}>
+            <SafeAreaView edges={['top']} style={{ flex: 1 }}>
                 <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
                     {/* Profile Header */}
                     <View style={{ alignItems: 'center', marginTop: 20 }}>
-                        <Avatar name={profile?.full_name} url={profile?.avatar_url} size={80} />
-                        <Text variant="heading" color={colors.text1} style={{ marginTop: 12 }}>
-                            {profile?.full_name || 'Profile'}
+                        <Avatar name={profile?.full_name} url={profile?.avatar_url} size={84} />
+                        <Text variant="heading" color={colors.text1} style={{ marginTop: 16 }}>
+                            {profile?.full_name || 'Gut Buddy User'}
                         </Text>
-                        <Text variant="label" color={colors.text2} style={{ marginTop: 4 }}>
+                        <Text variant="caption" color={colors.text2} style={{ marginTop: 4 }}>
                             {profile?.email}
                         </Text>
+                        <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
+                            <View style={{ backgroundColor: colors.primary.light, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 }}>
+                                <Text variant="caption" color={colors.primary.DEFAULT}>{profile?.biological_sex || 'Not set'}</Text>
+                            </View>
+                            <View style={{ backgroundColor: colors.primary.light, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 }}>
+                                <Text variant="caption" color={colors.primary.DEFAULT}>{profile?.age ? `${profile?.age} years` : 'Age not set'}</Text>
+                            </View>
+                        </View>
                     </View>
 
                     {/* Known Triggers Section */}
@@ -196,31 +246,98 @@ export default function ProfileScreen(): React.JSX.Element {
 
                     {/* Conditions */}
                     <Card animated delay={80} style={{ marginTop: 12 }}>
-                        <Text variant="title" color={colors.text1} style={{ marginBottom: 8 }}>Conditions</Text>
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                            {(profile?.diagnosed_conditions || []).length > 0 ? (
-                                (profile?.diagnosed_conditions || []).map(condition => (
-                                    <View key={condition} style={{ backgroundColor: colors.amber.light, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }}>
-                                        <Text variant="caption" color={colors.amber.DEFAULT}>{condition}</Text>
-                                    </View>
-                                ))
-                            ) : (
-                                <Text variant="label" color={colors.text3}>None specified</Text>
-                            )}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                <Activity size={18} color={colors.text2} />
+                                <Text variant="title" color={colors.text1}>Conditions</Text>
+                            </View>
+                            <Pressable onPress={() => setEditingConditions(!editingConditions)}>
+                                <Text variant="labelBold" color={colors.primary.DEFAULT}>
+                                    {editingConditions ? 'Cancel' : 'Edit'}
+                                </Text>
+                            </Pressable>
                         </View>
+                        {editingConditions ? (
+                            <View style={{ gap: 10 }}>
+                                <Input
+                                    placeholder="IBS-D, Bloating..."
+                                    value={conditionInput}
+                                    onChangeText={setConditionInput}
+                                    multiline
+                                />
+                                <Button title="Save" onPress={handleUpdateConditions} loading={saving} />
+                            </View>
+                        ) : (
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                                {(profile?.diagnosed_conditions || []).length > 0 ? (
+                                    (profile?.diagnosed_conditions || []).map(condition => (
+                                        <View key={condition} style={{ backgroundColor: colors.amber.light, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }}>
+                                            <Text variant="caption" color={colors.amber.DEFAULT}>{condition}</Text>
+                                        </View>
+                                    ))
+                                ) : (
+                                    <Text variant="label" color={colors.text3}>None specified</Text>
+                                )}
+                            </View>
+                        )}
+                    </Card>
+
+                    {/* Diet Type */}
+                    <Card animated delay={120} style={{ marginTop: 12 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                <Salad size={18} color={colors.text2} />
+                                <Text variant="title" color={colors.text1}>Diet Type</Text>
+                            </View>
+                            <Pressable onPress={() => setEditingDiet(!editingDiet)}>
+                                <Text variant="labelBold" color={colors.primary.DEFAULT}>
+                                    {editingDiet ? 'Cancel' : 'Edit'}
+                                </Text>
+                            </Pressable>
+                        </View>
+                        {editingDiet ? (
+                            <View style={{ gap: 10 }}>
+                                <Input
+                                    placeholder="Omnivore, Vegan, Low FODMAP..."
+                                    value={dietInput}
+                                    onChangeText={setDietInput}
+                                />
+                                <Button title="Save" onPress={handleUpdateDiet} loading={saving} />
+                            </View>
+                        ) : (
+                            <View style={{ backgroundColor: colors.primary.light, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, alignSelf: 'flex-start' }}>
+                                <Text variant="labelBold" color={colors.primary.DEFAULT}>
+                                    {profile?.diet_type || 'General'}
+                                </Text>
+                            </View>
+                        )}
                     </Card>
 
                     {/* Settings */}
                     <Card animated delay={160} style={{ marginTop: 16 }}>
                         <Text variant="title" color={colors.text1} style={{ marginBottom: 4 }}>Settings</Text>
 
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.stone }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                <Bell size={18} color={colors.text2} />
+                                <Text variant="body" color={colors.text1}>Notifications</Text>
+                            </View>
+                            <Switch
+                                value={profile?.notifications_enabled}
+                                onValueChange={handleToggleNotifications}
+                                trackColor={{ false: colors.stone, true: colors.primary.DEFAULT }}
+                                thumbColor="#FFFFFF"
+                            />
+                        </View>
+
                         <ProfileRow
-                            icon={<Star size={18} color={colors.amber.DEFAULT} />}
-                            label="Subscription"
+                            icon={<CreditCard size={18} color={colors.amber.DEFAULT} />}
+                            label="Plan & Subscription"
+                            value="GutScan Pro"
                             onPress={handleOpenPaywall}
                         />
                         <ProfileRow
-                            icon={<Star size={18} color={colors.text2} />}
+                            icon={<RefreshCcw size={18} color={colors.text2} />}
                             label="Restore Purchases"
                             onPress={handleRestorePurchases}
                         />

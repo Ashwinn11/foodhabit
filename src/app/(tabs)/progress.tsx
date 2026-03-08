@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, RefreshControl, Pressable } from 'react-native';
+import { View, ScrollView, RefreshControl, Pressable, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     AlertCircle, CheckCircle2, TrendingDown, TrendingUp,
-    Eye, Target, Lock as LockIcon,
+    Eye, Target, Lock as LockIcon, ChevronRight,
 } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
+import { LineChart } from "react-native-gifted-charts";
+import { haptics } from '@/theme/haptics';
 
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
@@ -20,6 +22,8 @@ import { supabase } from '@/lib/supabase';
 import { colors, radii } from '@/theme';
 import { useSubscription } from '@/hooks/useSubscription';
 import type { AiInsight, ProgressSnapshot } from '@/lib/database.types';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const insightBorderColors: Record<string, string> = {
     trigger_watching: colors.red.DEFAULT,
@@ -176,7 +180,9 @@ function ProgressSegment(): React.JSX.Element {
     const [safeFoods, setSafeFoods] = useState<string[]>([]);
     const [topTriggers, setTopTriggers] = useState<AiInsight[]>([]);
     const [loading, setLoading] = useState(true);
-    const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('7d');
+    const [chartData, setChartData] = useState<any[]>([]);
+    const [activeSymptom, setActiveSymptom] = useState<string>('Pain');
+    const [heatmap, setHeatmap] = useState<boolean[]>(Array(90).fill(false));
 
     // Improvement animation
     const improvementWidth = useSharedValue(0);
@@ -232,12 +238,43 @@ function ProgressSegment(): React.JSX.Element {
                 );
                 setSafeFoods([...new Set(allFoods)]);
             }
+
+            // Fetch last 7 days for chart
+            const { data: trendData } = await supabase
+                .from('symptom_logs')
+                .select('logged_at, pain, bloating, urgency')
+                .eq('user_id', user.id)
+                .order('logged_at', { ascending: false })
+                .limit(7);
+
+            if (trendData) {
+                const reversed = [...trendData].reverse();
+                setChartData(reversed.map(d => ({
+                    value: activeSymptom === 'Pain' ? d.pain : activeSymptom === 'Bloating' ? d.bloating : d.urgency,
+                    label: new Date(d.logged_at).toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
+                })));
+            }
+
+            // Heatmap logic — last 90 days
+            const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
+            const { data: recentLogs } = await supabase
+                .from('meal_logs')
+                .select('logged_at')
+                .eq('user_id', user.id)
+                .gte('logged_at', ninetyDaysAgo);
+
+            const loggedDates = new Set((recentLogs || []).map(l => l.logged_at.split('T')[0]));
+            const map = Array(90).fill(false).map((_, i) => {
+                const d = new Date(Date.now() - (89 - i) * 86400000).toISOString().split('T')[0];
+                return loggedDates.has(d);
+            });
+            setHeatmap(map);
         } catch (error) {
             console.error('Progress fetch error:', error);
         } finally {
             setLoading(false);
         }
-    }, [user?.id]);
+    }, [user?.id, activeSymptom]);
 
     useEffect(() => { fetchProgress(); }, [fetchProgress]);
 
@@ -287,6 +324,79 @@ function ProgressSegment(): React.JSX.Element {
                     </>
                 )}
             </LinearGradient>
+
+            {/* Heatmap Section */}
+            <Card>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <Text variant="title" color={colors.text1}>Log Consistency</Text>
+                    <Text variant="caption" color={colors.text3}>Last 90 days</Text>
+                </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3 }}>
+                    {heatmap.map((active, i) => (
+                        <View
+                            key={i}
+                            style={{
+                                width: (SCREEN_WIDTH - 88) / 18,
+                                height: (SCREEN_WIDTH - 88) / 18,
+                                borderRadius: 2,
+                                backgroundColor: active ? colors.primary.DEFAULT : colors.stone,
+                                opacity: active ? 0.8 : 0.3,
+                            }}
+                        />
+                    ))}
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+                    <Text variant="caption" color={colors.text3}>Less</Text>
+                    <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: colors.stone, opacity: 0.3 }} />
+                    <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: colors.primary.DEFAULT }} />
+                    <Text variant="caption" color={colors.text3}>More</Text>
+                </View>
+            </Card>
+
+            {/* Symptom Chart */}
+            <Card>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <Text variant="title" color={colors.text1}>Trends</Text>
+                    <View style={{ flexDirection: 'row', gap: 4 }}>
+                        {['Pain', 'Bloating', 'Urgency'].map(s => (
+                            <Chip
+                                key={s}
+                                label={s}
+                                selected={activeSymptom === s}
+                                onPress={() => { setActiveSymptom(s); haptics.buttonTap(); }}
+                                style={{ paddingHorizontal: 4, height: 24 }}
+                            />
+                        ))}
+                    </View>
+                </View>
+                {chartData.length > 1 ? (
+                    <View style={{ paddingRight: 20 }}>
+                        <LineChart
+                            data={chartData}
+                            width={SCREEN_WIDTH - 80}
+                            height={120}
+                            curvature={0.4}
+                            spacing={35}
+                            color={colors.primary.DEFAULT}
+                            thickness={3}
+                            hideDataPoints
+                            hideRules
+                            yAxisColor="transparent"
+                            xAxisColor={colors.stone}
+                            yAxisTextStyle={{ color: colors.text3, fontSize: 10 }}
+                            xAxisLabelTextStyle={{ color: colors.text3, fontSize: 10 }}
+                            initialSpacing={10}
+                            yAxisThickness={0}
+                            maxValue={10}
+                            noOfSections={2}
+                        />
+                    </View>
+                ) : (
+                    <View style={{ height: 120, alignItems: 'center', justifyContent: 'center' }}>
+                        <Text variant="caption" color={colors.text3}>Not enough data for at least 2 days</Text>
+                    </View>
+                )}
+            </Card>
 
             {/* Symptom Averages */}
             {snapshot && (
@@ -374,7 +484,7 @@ export default function ProgressScreen(): React.JSX.Element {
 
     return (
         <LinearGradient colors={[colors.gradient.start, colors.gradient.mid]} style={{ flex: 1 }}>
-            <SafeAreaView style={{ flex: 1 }}>
+            <SafeAreaView edges={['top']} style={{ flex: 1 }}>
                 <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
                     <SegmentedControl
                         segments={['Insights', 'Progress']}

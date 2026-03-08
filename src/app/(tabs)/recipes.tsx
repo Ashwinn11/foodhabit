@@ -167,7 +167,7 @@ export default function RecipesScreen(): React.JSX.Element {
     if (loading || subLoading) {
         return (
             <LinearGradient colors={['#FFFBF0', '#F0FDF5']} style={{ flex: 1 }}>
-                <SafeAreaView style={{ flex: 1, padding: 20, gap: 12 }}>
+                <SafeAreaView edges={['top']} style={{ flex: 1, padding: 20, gap: 12 }}>
                     <RecipeSkeleton />
                     <RecipeSkeleton />
                 </SafeAreaView>
@@ -177,7 +177,7 @@ export default function RecipesScreen(): React.JSX.Element {
 
     return (
         <LinearGradient colors={['#FFFBF0', '#F0FDF5']} locations={[0, 1]} style={{ flex: 1 }}>
-            <SafeAreaView style={{ flex: 1 }}>
+            <SafeAreaView edges={['top']} style={{ flex: 1 }}>
                 <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
                     <Text variant="heading" color={colors.text1}>Recipes</Text>
 
