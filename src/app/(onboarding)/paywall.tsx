@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Search, TrendingDown, Activity, Check } from 'lucide-react-native';
@@ -15,6 +15,7 @@ import { colors } from '@/theme';
 
 export default function PaywallScreen(): React.JSX.Element {
     const router = useRouter();
+    const navigation = useNavigation();
     const { updateProfile } = useAuthStore();
     const [finishing, setFinishing] = useState(false);
 
@@ -30,13 +31,20 @@ export default function PaywallScreen(): React.JSX.Element {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+        <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
             {/* Native RevenueCat Paywall */}
             <RevenueCatUI.Paywall
                 options={{
                     displayCloseButton: true,
                 }}
-                onDismiss={completeOnboarding}
+                onDismiss={() => {
+                    if (navigation.canGoBack()) {
+                        router.back();
+                    } else {
+                        // Fallback to the onboarding bay if no history
+                        router.replace('/(onboarding)/conditions');
+                    }
+                }}
                 onPurchaseCompleted={completeOnboarding}
                 onRestoreCompleted={completeOnboarding}
             />

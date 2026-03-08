@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, ScrollView, Pressable, Platform } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Bell, Clock } from 'lucide-react-native';
@@ -20,6 +20,7 @@ interface ReminderTime {
 
 export default function NotificationsScreen(): React.JSX.Element {
     const router = useRouter();
+    const navigation = useNavigation();
     const [reminders, setReminders] = useState<ReminderTime[]>([
         { label: 'Breakfast reminder', hour: 8, minute: 0, enabled: true },
         { label: 'Lunch reminder', hour: 12, minute: 30, enabled: true },
@@ -87,9 +88,13 @@ export default function NotificationsScreen(): React.JSX.Element {
         <LinearGradient colors={[colors.gradient.start, colors.gradient.mid]} style={{ flex: 1 }}>
             <SafeAreaView style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
-                    <Pressable onPress={() => router.back()} style={{ padding: 8 }}>
-                        <ChevronLeft size={24} color={colors.text1} />
-                    </Pressable>
+                    {navigation.canGoBack() ? (
+                        <Pressable onPress={() => router.back()} style={{ padding: 8 }}>
+                            <ChevronLeft size={24} color={colors.text1} />
+                        </Pressable>
+                    ) : (
+                        <View style={{ width: 40 }} />
+                    )}
                     <View style={{ flex: 1 }}>
                         <ProgressDots total={5} current={3} />
                     </View>

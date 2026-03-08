@@ -38,11 +38,11 @@ export default function TabLayout(): React.JSX.Element {
                     title: 'Home',
                     tabBarIcon: ({ focused, color }: TabIconProps) => (
                         <View style={{
-                            width: 36, height: 36, borderRadius: 10,
+                            width: 36, height: 36, borderRadius: 12,
                             backgroundColor: focused ? colors.primary.light : 'transparent',
                             alignItems: 'center', justifyContent: 'center',
                         }}>
-                            <Home size={20} color={color} />
+                            <Home size={20} color={color} fill={focused ? colors.primary.DEFAULT : 'none'} fillOpacity={0.15} />
                         </View>
                     ),
                 }}
@@ -53,11 +53,11 @@ export default function TabLayout(): React.JSX.Element {
                     title: 'Log',
                     tabBarIcon: ({ focused, color }: TabIconProps) => (
                         <View style={{
-                            width: 36, height: 36, borderRadius: 10,
-                            backgroundColor: focused ? colors.primary.light : 'transparent',
+                            width: 36, height: 36, borderRadius: 12,
+                            backgroundColor: focused ? colors.dark : 'transparent',
                             alignItems: 'center', justifyContent: 'center',
                         }}>
-                            <Plus size={20} color={color} />
+                            <Plus size={22} color={focused ? '#FFF' : color} strokeWidth={focused ? 3 : 2} />
                         </View>
                     ),
                 }}
@@ -68,11 +68,11 @@ export default function TabLayout(): React.JSX.Element {
                     title: 'Progress',
                     tabBarIcon: ({ focused, color }: TabIconProps) => (
                         <View style={{
-                            width: 36, height: 36, borderRadius: 10,
+                            width: 36, height: 36, borderRadius: 12,
                             backgroundColor: focused ? colors.primary.light : 'transparent',
                             alignItems: 'center', justifyContent: 'center',
                         }}>
-                            <Activity size={20} color={color} />
+                            <Activity size={20} color={color} fill={focused ? colors.primary.DEFAULT : 'none'} fillOpacity={0.15} />
                         </View>
                     ),
                 }}
@@ -83,11 +83,11 @@ export default function TabLayout(): React.JSX.Element {
                     title: 'Recipes',
                     tabBarIcon: ({ focused, color }: TabIconProps) => (
                         <View style={{
-                            width: 36, height: 36, borderRadius: 10,
-                            backgroundColor: focused ? colors.primary.light : 'transparent',
+                            width: 36, height: 36, borderRadius: 12,
+                            backgroundColor: focused ? '#FFF8E8' : 'transparent',
                             alignItems: 'center', justifyContent: 'center',
                         }}>
-                            <UtensilsCrossed size={20} color={color} />
+                            <UtensilsCrossed size={20} color={focused ? colors.amber.DEFAULT : color} strokeWidth={focused ? 2.5 : 2} />
                         </View>
                     ),
                 }}
@@ -98,11 +98,11 @@ export default function TabLayout(): React.JSX.Element {
                     title: 'Profile',
                     tabBarIcon: ({ focused, color }: TabIconProps) => (
                         <View style={{
-                            width: 36, height: 36, borderRadius: 10,
-                            backgroundColor: focused ? colors.primary.light : 'transparent',
+                            width: 36, height: 36, borderRadius: 12,
+                            backgroundColor: focused ? colors.stone : 'transparent',
                             alignItems: 'center', justifyContent: 'center',
                         }}>
-                            <User size={20} color={color} />
+                            <User size={20} color={focused ? colors.text1 : color} fill={focused ? colors.text1 : 'none'} fillOpacity={0.15} />
                         </View>
                     ),
                 }}

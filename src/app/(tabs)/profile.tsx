@@ -133,31 +133,22 @@ export default function ProfileScreen(): React.JSX.Element {
         }
     };
 
-    const handleUpdateConditions = async (): Promise<void> => {
-        setSaving(true);
-        try {
-            const conditions = conditionInput.split(',').map(c => c.trim()).filter(Boolean);
-            await updateProfile({ diagnosed_conditions: conditions });
-            setEditingConditions(false);
-            haptics.buttonTap();
-        } catch (error) {
-            console.error('Update conditions error:', error);
-        } finally {
-            setSaving(false);
-        }
+    const toggleCondition = (condition: string): void => {
+        const current = profile?.diagnosed_conditions || [];
+        const next = current.includes(condition)
+            ? current.filter(c => c !== condition)
+            : [...current, condition];
+
+        updateProfile({ diagnosed_conditions: next }).then(() => {
+            haptics.sliderTick();
+        }).catch(console.error);
     };
 
-    const handleUpdateDiet = async (): Promise<void> => {
-        setSaving(true);
-        try {
-            await updateProfile({ diet_type: dietInput.trim().toLowerCase() });
+    const setDietType = (diet: string): void => {
+        updateProfile({ diet_type: diet }).then(() => {
+            haptics.sliderTick();
             setEditingDiet(false);
-            haptics.buttonTap();
-        } catch (error) {
-            console.error('Update diet error:', error);
-        } finally {
-            setSaving(false);
-        }
+        }).catch(console.error);
     };
 
     const handleToggleNotifications = async (val: boolean): Promise<void> => {
@@ -168,6 +159,9 @@ export default function ProfileScreen(): React.JSX.Element {
             console.error('Toggle notifications error:', error);
         }
     };
+
+    const CONDITIONS = ['IBS-D', 'IBS-C', 'IBS-M', 'Chronic Bloating', 'SIBO', 'Lactose Intolerance', 'Gluten Sensitivity', 'Crohn\'s', 'Colitis', 'Not Diagnosed', 'Other'];
+    const DIET_TYPES = ['Omnivore', 'Vegetarian', 'Vegan', 'Gluten-free', 'Dairy-free', 'Low FODMAP'];
 
     const handleOpenPaywall = async (): Promise<void> => {
         try {
@@ -258,14 +252,18 @@ export default function ProfileScreen(): React.JSX.Element {
                             </Pressable>
                         </View>
                         {editingConditions ? (
-                            <View style={{ gap: 10 }}>
-                                <Input
-                                    placeholder="IBS-D, Bloating..."
-                                    value={conditionInput}
-                                    onChangeText={setConditionInput}
-                                    multiline
-                                />
-                                <Button title="Save" onPress={handleUpdateConditions} loading={saving} />
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                                {CONDITIONS.map(condition => {
+                                    const isSelected = (profile?.diagnosed_conditions || []).includes(condition);
+                                    return (
+                                        <Chip
+                                            key={condition}
+                                            label={condition}
+                                            selected={isSelected}
+                                            onPress={() => toggleCondition(condition)}
+                                        />
+                                    );
+                                })}
                             </View>
                         ) : (
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -296,13 +294,18 @@ export default function ProfileScreen(): React.JSX.Element {
                             </Pressable>
                         </View>
                         {editingDiet ? (
-                            <View style={{ gap: 10 }}>
-                                <Input
-                                    placeholder="Omnivore, Vegan, Low FODMAP..."
-                                    value={dietInput}
-                                    onChangeText={setDietInput}
-                                />
-                                <Button title="Save" onPress={handleUpdateDiet} loading={saving} />
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                                {DIET_TYPES.map(diet => {
+                                    const isSelected = profile?.diet_type === diet;
+                                    return (
+                                        <Chip
+                                            key={diet}
+                                            label={diet}
+                                            selected={isSelected}
+                                            onPress={() => setDietType(diet)}
+                                        />
+                                    );
+                                })}
                             </View>
                         ) : (
                             <View style={{ backgroundColor: colors.primary.light, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, alignSelf: 'flex-start' }}>
@@ -344,12 +347,12 @@ export default function ProfileScreen(): React.JSX.Element {
                         <ProfileRow
                             icon={<Shield size={18} color={colors.text2} />}
                             label="Privacy Policy"
-                            onPress={() => Linking.openURL('https://gutbuddy.app/privacy')}
+                            onPress={() => router.push('/legal/privacy')}
                         />
                         <ProfileRow
                             icon={<HelpCircle size={18} color={colors.text2} />}
                             label="Terms of Service"
-                            onPress={() => Linking.openURL('https://gutbuddy.app/terms')}
+                            onPress={() => router.push('/legal/terms')}
                         />
                     </Card>
 
@@ -372,7 +375,7 @@ export default function ProfileScreen(): React.JSX.Element {
 
                     {/* App version */}
                     <View style={{ alignItems: 'center', marginTop: 24 }}>
-                        <Text variant="caption" color={colors.text3}>Gut Buddy v1.0.0</Text>
+                        <Text variant="caption" color={colors.text3}>Gut Buddy v3.0.0</Text>
                     </View>
                 </ScrollView>
             </SafeAreaView>

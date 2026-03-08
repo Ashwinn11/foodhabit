@@ -86,9 +86,7 @@ export function VerdictBadge({ verdict, cautionAction, animated = true }: Verdic
         transform: [{ scale: scale.value }],
     }));
 
-    const label = verdict === 'caution' && cautionAction
-        ? `CAUTION — ${cautionAction}`
-        : style.label;
+    const label = style.label;
 
     return (
         <Animated.View
@@ -115,9 +113,9 @@ export function VerdictBadge({ verdict, cautionAction, animated = true }: Verdic
     );
 }
 
-export function DualBadge({ fodmapRisk, personalVerdict, cautionAction, animated = true }: DualBadgeProps): React.JSX.Element {
+export function DualBadge({ fodmapRisk, personalVerdict, cautionAction, animated = true, style }: DualBadgeProps & { style?: any }): React.JSX.Element {
     return (
-        <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap' }}>
+        <View style={[{ flexDirection: 'row', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end', flexShrink: 1 }, style]}>
             <FodmapBadge risk={fodmapRisk} animated={animated} />
             <VerdictBadge verdict={personalVerdict} cautionAction={cautionAction} animated={animated} />
         </View>

@@ -23,7 +23,7 @@ async function callGemini(prompt: string, imageBase64?: string, mimeType?: strin
     }
 
     const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
         {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -108,6 +108,8 @@ Respond with a JSON object:
   "personal_verdict": "avoid" | "caution" | "safest",
   "caution_action": "specific action if verdict is caution, e.g. 'limit to 1/4 cup' or 'try with lactase enzyme'. null if not caution",
   "why": ["reason 1 based on user's profile", "reason 2"],
+  "ingredients": ["main ingredient 1", "ingredient 2"],
+  "contains_user_triggers": ["trigger found 1", "trigger 2"],
   "conflict_explanation": "if FODMAP data and personal data conflict, explain why. null otherwise",
   "portion": "safe portion size if applicable"
 }
@@ -135,6 +137,7 @@ For each dish on the menu, provide analysis. Respond with:
       "fodmap_risk": "low" | "medium" | "high",
       "personal_verdict": "avoid" | "caution" | "safest",
       "why": ["concise reason based on user profile"],
+      "ingredients": ["key ingredient 1", "2"],
       "contains_user_triggers": ["trigger1", "trigger2"]
     }
   ],

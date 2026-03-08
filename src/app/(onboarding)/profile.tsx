@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
@@ -31,11 +31,21 @@ const dietOptions: { label: string; value: DietType }[] = [
 
 export default function ProfileScreen(): React.JSX.Element {
     const router = useRouter();
-    const { updateProfile } = useAuthStore();
-    const [age, setAge] = useState('');
-    const [sex, setSex] = useState<BiologicalSex | null>(null);
-    const [diet, setDiet] = useState<DietType | null>(null);
+    const navigation = useNavigation();
+    const { profile, updateProfile } = useAuthStore();
+    const [age, setAge] = useState(profile?.age?.toString() || '');
+    const [sex, setSex] = useState<BiologicalSex | null>(profile?.biological_sex as BiologicalSex || null);
+    const [diet, setDiet] = useState<DietType | null>(profile?.diet_type as DietType || null);
     const [loading, setLoading] = useState(false);
+
+    // Sync from profile when it loads (e.g. on fresh app start)
+    React.useEffect(() => {
+        if (profile) {
+            if (profile.age && !age) setAge(profile.age.toString());
+            if (profile.biological_sex && !sex) setSex(profile.biological_sex as BiologicalSex);
+            if (profile.diet_type && !diet) setDiet(profile.diet_type as DietType);
+        }
+    }, [profile]);
 
     const handleContinue = async (): Promise<void> => {
         setLoading(true);
@@ -57,9 +67,13 @@ export default function ProfileScreen(): React.JSX.Element {
         <LinearGradient colors={[colors.gradient.start, colors.gradient.mid]} style={{ flex: 1 }}>
             <SafeAreaView style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
-                    <Pressable onPress={() => router.back()} style={{ padding: 8 }}>
-                        <ChevronLeft size={24} color={colors.text1} />
-                    </Pressable>
+                    {navigation.canGoBack() ? (
+                        <Pressable onPress={() => router.back()} style={{ padding: 8 }}>
+                            <ChevronLeft size={24} color={colors.text1} />
+                        </Pressable>
+                    ) : (
+                        <View style={{ width: 40 }} />
+                    )}
                     <View style={{ flex: 1 }}>
                         <ProgressDots total={5} current={1} />
                     </View>
@@ -123,7 +137,13 @@ export default function ProfileScreen(): React.JSX.Element {
                     <View style={{ flex: 1 }} />
 
                     <View style={{ gap: 12, marginTop: 32 }}>
-                        <Button title="Continue" onPress={handleContinue} loading={loading} fullWidth />
+                        <Button
+                            title="Continue"
+                            onPress={handleContinue}
+                            loading={loading}
+                            disabled={!age && !sex && !diet}
+                            fullWidth
+                        />
                         <Button
                             title="Skip for now"
                             variant="ghost"

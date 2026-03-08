@@ -33,7 +33,7 @@ CREATE POLICY "Users can update own profile" ON public.profiles
 CREATE POLICY "Users can delete own profile" ON public.profiles
   FOR DELETE USING (auth.uid() = id);
 
-GRANT ALL ON public.profiles TO authenticated;
+GRANT ALL ON public.profiles TO authenticated, service_role;
 
 -- Auth trigger: auto-create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -86,7 +86,7 @@ CREATE POLICY "Users can update own meal logs" ON public.meal_logs
 CREATE POLICY "Users can delete own meal logs" ON public.meal_logs
   FOR DELETE USING (auth.uid() = user_id);
 
-GRANT ALL ON public.meal_logs TO authenticated;
+GRANT ALL ON public.meal_logs TO authenticated, service_role;
 
 
 -- ===========================================
@@ -120,7 +120,7 @@ CREATE POLICY "Users can update own symptom logs" ON public.symptom_logs
 CREATE POLICY "Users can delete own symptom logs" ON public.symptom_logs
   FOR DELETE USING (auth.uid() = user_id);
 
-GRANT ALL ON public.symptom_logs TO authenticated;
+GRANT ALL ON public.symptom_logs TO authenticated, service_role;
 
 
 -- ===========================================
@@ -155,7 +155,7 @@ CREATE POLICY "Users can update own daily factors" ON public.daily_factors
 CREATE POLICY "Users can delete own daily factors" ON public.daily_factors
   FOR DELETE USING (auth.uid() = user_id);
 
-GRANT ALL ON public.daily_factors TO authenticated;
+GRANT ALL ON public.daily_factors TO authenticated, service_role;
 
 
 -- ===========================================
@@ -188,7 +188,7 @@ CREATE POLICY "Users can update own insights" ON public.ai_insights
 CREATE POLICY "Users can delete own insights" ON public.ai_insights
   FOR DELETE USING (auth.uid() = user_id);
 
-GRANT ALL ON public.ai_insights TO authenticated;
+GRANT ALL ON public.ai_insights TO authenticated, service_role;
 
 
 -- ===========================================
@@ -223,7 +223,7 @@ CREATE POLICY "Users can update own recipes" ON public.recipes
 CREATE POLICY "Users can delete own recipes" ON public.recipes
   FOR DELETE USING (auth.uid() = user_id);
 
-GRANT ALL ON public.recipes TO authenticated;
+GRANT ALL ON public.recipes TO authenticated, service_role;
 
 
 -- ===========================================
@@ -258,7 +258,7 @@ CREATE POLICY "Users can update own progress" ON public.progress_snapshots
 CREATE POLICY "Users can delete own progress" ON public.progress_snapshots
   FOR DELETE USING (auth.uid() = user_id);
 
-GRANT ALL ON public.progress_snapshots TO authenticated;
+GRANT ALL ON public.progress_snapshots TO authenticated, service_role;
 
 
 -- ===========================================
@@ -287,7 +287,7 @@ CREATE POLICY "Users can update own streak" ON public.streaks
 CREATE POLICY "Users can delete own streak" ON public.streaks
   FOR DELETE USING (auth.uid() = user_id);
 
-GRANT ALL ON public.streaks TO authenticated;
+GRANT ALL ON public.streaks TO authenticated, service_role;
 
 
 -- ===========================================

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -22,19 +22,29 @@ function useProtectedRoute(isPremium: boolean, isSubLoading: boolean): void {
 
         const inAuthGroup = segments[0] === '(auth)';
         const inOnboardingGroup = segments[0] === '(onboarding)';
+        const inLegalGroup = segments[0] === 'legal';
         const onPaywall = segments[segments.length - 1] === 'paywall';
 
         if (!session) {
-            if (!inAuthGroup) {
+            if (!inAuthGroup && !inLegalGroup) {
                 router.replace('/(auth)');
             }
         } else if (!profile?.onboarding_complete) {
             if (!inOnboardingGroup) {
-                router.replace('/(onboarding)/welcome');
+                // Determine the next step based on what's already filled
+                if (!profile?.age && !profile?.biological_sex) {
+                    router.replace('/(onboarding)/welcome');
+                } else if (!profile?.diagnosed_conditions?.length) {
+                    router.replace('/(onboarding)/conditions');
+                } else if (!isPremium) {
+                    router.replace('/(onboarding)/paywall');
+                } else {
+                    router.replace('/(tabs)');
+                }
             }
         } else if (!isPremium) {
             // HARD PAYWALL: Onboarding complete but no subscription
-            if (!onPaywall) {
+            if (!onPaywall && !inLegalGroup) {
                 router.replace('/(onboarding)/paywall');
             }
         } else {
@@ -101,7 +111,14 @@ export default function RootLayout(): React.JSX.Element | null {
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <StatusBar style="dark" />
-            <Slot />
+            <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(onboarding)" />
+                <Stack.Screen name="legal/privacy" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="legal/terms" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="scanner/index" />
+            </Stack>
         </GestureHandlerRootView>
     );
 }

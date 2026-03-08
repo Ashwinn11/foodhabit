@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
@@ -20,10 +20,23 @@ const conditionOptions = [
 
 export default function ConditionsScreen(): React.JSX.Element {
     const router = useRouter();
-    const { updateProfile } = useAuthStore();
-    const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
-    const [triggerText, setTriggerText] = useState('');
+    const navigation = useNavigation();
+    const { profile, updateProfile } = useAuthStore();
+    const [selectedConditions, setSelectedConditions] = useState<string[]>(profile?.diagnosed_conditions || []);
+    const [triggerText, setTriggerText] = useState(profile?.known_triggers?.join(', ') || '');
     const [loading, setLoading] = useState(false);
+
+    // Sync from profile when it loads (e.g. on fresh app start)
+    React.useEffect(() => {
+        if (profile) {
+            if (profile.diagnosed_conditions?.length && !selectedConditions.length) {
+                setSelectedConditions(profile.diagnosed_conditions);
+            }
+            if (profile.known_triggers?.length && !triggerText) {
+                setTriggerText(profile.known_triggers.join(', '));
+            }
+        }
+    }, [profile]);
 
     const toggleCondition = (condition: string): void => {
         setSelectedConditions(prev =>
@@ -38,7 +51,7 @@ export default function ConditionsScreen(): React.JSX.Element {
         try {
             const triggers = triggerText
                 .split(',')
-                .map(t => t.trim().toLowerCase())
+                .map((t: string) => t.trim().toLowerCase())
                 .filter(Boolean);
 
             await updateProfile({
@@ -57,9 +70,13 @@ export default function ConditionsScreen(): React.JSX.Element {
         <LinearGradient colors={[colors.gradient.start, colors.gradient.mid]} style={{ flex: 1 }}>
             <SafeAreaView style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
-                    <Pressable onPress={() => router.back()} style={{ padding: 8 }}>
-                        <ChevronLeft size={24} color={colors.text1} />
-                    </Pressable>
+                    {navigation.canGoBack() ? (
+                        <Pressable onPress={() => router.back()} style={{ padding: 8 }}>
+                            <ChevronLeft size={24} color={colors.text1} />
+                        </Pressable>
+                    ) : (
+                        <View style={{ width: 40 }} />
+                    )}
                     <View style={{ flex: 1 }}>
                         <ProgressDots total={5} current={2} />
                     </View>
@@ -101,7 +118,13 @@ export default function ConditionsScreen(): React.JSX.Element {
                     <View style={{ flex: 1 }} />
 
                     <View style={{ gap: 12, marginTop: 32 }}>
-                        <Button title="Continue" onPress={handleContinue} loading={loading} fullWidth />
+                        <Button
+                            title="Continue"
+                            onPress={handleContinue}
+                            loading={loading}
+                            disabled={selectedConditions.length === 0 && !triggerText.trim()}
+                            fullWidth
+                        />
                         <Button
                             title="Skip for now"
                             variant="ghost"

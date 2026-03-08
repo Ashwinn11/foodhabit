@@ -29,7 +29,7 @@ serve(async (req: Request) => {
             .from('profiles')
             .select('known_triggers, diagnosed_conditions, diet_type')
             .eq('id', user_id)
-            .single();
+            .maybeSingle();
 
         // Get confirmed and likely triggers from insights
         const { data: insights } = await supabase
@@ -43,7 +43,11 @@ serve(async (req: Request) => {
             ...(profile?.known_triggers || []),
             ...(insights || []).flatMap((i: any) => i.related_foods || []),
         ];
-        const uniqueTriggers = [...new Set(allTriggers.map((t: string) => t.toLowerCase()))];
+        const uniqueTriggers = [...new Set(
+            allTriggers
+                .filter(t => typeof t === 'string')
+                .map((t: string) => t.toLowerCase())
+        )];
 
         // Get recent safe foods from meal logs
         const { data: safeMeals } = await supabase
@@ -103,7 +107,7 @@ Rules:
 - Make it genuinely appetising, not just "safe"`;
 
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -115,28 +119,74 @@ Rules:
         );
 
         const data = await response.json();
+
+        if (!response.ok) {
+            console.error('Gemini API error:', data);
+            throw new Error(`Gemini API failed with status ${response.status}`);
+        }
+
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) throw new Error('No response from Gemini');
+        if (!text) {
+            console.error('Empty Gemini response. Candidate:', data.candidates?.[0]);
+            throw new Error('No response content from Gemini');
+        }
 
-        const recipe = JSON.parse(text);
+        console.log('Successfully received recipe from Gemini. Text length:', text.length);
+        let recipe = JSON.parse(text);
 
-        // Store recipe in DB
-        await supabase.from('recipes').insert({
-            user_id,
-            title: recipe.title,
-            description: recipe.description,
-            ingredients: recipe.ingredients,
-            steps: recipe.steps,
-            prep_time_mins: recipe.prep_time_mins,
-            meal_type: recipe.meal_type || meal_type || 'dinner',
-            trigger_free: recipe.trigger_free || [],
-            source,
-        });
+        // Smart Extraction: Handle arrays or common nesting patterns
+        if (Array.isArray(recipe) && recipe.length > 0) {
+            recipe = recipe[0];
+        } else if (!recipe.title && (recipe.recipe || recipe.data || recipe.output)) {
+            recipe = recipe.recipe || recipe.data || recipe.output;
+        }
 
-        return new Response(JSON.stringify(recipe), {
+        console.log('Parsed recipe keys:', Object.keys(recipe));
+
+        // Validate structure and apply smart defaults
+        const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : (recipe.recipe?.ingredients || []);
+        const steps = Array.isArray(recipe.steps) ? recipe.steps : (recipe.recipe?.steps || []);
+        const trigger_free = Array.isArray(recipe.trigger_free) ? recipe.trigger_free : (recipe.recipe?.trigger_free || []);
+
+        // Store recipe in DB with explicit error checking
+        const { data: insertedData, error: insertError } = await supabase
+            .from('recipes')
+            .insert({
+                user_id,
+                title: recipe.title || recipe.name || recipe.recipe?.title || 'Personalized Recipe',
+                description: recipe.description || recipe.summary || recipe.recipe?.description || '',
+                ingredients,
+                steps,
+                prep_time_mins: Number(recipe.prep_time_mins || recipe.time || recipe.recipe?.prep_time_mins || 25),
+                meal_type: recipe.meal_type || recipe.recipe?.meal_type || meal_type || 'dinner',
+                trigger_free,
+                source,
+            })
+            .select();
+
+        if (insertError) {
+            console.error('Database Insert Error:', insertError);
+            throw new Error(`Failed to save recipe to database: ${insertError.message}`);
+        }
+
+        const createdRecipe = insertedData?.[0];
+        if (!createdRecipe) {
+            throw new Error('Recipe was inserted but no data was returned');
+        }
+
+        console.log('Successfully saved recipe and returning to client');
+
+        return new Response(JSON.stringify(createdRecipe), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     } catch (error: any) {
-        return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+        console.error('Generate-recipe function error:', error.message);
+        return new Response(JSON.stringify({
+            error: error.message,
+            stack: error.stack
+        }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
     }
 });

@@ -108,8 +108,15 @@ export default function HomeScreen(): React.JSX.Element {
             if (symptomLogs && symptomLogs.length > 0) {
                 setTodayLogs(prev => ({ ...prev, symptoms: true }));
                 const log = symptomLogs[0];
-                const avg = (log.bloating + log.pain + log.urgency + log.nausea + log.fatigue) / 5;
-                const score = Math.max(0, Math.round(100 - avg * 10));
+                const symptoms = [log.bloating, log.pain, log.urgency, log.nausea, log.fatigue];
+                const avg = symptoms.reduce((a, b) => a + b, 0) / symptoms.length;
+                const max = Math.max(...symptoms);
+
+                // Weight the score more heavily toward the worst symptom
+                // This ensures a 10/10 bloating doesn't get masked by other 0s
+                const weightedAvg = (avg * 0.6) + (max * 0.4);
+                const score = Math.max(0, Math.round(100 - weightedAvg * 10));
+
                 setGutScore(score);
                 scoreProgress.value = withTiming(score, { duration: 1200, easing: Easing.out(Easing.ease) });
             }

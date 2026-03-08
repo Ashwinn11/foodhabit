@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Pressable, ScrollView, Dimensions } from 'react-native';
+import { View, Pressable, ScrollView, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,6 +24,7 @@ interface MenuDish {
     fodmap_risk: 'low' | 'medium' | 'high';
     personal_verdict: 'avoid' | 'caution' | 'safest';
     why: string[];
+    ingredients?: string[];
     contains_user_triggers: string[];
 }
 
@@ -40,6 +41,8 @@ export default function ScannerScreen(): React.JSX.Element {
     const [permission, requestPermission] = useCameraPermissions();
     const [scanning, setScanning] = useState(false);
     const [result, setResult] = useState<MenuResult | null>(null);
+    const [selectedDishes, setSelectedDishes] = useState<number[]>([]);
+    const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
     // Scan line animation
     const scanLineY = useSharedValue(0);
@@ -62,6 +65,7 @@ export default function ScannerScreen(): React.JSX.Element {
         try {
             const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.7 });
             if (!photo?.base64) throw new Error('Failed to capture photo');
+            setCapturedImage(photo.uri);
 
             const { data, error } = await supabase.functions.invoke('analyze-food', {
                 body: {
@@ -99,11 +103,18 @@ export default function ScannerScreen(): React.JSX.Element {
 
     return (
         <View style={{ flex: 1, backgroundColor: '#000' }}>
-            <CameraView
-                ref={cameraRef}
-                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-                facing="back"
-            />
+            {capturedImage ? (
+                <Image
+                    source={{ uri: capturedImage }}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                />
+            ) : (
+                <CameraView
+                    ref={cameraRef}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                    facing="back"
+                />
+            )}
 
             <SafeAreaView style={{ flex: 1 }}>
                 {/* Close button */}
@@ -205,31 +216,75 @@ export default function ScannerScreen(): React.JSX.Element {
                         )}
 
                         {/* All Dishes */}
-                        {result.dishes.map((dish, i) => (
-                            <Card key={i}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <Text variant="foodName" color={colors.text1} style={{ flex: 1 }}>{dish.name}</Text>
-                                    <DualBadge fodmapRisk={dish.fodmap_risk} personalVerdict={dish.personal_verdict} />
-                                </View>
-                                {dish.why.map((reason, j) => (
-                                    <View key={j} style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
-                                        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: dish.personal_verdict === 'avoid' ? colors.red.DEFAULT : dish.personal_verdict === 'caution' ? colors.amber.DEFAULT : colors.primary.DEFAULT, marginTop: 5 }} />
-                                        <Text variant="caption" color={colors.text2} style={{ flex: 1 }}>{reason}</Text>
-                                    </View>
-                                ))}
-                            </Card>
-                        ))}
+                        {result.dishes.map((dish, i) => {
+                            const isSelected = selectedDishes.includes(i);
+                            return (
+                                <Pressable key={i} onPress={() => {
+                                    setSelectedDishes(prev =>
+                                        prev.includes(i) ? prev.filter(idx => idx !== i) : [...prev, i]
+                                    );
+                                }}>
+                                    <Card style={{
+                                        borderWidth: 2,
+                                        borderColor: isSelected ? colors.primary.DEFAULT : 'transparent',
+                                        backgroundColor: isSelected ? colors.primary.light : colors.surface
+                                    }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                                {isSelected && <Star size={14} color={colors.primary.DEFAULT} fill={colors.primary.DEFAULT} />}
+                                                <Text variant="foodName" color={colors.text1}>{dish.name}</Text>
+                                            </View>
+                                            <DualBadge fodmapRisk={dish.fodmap_risk} personalVerdict={dish.personal_verdict} />
+                                        </View>
+
+                                        {dish.personal_verdict === 'avoid' && dish.contains_user_triggers?.length > 0 && (
+                                            <View style={{ backgroundColor: colors.red.light, padding: 6, borderRadius: 6, marginTop: 8 }}>
+                                                <Text variant="caption" color={colors.red.DEFAULT} style={{ fontWeight: '700' }}>
+                                                    ⚠️ TRIGGER DETECTED: {dish.contains_user_triggers.join(', ')}
+                                                </Text>
+                                            </View>
+                                        )}
+
+                                        {dish.why.map((reason, j) => (
+                                            <View key={j} style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+                                                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: dish.personal_verdict === 'avoid' ? colors.red.DEFAULT : dish.personal_verdict === 'caution' ? colors.amber.DEFAULT : colors.primary.DEFAULT, marginTop: 5 }} />
+                                                <Text variant="caption" color={colors.text2} style={{ flex: 1 }}>{reason}</Text>
+                                            </View>
+                                        ))}
+
+                                        {dish.ingredients && dish.ingredients.length > 0 && (
+                                            <Text variant="caption" color={colors.text3} style={{ marginTop: 6, fontStyle: 'italic' }}>
+                                                Ingredients: {dish.ingredients.join(', ')}
+                                            </Text>
+                                        )}
+                                    </Card>
+                                </Pressable>
+                            );
+                        })}
 
                         <View style={{ gap: 8, marginTop: 8 }}>
                             <Button
-                                title={result.best_pick ? `Log ${result.best_pick}` : 'Log a dish'}
+                                title={selectedDishes.length > 0 ? `Log ${selectedDishes.length} Items` : 'Select items to log'}
+                                disabled={selectedDishes.length === 0}
                                 onPress={() => {
-                                    const dish = result.best_pick || result.dishes[0]?.name;
-                                    router.replace({ pathname: '/(tabs)/log', params: { prefill: dish } });
+                                    const selectedData = result.dishes
+                                        .filter((_, i) => selectedDishes.includes(i))
+                                        .map(d => ({
+                                            name: d.name,
+                                            fodmap_risk: d.fodmap_risk,
+                                            personal_verdict: d.personal_verdict,
+                                            trigger_reasons: d.why,
+                                            caution_action: null // Menu scan doesn't provide specific caution actions yet
+                                        }));
+
+                                    router.replace({
+                                        pathname: '/(tabs)/log',
+                                        params: { scannedData: JSON.stringify(selectedData) }
+                                    });
                                 }}
                                 fullWidth
                             />
-                            <Button title="Close" variant="outline" onPress={() => router.back()} fullWidth />
+                            <Button title="Cancel" variant="outline" onPress={() => router.back()} fullWidth />
                         </View>
                     </ScrollView>
                 </View>

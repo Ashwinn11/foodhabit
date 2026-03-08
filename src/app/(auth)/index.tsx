@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, ScrollView, Image, Platform } from 'react-native';
+import { View, ScrollView, Image, Platform, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter, Link } from 'expo-router';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { GutBuddyMascot } from '@/components/mascot/GutBuddy';
@@ -32,6 +33,7 @@ function AppleLogo(): React.JSX.Element {
 
 export default function AuthScreen(): React.JSX.Element {
     const { signInWithGoogle, signInWithApple, isLoading } = useAuthStore();
+    const router = useRouter();
 
     const handleGoogleSignIn = async (): Promise<void> => {
         try {
@@ -59,10 +61,10 @@ export default function AuthScreen(): React.JSX.Element {
             <SafeAreaView style={{ flex: 1 }}>
                 <ScrollView
                     contentContainerStyle={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
                         paddingHorizontal: 32,
+                        paddingTop: 60,
+                        paddingBottom: 40,
+                        alignItems: 'center',
                     }}
                 >
                     {/* Mascot */}
@@ -124,6 +126,29 @@ export default function AuthScreen(): React.JSX.Element {
                             loading={isLoading}
                             fullWidth
                         />
+                    </View>
+
+                    <View style={{ marginTop: 24, alignItems: 'center' }}>
+                        <Text variant="caption" color={colors.text3} style={{ textAlign: 'center', lineHeight: 18 }}>
+                            By continuing, you agree to our{' '}
+                            <Link href="/legal/terms" asChild>
+                                <Text
+                                    variant="caption"
+                                    style={{ textDecorationLine: 'underline' }}
+                                >
+                                    Terms of Service
+                                </Text>
+                            </Link>
+                            {' '}and{' '}
+                            <Link href="/legal/privacy" asChild>
+                                <Text
+                                    variant="caption"
+                                    style={{ textDecorationLine: 'underline' }}
+                                >
+                                    Privacy Policy
+                                </Text>
+                            </Link>.
+                        </Text>
                     </View>
                 </ScrollView>
             </SafeAreaView>

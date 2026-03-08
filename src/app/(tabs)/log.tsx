@@ -7,6 +7,7 @@ import {
     Search, Camera, Sunrise, Sun, Moon, Apple, Utensils,
     AlertTriangle, CheckCircle, Smile, Frown, Clock, Check,
     Minus as MinusIcon, Plus as PlusIcon, Droplets, Activity as ActivityIcon,
+    Trash2,
 } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -27,7 +28,7 @@ import type { FoodItem, MealType } from '@/lib/database.types';
 // ========================== MEAL SEGMENT ==========================
 function MealSegment(): React.JSX.Element {
     const router = useRouter();
-    const { prefill } = useLocalSearchParams();
+    const { prefill, scannedData } = useLocalSearchParams();
     const { user } = useAuthStore();
 
     const [mealType, setMealType] = useState<MealType>('breakfast');
@@ -42,7 +43,20 @@ function MealSegment(): React.JSX.Element {
         if (prefill && foodInput === prefill) {
             analyzeFood();
         }
-    }, [prefill]);
+
+        if (scannedData) {
+            try {
+                const parsed = JSON.parse(scannedData as string);
+                if (Array.isArray(parsed)) {
+                    setFoods(prev => [...prev, ...parsed]);
+                    // Clear scannedData by replacing route without it
+                    router.setParams({ scannedData: undefined });
+                }
+            } catch (e) {
+                console.error('Failed to parse scannedData:', e);
+            }
+        }
+    }, [prefill, scannedData]);
 
     const mealChips: { label: string; value: MealType; icon: any }[] = [
         { label: 'Breakfast', value: 'breakfast', icon: Sunrise },
@@ -68,6 +82,8 @@ function MealSegment(): React.JSX.Element {
                 personal_verdict: data.personal_verdict || 'caution',
                 caution_action: data.caution_action,
                 trigger_reasons: data.why || [],
+                ingredients: data.ingredients || [],
+                contains_user_triggers: data.contains_user_triggers || [],
                 conflict_explanation: data.conflict_explanation,
             };
 
@@ -93,6 +109,11 @@ function MealSegment(): React.JSX.Element {
         } finally {
             setAnalyzing(false);
         }
+    };
+
+    const removeFood = (index: number) => {
+        setFoods(prev => prev.filter((_, i) => i !== index));
+        haptics.buttonTap();
     };
 
     const getOverallVerdict = (): 'avoid' | 'caution' | 'safest' | null => {
@@ -169,6 +190,8 @@ function MealSegment(): React.JSX.Element {
     };
 
     const overallVerdict = getOverallVerdict();
+    const cautionItems = foods.filter(f => f.personal_verdict === 'caution' && f.caution_action);
+    const avoidItems = foods.filter(f => f.personal_verdict === 'avoid');
 
     return (
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
@@ -247,20 +270,40 @@ function MealSegment(): React.JSX.Element {
                             }}>
                                 <Utensils size={16} color={colors.text2} />
                             </View>
-                            <View style={{ flex: 1 }}>
-                                <Text variant="foodName" color={colors.text1}>{food.name}</Text>
+                            <View style={{ flex: 1, marginRight: 8 }}>
+                                <Text variant="foodName" color={colors.text1} numberOfLines={2}>{food.name}</Text>
                             </View>
-                            <DualBadge fodmapRisk={food.fodmap_risk} personalVerdict={food.personal_verdict} cautionAction={food.caution_action} />
+                            <DualBadge
+                                fodmapRisk={food.fodmap_risk}
+                                personalVerdict={food.personal_verdict}
+                                cautionAction={food.caution_action}
+                                style={{ maxWidth: '40%' }}
+                            />
+                            <Pressable onPress={() => removeFood(index)} style={{ marginLeft: 4, padding: 4 }}>
+                                <Trash2 size={16} color={colors.red.DEFAULT} />
+                            </Pressable>
                         </View>
 
                         {food.trigger_reasons.length > 0 && (
                             <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.stone, gap: 6 }}>
+                                {food.personal_verdict === 'avoid' && food.contains_user_triggers && food.contains_user_triggers.length > 0 && (
+                                    <View style={{ backgroundColor: colors.red.light, padding: 8, borderRadius: 8, marginBottom: 4 }}>
+                                        <Text variant="caption" color={colors.red.DEFAULT} style={{ fontWeight: '700' }}>
+                                            ⚠️ TRIGGER DETECTED: {food.contains_user_triggers.join(', ')}
+                                        </Text>
+                                    </View>
+                                )}
                                 {food.trigger_reasons.map((reason, i) => (
                                     <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
                                         <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: dotColor, marginTop: 5 }} />
                                         <Text variant="caption" color={colors.text2} style={{ flex: 1, lineHeight: 14 }}>{reason}</Text>
                                     </View>
                                 ))}
+                                {food.ingredients && food.ingredients.length > 0 && (
+                                    <Text variant="caption" color={colors.text3} style={{ marginTop: 4, fontStyle: 'italic' }}>
+                                        Ingredients: {food.ingredients.join(', ')}
+                                    </Text>
+                                )}
                             </View>
                         )}
 
@@ -300,6 +343,26 @@ function MealSegment(): React.JSX.Element {
                                     : 'Safe meal for you'}
                         </Text>
                     </View>
+
+                    {overallVerdict === 'avoid' && avoidItems.length > 0 && (
+                        <View style={{ marginTop: 8, paddingLeft: 30, gap: 4 }}>
+                            {avoidItems.map((item, i) => (
+                                <Text key={i} variant="caption" color={colors.red.DEFAULT} style={{ fontWeight: '700' }}>
+                                    • {item.name}: Trigger detected
+                                </Text>
+                            ))}
+                        </View>
+                    )}
+
+                    {overallVerdict === 'caution' && cautionItems.length > 0 && (
+                        <View style={{ marginTop: 8, paddingLeft: 30, gap: 4 }}>
+                            {cautionItems.map((item, i) => (
+                                <Text key={i} variant="caption" color={colors.amber.DEFAULT} style={{ fontWeight: '600' }}>
+                                    • {item.name}: {item.caution_action}
+                                </Text>
+                            ))}
+                        </View>
+                    )}
                 </Card>
             )}
 

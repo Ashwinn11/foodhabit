@@ -9,6 +9,8 @@ export type FoodItem = {
     personal_verdict: 'avoid' | 'caution' | 'safest';
     caution_action?: string;
     trigger_reasons: string[];
+    ingredients?: string[];
+    contains_user_triggers?: string[];
     conflict_explanation?: string | null;
 };
 
