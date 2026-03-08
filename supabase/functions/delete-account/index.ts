@@ -62,7 +62,39 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Delete user from Supabase Auth (this is all we need now!)
+    // Cascade delete all user data from every table
+    const tables = [
+      'meal_logs',
+      'symptom_logs',
+      'daily_factors',
+      'ai_insights',
+      'recipes',
+      'progress_snapshots',
+      'streaks',
+    ];
+
+    for (const table of tables) {
+      const { error: deleteError } = await supabase
+        .from(table)
+        .delete()
+        .eq('user_id', user.id);
+
+      if (deleteError) {
+        console.error(`Error deleting ${table}:`, deleteError);
+      }
+    }
+
+    // Delete user profile
+    const { error: profileDeleteError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', user.id);
+
+    if (profileDeleteError) {
+      console.error('Error deleting profile:', profileDeleteError);
+    }
+
+    // Delete user from Supabase Auth
     const { error: adminDeleteError } = await supabase.auth.admin.deleteUser(
       user.id
     );

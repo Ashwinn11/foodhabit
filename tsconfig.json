@@ -14,28 +14,27 @@
     "strictPropertyInitialization": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
-  },
-  "ts-node": {
-    "compilerOptions": {
-      "module": "commonjs",
-      "lib": [
-        "ES2020"
+    "paths": {
+      "@/*": [
+        "./src/*"
       ]
     }
   },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "nativewind-env.d.ts"
+  ],
   "exclude": [
     "node_modules",
     "supabase/functions"

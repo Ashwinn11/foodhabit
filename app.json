@@ -3,16 +3,16 @@
     "name": "Gut Buddy",
     "slug": "foodhabit",
     "owner": "foodhabit",
-    "version": "2.0",
+    "version": "3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "scheme": "foodhabit",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/icon.png",
       "imageWidth": 200,
-      "backgroundColor": "#0B1219"
+      "backgroundColor": "#F0F7F2"
     },
     "ios": {
       "supportsTablet": false,
@@ -24,14 +24,9 @@
       ],
       "config": {
         "usesNonExemptEncryption": false
-      }
-    },
-    "web": {
-      "favicon": "./assets/icon.png",
-      "bundler": "metro",
-      "output": "single",
-      "build": {
-        "babel": {}
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "Gut Buddy needs camera access to scan restaurant menus and identify safe dishes for your gut."
       }
     },
     "plugins": [
@@ -40,12 +35,17 @@
         {
           "image": "./assets/icon.png",
           "imageWidth": 200,
-          "backgroundColor": "#0B1219"
+          "backgroundColor": "#F0F7F2"
         }
       ],
       "expo-apple-authentication",
-      "./plugins/withFirebaseFix",
-      "./plugins/withNodeModulesSymlink",
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Gut Buddy needs camera access to scan restaurant menus."
+        }
+      ],
       [
         "expo-build-properties",
         {
@@ -55,13 +55,16 @@
         }
       ]
     ],
+    "experiments": {
+      "typedRoutes": true
+    },
     "extra": {
       "eas": {
         "projectId": "a729b1be-9c50-4ae8-a28a-96cbe598b18a"
-      }
-    },
-    "android": {
-      "package": "com.foodhabit.app"
+      },
+      "SUPABASE_URL": "process.env.EXPO_PUBLIC_SUPABASE_URL",
+      "SUPABASE_ANON_KEY": "process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY",
+      "REVENUECAT_IOS_API_KEY": "process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"
     }
   }
 }

@@ -1,0 +1,204 @@
+import React, { useState } from 'react';
+import { View, ScrollView, Pressable, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ChevronLeft, Bell, Clock } from 'lucide-react-native';
+import * as Notifications from 'expo-notifications';
+import { Text } from '@/components/ui/Text';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { ProgressDots } from '@/components/ui/ProgressDots';
+import { colors } from '@/theme';
+
+interface ReminderTime {
+    label: string;
+    hour: number;
+    minute: number;
+    enabled: boolean;
+}
+
+export default function NotificationsScreen(): React.JSX.Element {
+    const router = useRouter();
+    const [reminders, setReminders] = useState<ReminderTime[]>([
+        { label: 'Breakfast reminder', hour: 8, minute: 0, enabled: true },
+        { label: 'Lunch reminder', hour: 12, minute: 30, enabled: true },
+        { label: 'Dinner reminder', hour: 19, minute: 0, enabled: true },
+    ]);
+    const [eveningCheckin, setEveningCheckin] = useState(true);
+    const [loading, setLoading] = useState(false);
+
+    const formatTime = (hour: number, minute: number): string => {
+        const h = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+        const m = minute.toString().padStart(2, '0');
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        return `${h}:${m} ${ampm}`;
+    };
+
+    const handleAllow = async (): Promise<void> => {
+        setLoading(true);
+        try {
+            const { status } = await Notifications.requestPermissionsAsync();
+
+            if (status === 'granted') {
+                // Schedule meal reminders
+                for (const reminder of reminders) {
+                    if (reminder.enabled) {
+                        await Notifications.scheduleNotificationAsync({
+                            content: {
+                                title: 'Time to log your meal',
+                                body: `Every entry helps find your triggers.`,
+                            },
+                            trigger: {
+                                type: Notifications.SchedulableTriggerInputTypes.DAILY,
+                                hour: reminder.hour,
+                                minute: reminder.minute,
+                            },
+                        });
+                    }
+                }
+
+                // Schedule evening check-in
+                if (eveningCheckin) {
+                    await Notifications.scheduleNotificationAsync({
+                        content: {
+                            title: "How's your gut today?",
+                            body: 'Log your symptoms before bed.',
+                        },
+                        trigger: {
+                            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+                            hour: 21,
+                            minute: 0,
+                        },
+                    });
+                }
+            }
+
+            router.push('/(onboarding)/paywall');
+        } catch (error) {
+            console.error('Notification error:', error);
+            router.push('/(onboarding)/paywall');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <LinearGradient colors={[colors.gradient.start, colors.gradient.mid]} style={{ flex: 1 }}>
+            <SafeAreaView style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
+                    <Pressable onPress={() => router.back()} style={{ padding: 8 }}>
+                        <ChevronLeft size={24} color={colors.text1} />
+                    </Pressable>
+                    <View style={{ flex: 1 }}>
+                        <ProgressDots total={5} current={3} />
+                    </View>
+                    <View style={{ width: 40 }} />
+                </View>
+
+                <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingBottom: 32, flexGrow: 1 }}>
+                    <View style={{ alignItems: 'center', marginTop: 24 }}>
+                        <View style={{
+                            width: 56, height: 56, borderRadius: 14,
+                            backgroundColor: colors.primary.light,
+                            alignItems: 'center', justifyContent: 'center',
+                        }}>
+                            <Bell size={28} color={colors.primary.DEFAULT} />
+                        </View>
+                    </View>
+
+                    <Text variant="heading" color={colors.text1} style={{ marginTop: 20, textAlign: 'center' }}>
+                        Let us remind you to log.
+                    </Text>
+                    <Text variant="label" color={colors.text2} style={{ marginTop: 8, textAlign: 'center', lineHeight: 18 }}>
+                        Consistent logging is what makes trigger detection work.
+                    </Text>
+
+                    <View style={{ marginTop: 28, gap: 12 }}>
+                        {reminders.map((reminder, index) => (
+                            <Card key={reminder.label} animated={true} delay={index * 80}>
+                                <Pressable
+                                    onPress={() => {
+                                        const updated = [...reminders];
+                                        updated[index] = { ...updated[index], enabled: !updated[index].enabled };
+                                        setReminders(updated);
+                                    }}
+                                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                                >
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                        <Clock size={18} color={colors.text2} />
+                                        <View>
+                                            <Text variant="bodyBold" color={colors.text1}>{reminder.label}</Text>
+                                            <Text variant="caption" color={colors.text2}>
+                                                {formatTime(reminder.hour, reminder.minute)}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <View
+                                        style={{
+                                            width: 44, height: 26, borderRadius: 13,
+                                            backgroundColor: reminder.enabled ? colors.primary.DEFAULT : colors.stone,
+                                            justifyContent: 'center',
+                                            paddingHorizontal: 2,
+                                        }}
+                                    >
+                                        <View
+                                            style={{
+                                                width: 22, height: 22, borderRadius: 11,
+                                                backgroundColor: '#FFFFFF',
+                                                alignSelf: reminder.enabled ? 'flex-end' : 'flex-start',
+                                            }}
+                                        />
+                                    </View>
+                                </Pressable>
+                            </Card>
+                        ))}
+
+                        <Card animated={true} delay={240}>
+                            <Pressable
+                                onPress={() => setEveningCheckin(!eveningCheckin)}
+                                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                            >
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                    <Clock size={18} color={colors.text2} />
+                                    <View>
+                                        <Text variant="bodyBold" color={colors.text1}>Evening symptom check-in</Text>
+                                        <Text variant="caption" color={colors.text2}>9:00 PM</Text>
+                                    </View>
+                                </View>
+                                <View
+                                    style={{
+                                        width: 44, height: 26, borderRadius: 13,
+                                        backgroundColor: eveningCheckin ? colors.primary.DEFAULT : colors.stone,
+                                        justifyContent: 'center',
+                                        paddingHorizontal: 2,
+                                    }}
+                                >
+                                    <View
+                                        style={{
+                                            width: 22, height: 22, borderRadius: 11,
+                                            backgroundColor: '#FFFFFF',
+                                            alignSelf: eveningCheckin ? 'flex-end' : 'flex-start',
+                                        }}
+                                    />
+                                </View>
+                            </Pressable>
+                        </Card>
+                    </View>
+
+                    <View style={{ flex: 1 }} />
+
+                    <View style={{ gap: 12, marginTop: 32 }}>
+                        <Button title="Allow Notifications" onPress={handleAllow} loading={loading} fullWidth />
+                        <Button
+                            title="Skip"
+                            variant="ghost"
+                            onPress={() => router.push('/(onboarding)/paywall')}
+                            fullWidth
+                        />
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
+        </LinearGradient>
+    );
+}
