@@ -143,13 +143,42 @@ export default function HomeScreen(): React.JSX.Element {
         } catch (error) {
             console.error('Home data fetch error:', error);
         } finally {
+            // Only set loading to false after the very first fetch
             setLoading(false);
         }
     }, [user?.id]);
 
     useEffect(() => {
         fetchHomeData();
-    }, [fetchHomeData]);
+
+        // Subscribe to real-time updates
+        const streakSubscription = supabase
+            .channel('streak-updates')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'streaks', filter: `user_id=eq.${user?.id}` }, () => {
+                fetchHomeData();
+            })
+            .subscribe();
+
+        const insightsSubscription = supabase
+            .channel('insight-updates')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ai_insights', filter: `user_id=eq.${user?.id}` }, () => {
+                fetchHomeData();
+            })
+            .subscribe();
+
+        const logsSubscription = supabase
+            .channel('log-updates')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'meal_logs', filter: `user_id=eq.${user?.id}` }, () => {
+                fetchHomeData();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(streakSubscription);
+            supabase.removeChannel(insightsSubscription);
+            supabase.removeChannel(logsSubscription);
+        };
+    }, [user?.id, fetchHomeData]);
 
     const onRefresh = async (): Promise<void> => {
         setRefreshing(true);
@@ -173,7 +202,8 @@ export default function HomeScreen(): React.JSX.Element {
         weekly_summary: colors.primary.DEFAULT,
     }[latestInsight.insight_type] : colors.primary.DEFAULT;
 
-    if (loading) {
+    // Only show skeleton if we have NO data at all
+    if (loading && !streak && !latestInsight && gutScore === null) {
         return (
             <LinearGradient colors={[colors.gradient.start, colors.gradient.mid, colors.gradient.end]} style={{ flex: 1 }}>
                 <SafeAreaView edges={['top']} style={{ flex: 1, paddingHorizontal: 20, gap: 16, paddingTop: 16 }}>

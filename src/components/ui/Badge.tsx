@@ -71,7 +71,7 @@ export function FodmapBadge({ risk, animated = true }: FodmapBadgeProps): React.
 
 export function VerdictBadge({ verdict, cautionAction, animated = true }: VerdictBadgeProps): React.JSX.Element {
     const scale = useSharedValue(animated ? 0.5 : 1);
-    const style = verdictColors[verdict];
+    const style = verdictColors[verdict] || verdictColors.caution;
 
     useEffect(() => {
         if (animated) {

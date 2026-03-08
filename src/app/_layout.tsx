@@ -8,9 +8,20 @@ import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 import Purchases from 'react-native-purchases';
 import { useSubscription } from '@/hooks/useSubscription';
+import * as Notifications from 'expo-notifications';
 import '../../global.css';
 
 SplashScreen.preventAutoHideAsync();
+
+// Configure notifications to show when app is in foreground
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+    }),
+});
 
 function useProtectedRoute(isPremium: boolean, isSubLoading: boolean): void {
     const { session, profile, isInitialized } = useAuthStore();
@@ -101,6 +112,65 @@ export default function RootLayout(): React.JSX.Element | null {
             SplashScreen.hideAsync();
         }
     }, [fontsLoaded, isInitialized, isSubLoading]);
+
+    // Global profile listener
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const profileSubscription = supabase
+            .channel('global-profile-updates')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
+                // Manually trigger a refresh in the store
+                setSession(supabase.auth.getSession() as any);
+                // Or better, just fetch the profile again
+                initialize();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(profileSubscription);
+        };
+    }, [user?.id, initialize, setSession]);
+
+    // Global Insight Listener
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const insightSubscription = supabase
+            .channel('global-insight-notifications')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ai_insights', filter: `user_id=eq.${user.id}` }, (payload) => {
+                const insight = payload.new;
+                Notifications.scheduleNotificationAsync({
+                    content: {
+                        title: 'New Gut Insight 🧠',
+                        body: insight.title || 'Tap to see your new pattern discovery!',
+                        data: { type: 'insight', id: insight.id },
+                    },
+                    trigger: null,
+                });
+            })
+            .subscribe();
+
+        const recipeSubscription = supabase
+            .channel('global-recipe-notifications')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'recipes', filter: `user_id=eq.${user.id}` }, (payload) => {
+                const recipe = payload.new;
+                Notifications.scheduleNotificationAsync({
+                    content: {
+                        title: 'New Recipe Ready 🍲',
+                        body: `Try our expert: ${recipe.title}`,
+                        data: { type: 'recipe', id: recipe.id },
+                    },
+                    trigger: null,
+                });
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(insightSubscription);
+            supabase.removeChannel(recipeSubscription);
+        };
+    }, [user?.id]);
 
     useProtectedRoute(isPremium, isSubLoading);
 

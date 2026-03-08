@@ -59,7 +59,7 @@ export function Chip({ label, selected = false, icon, style, onPress, ...props }
             {icon}
             <Text
                 variant="label"
-                color={selected ? colors.primary.DEFAULT : colors.text2}
+                color={selected ? colors.primary.DEFAULT : colors.text1}
             >
                 {label}
             </Text>

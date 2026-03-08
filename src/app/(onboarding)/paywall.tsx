@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter, useNavigation } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Search, TrendingDown, Activity, Check } from 'lucide-react-native';
-import Purchases, { type PurchasesPackage } from 'react-native-purchases';
 import RevenueCatUI from 'react-native-purchases-ui';
-import { Text } from '@/components/ui/Text';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { ProgressDots } from '@/components/ui/ProgressDots';
+import * as Notifications from 'expo-notifications';
 import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme';
 
@@ -23,6 +17,13 @@ export default function PaywallScreen(): React.JSX.Element {
         setFinishing(true);
         try {
             await updateProfile({ onboarding_complete: true });
+            Notifications.scheduleNotificationAsync({
+                content: {
+                    title: "You're All Set! 🎉",
+                    body: "Welcome to Gut Buddy Pro. We're ready to find your triggers.",
+                },
+                trigger: null,
+            });
             router.replace('/(tabs)');
         } catch (error) {
             console.error('Onboarding complete error:', error);
@@ -41,8 +42,8 @@ export default function PaywallScreen(): React.JSX.Element {
                     if (navigation.canGoBack()) {
                         router.back();
                     } else {
-                        // Fallback to the onboarding bay if no history
-                        router.replace('/(onboarding)/conditions');
+                        // Fallback to the plan screen if no history
+                        router.replace('/(onboarding)/plan');
                     }
                 }}
                 onPurchaseCompleted={completeOnboarding}

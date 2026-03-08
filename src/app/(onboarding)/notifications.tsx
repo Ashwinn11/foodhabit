@@ -9,6 +9,7 @@ import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ProgressDots } from '@/components/ui/ProgressDots';
+import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme';
 
 interface ReminderTime {
@@ -21,6 +22,7 @@ interface ReminderTime {
 export default function NotificationsScreen(): React.JSX.Element {
     const router = useRouter();
     const navigation = useNavigation();
+    const { updateProfile } = useAuthStore();
     const [reminders, setReminders] = useState<ReminderTime[]>([
         { label: 'Breakfast reminder', hour: 8, minute: 0, enabled: true },
         { label: 'Lunch reminder', hour: 12, minute: 30, enabled: true },
@@ -42,6 +44,7 @@ export default function NotificationsScreen(): React.JSX.Element {
             const { status } = await Notifications.requestPermissionsAsync();
 
             if (status === 'granted') {
+                await updateProfile({ notifications_enabled: true });
                 // Schedule meal reminders
                 for (const reminder of reminders) {
                     if (reminder.enabled) {
@@ -85,20 +88,18 @@ export default function NotificationsScreen(): React.JSX.Element {
     };
 
     return (
-        <LinearGradient colors={[colors.gradient.start, colors.gradient.mid]} style={{ flex: 1 }}>
+        <LinearGradient colors={[colors.gradient.start, colors.gradient.mid, colors.gradient.end]} style={{ flex: 1 }}>
             <SafeAreaView style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
-                    {navigation.canGoBack() ? (
-                        <Pressable onPress={() => router.back()} style={{ padding: 8 }}>
-                            <ChevronLeft size={24} color={colors.text1} />
-                        </Pressable>
-                    ) : (
-                        <View style={{ width: 40 }} />
-                    )}
-                    <View style={{ flex: 1 }}>
-                        <ProgressDots total={5} current={3} />
+                <View style={{ height: 56, flexDirection: 'row', alignItems: 'center' }}>
+                    <Pressable
+                        onPress={() => navigation.canGoBack() && router.back()}
+                        style={{ padding: 16, position: 'absolute', left: 0, zIndex: 10 }}
+                    >
+                        <ChevronLeft size={24} color={colors.text1} />
+                    </Pressable>
+                    <View style={{ flex: 1, paddingHorizontal: 70 }}>
+                        <ProgressDots total={7} current={6} />
                     </View>
-                    <View style={{ width: 40 }} />
                 </View>
 
                 <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingBottom: 32, flexGrow: 1 }}>

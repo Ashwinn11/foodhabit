@@ -8,22 +8,20 @@ interface ProgressDotsProps {
 }
 
 export function ProgressDots({ total, current }: ProgressDotsProps): React.JSX.Element {
+    const progress = (current + 1) / total;
+
     return (
-        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, paddingVertical: 12 }}>
-            {Array.from({ length: total }).map((_, i) => {
-                const isActive = i === current;
-                return (
-                    <View
-                        key={i}
-                        style={{
-                            width: isActive ? 10 : 7,
-                            height: isActive ? 10 : 7,
-                            borderRadius: 999,
-                            backgroundColor: isActive ? colors.primary.DEFAULT : colors.primary.mid,
-                        }}
-                    />
-                );
-            })}
+        <View style={{ paddingHorizontal: 24, paddingVertical: 12 }}>
+            <View style={{ height: 6, backgroundColor: colors.primary.light, borderRadius: 3, overflow: 'hidden' }}>
+                <View
+                    style={{
+                        height: '100%',
+                        width: `${progress * 100}%`,
+                        backgroundColor: colors.primary.DEFAULT,
+                        borderRadius: 3
+                    }}
+                />
+            </View>
         </View>
     );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, ScrollView, TextInput, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, ScrollView, TextInput, Pressable, ActivityIndicator, Alert, Dimensions } from 'react-native';
+import ConfettiCannon from 'react-native-confetti-cannon';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +10,7 @@ import {
     Minus as MinusIcon, Plus as PlusIcon, Droplets, Activity as ActivityIcon,
     Trash2,
 } from 'lucide-react-native';
+import * as Notifications from 'expo-notifications';
 
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
@@ -25,19 +27,23 @@ import { colors, radii } from '@/theme';
 import { haptics } from '@/theme/haptics';
 import type { FoodItem, MealType } from '@/lib/database.types';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 // ========================== MEAL SEGMENT ==========================
 function MealSegment(): React.JSX.Element {
     const router = useRouter();
-    const { prefill, scannedData } = useLocalSearchParams();
+    const { prefill, scannedData, autoLog } = useLocalSearchParams();
     const { user } = useAuthStore();
 
     const [mealType, setMealType] = useState<MealType>('breakfast');
     const [foodInput, setFoodInput] = useState((prefill as string) || '');
     const [foods, setFoods] = useState<FoodItem[]>([]);
+    const [selectedFoods, setSelectedFoods] = useState<number[]>([]);
     const [analyzing, setAnalyzing] = useState(false);
     const [stressLevel, setStressLevel] = useState(1);
     const [notes, setNotes] = useState('');
     const [logging, setLogging] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
 
     useEffect(() => {
         if (prefill && foodInput === prefill) {
@@ -49,8 +55,21 @@ function MealSegment(): React.JSX.Element {
                 const parsed = JSON.parse(scannedData as string);
                 if (Array.isArray(parsed)) {
                     setFoods(prev => [...prev, ...parsed]);
-                    // Clear scannedData by replacing route without it
-                    router.setParams({ scannedData: undefined });
+
+                    // Auto-select all newly added items
+                    setSelectedFoods(prev => {
+                        const newIndices = parsed.map((_, idx) => foods.length + idx);
+                        return [...prev, ...newIndices];
+                    });
+
+                    // Clear params before logging
+                    router.setParams({ scannedData: undefined, autoLog: undefined });
+
+                    if (autoLog === 'true') {
+                        // Pass the combined array or just the parsed array depending on desired behavior
+                        // We'll pass the exact payload so it logs without needing state to update
+                        logMeal(parsed);
+                    }
                 }
             } catch (e) {
                 console.error('Failed to parse scannedData:', e);
@@ -88,6 +107,7 @@ function MealSegment(): React.JSX.Element {
             };
 
             setFoods(prev => [...prev, foodItem]);
+            setSelectedFoods(prev => [...prev, foods.length]);
             setFoodInput('');
 
             if (foodItem.personal_verdict === 'avoid') {
@@ -98,6 +118,7 @@ function MealSegment(): React.JSX.Element {
         } catch (error) {
             console.error('Food analysis error:', error);
             // Add food without analysis on failure
+            const newIndex = foods.length;
             setFoods(prev => [...prev, {
                 name: foodInput.trim(),
                 fodmap_risk: 'medium',
@@ -105,33 +126,37 @@ function MealSegment(): React.JSX.Element {
                 caution_action: "Couldn't analyse — try again",
                 trigger_reasons: [],
             }]);
+            setSelectedFoods(prev => [...prev, newIndex]);
             setFoodInput('');
         } finally {
             setAnalyzing(false);
         }
     };
 
-    const removeFood = (index: number) => {
-        setFoods(prev => prev.filter((_, i) => i !== index));
+    const toggleSelection = (index: number) => {
+        setSelectedFoods(prev =>
+            prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+        );
         haptics.buttonTap();
     };
 
-    const getOverallVerdict = (): 'avoid' | 'caution' | 'safest' | null => {
-        if (foods.length === 0) return null;
-        if (foods.some(f => f.personal_verdict === 'avoid')) return 'avoid';
-        if (foods.some(f => f.personal_verdict === 'caution')) return 'caution';
+    const getOverallVerdict = (items = foods): 'avoid' | 'caution' | 'safest' | null => {
+        if (items.length === 0) return null;
+        if (items.some(f => f.personal_verdict === 'avoid')) return 'avoid';
+        if (items.some(f => f.personal_verdict === 'caution')) return 'caution';
         return 'safest';
     };
 
-    const logMeal = async (): Promise<void> => {
-        if (!user?.id || foods.length === 0) return;
+    const logMeal = async (overrideFoods?: FoodItem[]): Promise<void> => {
+        const finalFoods = overrideFoods || foods;
+        if (!user?.id || finalFoods.length === 0) return;
         setLogging(true);
         try {
-            const overall = getOverallVerdict();
+            const overall = getOverallVerdict(finalFoods);
             const { error } = await supabase.from('meal_logs').insert({
                 user_id: user.id,
                 meal_type: mealType,
-                foods: foods as any,
+                foods: finalFoods as any,
                 overall_meal_verdict: overall,
                 stress_level: stressLevel,
                 notes: notes || null,
@@ -169,16 +194,28 @@ function MealSegment(): React.JSX.Element {
                 });
             }
 
-            // Milestone haptics
-            const milestones = [7, 14, 30, 60, 90];
+            // Milestone haptics & notifications
+            const milestones = [3, 7, 14, 30, 60, 90];
             if (milestones.includes(finalStreak)) {
                 haptics.streakMilestone();
+                Notifications.scheduleNotificationAsync({
+                    content: {
+                        title: `${finalStreak} Day Streak! 🔥`,
+                        body: "You're consistently finding your triggers. That's how we fix the gut!",
+                    },
+                    trigger: null,
+                });
             } else {
                 haptics.mealLogged();
             }
 
             Alert.alert('Meal Logged', 'Your meal has been logged successfully!');
-            setFoods([]);
+            if (finalStreak > (existingStreak?.current_streak ?? 0)) {
+                setShowConfetti(true);
+            }
+            // Remove logged foods from the list
+            setFoods(prev => prev.filter((_, i) => !selectedFoods.includes(i)));
+            setSelectedFoods([]);
             setNotes('');
             setStressLevel(1);
         } catch (error) {
@@ -189,9 +226,10 @@ function MealSegment(): React.JSX.Element {
         }
     };
 
-    const overallVerdict = getOverallVerdict();
-    const cautionItems = foods.filter(f => f.personal_verdict === 'caution' && f.caution_action);
-    const avoidItems = foods.filter(f => f.personal_verdict === 'avoid');
+    const activeFoods = foods.filter((_, i) => selectedFoods.includes(i));
+    const overallVerdict = getOverallVerdict(activeFoods);
+    const cautionItems = activeFoods.filter(f => f.personal_verdict === 'caution' && f.caution_action);
+    const avoidItems = activeFoods.filter(f => f.personal_verdict === 'avoid');
 
     return (
         <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
@@ -257,70 +295,79 @@ function MealSegment(): React.JSX.Element {
 
             {/* Food Cards */}
             {foods.map((food, index) => {
+                const isSelected = selectedFoods.includes(index);
                 const dotColor = food.personal_verdict === 'avoid' ? colors.red.DEFAULT
                     : food.personal_verdict === 'caution' ? colors.amber.DEFAULT
                         : colors.primary.DEFAULT;
 
                 return (
-                    <Card key={`${food.name}-${index}`} animated delay={0} style={{ marginTop: 12 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                            <View style={{
-                                width: 36, height: 36, borderRadius: 10,
-                                backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center',
-                            }}>
-                                <Utensils size={16} color={colors.text2} />
+                    <Pressable key={`${food.name}-${index}`} onPress={() => toggleSelection(index)}>
+                        <Card
+                            animated
+                            delay={0}
+                            style={{
+                                marginTop: 12,
+                                borderWidth: 2,
+                                borderColor: isSelected ? colors.primary.DEFAULT : 'transparent',
+                                backgroundColor: isSelected ? colors.primary.light : colors.surface
+                            }}
+                        >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                                <View style={{
+                                    width: 36, height: 36, borderRadius: 10,
+                                    backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center',
+                                }}>
+                                    {isSelected ? <Check size={16} color={colors.primary.DEFAULT} /> : <Utensils size={16} color={colors.text2} />}
+                                </View>
+                                <View style={{ flex: 1, marginRight: 8 }}>
+                                    <Text variant="foodName" color={colors.text1} numberOfLines={2}>{food.name}</Text>
+                                </View>
+                                <DualBadge
+                                    fodmapRisk={food.fodmap_risk}
+                                    personalVerdict={food.personal_verdict}
+                                    cautionAction={food.caution_action}
+                                    style={{ maxWidth: '40%' }}
+                                />
                             </View>
-                            <View style={{ flex: 1, marginRight: 8 }}>
-                                <Text variant="foodName" color={colors.text1} numberOfLines={2}>{food.name}</Text>
-                            </View>
-                            <DualBadge
-                                fodmapRisk={food.fodmap_risk}
-                                personalVerdict={food.personal_verdict}
-                                cautionAction={food.caution_action}
-                                style={{ maxWidth: '40%' }}
-                            />
-                            <Pressable onPress={() => removeFood(index)} style={{ marginLeft: 4, padding: 4 }}>
-                                <Trash2 size={16} color={colors.red.DEFAULT} />
-                            </Pressable>
-                        </View>
 
-                        {food.trigger_reasons.length > 0 && (
-                            <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.stone, gap: 6 }}>
-                                {food.personal_verdict === 'avoid' && food.contains_user_triggers && food.contains_user_triggers.length > 0 && (
-                                    <View style={{ backgroundColor: colors.red.light, padding: 8, borderRadius: 8, marginBottom: 4 }}>
-                                        <Text variant="caption" color={colors.red.DEFAULT} style={{ fontWeight: '700' }}>
-                                            ⚠️ TRIGGER DETECTED: {food.contains_user_triggers.join(', ')}
+                            {food.trigger_reasons.length > 0 && (
+                                <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.stone, gap: 6 }}>
+                                    {food.personal_verdict === 'avoid' && food.contains_user_triggers && food.contains_user_triggers.length > 0 && (
+                                        <View style={{ backgroundColor: colors.red.light, padding: 8, borderRadius: 8, marginBottom: 4 }}>
+                                            <Text variant="caption" color={colors.red.DEFAULT} style={{ fontWeight: '700' }}>
+                                                ⚠️ TRIGGER DETECTED: {food.contains_user_triggers.join(', ')}
+                                            </Text>
+                                        </View>
+                                    )}
+                                    {food.trigger_reasons.map((reason, i) => (
+                                        <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                                            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: dotColor, marginTop: 5 }} />
+                                            <Text variant="caption" color={colors.text2} style={{ flex: 1, lineHeight: 14 }}>{reason}</Text>
+                                        </View>
+                                    ))}
+                                    {food.ingredients && food.ingredients.length > 0 && (
+                                        <Text variant="caption" color={colors.text3} style={{ marginTop: 4, fontStyle: 'italic' }}>
+                                            Ingredients: {food.ingredients.join(', ')}
                                         </Text>
-                                    </View>
-                                )}
-                                {food.trigger_reasons.map((reason, i) => (
-                                    <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                                        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: dotColor, marginTop: 5 }} />
-                                        <Text variant="caption" color={colors.text2} style={{ flex: 1, lineHeight: 14 }}>{reason}</Text>
-                                    </View>
-                                ))}
-                                {food.ingredients && food.ingredients.length > 0 && (
-                                    <Text variant="caption" color={colors.text3} style={{ marginTop: 4, fontStyle: 'italic' }}>
-                                        Ingredients: {food.ingredients.join(', ')}
-                                    </Text>
-                                )}
-                            </View>
-                        )}
+                                    )}
+                                </View>
+                            )}
 
-                        {food.conflict_explanation && (
-                            <View style={{ marginTop: 6, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.primary.DEFAULT, marginTop: 5 }} />
-                                <Text variant="caption" color={colors.primary.DEFAULT} style={{ flex: 1, lineHeight: 14 }}>
-                                    {food.conflict_explanation}
-                                </Text>
-                            </View>
-                        )}
-                    </Card>
+                            {food.conflict_explanation && (
+                                <View style={{ marginTop: 6, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.primary.DEFAULT, marginTop: 5 }} />
+                                    <Text variant="caption" color={colors.primary.DEFAULT} style={{ flex: 1, lineHeight: 14 }}>
+                                        {food.conflict_explanation}
+                                    </Text>
+                                </View>
+                            )}
+                        </Card>
+                    </Pressable>
                 );
             })}
 
             {/* Overall Meal Verdict */}
-            {overallVerdict && (
+            {overallVerdict && activeFoods.length > 0 && (
                 <Card animated delay={0} style={{
                     marginTop: 12,
                     backgroundColor: overallVerdict === 'avoid' ? colors.red.light
@@ -408,14 +455,26 @@ function MealSegment(): React.JSX.Element {
 
                     <View style={{ marginTop: 20 }}>
                         <Button
-                            title="Log Meal"
+                            title={selectedFoods.length > 0 ? `Log ${selectedFoods.length} Items` : 'Select items to log'}
                             icon={<Check size={18} color="#FFFFFF" />}
-                            onPress={logMeal}
+                            onPress={() => logMeal(activeFoods)}
+                            disabled={selectedFoods.length === 0}
                             loading={logging}
                             fullWidth
                         />
                     </View>
                 </>
+            )}
+            {showConfetti && (
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 1000 }}>
+                    <ConfettiCannon
+                        count={200}
+                        origin={{ x: SCREEN_WIDTH / 2, y: -20 }}
+                        fadeOut={true}
+                        autoStart={true}
+                        onAnimationEnd={() => setShowConfetti(false)}
+                    />
+                </View>
             )}
         </ScrollView>
     );
@@ -432,6 +491,7 @@ function SymptomsSegment(): React.JSX.Element {
     const [stoolType, setStoolType] = useState<number | null>(null);
     const [notes, setNotes] = useState('');
     const [logging, setLogging] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
 
     const symptoms = [
         { label: 'Bloating', value: bloating, setter: setBloating },
@@ -459,7 +519,43 @@ function SymptomsSegment(): React.JSX.Element {
             });
             if (error) throw error;
 
-            haptics.mealLogged();
+            // Update streak (syncing with meal log logic)
+            const today = new Date().toISOString().split('T')[0];
+            const { data: existingStreak } = await supabase
+                .from('streaks')
+                .select('*')
+                .eq('user_id', user.id)
+                .single();
+
+            let finalStreak = 1;
+            if (existingStreak) {
+                const lastDate = existingStreak.last_logged_date;
+                const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                const newStreak = lastDate === yesterday ? existingStreak.current_streak + 1
+                    : lastDate === today ? existingStreak.current_streak
+                        : 1;
+                finalStreak = newStreak;
+                await supabase.from('streaks').update({
+                    current_streak: newStreak,
+                    longest_streak: Math.max(newStreak, existingStreak.longest_streak),
+                    last_logged_date: today,
+                    updated_at: new Date().toISOString(),
+                }).eq('user_id', user.id);
+
+                if (newStreak > existingStreak.current_streak) {
+                    setShowConfetti(true);
+                    haptics.streakMilestone();
+                }
+            } else {
+                await supabase.from('streaks').insert({
+                    user_id: user.id,
+                    current_streak: 1,
+                    longest_streak: 1,
+                    last_logged_date: today,
+                });
+                setShowConfetti(true);
+            }
+
             Alert.alert('Symptoms Logged', 'Your symptoms have been recorded.');
             setBloating(0);
             setPain(0);
@@ -553,6 +649,17 @@ function SymptomsSegment(): React.JSX.Element {
             <View style={{ marginTop: 20 }}>
                 <Button title="Log Symptoms" icon={<Check size={18} color="#FFFFFF" />} onPress={logSymptoms} loading={logging} fullWidth />
             </View>
+            {showConfetti && (
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 1000 }}>
+                    <ConfettiCannon
+                        count={200}
+                        origin={{ x: SCREEN_WIDTH / 2, y: -20 }}
+                        fadeOut={true}
+                        autoStart={true}
+                        onAnimationEnd={() => setShowConfetti(false)}
+                    />
+                </View>
+            )}
         </ScrollView>
     );
 }

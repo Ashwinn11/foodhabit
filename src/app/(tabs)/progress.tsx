@@ -102,8 +102,6 @@ function InsightsSegment(): React.JSX.Element {
         }
     };
 
-    useEffect(() => { fetchInsights(); }, [fetchInsights]);
-
     const onRefresh = async (): Promise<void> => {
         if (!isPremium) {
             import('react-native-purchases-ui').then(({ default: RevenueCatUI }) => RevenueCatUI.presentPaywall());
@@ -114,7 +112,24 @@ function InsightsSegment(): React.JSX.Element {
         setRefreshing(false);
     };
 
-    if (loading || subLoading) {
+    useEffect(() => {
+        fetchInsights();
+
+        // Realtime Subscription for Insights
+        const sub = supabase
+            .channel('insight-progress-updates')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'ai_insights', filter: `user_id=eq.${user?.id}` }, () => {
+                fetchInsights();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(sub);
+        };
+    }, [fetchInsights, user?.id]);
+
+    // Only show skeleton on first load when NO data is present
+    if (loading && insights.length === 0) {
         return (
             <View style={{ padding: 20, gap: 12 }}>
                 <InsightSkeleton />
@@ -126,11 +141,13 @@ function InsightsSegment(): React.JSX.Element {
 
     if (insights.length === 0) {
         return (
-            <EmptyState
-                title="No insights yet"
-                message="Log for a few more days to unlock your first insight. Every meal and symptom log helps."
-                mascotExpression="okay"
-            />
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+                <EmptyState
+                    title="No insights yet"
+                    message="Log for a few more days to unlock your first insight. Every meal and symptom log helps."
+                    mascotExpression="happy"
+                />
+            </View>
         );
     }
 
@@ -175,11 +192,12 @@ function InsightsSegment(): React.JSX.Element {
 
 // ========================== PROGRESS SEGMENT ==========================
 function ProgressSegment(): React.JSX.Element {
-    const { user } = useAuthStore();
+    const { user, profile } = useAuthStore();
     const [snapshot, setSnapshot] = useState<ProgressSnapshot | null>(null);
     const [safeFoods, setSafeFoods] = useState<string[]>([]);
-    const [topTriggers, setTopTriggers] = useState<AiInsight[]>([]);
+    const [topTriggers, setTopTriggers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [rawTrendData, setRawTrendData] = useState<any[]>([]);
     const [chartData, setChartData] = useState<any[]>([]);
     const [activeSymptom, setActiveSymptom] = useState<string>('Pain');
     const [heatmap, setHeatmap] = useState<boolean[]>(Array(90).fill(false));
@@ -193,92 +211,146 @@ function ProgressSegment(): React.JSX.Element {
     const fetchProgress = useCallback(async () => {
         if (!user?.id) return;
         try {
-            // Calculate progress via edge function
-            const { data: calcData } = await supabase.functions.invoke('calculate-progress', {
+            // FIRE AND FORGET: Start calculation in background, don't await it to block UI paint
+            supabase.functions.invoke('calculate-progress', {
                 body: { user_id: user.id },
-            });
+            }).catch(e => console.error('Silent progress calc error:', e));
 
-            // Fetch latest snapshot
-            const { data: snapData } = await supabase
+            // PROGRESSIVE FETCH: Request all data independently so the UI paints as soon as each piece arrives
+
+            // 1. Snapshot
+            supabase
                 .from('progress_snapshots')
                 .select('*')
                 .eq('user_id', user.id)
                 .order('snapshot_date', { ascending: false })
                 .limit(1)
-                .single();
+                .maybeSingle()
+                .then(snapRes => {
+                    if (snapRes.data) {
+                        setSnapshot(snapRes.data);
+                        const improvement = Math.max(0, Math.min(100, snapRes.data.improvement_vs_baseline));
+                        improvementWidth.value = withTiming(improvement, { duration: 1200, easing: Easing.out(Easing.ease) });
+                    }
+                });
 
-            if (snapData) {
-                setSnapshot(snapData);
-                const improvement = Math.max(0, Math.min(100, snapData.improvement_vs_baseline));
-                improvementWidth.value = withTiming(improvement, { duration: 1200, easing: Easing.out(Easing.ease) });
-            }
-
-            // Fetch confirmed triggers
-            const { data: triggers } = await supabase
+            // 2. Triggers (Manual + AI)
+            supabase
                 .from('ai_insights')
                 .select('*')
                 .eq('user_id', user.id)
                 .in('insight_type', ['trigger_confirmed', 'trigger_likely'])
                 .order('confidence', { ascending: false })
-                .limit(10);
+                .limit(10)
+                .then(insightsRes => {
+                    const manualTriggers = (profile?.known_triggers || []).map((t, i) => ({
+                        id: `manual-${i}`,
+                        title: t,
+                        body: 'Identified during onboarding',
+                        insight_type: 'manual',
+                        confidence: 'high'
+                    }));
+                    setTopTriggers([...manualTriggers, ...(insightsRes.data || [])]);
+                });
 
-            if (triggers) setTopTriggers(triggers);
-
-            // Derive safe foods from meal logs with no symptoms
-            const { data: mealData } = await supabase
+            // 3. Safe Foods
+            supabase
                 .from('meal_logs')
                 .select('foods')
                 .eq('user_id', user.id)
                 .eq('overall_meal_verdict', 'safest')
-                .limit(50);
+                .limit(40)
+                .then(mealRes => {
+                    if (mealRes.data) {
+                        const allFoods = mealRes.data.flatMap((ml: any) =>
+                            (ml.foods as any[]).filter(f => f.personal_verdict === 'safest').map(f => f.name)
+                        );
+                        setSafeFoods([...new Set(allFoods)]);
+                    }
+                });
 
-            if (mealData) {
-                const allFoods = mealData.flatMap((ml: any) =>
-                    (ml.foods as any[]).filter(f => f.personal_verdict === 'safest').map(f => f.name)
-                );
-                setSafeFoods([...new Set(allFoods)]);
-            }
-
-            // Fetch last 7 days for chart
-            const { data: trendData } = await supabase
+            // 4. Trends
+            supabase
                 .from('symptom_logs')
                 .select('logged_at, pain, bloating, urgency')
                 .eq('user_id', user.id)
                 .order('logged_at', { ascending: false })
-                .limit(7);
+                .limit(7)
+                .then(trendRes => {
+                    if (trendRes.data) {
+                        setRawTrendData(trendRes.data);
+                    }
+                });
 
-            if (trendData) {
-                const reversed = [...trendData].reverse();
-                setChartData(reversed.map(d => ({
-                    value: activeSymptom === 'Pain' ? d.pain : activeSymptom === 'Bloating' ? d.bloating : d.urgency,
-                    label: new Date(d.logged_at).toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
-                })));
-            }
-
-            // Heatmap logic — last 90 days
-            const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
-            const { data: recentLogs } = await supabase
+            // 5. Heatmap
+            supabase
                 .from('meal_logs')
                 .select('logged_at')
                 .eq('user_id', user.id)
-                .gte('logged_at', ninetyDaysAgo);
+                .gte('logged_at', new Date(Date.now() - 90 * 86400000).toISOString())
+                .then(recentRes => {
+                    const loggedDates = new Set((recentRes.data || []).map(l => l.logged_at.split('T')[0]));
+                    const map = Array(90).fill(false).map((_, i) => {
+                        const d = new Date(Date.now() - (89 - i) * 86400000).toISOString().split('T')[0];
+                        return loggedDates.has(d);
+                    });
+                    setHeatmap(map);
 
-            const loggedDates = new Set((recentLogs || []).map(l => l.logged_at.split('T')[0]));
-            const map = Array(90).fill(false).map((_, i) => {
-                const d = new Date(Date.now() - (89 - i) * 86400000).toISOString().split('T')[0];
-                return loggedDates.has(d);
-            });
-            setHeatmap(map);
+                    // Consider it fully "loaded" once the heaviest query finishes
+                    setLoading(false);
+                });
+
         } catch (error) {
             console.error('Progress fetch error:', error);
-        } finally {
             setLoading(false);
         }
-    }, [user?.id, activeSymptom]);
+    }, [user?.id]);
 
-    useEffect(() => { fetchProgress(); }, [fetchProgress]);
+    // Fast local re-render for symptom switching
+    useEffect(() => {
+        if (rawTrendData.length > 0) {
+            const reversed = [...rawTrendData].reverse();
+            setChartData(reversed.map(d => ({
+                value: activeSymptom === 'Pain' ? d.pain : activeSymptom === 'Bloating' ? d.bloating : d.urgency,
+                label: new Date(d.logged_at).toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
+            })));
+        }
+    }, [rawTrendData, activeSymptom]);
 
-    if (loading) {
+    useEffect(() => {
+        fetchProgress();
+
+        // Realtime Subscription for Progress Data
+        const logsSub = supabase
+            .channel('progress-logs-updates')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'meal_logs', filter: `user_id=eq.${user?.id}` }, () => {
+                fetchProgress();
+            })
+            .subscribe();
+
+        const symptomSub = supabase
+            .channel('progress-symptoms-updates')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'symptom_logs', filter: `user_id=eq.${user?.id}` }, () => {
+                fetchProgress();
+            })
+            .subscribe();
+
+        const snapshotSub = supabase
+            .channel('progress-snapshot-updates')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'progress_snapshots', filter: `user_id=eq.${user?.id}` }, () => {
+                fetchProgress();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(logsSub);
+            supabase.removeChannel(symptomSub);
+            supabase.removeChannel(snapshotSub);
+        };
+    }, [fetchProgress, user?.id]);
+
+    // Only show skeleton on first load when NO data is present
+    if (loading && !snapshot && chartData.length === 0) {
         return (
             <View style={{ padding: 20, gap: 12 }}>
                 <InsightSkeleton />
@@ -359,14 +431,14 @@ function ProgressSegment(): React.JSX.Element {
             <Card>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                     <Text variant="title" color={colors.text1}>Trends</Text>
-                    <View style={{ flexDirection: 'row', gap: 4 }}>
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
                         {['Pain', 'Bloating', 'Urgency'].map(s => (
                             <Chip
                                 key={s}
                                 label={s}
                                 selected={activeSymptom === s}
                                 onPress={() => { setActiveSymptom(s); haptics.buttonTap(); }}
-                                style={{ paddingHorizontal: 4, height: 24 }}
+                                style={{ paddingHorizontal: 10, paddingVertical: 4 }}
                             />
                         ))}
                     </View>
@@ -374,23 +446,43 @@ function ProgressSegment(): React.JSX.Element {
                 {chartData.length > 1 ? (
                     <View style={{ paddingRight: 20 }}>
                         <LineChart
+                            areaChart
                             data={chartData}
                             width={SCREEN_WIDTH - 80}
-                            height={120}
+                            height={140}
                             curvature={0.4}
-                            spacing={35}
+                            spacing={38}
                             color={colors.primary.DEFAULT}
                             thickness={3}
-                            hideDataPoints
-                            hideRules
-                            yAxisColor="transparent"
+                            startFillColor={colors.primary.DEFAULT}
+                            endFillColor={colors.primary.light}
+                            startOpacity={0.2}
+                            endOpacity={0.01}
+                            initialSpacing={20}
+                            noOfSections={2}
+                            maxValue={10}
+                            yAxisThickness={0}
+                            xAxisThickness={1}
                             xAxisColor={colors.stone}
+                            yAxisColor="transparent"
                             yAxisTextStyle={{ color: colors.text3, fontSize: 10 }}
                             xAxisLabelTextStyle={{ color: colors.text3, fontSize: 10 }}
-                            initialSpacing={10}
-                            yAxisThickness={0}
-                            maxValue={10}
-                            noOfSections={2}
+                            dataPointsColor={colors.primary.DEFAULT}
+                            dataPointsRadius={4}
+                            showValuesAsDataPointsText={false}
+                            pointerConfig={{
+                                pointerStripColor: colors.primary.mid,
+                                pointerStripWidth: 2,
+                                pointerColor: colors.primary.DEFAULT,
+                                radius: 6,
+                                pointerLabelComponent: (items: any) => {
+                                    return (
+                                        <View style={{ backgroundColor: colors.dark, padding: 8, borderRadius: 8 }}>
+                                            <Text variant="badge" color="#FFFFFF">{activeSymptom}: {items[0].value}</Text>
+                                        </View>
+                                    );
+                                },
+                            }}
                         />
                     </View>
                 ) : (
@@ -424,6 +516,9 @@ function ProgressSegment(): React.JSX.Element {
                         <Text variant="caption" color={colors.primary.DEFAULT}>Good days: {snapshot.good_days_count}</Text>
                         <Text variant="caption" color={colors.red.DEFAULT}>Bad days: {snapshot.bad_days_count}</Text>
                     </View>
+                    <Text variant="caption" color={colors.text3} style={{ textAlign: 'center', marginTop: 8, fontStyle: 'italic' }}>
+                        *Good days: all symptom severities ≤ 3. Bad days: ANY symptom ≥ 6.
+                    </Text>
                 </Card>
             )}
 
@@ -443,9 +538,9 @@ function ProgressSegment(): React.JSX.Element {
                                 <Text variant="bodyBold" color={colors.text1}>{trigger.title}</Text>
                                 <Text variant="caption" color={colors.text2} numberOfLines={1}>{trigger.body}</Text>
                             </View>
-                            <View style={{ backgroundColor: trigger.insight_type === 'trigger_confirmed' ? colors.red.light : colors.amber.light, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                                <Text variant="badge" color={trigger.insight_type === 'trigger_confirmed' ? colors.red.DEFAULT : colors.amber.DEFAULT}>
-                                    {trigger.insight_type === 'trigger_confirmed' ? 'CONFIRMED' : 'LIKELY'}
+                            <View style={{ backgroundColor: trigger.insight_type === 'manual' ? colors.primary.light : trigger.insight_type === 'trigger_confirmed' ? colors.red.light : colors.amber.light, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                                <Text variant="badge" color={trigger.insight_type === 'manual' ? colors.primary.DEFAULT : trigger.insight_type === 'trigger_confirmed' ? colors.red.DEFAULT : colors.amber.DEFAULT}>
+                                    {trigger.insight_type === 'manual' ? 'SET BY YOU' : trigger.insight_type === 'trigger_confirmed' ? 'CONFIRMED' : 'LIKELY'}
                                 </Text>
                             </View>
                         </View>

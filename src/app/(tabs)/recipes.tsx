@@ -49,7 +49,6 @@ export default function RecipesScreen(): React.JSX.Element {
                     .from('recipes')
                     .select('*')
                     .eq('user_id', user.id)
-                    .eq('source', 'daily')
                     .gte('generated_at', `${today}T00:00:00`)
                     .order('generated_at', { ascending: false })
                     .limit(1)
@@ -85,20 +84,20 @@ export default function RecipesScreen(): React.JSX.Element {
     }, [user?.id, isPremium, supabase]);
 
     useEffect(() => {
-        let ignore = false;
+        fetchRecipes();
 
-        const load = async () => {
-            if (!user?.id) return;
-            // First time loading - standard fetch
-            await fetchRecipes();
-        };
-
-        load();
+        // Realtime Subscription
+        const sub = supabase
+            .channel('recipe-updates')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'recipes', filter: `user_id=eq.${user?.id}` }, () => {
+                fetchRecipes();
+            })
+            .subscribe();
 
         return () => {
-            ignore = true;
+            supabase.removeChannel(sub);
         };
-    }, [fetchRecipes]);
+    }, [fetchRecipes, user?.id]);
 
     const generateRecipe = async (): Promise<void> => {
         if (!user?.id || generating) return;
@@ -189,7 +188,8 @@ export default function RecipesScreen(): React.JSX.Element {
         }
     };
 
-    if (loading || subLoading) {
+    // Only show skeleton on first load when NO data is present
+    if (loading && !todayRecipe && savedRecipes.length === 0) {
         return (
             <LinearGradient colors={['#FFFBF0', '#F0FDF5']} style={{ flex: 1 }}>
                 <SafeAreaView edges={['top']} style={{ flex: 1, padding: 20, gap: 12 }}>
@@ -208,9 +208,33 @@ export default function RecipesScreen(): React.JSX.Element {
 
                     {/* Today's Recipe - Only show if not saved */}
                     {todayRecipe && !todayRecipe.is_saved ? (
-                        <Card animated delay={0} style={{ marginTop: 16, backgroundColor: '#FFFBF0', borderWidth: 1, borderColor: colors.amber.DEFAULT }}>
-                            <View style={{ position: 'absolute', top: 12, right: 12, backgroundColor: colors.amber.DEFAULT, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-                                <Text variant="badge" color="#FFFFFF">TODAY</Text>
+                        <Card animated delay={0} style={{
+                            marginTop: 16,
+                            backgroundColor: todayRecipe.source === 'daily' ? '#FFFBF0' : '#F5F3FF',
+                            borderWidth: 1.5,
+                            borderColor: todayRecipe.source === 'daily' ? colors.amber.DEFAULT : colors.purple.DEFAULT,
+                            shadowColor: todayRecipe.source === 'daily' ? colors.amber.DEFAULT : colors.purple.DEFAULT,
+                            shadowOpacity: 0.1,
+                        }}>
+                            <View style={{
+                                position: 'absolute',
+                                top: 12,
+                                right: 12,
+                                backgroundColor: todayRecipe.source === 'daily' ? colors.amber.DEFAULT : colors.purple.DEFAULT,
+                                paddingHorizontal: 8,
+                                paddingVertical: 3,
+                                borderRadius: 6,
+                                zIndex: 1,
+                            }}>
+                                <Text variant="badge" color="#FFFFFF">
+                                    {todayRecipe.source === 'daily' ? 'GUTSY\'S PICK' : 'CUSTOM REQUEST'}
+                                </Text>
+                            </View>
+
+                            <View style={{ marginTop: 2 }}>
+                                <Text variant="labelBold" color={todayRecipe.source === 'daily' ? colors.amber.DEFAULT : colors.purple.DEFAULT}>
+                                    {todayRecipe.source === 'daily' ? 'Your Daily Gut-Safe Meal' : 'Based on your preferences'}
+                                </Text>
                             </View>
 
                             {todayRecipe.trigger_free?.length > 0 && (
@@ -239,7 +263,11 @@ export default function RecipesScreen(): React.JSX.Element {
                             </View>
 
                             <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
-                                <Button title="See Recipe" onPress={() => setDetailRecipe(todayRecipe)} style={{ flex: 1 }} />
+                                <Button
+                                    title="See Recipe"
+                                    onPress={() => setDetailRecipe(todayRecipe)}
+                                    style={{ flex: 1, backgroundColor: todayRecipe.source === 'daily' ? colors.primary.DEFAULT : colors.purple.DEFAULT }}
+                                />
                                 <Pressable
                                     onPress={() => toggleSave(todayRecipe)}
                                     style={{
@@ -253,14 +281,20 @@ export default function RecipesScreen(): React.JSX.Element {
                                 </Pressable>
                             </View>
 
-                            <Pressable
-                                onPress={refreshTodayRecipe}
-                                disabled={generating}
-                                style={{ alignSelf: 'center', marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 4, opacity: generating ? 0.6 : 1 }}
-                            >
-                                <RefreshCw size={12} color={colors.text3} />
-                                <Text variant="caption" color={colors.text3}>{generating ? 'Finding a new one...' : "This isn't for me"}</Text>
-                            </Pressable>
+                            {todayRecipe.source === 'daily' ? (
+                                <Pressable
+                                    onPress={refreshTodayRecipe}
+                                    disabled={generating}
+                                    style={{ alignSelf: 'center', marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 4, opacity: generating ? 0.6 : 1 }}
+                                >
+                                    <RefreshCw size={12} color={colors.text3} />
+                                    <Text variant="caption" color={colors.text3}>{generating ? 'Finding a new one...' : "This isn't for me"}</Text>
+                                </Pressable>
+                            ) : (
+                                <View style={{ alignSelf: 'center', marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                    <Text variant="caption" color={colors.text3}>Generated with your ingredients ✨</Text>
+                                </View>
+                            )}
                         </Card>
                     ) : generating ? (
                         <RecipeSkeleton />
@@ -335,7 +369,9 @@ export default function RecipesScreen(): React.JSX.Element {
                                 </View>
 
                                 <Text variant="heading" color={colors.text1}>{detailRecipe.title}</Text>
-                                <Text variant="body" color={colors.text2} style={{ marginTop: 6 }}>{detailRecipe.description}</Text>
+                                <View style={{ backgroundColor: colors.primary.light, padding: 12, borderRadius: 12, marginTop: 12 }}>
+                                    <Text variant="body" color={colors.text1} style={{ lineHeight: 20 }}>{detailRecipe.description}</Text>
+                                </View>
 
                                 {detailRecipe.trigger_free?.length > 0 && (
                                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 10 }}>
@@ -364,7 +400,14 @@ export default function RecipesScreen(): React.JSX.Element {
                                 <View style={{ marginTop: 8, gap: 8 }}>
                                     {(detailRecipe.ingredients as any[] || []).map((ing, i) => (
                                         <View key={i} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.stone }}>
-                                            <Text variant="body" color={colors.text1}>{ing.amount} {ing.unit} {ing.name}</Text>
+                                            <View style={{ flex: 1, gap: 2 }}>
+                                                <Text variant="body" color={colors.text1}>{ing.amount} {ing.unit} {ing.name}</Text>
+                                                {ing.is_safe_substitute && (
+                                                    <View style={{ alignSelf: 'flex-start', backgroundColor: colors.primary.DEFAULT, paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 4 }}>
+                                                        <Text variant="badge" color="#FFFFFF" style={{ fontSize: 7 }}>SAFE SUBSTITUTE</Text>
+                                                    </View>
+                                                )}
+                                            </View>
                                             <View style={{ backgroundColor: ing.fodmap_risk === 'high' ? colors.red.light : ing.fodmap_risk === 'medium' ? colors.amber.light : colors.primary.light, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                                                 <Text variant="badge" color={ing.fodmap_risk === 'high' ? colors.red.DEFAULT : ing.fodmap_risk === 'medium' ? colors.amber.DEFAULT : colors.primary.DEFAULT}>
                                                     {ing.fodmap_risk.toUpperCase()}

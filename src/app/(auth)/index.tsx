@@ -61,9 +61,10 @@ export default function AuthScreen(): React.JSX.Element {
             <SafeAreaView style={{ flex: 1 }}>
                 <ScrollView
                     contentContainerStyle={{
+                        flexGrow: 1,
+                        justifyContent: 'flex-end',
                         paddingHorizontal: 32,
-                        paddingTop: 60,
-                        paddingBottom: 40,
+                        paddingBottom: 100,
                         alignItems: 'center',
                     }}
                 >

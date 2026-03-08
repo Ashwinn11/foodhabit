@@ -64,20 +64,18 @@ export default function ProfileScreen(): React.JSX.Element {
     };
 
     return (
-        <LinearGradient colors={[colors.gradient.start, colors.gradient.mid]} style={{ flex: 1 }}>
+        <LinearGradient colors={[colors.gradient.start, colors.gradient.mid, colors.gradient.end]} style={{ flex: 1 }}>
             <SafeAreaView style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
-                    {navigation.canGoBack() ? (
-                        <Pressable onPress={() => router.back()} style={{ padding: 8 }}>
-                            <ChevronLeft size={24} color={colors.text1} />
-                        </Pressable>
-                    ) : (
-                        <View style={{ width: 40 }} />
-                    )}
-                    <View style={{ flex: 1 }}>
-                        <ProgressDots total={5} current={1} />
+                <View style={{ height: 56, flexDirection: 'row', alignItems: 'center' }}>
+                    <Pressable
+                        onPress={() => navigation.canGoBack() && router.back()}
+                        style={{ padding: 16, position: 'absolute', left: 0, zIndex: 10 }}
+                    >
+                        <ChevronLeft size={24} color={colors.text1} />
+                    </Pressable>
+                    <View style={{ flex: 1, paddingHorizontal: 70 }}>
+                        <ProgressDots total={7} current={1} />
                     </View>
-                    <View style={{ width: 40 }} />
                 </View>
 
                 <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingBottom: 32, flexGrow: 1 }}>
@@ -136,18 +134,12 @@ export default function ProfileScreen(): React.JSX.Element {
 
                     <View style={{ flex: 1 }} />
 
-                    <View style={{ gap: 12, marginTop: 32 }}>
+                    <View style={{ marginTop: 32 }}>
                         <Button
                             title="Continue"
                             onPress={handleContinue}
                             loading={loading}
                             disabled={!age && !sex && !diet}
-                            fullWidth
-                        />
-                        <Button
-                            title="Skip for now"
-                            variant="ghost"
-                            onPress={() => router.push('/(onboarding)/conditions')}
                             fullWidth
                         />
                     </View>

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -61,50 +62,64 @@ serve(async (req: Request) => {
         const safeFoods = (safeMeals || [])
             .flatMap((m: any) => (m.foods as any[]).filter(f => f.personal_verdict === 'safest').map(f => f.name));
 
+        // Get recent recipes to avoid repetition
+        const { data: recentRecipes } = await supabase
+            .from('recipes')
+            .select('title')
+            .eq('user_id', user_id)
+            .order('generated_at', { ascending: false })
+            .limit(5);
+
+        const recentTitles = (recentRecipes || []).map(r => r.title);
+
         const contextPart = context ? `\nUser wants: ${context}` : '';
         const ingredientsPart = available_ingredients?.length
             ? `\nAvailable ingredients: ${available_ingredients.join(', ')}`
             : '';
 
-        const prompt = `You are a gut health recipe AI. Generate a safe, delicious recipe for this user.
+        const prompt = `You are an expert gut health nutritionist and chef. Generate a premium, safe, and delicious recipe tailored to this user's unique biology.
 
 User Profile:
 - Triggers to AVOID: ${uniqueTriggers.join(', ') || 'none identified yet'}
 - Conditions: ${(profile?.diagnosed_conditions || []).join(', ') || 'none'}
-- Diet: ${profile?.diet_type || 'omnivore'}
-- Safe foods they enjoy: ${[...new Set(safeFoods)].join(', ') || 'not enough data yet'}
+- Diet Preference: ${profile?.diet_type || 'omnivore'}
+- Safe Foods They Like: ${[...new Set(safeFoods)].join(', ') || 'not enough data yet'}
+- RECENT RECIPES GENERATED (Avoid these titles/ingredients): ${recentTitles.join(', ') || 'none'}
 ${contextPart}${ingredientsPart}
 
-Meal type: ${meal_type || 'dinner'}
-Source: ${source} (${source === 'daily' ? 'daily recommendation' : source === 'post_log' ? 'post-meal suggestion' : 'user requested'})
+Meal Type: ${meal_type || 'dinner'}
 
-Respond with a JSON object:
+Respond with a strictly formatted JSON object:
 {
-  "title": "Recipe name",
-  "description": "Brief, appetising description (1-2 sentences)",
+  "title": "Creative & Appetizing Recipe Name",
+  "description": "A very appetising 2-sentence description of the flavor profile.",
+  "why_is_safe": "A personalized explanation of why this is perfect for their ${profile?.diagnosed_conditions?.[0] || 'gut health'} and avoids their specific triggers like ${uniqueTriggers.slice(0, 2).join(' and ') || 'common irritants'}.",
+  "servings": 2,
+  "calories_per_serving": 450,
   "ingredients": [
     {
       "name": "ingredient name",
       "amount": "1",
       "unit": "cup",
-      "fodmap_risk": "low" | "medium" | "high"
+      "fodmap_risk": "low" | "medium" | "high",
+      "is_safe_substitute": boolean (true if this replaces a common trigger like onion/garlic)
     }
   ],
   "steps": [
-    { "step_number": 1, "instruction": "clear, concise instruction" }
+    { "step_number": 1, "instruction": "Clear, professional culinary instruction" }
   ],
   "prep_time_mins": 25,
-  "meal_type": "${meal_type || 'dinner'}",
-  "trigger_free": ["trigger1-free", "trigger2-free"]
+  "difficulty": "easy" | "medium" | "hard",
+  "trigger_free": ["trigger1", "trigger2"]
 }
 
 Rules:
-- NEVER include any of the user's triggers as ingredients
-- Use LOW FODMAP ingredients preferentially
-- If a medium risk ingredient is used, keep portion small
-- trigger_free array should list which user triggers this recipe avoids
-- Keep it practical — max 8-10 ingredients, clear simple steps
-- Make it genuinely appetising, not just "safe"`;
+1. STRICT ADHERENCE: Never use ${uniqueTriggers.join(', ')}.
+2. DIET MATCH: If user is ${profile?.diet_type}, the recipe MUST be ${profile?.diet_type}.
+3. LOW FODMAP: Prioritize Low FODMAP ingredients.
+4. VARIETY: Do NOT repeat flavor profiles from the recent list. Explore diverse global cuisines that fit the user's constraints.
+5. TASTE: Use a wide array of gut-safe fresh herbs and spices to ensure high-end culinary quality. Do not be repetitive with flavor bases.
+6. NO PLACEHOLDERS: Provide specific amounts.`;
 
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
@@ -148,13 +163,16 @@ Rules:
         const steps = Array.isArray(recipe.steps) ? recipe.steps : (recipe.recipe?.steps || []);
         const trigger_free = Array.isArray(recipe.trigger_free) ? recipe.trigger_free : (recipe.recipe?.trigger_free || []);
 
+        // Merge premium fields into description since they don't have dedicated columns yet
+        const fullDescription = `${recipe.description || ''}\n\n💡 Why it's safe: ${recipe.why_is_safe || ''}\n\n🍴 Servings: ${recipe.servings || 2} | 🔥 Calories: ${recipe.calories_per_serving || 0} | 👨‍🍳 Difficulty: ${recipe.difficulty || 'easy'}`;
+
         // Store recipe in DB with explicit error checking
         const { data: insertedData, error: insertError } = await supabase
             .from('recipes')
             .insert({
                 user_id,
                 title: recipe.title || recipe.name || recipe.recipe?.title || 'Personalized Recipe',
-                description: recipe.description || recipe.summary || recipe.recipe?.description || '',
+                description: fullDescription,
                 ingredients,
                 steps,
                 prep_time_mins: Number(recipe.prep_time_mins || recipe.time || recipe.recipe?.prep_time_mins || 25),

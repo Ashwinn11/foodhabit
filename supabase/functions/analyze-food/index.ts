@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -56,15 +57,24 @@ serve(async (req: Request) => {
 
         const { mode, food_name, user_id, menu_image_base64, mime_type } = await req.json();
 
+        if (!user_id) {
+            console.error('No user_id provided in request');
+            return new Response(JSON.stringify({ error: 'user_id is required' }), { status: 400, headers: corsHeaders });
+        }
+
         // Create admin client to fetch user profile
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
         // Get user profile for personalisation
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('known_triggers, diagnosed_conditions, diet_type')
             .eq('id', user_id)
             .single();
+
+        if (profileError) {
+            console.error('Error fetching profile:', profileError);
+        }
 
         const triggers = profile?.known_triggers || [];
         const conditions = profile?.diagnosed_conditions || [];
@@ -86,12 +96,13 @@ serve(async (req: Request) => {
             .flatMap((i: any) => i.related_foods || []);
 
         const userContext = `
-User Profile:
-- Known triggers: ${triggers.join(', ') || 'none specified'}
-- AI-confirmed triggers: ${confirmedTriggers.join(', ') || 'none yet'}
-- AI-likely triggers: ${likelyTriggers.join(', ') || 'none yet'}
-- Diagnosed conditions: ${conditions.join(', ') || 'none'}
-- Diet: ${dietType}
+[CRITICAL USER DATA]
+- PERSONAL TRIGGERS: ${triggers.join(', ') || 'NONE SPECIFIED BY USER'}
+- AI-DETECTED CONFIRMED TRIGGERS: ${confirmedTriggers.join(', ') || 'none'}
+- AI-DETECTED LIKELY TRIGGERS: ${likelyTriggers.join(', ') || 'none'}
+- CONDITIONS: ${conditions.join(', ') || 'none'}
+- DIET: ${dietType}
+[/CRITICAL USER DATA]
 `;
 
         if (mode === 'food') {
@@ -103,23 +114,23 @@ Food to analyse: "${food_name}"
 
 Respond with a JSON object:
 {
-  "name": "food name (proper capitalisation)",
+  "name": "food name",
   "fodmap_risk": "low" | "medium" | "high",
   "personal_verdict": "avoid" | "caution" | "safest",
-  "caution_action": "specific action if verdict is caution, e.g. 'limit to 1/4 cup' or 'try with lactase enzyme'. null if not caution",
-  "why": ["reason 1 based on user's profile", "reason 2"],
-  "ingredients": ["main ingredient 1", "ingredient 2"],
-  "contains_user_triggers": ["trigger found 1", "trigger 2"],
-  "conflict_explanation": "if FODMAP data and personal data conflict, explain why. null otherwise",
-  "portion": "safe portion size if applicable"
+  "caution_action": "specific advice if caution, else null",
+  "why": ["ECHO DETECTED TRIGGER HERE IF FOUND", "reason 2"],
+  "ingredients": ["ingredient 1", "2"],
+  "contains_user_triggers": ["MATCHED TRIGGER FROM USER LIST"],
+  "conflict_explanation": "null unless personal data overrides FODMAP",
+  "portion": "safe portion size if applicable",
+  "debug_profile_seen": "List of triggers seen in prompt"
 }
 
 Rules:
-- personal_verdict MUST factor in the user's known and AI-confirmed triggers
-- If a food contains or is derived from a confirmed trigger, verdict must be "avoid"
-- If it contains a likely trigger, verdict should be "caution" with a specific caution_action
-- If FODMAP says low risk but user's personal data says it's a trigger, acknowledge the conflict
-- Be specific about portions and actions, not generic`;
+- PRIORITY: Personal Triggers > General FODMAP Data.
+- If a food matches ANY "PERSONAL TRIGGER", the personal_verdict MUST BE "avoid".
+- The first item in the "why" array MUST explicitly name the detected trigger.
+- DO NOT say "user has no triggers" if any are listed in [CRITICAL USER DATA].`;
 
             const result = await callGemini(prompt);
             return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -129,27 +140,26 @@ Rules:
 
 ${userContext}
 
-For each dish on the menu, provide analysis. Respond with:
+For each dish, respond with a JSON object following this structure:
 {
   "dishes": [
     {
       "name": "dish name",
       "fodmap_risk": "low" | "medium" | "high",
       "personal_verdict": "avoid" | "caution" | "safest",
-      "why": ["concise reason based on user profile"],
+      "why": ["ECHO DETECTED TRIGGER HERE IF FOUND"],
       "ingredients": ["key ingredient 1", "2"],
       "contains_user_triggers": ["trigger1", "trigger2"]
     }
   ],
-  "best_pick": "name of safest dish",
-  "best_pick_reason": "why this is the best choice for this user"
+  "best_pick": "safest dish name",
+  "best_pick_reason": "why this is best for THIS user"
 }
 
 Rules:
-- Analyse EVERY visible dish
-- personal_verdict must be based on user's triggers, not just general FODMAP
-- best_pick should be the dish with best overall safety for this specific user
-- Be concise but specific`;
+- Analyse EVERY visible dish.
+- personal_verdict MUST be 'avoid' if any dish name or ingredient matches a [CRITICAL USER DATA] trigger.
+- contains_user_triggers MUST list any ingredients matched from the user's trigger list.`;
 
             const result = await callGemini(prompt, menu_image_base64, mime_type);
             return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

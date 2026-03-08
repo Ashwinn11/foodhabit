@@ -279,7 +279,7 @@ export default function ScannerScreen(): React.JSX.Element {
 
                                     router.replace({
                                         pathname: '/(tabs)/log',
-                                        params: { scannedData: JSON.stringify(selectedData) }
+                                        params: { scannedData: JSON.stringify(selectedData), autoLog: 'true' }
                                     });
                                 }}
                                 fullWidth

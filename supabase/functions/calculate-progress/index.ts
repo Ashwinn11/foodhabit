@@ -59,12 +59,17 @@ serve(async (req: Request) => {
         });
 
         Object.values(dayMap).forEach((logs: any[]) => {
-            const avgSymptom = logs.reduce((sum: number, l: any) => {
-                return sum + (l.bloating + l.pain + l.urgency + l.nausea + l.fatigue) / 5;
-            }, 0) / logs.length;
+            let maxSymptomOfDay = 0;
 
-            if (avgSymptom <= 3) goodDays++;
-            else if (avgSymptom >= 6) badDays++;
+            logs.forEach(l => {
+                const maxInLog = Math.max(l.bloating, l.pain, l.urgency, l.nausea, l.fatigue);
+                if (maxInLog > maxSymptomOfDay) {
+                    maxSymptomOfDay = maxInLog;
+                }
+            });
+
+            if (maxSymptomOfDay >= 6) badDays++;
+            else if (maxSymptomOfDay <= 3) goodDays++;
         });
 
         // Get confirmed triggers
