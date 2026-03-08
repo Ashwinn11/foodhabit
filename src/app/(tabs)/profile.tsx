@@ -39,7 +39,18 @@ function ProfileRow({ icon, label, value, onPress, danger }: ProfileRowProps): R
                 borderBottomWidth: 1, borderBottomColor: colors.stone,
             }}
         >
-            {icon}
+            <View style={{
+                width: 32, height: 32, borderRadius: 8,
+                backgroundColor: danger ? colors.red.light : colors.stone,
+                alignItems: 'center', justifyContent: 'center'
+            }}>
+                {React.cloneElement(icon as React.ReactElement<any>, {
+                    size: 16,
+                    color: danger ? colors.red.DEFAULT : colors.text2,
+                    fill: danger ? colors.red.DEFAULT : colors.text2,
+                    fillOpacity: 0.2
+                })}
+            </View>
             <Text
                 variant="body"
                 color={danger ? colors.red.DEFAULT : colors.text1}
@@ -322,7 +333,9 @@ export default function ProfileScreen(): React.JSX.Element {
 
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.stone }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                <Bell size={18} color={colors.text2} />
+                                <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: colors.stone, alignItems: 'center', justifyContent: 'center' }}>
+                                    <Bell size={16} color={colors.text2} fill={colors.text2} fillOpacity={0.2} />
+                                </View>
                                 <Text variant="body" color={colors.text1}>Notifications</Text>
                             </View>
                             <Switch

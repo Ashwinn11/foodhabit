@@ -158,10 +158,10 @@ export default function HomeScreen(): React.JSX.Element {
     };
 
     const todayTiles = [
-        { label: 'Breakfast', icon: Sunrise, done: todayLogs.breakfast, mealType: 'breakfast' },
-        { label: 'Lunch', icon: Sun, done: todayLogs.lunch, mealType: 'lunch' },
-        { label: 'Dinner', icon: Moon, done: todayLogs.dinner, mealType: 'dinner' },
-        { label: 'Symptoms', icon: Heart, done: todayLogs.symptoms, mealType: 'symptoms' },
+        { label: 'Breakfast', emoji: '🍳', done: todayLogs.breakfast, mealType: 'breakfast', color: colors.amber.DEFAULT, bgColor: '#FFF8E8' },
+        { label: 'Lunch', emoji: '🥙', done: todayLogs.lunch, mealType: 'lunch', color: '#F59E0B', bgColor: '#FFF4E5' },
+        { label: 'Dinner', emoji: '🍱', done: todayLogs.dinner, mealType: 'dinner', color: colors.purple.DEFAULT, bgColor: colors.purple.light },
+        { label: 'Symptoms', emoji: '🤒', done: todayLogs.symptoms, mealType: 'symptoms', color: colors.red.DEFAULT, bgColor: '#FDE8E6' },
     ];
 
     const insightBorderColor = latestInsight ? {
@@ -169,7 +169,7 @@ export default function HomeScreen(): React.JSX.Element {
         trigger_likely: colors.red.DEFAULT,
         trigger_confirmed: colors.red.DEFAULT,
         pattern: colors.amber.DEFAULT,
-        recommendation: colors.purple,
+        recommendation: colors.purple.DEFAULT,
         weekly_summary: colors.primary.DEFAULT,
     }[latestInsight.insight_type] : colors.primary.DEFAULT;
 
@@ -264,7 +264,6 @@ export default function HomeScreen(): React.JSX.Element {
                         </Text>
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                             {todayTiles.map((tile, index) => {
-                                const Icon = tile.icon;
                                 return (
                                     <Card
                                         key={tile.label}
@@ -275,7 +274,7 @@ export default function HomeScreen(): React.JSX.Element {
                                             flexGrow: 1,
                                             padding: 14,
                                             borderWidth: 1,
-                                            borderColor: tile.done ? colors.primary.DEFAULT : colors.border,
+                                            borderColor: tile.done ? tile.color : colors.border,
                                         }}
                                     >
                                         <Pressable
@@ -289,16 +288,24 @@ export default function HomeScreen(): React.JSX.Element {
                                         >
                                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                                                 <View style={{
-                                                    width: 32, height: 32, borderRadius: 8,
-                                                    backgroundColor: tile.done ? colors.primary.light : colors.cream,
+                                                    width: 36, height: 36, borderRadius: 12,
+                                                    backgroundColor: tile.done ? tile.color : tile.bgColor,
                                                     alignItems: 'center', justifyContent: 'center',
+                                                    shadowColor: tile.color,
+                                                    shadowOffset: { width: 0, height: 2 },
+                                                    shadowOpacity: tile.done ? 0.3 : 0,
+                                                    shadowRadius: 4,
                                                 }}>
-                                                    <Icon size={16} color={tile.done ? colors.primary.DEFAULT : colors.text3} />
+                                                    {tile.done ? (
+                                                        <CheckCircle2 size={18} color="#FFF" />
+                                                    ) : (
+                                                        <Text style={{ fontSize: 20 }}>{tile.emoji}</Text>
+                                                    )}
                                                 </View>
                                                 {tile.done && <CheckCircle2 size={16} color={colors.primary.DEFAULT} />}
                                             </View>
                                             <Text variant="foodName" color={colors.text1} style={{ marginTop: 8 }}>{tile.label}</Text>
-                                            <Text variant="caption" color={tile.done ? colors.primary.DEFAULT : colors.text3} style={{ marginTop: 2 }}>
+                                            <Text variant="caption" color={tile.done ? tile.color : colors.text3} style={{ marginTop: 2 }}>
                                                 {tile.done ? 'Logged' : 'Tap to log'}
                                             </Text>
                                         </Pressable>

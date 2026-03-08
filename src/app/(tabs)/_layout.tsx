@@ -39,10 +39,10 @@ export default function TabLayout(): React.JSX.Element {
                     tabBarIcon: ({ focused, color }: TabIconProps) => (
                         <View style={{
                             width: 36, height: 36, borderRadius: 12,
-                            backgroundColor: focused ? colors.primary.light : 'transparent',
+                            backgroundColor: focused ? colors.primary.DEFAULT : 'transparent',
                             alignItems: 'center', justifyContent: 'center',
                         }}>
-                            <Home size={20} color={color} fill={focused ? colors.primary.DEFAULT : 'none'} fillOpacity={0.15} />
+                            <Home size={20} color={focused ? '#FFF' : color} fill={focused ? '#FFF' : 'none'} fillOpacity={0.2} />
                         </View>
                     ),
                 }}
@@ -69,10 +69,10 @@ export default function TabLayout(): React.JSX.Element {
                     tabBarIcon: ({ focused, color }: TabIconProps) => (
                         <View style={{
                             width: 36, height: 36, borderRadius: 12,
-                            backgroundColor: focused ? colors.primary.light : 'transparent',
+                            backgroundColor: focused ? colors.primary.DEFAULT : 'transparent',
                             alignItems: 'center', justifyContent: 'center',
                         }}>
-                            <Activity size={20} color={color} fill={focused ? colors.primary.DEFAULT : 'none'} fillOpacity={0.15} />
+                            <Activity size={20} color={focused ? '#FFF' : color} fill={focused ? '#FFF' : 'none'} fillOpacity={0.2} />
                         </View>
                     ),
                 }}
@@ -84,10 +84,10 @@ export default function TabLayout(): React.JSX.Element {
                     tabBarIcon: ({ focused, color }: TabIconProps) => (
                         <View style={{
                             width: 36, height: 36, borderRadius: 12,
-                            backgroundColor: focused ? '#FFF8E8' : 'transparent',
+                            backgroundColor: focused ? colors.primary.DEFAULT : 'transparent',
                             alignItems: 'center', justifyContent: 'center',
                         }}>
-                            <UtensilsCrossed size={20} color={focused ? colors.amber.DEFAULT : color} strokeWidth={focused ? 2.5 : 2} />
+                            <UtensilsCrossed size={20} color={focused ? '#FFF' : color} strokeWidth={focused ? 2.5 : 2} />
                         </View>
                     ),
                 }}
@@ -99,10 +99,10 @@ export default function TabLayout(): React.JSX.Element {
                     tabBarIcon: ({ focused, color }: TabIconProps) => (
                         <View style={{
                             width: 36, height: 36, borderRadius: 12,
-                            backgroundColor: focused ? colors.stone : 'transparent',
+                            backgroundColor: focused ? colors.primary.DEFAULT : 'transparent',
                             alignItems: 'center', justifyContent: 'center',
                         }}>
-                            <User size={20} color={focused ? colors.text1 : color} fill={focused ? colors.text1 : 'none'} fillOpacity={0.15} />
+                            <User size={20} color={focused ? '#FFF' : color} fill={focused ? '#FFF' : 'none'} fillOpacity={0.2} />
                         </View>
                     ),
                 }}

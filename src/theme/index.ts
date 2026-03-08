@@ -29,7 +29,10 @@ export const colors = {
         mid: '#FDFAF4',
         end: '#F5F0FF',
     },
-    purple: '#7C3AED',
+    purple: {
+        DEFAULT: '#7C3AED',
+        light: '#F5F0FF',
+    },
 } as const;
 
 export const typography = {

@@ -11,9 +11,9 @@ import { ProgressDots } from '@/components/ui/ProgressDots';
 import { colors } from '@/theme';
 
 const features = [
-    { icon: Search, title: 'No generic advice', desc: 'Every verdict is specific to you' },
-    { icon: TrendingDown, title: 'Built from your data', desc: 'AI learns your personal triggers' },
-    { icon: UtensilsCrossed, title: 'Gets smarter daily', desc: 'More logs = better predictions' },
+    { icon: Search, title: 'No generic advice', desc: 'Every verdict is specific to you', color: colors.amber.DEFAULT, lightColor: colors.amber.light },
+    { icon: TrendingDown, title: 'Built from your data', desc: 'AI learns your personal triggers', color: colors.purple.DEFAULT, lightColor: colors.purple.light },
+    { icon: UtensilsCrossed, title: 'Gets smarter daily', desc: 'More logs = better predictions', color: colors.primary.DEFAULT, lightColor: colors.primary.light },
 ];
 
 export default function WelcomeScreen(): React.JSX.Element {
@@ -71,13 +71,13 @@ export default function WelcomeScreen(): React.JSX.Element {
                                         style={{
                                             width: 40,
                                             height: 40,
-                                            borderRadius: 10,
-                                            backgroundColor: colors.primary.light,
+                                            borderRadius: 12,
+                                            backgroundColor: feature.lightColor,
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                         }}
                                     >
-                                        <Icon size={20} color={colors.primary.DEFAULT} />
+                                        <Icon size={20} color={feature.color} fill={feature.color} fillOpacity={0.2} />
                                     </View>
                                     <View style={{ flex: 1 }}>
                                         <Text variant="bodyBold" color={colors.text1}>{feature.title}</Text>

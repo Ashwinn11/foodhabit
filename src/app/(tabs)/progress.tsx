@@ -30,7 +30,7 @@ const insightBorderColors: Record<string, string> = {
     trigger_likely: colors.red.DEFAULT,
     trigger_confirmed: colors.red.DEFAULT,
     pattern: colors.amber.DEFAULT,
-    recommendation: colors.purple,
+    recommendation: colors.purple.DEFAULT,
     weekly_summary: colors.primary.DEFAULT,
 };
 
@@ -295,7 +295,9 @@ function ProgressSegment(): React.JSX.Element {
                     <>
                         <Text variant="labelBold" color="rgba(255,255,255,0.7)">Your Improvement</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 4 }}>
-                            <TrendingDown size={20} color="#FFFFFF" />
+                            <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                                <TrendingDown size={16} color="#FFFFFF" fill="#FFFFFF" fillOpacity={0.2} />
+                            </View>
                             <Text variant="heading" color="#FFFFFF" style={{ fontSize: 40 }}>
                                 {Math.round(snapshot.improvement_vs_baseline)}%
                             </Text>
@@ -427,8 +429,10 @@ function ProgressSegment(): React.JSX.Element {
 
             {/* Top Triggers */}
             <Card>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    <AlertCircle size={18} color={colors.red.DEFAULT} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: colors.red.light, alignItems: 'center', justifyContent: 'center' }}>
+                        <AlertCircle size={16} color={colors.red.DEFAULT} fill={colors.red.DEFAULT} fillOpacity={0.2} />
+                    </View>
                     <Text variant="title" color={colors.text1}>Top Triggers</Text>
                 </View>
                 {topTriggers.length > 0 ? (
@@ -453,8 +457,10 @@ function ProgressSegment(): React.JSX.Element {
 
             {/* Safe Foods */}
             <Card>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    <CheckCircle2 size={18} color={colors.primary.DEFAULT} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: colors.primary.light, alignItems: 'center', justifyContent: 'center' }}>
+                        <CheckCircle2 size={16} color={colors.primary.DEFAULT} fill={colors.primary.DEFAULT} fillOpacity={0.2} />
+                    </View>
                     <Text variant="title" color={colors.text1}>Safe Foods</Text>
                 </View>
                 {safeFoods.length > 0 ? (

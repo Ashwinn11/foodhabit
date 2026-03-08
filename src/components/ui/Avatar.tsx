@@ -10,9 +10,7 @@ interface AvatarProps {
 }
 
 export function Avatar({ name, url, size = 40 }: AvatarProps): React.JSX.Element {
-    const initials = name
-        ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-        : '?';
+    const placeholder = '?';
 
     if (url) {
         return (
@@ -44,7 +42,7 @@ export function Avatar({ name, url, size = 40 }: AvatarProps): React.JSX.Element
                 color="#FFFFFF"
                 style={{ fontSize: size * 0.4 }}
             >
-                {initials}
+                {placeholder}
             </Text>
         </View>
     );
