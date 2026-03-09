@@ -20,7 +20,7 @@ const features = [
     { icon: Sparkles, title: 'AI Recipe Generation', desc: 'Custom meal planning that avoids your specific gut triggers.' },
     { icon: Zap, title: 'Deep Pattern Insights', desc: 'Our AI finds hidden links between your symptoms and foods.' },
     { icon: ActivityIcon, title: 'Smart Menu Picks', desc: 'Instantly find the healthiest, safest option on any menu.' },
-    { icon: ShieldCheck, title: 'Dish Analysis', desc: 'Detailed safety breakdown for any ingredient or recipe.' },
+    { icon: ShieldCheck, title: 'Individualized Verdicts', desc: 'Our Dual-Badge system shows both scientific fact and your personal safety.' },
 ];
 
 export default function BenefitsScreen(): React.JSX.Element {
