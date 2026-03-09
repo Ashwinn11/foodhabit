@@ -45,6 +45,9 @@ export default function NotificationsScreen(): React.JSX.Element {
 
             if (status === 'granted') {
                 await updateProfile({ notifications_enabled: true });
+                // Clean slate - remove any previously scheduled reminders to prevent duplicates
+                await Notifications.cancelAllScheduledNotificationsAsync();
+
                 // Schedule meal reminders
                 for (const reminder of reminders) {
                     if (reminder.enabled) {
@@ -78,10 +81,10 @@ export default function NotificationsScreen(): React.JSX.Element {
                 }
             }
 
-            router.push('/(onboarding)/paywall');
+            router.push('/(onboarding)/plan');
         } catch (error) {
             console.error('Notification error:', error);
-            router.push('/(onboarding)/paywall');
+            router.push('/(onboarding)/plan');
         } finally {
             setLoading(false);
         }
@@ -98,7 +101,7 @@ export default function NotificationsScreen(): React.JSX.Element {
                         <ChevronLeft size={24} color={colors.text1} />
                     </Pressable>
                     <View style={{ flex: 1, paddingHorizontal: 70 }}>
-                        <ProgressDots total={7} current={6} />
+                        <ProgressDots total={7} current={5} />
                     </View>
                 </View>
 
@@ -199,7 +202,7 @@ export default function NotificationsScreen(): React.JSX.Element {
                         <Button
                             title="Skip"
                             variant="ghost"
-                            onPress={() => router.push('/(onboarding)/paywall')}
+                            onPress={() => router.push('/(onboarding)/plan')}
                             fullWidth
                         />
                     </View>

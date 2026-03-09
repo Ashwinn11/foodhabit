@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, type PressableProps, ActivityIndicator } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { colors, radii, shadows } from '@/theme';
 import { haptics } from '@/theme/haptics';
@@ -34,14 +34,11 @@ export function Button({ title, variant = 'primary', icon, loading, fullWidth, s
     }));
 
     const handlePressIn = (): void => {
-        scale.value = withSpring(0.95, { damping: 12, stiffness: 200 });
+        scale.value = withTiming(0.96, { duration: 100 });
     };
 
     const handlePressOut = (): void => {
-        scale.value = withSequence(
-            withSpring(1.05, { damping: 12, stiffness: 200 }),
-            withSpring(1.0, { damping: 12, stiffness: 200 })
-        );
+        scale.value = withTiming(1, { duration: 100 });
     };
 
     const handlePress = (e: any): void => {

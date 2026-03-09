@@ -3,7 +3,7 @@ import Purchases, { type CustomerInfo } from 'react-native-purchases';
 import { useAuthStore } from '@/store/authStore';
 
 export function useSubscription() {
-    const { profile } = useAuthStore();
+    const { profile, user } = useAuthStore();
     const [isPremium, setIsPremium] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -30,7 +30,7 @@ export function useSubscription() {
         };
 
         Purchases.addCustomerInfoUpdateListener(listener);
-    }, []);
+    }, [user?.id]);
 
     return { isPremium, isLoading };
 }

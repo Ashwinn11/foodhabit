@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { colors, typography } from '@/theme';
 import type { FodmapRisk, Verdict } from '@/lib/database.types';
@@ -42,8 +42,8 @@ export function FodmapBadge({ risk, animated = true }: FodmapBadgeProps): React.
     useEffect(() => {
         if (animated) {
             scale.value = withSequence(
-                withTiming(1.1, { duration: 200 }),
-                withSpring(1.0, { damping: 12, stiffness: 200 })
+                withTiming(1.05, { duration: 150 }),
+                withTiming(1.0, { duration: 100 })
             );
         }
     }, [animated]);
@@ -76,8 +76,8 @@ export function VerdictBadge({ verdict, cautionAction, animated = true }: Verdic
     useEffect(() => {
         if (animated) {
             scale.value = withSequence(
-                withTiming(1.1, { duration: 200 }),
-                withSpring(1.0, { damping: 12, stiffness: 200 })
+                withTiming(1.05, { duration: 150 }),
+                withTiming(1.0, { duration: 100 })
             );
         }
     }, [animated]);

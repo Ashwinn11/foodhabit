@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, RefreshControl, Pressable, Dimensions } from 'react-native';
+import { View, ScrollView, RefreshControl, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-    AlertCircle, CheckCircle2, TrendingDown, TrendingUp,
-    Eye, Target, Lock as LockIcon, ChevronRight,
+    AlertCircle, CheckCircle2, TrendingDown, Lock as LockIcon,
 } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { LineChart } from "react-native-gifted-charts";
@@ -15,12 +14,12 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { useToast } from '@/components/ui/Toast';
 import { InsightSkeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 import { colors, radii } from '@/theme';
-import { useSubscription } from '@/hooks/useSubscription';
 import type { AiInsight, ProgressSnapshot } from '@/lib/database.types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -66,7 +65,6 @@ function LockedFeature({ title, message, onUpgrade }: { title: string; message: 
 // ========================== INSIGHTS SEGMENT ==========================
 function InsightsSegment(): React.JSX.Element {
     const { user } = useAuthStore();
-    const { isPremium, isLoading: subLoading } = useSubscription();
     const [insights, setInsights] = useState<AiInsight[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -91,7 +89,7 @@ function InsightsSegment(): React.JSX.Element {
     }, [user?.id]);
 
     const generateInsight = async (): Promise<void> => {
-        if (!user?.id || !isPremium) return;
+        if (!user?.id) return;
         try {
             await supabase.functions.invoke('generate-insight', {
                 body: { user_id: user.id },
@@ -103,10 +101,6 @@ function InsightsSegment(): React.JSX.Element {
     };
 
     const onRefresh = async (): Promise<void> => {
-        if (!isPremium) {
-            import('react-native-purchases-ui').then(({ default: RevenueCatUI }) => RevenueCatUI.presentPaywall());
-            return;
-        }
         setRefreshing(true);
         await generateInsight();
         setRefreshing(false);
@@ -141,13 +135,16 @@ function InsightsSegment(): React.JSX.Element {
 
     if (insights.length === 0) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+            <ScrollView
+                contentContainerStyle={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary.DEFAULT} />}
+            >
                 <EmptyState
                     title="No insights yet"
-                    message="Log for a few more days to unlock your first insight. Every meal and symptom log helps."
+                    message="Pull down to ask the AI to analyze your logs and generate your first insight!"
                     mascotExpression="happy"
                 />
-            </View>
+            </ScrollView>
         );
     }
 
@@ -193,6 +190,7 @@ function InsightsSegment(): React.JSX.Element {
 // ========================== PROGRESS SEGMENT ==========================
 function ProgressSegment(): React.JSX.Element {
     const { user, profile } = useAuthStore();
+    const { showToast } = useToast();
     const [snapshot, setSnapshot] = useState<ProgressSnapshot | null>(null);
     const [safeFoods, setSafeFoods] = useState<string[]>([]);
     const [topTriggers, setTopTriggers] = useState<any[]>([]);

@@ -87,7 +87,7 @@ export default function BenefitsScreen(): React.JSX.Element {
                     <View style={{ marginTop: 40 }}>
                         <Button
                             title="Get my custom plan"
-                            onPress={() => router.push('/(onboarding)/plan')}
+                            onPress={() => router.push('/(onboarding)/notifications')}
                             fullWidth
                         />
                     </View>

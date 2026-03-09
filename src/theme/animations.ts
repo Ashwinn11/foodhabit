@@ -1,6 +1,5 @@
 import {
     withTiming,
-    withSpring,
     withRepeat,
     withSequence,
     withDelay,
@@ -20,21 +19,17 @@ export const cardEntrance = {
 // Staggered list: 80ms delay per card
 export const staggerDelay = (index: number): number => index * 80;
 
-// Button press animation
+// Button press animation (snappy timing instead of spring)
 export const buttonPress = {
-    onPressIn: 0.95,
-    onPressOut: (): number =>
-        withSequence(
-            withSpring(1.05, { damping: 12, stiffness: 200 }),
-            withSpring(1.0, { damping: 12, stiffness: 200 })
-        ),
+    onPressIn: 0.96,
+    onPressOut: (): number => withTiming(1, { duration: 100 }),
 };
 
-// Badge pop: 0.5 → 1.1 → 1.0
+// Badge pop: 0.5 → 1.05 → 1.0 (smooth sequence)
 export const badgePop = (): number =>
     withSequence(
-        withTiming(1.1, { duration: 200, easing: Easing.out(Easing.ease) }),
-        withSpring(1.0, { damping: 12, stiffness: 200 })
+        withTiming(1.05, { duration: 150, easing: Easing.out(Easing.ease) }),
+        withTiming(1.0, { duration: 100 })
     );
 
 // Gut score ring animation: 1.2s
@@ -88,6 +83,6 @@ export const floatAnimation = {
 export const progressBarAnimation = (finalWidth: number): number =>
     withTiming(finalWidth, { duration: 800, easing: Easing.out(Easing.ease) });
 
-// Speech bubble spring scale-in
-export const speechBubbleSpring = (): number =>
-    withSpring(1, { damping: 14, stiffness: 160 });
+// Speech bubble scale-in
+export const speechBubbleScale = (): number =>
+    withTiming(1, { duration: 300 });

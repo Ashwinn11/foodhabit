@@ -6,7 +6,6 @@ import Animated, {
     withRepeat,
     withTiming,
     withSequence,
-    withSpring,
     Easing,
 } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
@@ -79,7 +78,7 @@ export default function AnimatedMascot({
         );
 
         if (showBubble && message) {
-            bubbleScale.value = withSpring(1, { damping: 14, stiffness: 160 });
+            bubbleScale.value = withTiming(1, { duration: 300 });
         } else {
             bubbleScale.value = withTiming(0);
         }

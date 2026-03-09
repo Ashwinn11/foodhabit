@@ -35,7 +35,7 @@ export default function PlanScreen(): React.JSX.Element {
                         <ChevronLeft size={24} color={colors.text1} />
                     </Pressable>
                     <View style={{ flex: 1, paddingHorizontal: 70 }}>
-                        <ProgressDots total={7} current={5} />
+                        <ProgressDots total={7} current={6} />
                     </View>
                 </View>
 
@@ -78,7 +78,7 @@ export default function PlanScreen(): React.JSX.Element {
                     <View style={{ marginTop: 40 }}>
                         <Button
                             title="Start your transformation"
-                            onPress={() => router.push('/(onboarding)/notifications')}
+                            onPress={() => router.push('/(onboarding)/paywall')}
                             fullWidth
                         />
                     </View>

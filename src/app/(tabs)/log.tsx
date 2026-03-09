@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, ScrollView, TextInput, Pressable, ActivityIndicator, Alert, Dimensions } from 'react-native';
-import ConfettiCannon from 'react-native-confetti-cannon';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { ZoomIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     Search, Camera, Sunrise, Sun, Moon, Apple, Utensils,
@@ -19,6 +19,7 @@ import { Chip } from '@/components/ui/Chip';
 import { Input } from '@/components/ui/Input';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { DualBadge } from '@/components/ui/Badge';
+import { useToast } from '@/components/ui/Toast';
 import { FoodSkeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuthStore } from '@/store/authStore';
@@ -32,6 +33,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // ========================== MEAL SEGMENT ==========================
 function MealSegment(): React.JSX.Element {
     const router = useRouter();
+    const { showToast } = useToast();
     const { prefill, scannedData, autoLog } = useLocalSearchParams();
     const { user } = useAuthStore();
 
@@ -209,10 +211,20 @@ function MealSegment(): React.JSX.Element {
                 haptics.mealLogged();
             }
 
-            Alert.alert('Meal Logged', 'Your meal has been logged successfully!');
             if (finalStreak > (existingStreak?.current_streak ?? 0)) {
-                setShowConfetti(true);
+                showToast({
+                    title: 'Meal Logged! 🔥',
+                    message: `Great job! You're now on a ${finalStreak} day streak.`,
+                    type: 'success'
+                });
+            } else {
+                showToast({
+                    title: 'Meal Logged',
+                    message: 'Your meal has been saved successfully.',
+                    type: 'success'
+                });
             }
+
             // Remove logged foods from the list
             setFoods(prev => prev.filter((_, i) => !selectedFoods.includes(i)));
             setSelectedFoods([]);
@@ -220,7 +232,11 @@ function MealSegment(): React.JSX.Element {
             setStressLevel(1);
         } catch (error) {
             console.error('Log meal error:', error);
-            Alert.alert('Error', 'Failed to log meal. Please try again.');
+            showToast({
+                title: 'Error',
+                message: 'Failed to log meal. Please try again.',
+                type: 'error'
+            });
         } finally {
             setLogging(false);
         }
@@ -270,16 +286,24 @@ function MealSegment(): React.JSX.Element {
                             returnKeyType="go"
                         />
                     </View>
-                    <Pressable
-                        onPress={() => router.push('/scanner')}
+                    <Animated.View
+                        entering={ZoomIn.duration(250)}
                         style={{
                             width: 48, height: 48, borderRadius: radii.input,
                             backgroundColor: colors.dark,
                             alignItems: 'center', justifyContent: 'center',
                         }}
                     >
-                        <Camera size={20} color="#FFFFFF" />
-                    </Pressable>
+                        <Pressable
+                            onPress={() => router.push('/scanner')}
+                            style={{
+                                width: '100%', height: '100%',
+                                alignItems: 'center', justifyContent: 'center',
+                            }}
+                        >
+                            <Camera size={20} color="#FFFFFF" />
+                        </Pressable>
+                    </Animated.View>
                 </View>
                 <Text variant="caption" color={colors.text3} style={{ marginTop: 4 }}>
                     Both check every item against your gut profile
@@ -465,17 +489,6 @@ function MealSegment(): React.JSX.Element {
                     </View>
                 </>
             )}
-            {showConfetti && (
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 1000 }}>
-                    <ConfettiCannon
-                        count={200}
-                        origin={{ x: SCREEN_WIDTH / 2, y: -20 }}
-                        fadeOut={true}
-                        autoStart={true}
-                        onAnimationEnd={() => setShowConfetti(false)}
-                    />
-                </View>
-            )}
         </ScrollView>
     );
 }
@@ -483,6 +496,7 @@ function MealSegment(): React.JSX.Element {
 // ========================== SYMPTOMS SEGMENT ==========================
 function SymptomsSegment(): React.JSX.Element {
     const { user } = useAuthStore();
+    const { showToast } = useToast();
     const [bloating, setBloating] = useState(0);
     const [pain, setPain] = useState(0);
     const [urgency, setUrgency] = useState(0);
@@ -491,7 +505,6 @@ function SymptomsSegment(): React.JSX.Element {
     const [stoolType, setStoolType] = useState<number | null>(null);
     const [notes, setNotes] = useState('');
     const [logging, setLogging] = useState(false);
-    const [showConfetti, setShowConfetti] = useState(false);
 
     const symptoms = [
         { label: 'Bloating', value: bloating, setter: setBloating },
@@ -543,20 +556,21 @@ function SymptomsSegment(): React.JSX.Element {
                 }).eq('user_id', user.id);
 
                 if (newStreak > existingStreak.current_streak) {
-                    setShowConfetti(true);
                     haptics.streakMilestone();
+                    showToast({
+                        title: 'Symptoms Logged! 🔥',
+                        message: `Nicely done! You're on a ${finalStreak} day streak.`,
+                        type: 'success'
+                    });
                 }
             } else {
-                await supabase.from('streaks').insert({
-                    user_id: user.id,
-                    current_streak: 1,
-                    longest_streak: 1,
-                    last_logged_date: today,
+                showToast({
+                    title: 'Symptoms Logged',
+                    message: 'Your health data has been recorded.',
+                    type: 'success'
                 });
-                setShowConfetti(true);
             }
 
-            Alert.alert('Symptoms Logged', 'Your symptoms have been recorded.');
             setBloating(0);
             setPain(0);
             setUrgency(0);
@@ -566,7 +580,11 @@ function SymptomsSegment(): React.JSX.Element {
             setNotes('');
         } catch (error) {
             console.error('Log symptoms error:', error);
-            Alert.alert('Error', 'Failed to log symptoms. Please try again.');
+            showToast({
+                title: 'Error',
+                message: 'Failed to log symptoms. Please try again.',
+                type: 'error'
+            });
         } finally {
             setLogging(false);
         }
@@ -649,17 +667,6 @@ function SymptomsSegment(): React.JSX.Element {
             <View style={{ marginTop: 20 }}>
                 <Button title="Log Symptoms" icon={<Check size={18} color="#FFFFFF" />} onPress={logSymptoms} loading={logging} fullWidth />
             </View>
-            {showConfetti && (
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 1000 }}>
-                    <ConfettiCannon
-                        count={200}
-                        origin={{ x: SCREEN_WIDTH / 2, y: -20 }}
-                        fadeOut={true}
-                        autoStart={true}
-                        onAnimationEnd={() => setShowConfetti(false)}
-                    />
-                </View>
-            )}
         </ScrollView>
     );
 }
@@ -667,6 +674,7 @@ function SymptomsSegment(): React.JSX.Element {
 // ========================== TODAY SEGMENT ==========================
 function TodaySegment(): React.JSX.Element {
     const { user, profile } = useAuthStore();
+    const { showToast } = useToast();
     const [sleepHours, setSleepHours] = useState(7);
     const [sleepQuality, setSleepQuality] = useState(3);
     const [stressLevel, setStressLevel] = useState(3);
@@ -697,10 +705,18 @@ function TodaySegment(): React.JSX.Element {
 
             if (error) throw error;
             haptics.mealLogged();
-            Alert.alert('Saved', 'Daily factors recorded.');
+            showToast({
+                title: 'Factors Logged!',
+                message: 'Daily health factors recorded successfully.',
+                type: 'success'
+            });
         } catch (error) {
             console.error('Save daily factors error:', error);
-            Alert.alert('Error', 'Failed to save. Please try again.');
+            showToast({
+                title: 'Error',
+                message: 'Failed to save health factors.',
+                type: 'error'
+            });
         } finally {
             setSaving(false);
         }

@@ -39,6 +39,7 @@ export default function HomeScreen(): React.JSX.Element {
     const [gutScore, setGutScore] = useState<number | null>(null);
     const [streak, setStreak] = useState<Streak | null>(null);
     const [latestInsight, setLatestInsight] = useState<AiInsight | null>(null);
+    const [currentMealRecipe, setCurrentMealRecipe] = useState<any | null>(null);
 
     // Gut score ring animation
     const scoreProgress = useSharedValue(0);
@@ -56,6 +57,15 @@ export default function HomeScreen(): React.JSX.Element {
     };
 
     const firstName = profile?.full_name?.split(' ')[0] || 'there';
+
+    const getCurrentMealType = (): 'breakfast' | 'lunch' | 'dinner' => {
+        const hour = new Date().getHours();
+        if (hour < 10) return 'breakfast';
+        if (hour < 15) return 'lunch';
+        return 'dinner';
+    };
+
+    const mealType = getCurrentMealType();
 
     const getMascotExpression = (): 'happy' | 'okay' | 'sad' => {
         if (gutScore === null) return 'okay';
@@ -112,13 +122,20 @@ export default function HomeScreen(): React.JSX.Element {
                 const avg = symptoms.reduce((a, b) => a + b, 0) / symptoms.length;
                 const max = Math.max(...symptoms);
 
-                // Weight the score more heavily toward the worst symptom
-                // This ensures a 10/10 bloating doesn't get masked by other 0s
                 const weightedAvg = (avg * 0.6) + (max * 0.4);
                 const score = Math.max(0, Math.round(100 - weightedAvg * 10));
 
                 setGutScore(score);
                 scoreProgress.value = withTiming(score, { duration: 1200, easing: Easing.out(Easing.ease) });
+            } else if (profile) {
+                const triggers = profile.known_triggers || [];
+                const conditions = profile.diagnosed_conditions || [];
+                const baseScore = 92;
+                const penalty = Math.min(triggers.length * 8 + conditions.length * 5, 40);
+                const baselineScore = baseScore - penalty;
+
+                setGutScore(baselineScore);
+                scoreProgress.value = withTiming(baselineScore, { duration: 1200, easing: Easing.out(Easing.ease) });
             }
 
             // Fetch streak
@@ -139,6 +156,31 @@ export default function HomeScreen(): React.JSX.Element {
                 .limit(1);
 
             if (insights && insights.length > 0) setLatestInsight(insights[0]);
+
+            // Fetch current meal recipe
+            const currentMeal = getCurrentMealType();
+            const { data: recipeData } = await supabase
+                .from('recipes')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('meal_type', currentMeal)
+                .gte('generated_at', todayStart)
+                .order('generated_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            setCurrentMealRecipe(recipeData);
+
+            // PROACTIVE GENERATION: If no recipe exists for current slot, trigger it in background
+            if (!recipeData) {
+                supabase.functions.invoke('generate-recipe', {
+                    body: { user_id: user.id, source: 'daily', meal_type: currentMeal },
+                }).then(({ data: genData }) => {
+                    if (genData && !genData.error) {
+                        setCurrentMealRecipe(genData);
+                    }
+                }).catch(e => console.error('Proactive recipe generation failed:', e));
+            }
 
         } catch (error) {
             console.error('Home data fetch error:', error);
@@ -278,10 +320,10 @@ export default function HomeScreen(): React.JSX.Element {
                             </View>
                             <View style={{ flex: 1 }}>
                                 <Text variant="title" color={colors.text1}>
-                                    {gutScore === null ? 'No score yet' : gutScore >= 70 ? 'Great Day' : gutScore >= 40 ? 'Decent Day' : 'Tough Day'}
+                                    {todayLogs.symptoms ? (gutScore! >= 70 ? 'Great Day' : gutScore! >= 40 ? 'Decent Day' : 'Tough Day') : 'Baseline Score'}
                                 </Text>
                                 <Text variant="caption" color={colors.text2} style={{ marginTop: 2 }}>
-                                    {gutScore === null ? 'Log symptoms to see your score' : 'Based on today\'s symptoms'}
+                                    {todayLogs.symptoms ? 'Based on today\'s symptoms' : 'Initial score based on your profile'}
                                 </Text>
                             </View>
                         </View>
@@ -344,6 +386,36 @@ export default function HomeScreen(): React.JSX.Element {
                             })}
                         </View>
                     </View>
+
+                    {/* Daily Meal Plan */}
+                    <Card animated delay={360} style={{ marginTop: 16, backgroundColor: colors.primary.light + '40', borderColor: colors.primary.DEFAULT, borderWidth: 1 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <View style={{ flex: 1 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                    {mealType === 'breakfast' ? <Sunrise size={16} color={colors.primary.DEFAULT} /> :
+                                        mealType === 'lunch' ? <Sun size={16} color={colors.primary.DEFAULT} /> :
+                                            <Moon size={16} color={colors.primary.DEFAULT} />}
+                                    <Text variant="labelBold" color={colors.primary.DEFAULT} style={{ textTransform: 'uppercase' }}>
+                                        {mealType} Recommendation
+                                    </Text>
+                                </View>
+                                <Text variant="title" color={colors.text1} style={{ marginTop: 4 }}>
+                                    {currentMealRecipe ? currentMealRecipe.title : `Preparing your ${mealType}...`}
+                                </Text>
+                                <Text variant="caption" color={colors.text2} style={{ marginTop: 2 }}>
+                                    {currentMealRecipe
+                                        ? currentMealRecipe.description.split('\n')[0]
+                                        : `Our AI is tailoring a gut-safe ${mealType} based on your triggers.`}
+                                </Text>
+                            </View>
+                            <Pressable
+                                onPress={() => router.push('/(tabs)/recipes')}
+                                style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary.DEFAULT, alignItems: 'center', justifyContent: 'center' }}
+                            >
+                                <ChevronRight size={24} color="#FFF" />
+                            </Pressable>
+                        </View>
+                    </Card>
 
                     {/* Streak Bar */}
                     <Card animated delay={320} style={{ marginTop: 16, backgroundColor: '#FFF8E8' }}>

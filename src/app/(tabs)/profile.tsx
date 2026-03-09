@@ -6,8 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     User, Bell, ChevronRight, Shield, Trash2, LogOut,
     Star, Heart, HelpCircle, Activity, Salad, CreditCard,
-    RefreshCcw,
+    RefreshCcw, AlertCircle, CheckCircle,
 } from 'lucide-react-native';
+import * as Notifications from 'expo-notifications';
 import Purchases from 'react-native-purchases';
 import RevenueCatUI from 'react-native-purchases-ui';
 
@@ -17,6 +18,8 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Chip } from '@/components/ui/Chip';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Dialog } from '@/components/ui/Dialog';
+import { useToast } from '@/components/ui/Toast';
 import { useAuthStore } from '@/store/authStore';
 import { colors, radii } from '@/theme';
 import { haptics } from '@/theme/haptics';
@@ -75,59 +78,42 @@ export default function ProfileScreen(): React.JSX.Element {
     const [conditionInput, setConditionInput] = useState(profile?.diagnosed_conditions?.join(', ') || '');
     const [dietInput, setDietInput] = useState(profile?.diet_type || '');
     const [saving, setSaving] = useState(false);
+    const { showToast } = useToast();
 
-    const handleSignOut = (): void => {
-        Alert.alert(
-            'Sign Out',
-            'Are you sure you want to sign out?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Sign Out', style: 'destructive', onPress: async () => {
-                        try {
-                            await signOut();
-                        } catch (error) {
-                            console.error('Sign out error:', error);
-                        }
-                    }
-                },
-            ]
-        );
+    // Confirmation Modals State
+    const [signOutVisible, setSignOutVisible] = useState(false);
+    const [deleteVisible, setDeleteVisible] = useState(false);
+    const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
+
+    const handleSignOut = async (): Promise<void> => {
+        setActionLoading(true);
+        try {
+            await signOut();
+        } catch (error) {
+            console.error('Sign out error:', error);
+            showToast({ title: 'Error', message: 'Sign out failed.', type: 'error' });
+        } finally {
+            setActionLoading(false);
+            setSignOutVisible(false);
+        }
     };
 
-    const handleDeleteAccount = (): void => {
-        Alert.alert(
-            'Delete Account',
-            'This will permanently delete your account and all your data. This cannot be undone.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: () => {
-                        Alert.alert(
-                            'Are you absolutely sure?',
-                            'All your meal logs, symptom data, insights, and recipes will be permanently deleted.',
-                            [
-                                { text: 'Cancel', style: 'cancel' },
-                                {
-                                    text: 'Yes, Delete Everything',
-                                    style: 'destructive',
-                                    onPress: async () => {
-                                        try {
-                                            await deleteAccount();
-                                        } catch (error) {
-                                            console.error('Delete account error:', error);
-                                            Alert.alert('Error', 'Failed to delete account. Please try again.');
-                                        }
-                                    },
-                                },
-                            ]
-                        );
-                    },
-                },
-            ]
-        );
+    const handleDeleteAccount = async (): Promise<void> => {
+        setActionLoading(true);
+        try {
+            await deleteAccount();
+        } catch (error) {
+            console.error('Delete account error:', error);
+            showToast({
+                title: 'Error',
+                message: 'Failed to delete account. Please try again.',
+                type: 'error'
+            });
+        } finally {
+            setActionLoading(false);
+            setConfirmDeleteVisible(false);
+        }
     };
 
     const handleUpdateTriggers = async (): Promise<void> => {
@@ -185,9 +171,18 @@ export default function ProfileScreen(): React.JSX.Element {
     const handleRestorePurchases = async (): Promise<void> => {
         try {
             await Purchases.restorePurchases();
-            Alert.alert('Restored', 'Your purchases have been restored.');
+            showToast({
+                title: 'Restored',
+                message: 'Your purchases have been successfully restored!',
+                type: 'success'
+            });
         } catch (error) {
             console.error('Restore error:', error);
+            showToast({
+                title: 'Error',
+                message: 'Failed to restore. Please try again.',
+                type: 'error'
+            });
         }
     };
 
@@ -376,15 +371,52 @@ export default function ProfileScreen(): React.JSX.Element {
                         <ProfileRow
                             icon={<LogOut size={18} color={colors.text2} />}
                             label="Sign Out"
-                            onPress={handleSignOut}
+                            onPress={() => setSignOutVisible(true)}
                         />
                         <ProfileRow
                             icon={<Trash2 size={18} color={colors.red.DEFAULT} />}
                             label="Delete Account"
-                            onPress={handleDeleteAccount}
+                            onPress={() => setDeleteVisible(true)}
                             danger
                         />
                     </Card>
+
+                    <Dialog
+                        visible={signOutVisible}
+                        title="Sign Out"
+                        description="Are you sure you want to sign out?"
+                        confirmLabel="Sign Out"
+                        cancelLabel="Cancel"
+                        onConfirm={handleSignOut}
+                        onCancel={() => setSignOutVisible(false)}
+                        loading={actionLoading}
+                    />
+
+                    <Dialog
+                        visible={deleteVisible}
+                        title="Delete Account"
+                        description="This will permanently delete your account and all your data. This cannot be undone."
+                        confirmLabel="Continue"
+                        cancelLabel="Cancel"
+                        onConfirm={() => {
+                            setDeleteVisible(false);
+                            setConfirmDeleteVisible(true);
+                        }}
+                        onCancel={() => setDeleteVisible(false)}
+                        type="danger"
+                    />
+
+                    <Dialog
+                        visible={confirmDeleteVisible}
+                        title="Final Warning"
+                        description="Are you absolutely sure? All your meal logs, symptoms, insights, and recipes will be wiped forever."
+                        confirmLabel="Delete Everything"
+                        cancelLabel="Cancel"
+                        onConfirm={handleDeleteAccount}
+                        onCancel={() => setConfirmDeleteVisible(false)}
+                        type="danger"
+                        loading={actionLoading}
+                    />
 
                     {/* App version */}
                     <View style={{ alignItems: 'center', marginTop: 24 }}>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, type PressableProps } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { colors, radii } from '@/theme';
 import { haptics } from '@/theme/haptics';
@@ -22,11 +22,11 @@ export function Chip({ label, selected = false, icon, style, onPress, ...props }
     }));
 
     const handlePressIn = (): void => {
-        scale.value = withSpring(0.95, { damping: 12, stiffness: 200 });
+        scale.value = withTiming(0.96, { duration: 100 });
     };
 
     const handlePressOut = (): void => {
-        scale.value = withSpring(1.0, { damping: 12, stiffness: 200 });
+        scale.value = withTiming(1, { duration: 100 });
     };
 
     const handlePress = (e: any): void => {
