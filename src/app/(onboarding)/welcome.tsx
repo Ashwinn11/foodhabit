@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Sparkles } from 'lucide-react-native';
+import { Sparkles } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import AnimatedMascot from '@/components/AnimatedMascot';
@@ -15,6 +15,7 @@ import { colors } from '@/theme';
 
 export default function WelcomeScreen(): React.JSX.Element {
     const router = useRouter();
+
 
     return (
         <LinearGradient colors={[colors.gradient.start, colors.gradient.mid, colors.gradient.end]} style={{ flex: 1 }}>
@@ -54,7 +55,7 @@ export default function WelcomeScreen(): React.JSX.Element {
                             color={colors.text2}
                             style={{ marginTop: 8, textAlign: 'center', lineHeight: 22 }}
                         >
-                            We're going to help you find exactly what's causing your discomfort so you can enjoy food again without the fear.
+                            We're going to use advanced AI to find exactly what's causing your discomfort, discover your hidden triggers, and design a gut-safe life for you.
                         </Text>
                     </View>
 

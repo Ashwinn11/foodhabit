@@ -9,10 +9,11 @@ import { Text } from '@/components/ui/Text';
 import { colors } from '@/theme';
 
 const steps = [
-    "Analyzing your profile...",
-    "Correlating symptoms and triggers...",
-    "Identifying gut sensitivity levels...",
-    "Generating your custom 6-week roadmap..."
+    "Analyzing your gut profile...",
+    "Correlating symptoms and hidden patterns...",
+    "Learning your sensitivity to 32 common triggers...",
+    "Crafting your custom AI recipe engine...",
+    "Finalizing your 6-week gut health roadmap..."
 ];
 
 export default function AnalyzingScreen(): React.JSX.Element {

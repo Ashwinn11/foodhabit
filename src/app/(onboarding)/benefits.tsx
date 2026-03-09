@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable } from 'react-native';
 import { useRouter, useNavigation } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Star, ShieldCheck, Zap, HeartPulse } from 'lucide-react-native';
+import { ChevronLeft, Star, ShieldCheck, Zap, HeartPulse, Sparkles, Activity as ActivityIcon } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
@@ -17,9 +17,10 @@ const reviews = [
 ];
 
 const features = [
-    { icon: Zap, title: 'Instant Verdicts', desc: 'Scan any label to see if it fits your gut.' },
-    { icon: ShieldCheck, title: 'Safe Lists', desc: 'Browse thousands of verified safe foods.' },
-    { icon: HeartPulse, title: 'Symptom Tracking', desc: 'Link your meals to how you actually feel.' },
+    { icon: Sparkles, title: 'AI Recipe Generation', desc: 'Custom meal planning that avoids your specific gut triggers.' },
+    { icon: Zap, title: 'Deep Pattern Insights', desc: 'Our AI finds hidden links between your symptoms and foods.' },
+    { icon: ActivityIcon, title: 'Smart Menu Picks', desc: 'Instantly find the healthiest, safest option on any menu.' },
+    { icon: ShieldCheck, title: 'Dish Analysis', desc: 'Detailed safety breakdown for any ingredient or recipe.' },
 ];
 
 export default function BenefitsScreen(): React.JSX.Element {

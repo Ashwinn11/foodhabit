@@ -64,13 +64,16 @@ function MealSegment(): React.JSX.Element {
                         return [...prev, ...newIndices];
                     });
 
-                    // Clear params before logging
-                    router.setParams({ scannedData: undefined, autoLog: undefined });
+                    // Clear params and input immediately
+                    setFoodInput('');
+                    router.setParams({ scannedData: undefined, autoLog: undefined, prefill: undefined });
 
                     if (autoLog === 'true') {
-                        // Pass the combined array or just the parsed array depending on desired behavior
-                        // We'll pass the exact payload so it logs without needing state to update
-                        logMeal(parsed);
+                        // Pass the parsed array and clear everything after
+                        logMeal(parsed).then(() => {
+                            setFoods([]);
+                            setSelectedFoods([]);
+                        });
                     }
                 }
             } catch (e) {
@@ -226,8 +229,14 @@ function MealSegment(): React.JSX.Element {
             }
 
             // Remove logged foods from the list
-            setFoods(prev => prev.filter((_, i) => !selectedFoods.includes(i)));
-            setSelectedFoods([]);
+            if (overrideFoods) {
+                // If override was used, we likely want to clear the whole temporary state
+                setFoods([]);
+                setSelectedFoods([]);
+            } else {
+                setFoods(prev => prev.filter((_, i) => !selectedFoods.includes(i)));
+                setSelectedFoods([]);
+            }
             setNotes('');
             setStressLevel(1);
         } catch (error) {

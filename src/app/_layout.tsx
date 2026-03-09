@@ -8,9 +8,11 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 import Purchases from 'react-native-purchases';
-import { useSubscription } from '@/hooks/useSubscription';
 import * as Notifications from 'expo-notifications';
 import '../../global.css';
+
+import { useSubscriptionStore } from '@/store/subscriptionStore';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -59,12 +61,27 @@ function useProtectedRoute(isPremium: boolean, isSubLoading: boolean): void {
 export default function RootLayout(): React.JSX.Element | null {
     const fontsLoaded = useFontLoader();
     const { initialize, setSession, isInitialized, user } = useAuthStore();
+    const { sync: syncSubscription, initializeListener, isLoading: isSubLoading, isPremium } = useSubscriptionStore();
     const segments = useSegments();
+    const segmentsRef = React.useRef(segments);
 
+    // Initializations
     useEffect(() => {
         initialize();
+        const cleanupListener = initializeListener();
+
+        // Safety fallback: Hide splash screen after 5 seconds no matter what
+        const timeout = setTimeout(() => {
+            SplashScreen.hideAsync().catch(() => { });
+        }, 5000);
+
+        return () => {
+            cleanupListener();
+            clearTimeout(timeout);
+        };
     }, []);
 
+    // Session Management
     useEffect(() => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             await setSession(session);
@@ -72,50 +89,49 @@ export default function RootLayout(): React.JSX.Element | null {
         return () => subscription.unsubscribe();
     }, []);
 
+    // RevenueCat Configure
     useEffect(() => {
-        const initRC = async () => {
-            const rcKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY;
-            if (rcKey) Purchases.configure({ apiKey: rcKey });
-        };
-        initRC();
+        const rcKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY;
+        if (rcKey) {
+            Purchases.configure({ apiKey: rcKey });
+            syncSubscription(); // Initial sync
+        }
     }, []);
 
-    const segmentsRef = React.useRef(segments);
+    // Sync Subscription when user changes
+    useEffect(() => {
+        if (user?.id) {
+            Purchases.logIn(user.id)
+                .then(() => syncSubscription())
+                .catch(console.error);
+        } else {
+            syncSubscription();
+        }
+    }, [user?.id]);
+
     useEffect(() => {
         segmentsRef.current = segments;
     }, [segments]);
 
-    useEffect(() => {
-        if (user?.id) {
-            Purchases.logIn(user.id).catch(console.error);
-        }
-    }, [user?.id]);
-
-    const { isPremium, isLoading: isSubLoading } = useSubscription();
-
+    // Handle Splash Screen
     useEffect(() => {
         if (fontsLoaded && isInitialized && !isSubLoading) {
             SplashScreen.hideAsync();
         }
     }, [fontsLoaded, isInitialized, isSubLoading]);
 
+    // Subscriptions (Profile, Notifications)
     useEffect(() => {
         if (!user?.id) return;
 
-        const profileSubscription = supabase
+        const profileSub = supabase
             .channel('global-profile-updates')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
                 if (payload.new) useAuthStore.setState({ profile: payload.new as any });
             })
             .subscribe();
 
-        return () => { supabase.removeChannel(profileSubscription); };
-    }, [user?.id]);
-
-    useEffect(() => {
-        if (!user?.id) return;
-
-        const insightSubscription = supabase
+        const insightSub = supabase
             .channel('global-insight-notifications')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ai_insights', filter: `user_id=eq.${user.id}` }, (payload) => {
                 const currentSegments = segmentsRef.current;
@@ -132,7 +148,7 @@ export default function RootLayout(): React.JSX.Element | null {
             })
             .subscribe();
 
-        const recipeSubscription = supabase
+        const recipeSub = supabase
             .channel('global-recipe-notifications')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'recipes', filter: `user_id=eq.${user.id}` }, (payload) => {
                 const currentSegments = segmentsRef.current;
@@ -150,8 +166,9 @@ export default function RootLayout(): React.JSX.Element | null {
             .subscribe();
 
         return () => {
-            supabase.removeChannel(insightSubscription);
-            supabase.removeChannel(recipeSubscription);
+            supabase.removeChannel(profileSub);
+            supabase.removeChannel(insightSub);
+            supabase.removeChannel(recipeSub);
         };
     }, [user?.id]);
 
@@ -160,18 +177,20 @@ export default function RootLayout(): React.JSX.Element | null {
     if (!fontsLoaded || !isInitialized) return null;
 
     return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-            <StatusBar style="dark" />
-            <ToastProvider>
-                <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="(tabs)" />
-                    <Stack.Screen name="(auth)" />
-                    <Stack.Screen name="(onboarding)" />
-                    <Stack.Screen name="legal/privacy" options={{ presentation: 'modal' }} />
-                    <Stack.Screen name="legal/terms" options={{ presentation: 'modal' }} />
-                    <Stack.Screen name="scanner/index" />
-                </Stack>
-            </ToastProvider>
-        </GestureHandlerRootView>
+        <ErrorBoundary>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+                <StatusBar style="dark" />
+                <ToastProvider>
+                    <Stack screenOptions={{ headerShown: false }}>
+                        <Stack.Screen name="(tabs)" />
+                        <Stack.Screen name="(auth)" />
+                        <Stack.Screen name="(onboarding)" />
+                        <Stack.Screen name="legal/privacy" options={{ presentation: 'modal' }} />
+                        <Stack.Screen name="legal/terms" options={{ presentation: 'modal' }} />
+                        <Stack.Screen name="scanner/index" />
+                    </Stack>
+                </ToastProvider>
+            </GestureHandlerRootView>
+        </ErrorBoundary>
     );
 }
