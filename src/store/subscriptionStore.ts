@@ -10,6 +10,7 @@ export interface PlanDetails {
 interface SubscriptionState {
     isPremium: boolean;
     isLoading: boolean;
+    hasLoaded: boolean; // true after first sync attempt (success or fail)
     planDetails: PlanDetails | null;
     setPremium: (isPremium: boolean) => void;
     setLoading: (isLoading: boolean) => void;
@@ -20,6 +21,7 @@ interface SubscriptionState {
 export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
     isPremium: false,
     isLoading: true,
+    hasLoaded: false,
     planDetails: null,
 
     setPremium: (isPremium) => set({ isPremium }),
@@ -37,10 +39,11 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
                 expirationDate: activeEntitlement.expirationDate,
             } : null;
 
-            set({ isPremium: hasPremium, planDetails: details, isLoading: false });
+            set({ isPremium: hasPremium, planDetails: details, isLoading: false, hasLoaded: true });
         } catch (e) {
             console.error('Subscription sync error:', e);
-            set({ isLoading: false });
+            // Always mark as loaded so render guard doesn't block forever
+            set({ isLoading: false, hasLoaded: true });
         }
     },
 
@@ -54,7 +57,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
                 expirationDate: activeEntitlement.expirationDate,
             } : null;
 
-            set({ isPremium: hasPremium, planDetails: details });
+            set({ isPremium: hasPremium, planDetails: details, isLoading: false, hasLoaded: true });
         };
 
         Purchases.addCustomerInfoUpdateListener(listener);

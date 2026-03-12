@@ -30,6 +30,7 @@ export default function NotificationsScreen(): React.JSX.Element {
     ]);
     const [eveningCheckin, setEveningCheckin] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [permissionGranted, setPermissionGranted] = useState(false);
 
     const formatTime = (hour: number, minute: number): string => {
         const h = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
@@ -38,53 +39,69 @@ export default function NotificationsScreen(): React.JSX.Element {
         return `${h}:${m} ${ampm}`;
     };
 
-    const handleAllow = async (): Promise<void> => {
+    // Phase 1: Request OS permission
+    const handleRequestPermission = async (): Promise<void> => {
         setLoading(true);
         try {
             const { status } = await Notifications.requestPermissionsAsync();
-
             if (status === 'granted') {
-                await updateProfile({ notifications_enabled: true });
-                // Only schedule reminders the user explicitly toggled ON
-                await Notifications.cancelAllScheduledNotificationsAsync();
+                // Stay on screen — enable all toggles so user can customize
+                setPermissionGranted(true);
+                setReminders(prev => prev.map(r => ({ ...r, enabled: true })));
+                setEveningCheckin(true);
+            } else {
+                // Denied — mark disabled and move on
+                await updateProfile({ notifications_enabled: false });
+                router.push('/(onboarding)/plan');
+            }
+        } catch (error) {
+            console.error('Permission request error:', error);
+            router.push('/(onboarding)/plan');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-                for (const reminder of reminders) {
-                    if (reminder.enabled) {
-                        await Notifications.scheduleNotificationAsync({
-                            content: {
-                                title: 'Time to log your meal',
-                                body: `Every entry helps find your triggers.`,
-                            },
-                            trigger: {
-                                type: Notifications.SchedulableTriggerInputTypes.DAILY,
-                                hour: reminder.hour,
-                                minute: reminder.minute,
-                            },
-                        });
-                    }
-                }
+    // Phase 2: Schedule selected reminders and navigate
+    const handleSave = async (): Promise<void> => {
+        setLoading(true);
+        try {
+            await updateProfile({ notifications_enabled: true });
+            await Notifications.cancelAllScheduledNotificationsAsync();
 
-                if (eveningCheckin) {
+            for (const reminder of reminders) {
+                if (reminder.enabled) {
                     await Notifications.scheduleNotificationAsync({
                         content: {
-                            title: "How's your gut today?",
-                            body: 'Log your symptoms before bed.',
+                            title: 'Time to log your meal',
+                            body: `Every entry helps find your triggers.`,
                         },
                         trigger: {
                             type: Notifications.SchedulableTriggerInputTypes.DAILY,
-                            hour: 21,
-                            minute: 0,
+                            hour: reminder.hour,
+                            minute: reminder.minute,
                         },
                     });
                 }
-            } else {
-                // User denied — mark as disabled and move on, do not block
-                await updateProfile({ notifications_enabled: false });
+            }
+
+            if (eveningCheckin) {
+                await Notifications.scheduleNotificationAsync({
+                    content: {
+                        title: "How's your gut today?",
+                        body: 'Log your symptoms before bed.',
+                    },
+                    trigger: {
+                        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+                        hour: 21,
+                        minute: 0,
+                    },
+                });
             }
 
             router.push('/(onboarding)/plan');
         } catch (error) {
-            console.error('Notification error:', error);
+            console.error('Save reminders error:', error);
             router.push('/(onboarding)/plan');
         } finally {
             setLoading(false);
@@ -199,13 +216,19 @@ export default function NotificationsScreen(): React.JSX.Element {
                     <View style={{ flex: 1 }} />
 
                     <View style={{ gap: 12, marginTop: 32 }}>
-                        <Button title="Enable Notifications" onPress={handleAllow} loading={loading} fullWidth />
-                        <Button
-                            title="Not Now"
-                            variant="ghost"
-                            onPress={() => router.push('/(onboarding)/plan')}
-                            fullWidth
-                        />
+                        {!permissionGranted ? (
+                            <>
+                                <Button title="Enable Notifications" onPress={handleRequestPermission} loading={loading} fullWidth />
+                                <Button
+                                    title="Not Now"
+                                    variant="ghost"
+                                    onPress={() => router.push('/(onboarding)/plan')}
+                                    fullWidth
+                                />
+                            </>
+                        ) : (
+                            <Button title="Save Reminders" onPress={handleSave} loading={loading} fullWidth />
+                        )}
                     </View>
                 </ScrollView>
             </SafeAreaView>

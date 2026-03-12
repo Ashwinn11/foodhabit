@@ -45,15 +45,20 @@ export function Dialog({
             transparent
             visible={visible}
             animationType="none"
-            onRequestClose={onCancel}
+            onRequestClose={loading ? undefined : onCancel}
         >
-            <Animated.View
-                entering={FadeIn.duration(200)}
-                exiting={FadeOut.duration(200)}
-                style={styles.overlay}
-            >
-                <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
+            {/* Layer 1: Full-screen backdrop — receives taps that MISS the card */}
+            <Pressable
+                style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(28, 43, 32, 0.4)' }]}
+                onPress={loading ? undefined : onCancel}
+                disabled={loading}
+            />
 
+            {/* Layer 2: Centering wrapper — box-none so it doesn't intercept touches */}
+            <View
+                style={styles.overlay}
+                pointerEvents="box-none"
+            >
                 <Animated.View
                     entering={ZoomIn.duration(250)}
                     style={styles.content}
@@ -85,7 +90,7 @@ export function Dialog({
                         />
                     </View>
                 </Animated.View>
-            </Animated.View>
+            </View>
         </Modal>
     );
 }

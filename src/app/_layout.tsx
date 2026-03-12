@@ -65,7 +65,7 @@ function useProtectedRoute(isPremium: boolean, isSubLoading: boolean): void {
 export default function RootLayout(): React.JSX.Element | null {
     const fontsLoaded = useFontLoader();
     const { initialize, setSession, isInitialized, user } = useAuthStore();
-    const { sync: syncSubscription, initializeListener, isLoading: isSubLoading, isPremium } = useSubscriptionStore();
+    const { sync: syncSubscription, initializeListener, isLoading: isSubLoading, hasLoaded: subHasLoaded, isPremium } = useSubscriptionStore();
     const segments = useSegments();
     const segmentsRef = React.useRef(segments);
 
@@ -145,17 +145,12 @@ export default function RootLayout(): React.JSX.Element | null {
     }, [segments]);
 
     // Handle Splash Screen Hiding
+    // Unblock once: fonts loaded + auth resolved + sub has had at least one sync attempt
     useEffect(() => {
-        // Condition: We need fonts, we need Auth determination.
-        // If there is a USER, we MUST wait for the sub sync to guard against paywall flickers.
-        const isLoadingSub = user && isSubLoading;
-        const isReady = fontsLoaded && isInitialized && !isLoadingSub;
-
+        const isReady = fontsLoaded && isInitialized && (!user || subHasLoaded);
         if (!isReady) return;
-
-        // Instant hide 
         SplashScreen.hideAsync().catch(() => { });
-    }, [fontsLoaded, isInitialized, isSubLoading, user]);
+    }, [fontsLoaded, isInitialized, subHasLoaded, user]);
 
     // Subscriptions (Profile, Notifications)
     useEffect(() => {
@@ -170,9 +165,11 @@ export default function RootLayout(): React.JSX.Element | null {
 
         const insightSub = supabase
             .channel('global-insight-notifications')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ai_insights', filter: `user_id=eq.${user.id}` }, (payload) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ai_insights', filter: `user_id=eq.${user.id}` }, async (payload) => {
                 const currentSegments = segmentsRef.current;
-                if (currentSegments[currentSegments.length - 1] !== 'progress') {
+                const { status } = await Notifications.getPermissionsAsync();
+                const notificationsOn = useAuthStore.getState().profile?.notifications_enabled;
+                if (status === 'granted' && notificationsOn && currentSegments[currentSegments.length - 1] !== 'progress') {
                     Notifications.scheduleNotificationAsync({
                         content: {
                             title: 'New Gut Insight 🧠',
@@ -187,9 +184,11 @@ export default function RootLayout(): React.JSX.Element | null {
 
         const recipeSub = supabase
             .channel('global-recipe-notifications')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'recipes', filter: `user_id=eq.${user.id}` }, (payload) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'recipes', filter: `user_id=eq.${user.id}` }, async (payload) => {
                 const currentSegments = segmentsRef.current;
-                if (currentSegments[currentSegments.length - 1] !== 'recipes') {
+                const { status } = await Notifications.getPermissionsAsync();
+                const notificationsOn = useAuthStore.getState().profile?.notifications_enabled;
+                if (status === 'granted' && notificationsOn && currentSegments[currentSegments.length - 1] !== 'recipes') {
                     Notifications.scheduleNotificationAsync({
                         content: {
                             title: 'New Recipe Ready 🍲',
@@ -211,9 +210,8 @@ export default function RootLayout(): React.JSX.Element | null {
 
     useProtectedRoute(isPremium, isSubLoading);
 
-    // Render Guard: Keep native splash screen mounted until we are CERTAIN about routing
-    const isLoadingSub = user && isSubLoading;
-    if (!fontsLoaded || !isInitialized || isLoadingSub) return null;
+    // Render Guard: Block until fonts + auth resolved + sub has attempted at least one sync
+    if (!fontsLoaded || !isInitialized || (user && !subHasLoaded)) return null;
 
     return (
         <ErrorBoundary>
