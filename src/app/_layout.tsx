@@ -13,6 +13,7 @@ import '../../global.css';
 
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,12 +27,15 @@ Notifications.setNotificationHandler({
 });
 
 function useProtectedRoute(isPremium: boolean, isSubLoading: boolean): void {
-    const { session, profile, isInitialized } = useAuthStore();
+    const { session, profile, isInitialized, user } = useAuthStore();
     const segments = useSegments();
     const router = useRouter();
 
     useEffect(() => {
-        if (!isInitialized || isSubLoading) return;
+        if (!isInitialized) return;
+
+        // Only wait for subscription sync if we have a user (to decide between tabs and paywall)
+        if (user && isSubLoading) return;
 
         const inAuthGroup = segments[0] === '(auth)';
         const inOnboardingGroup = segments[0] === '(onboarding)';
@@ -65,23 +69,65 @@ export default function RootLayout(): React.JSX.Element | null {
     const segments = useSegments();
     const segmentsRef = React.useRef(segments);
 
-    // Initializations
+    // Unified Initialization
     useEffect(() => {
-        initialize();
-        const cleanupListener = initializeListener();
+        async function runInit() {
+            try {
+                // 1. Get last known user for RevenueCat instant hydration
+                const lastUserId = await AsyncStorage.getItem('last_user_id');
+                const rcKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY;
 
-        // Safety fallback: Hide splash screen after 5 seconds no matter what
+                // 2. Configure Purchases immediately with identity
+                if (rcKey) {
+                    Purchases.configure({
+                        apiKey: rcKey,
+                        appUserID: lastUserId || undefined
+                    });
+                    initializeListener();
+                }
+
+                // 3. Await Auth (crucial for routing)
+                await initialize();
+
+                // 4. Identity Sync
+                const currentUser = useAuthStore.getState().user;
+                const { sync: syncSubscription, setLoading } = useSubscriptionStore.getState();
+
+                if (currentUser?.id) {
+                    // Check if identity changed since configuration
+                    if (currentUser.id !== lastUserId) {
+                        setLoading(true); // Re-enter loading state for new identity
+                        await Purchases.logIn(currentUser.id);
+                        await AsyncStorage.setItem('last_user_id', currentUser.id);
+                    }
+                    // Final verification of premium status for THIS user
+                    await syncSubscription();
+                } else {
+                    await AsyncStorage.removeItem('last_user_id');
+                    // Logged-out: clear loading immediately so render guard doesn't block
+                    setLoading(false);
+                    syncSubscription(); // background, non-blocking
+                }
+            } catch (error) {
+                console.error('[RootLayout] Initialization error:', error);
+                // SAFETY: Always clear loading so the render guard doesn't block forever
+                useSubscriptionStore.getState().setLoading(false);
+            }
+        }
+
+        runInit();
+
+        // Safety fallback: Hide splash screen after 6 seconds no matter what
         const timeout = setTimeout(() => {
             SplashScreen.hideAsync().catch(() => { });
-        }, 5000);
+        }, 6000);
 
         return () => {
-            cleanupListener();
             clearTimeout(timeout);
         };
     }, []);
 
-    // Session Management
+    // Session Management (Supabase listener)
     useEffect(() => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             await setSession(session);
@@ -89,36 +135,27 @@ export default function RootLayout(): React.JSX.Element | null {
         return () => subscription.unsubscribe();
     }, []);
 
-    // RevenueCat Configure
-    useEffect(() => {
-        const rcKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY;
-        if (rcKey) {
-            Purchases.configure({ apiKey: rcKey });
-            syncSubscription(); // Initial sync
-        }
-    }, []);
-
-    // Sync Subscription when user changes
-    useEffect(() => {
-        if (user?.id) {
-            Purchases.logIn(user.id)
-                .then(() => syncSubscription())
-                .catch(console.error);
-        } else {
-            syncSubscription();
-        }
-    }, [user?.id]);
+    // NOTE: Subscription sync is handled inside runInit above.
+    // A separate useEffect here would race against runInit and reset isLoading,
+    // causing the blank screen render guard to block indefinitely.
+    // Post-login syncs happen via the RevenueCat listener (initializeListener).
 
     useEffect(() => {
         segmentsRef.current = segments;
     }, [segments]);
 
-    // Handle Splash Screen
+    // Handle Splash Screen Hiding
     useEffect(() => {
-        if (fontsLoaded && isInitialized && !isSubLoading) {
-            SplashScreen.hideAsync();
-        }
-    }, [fontsLoaded, isInitialized, isSubLoading]);
+        // Condition: We need fonts, we need Auth determination.
+        // If there is a USER, we MUST wait for the sub sync to guard against paywall flickers.
+        const isLoadingSub = user && isSubLoading;
+        const isReady = fontsLoaded && isInitialized && !isLoadingSub;
+
+        if (!isReady) return;
+
+        // Instant hide 
+        SplashScreen.hideAsync().catch(() => { });
+    }, [fontsLoaded, isInitialized, isSubLoading, user]);
 
     // Subscriptions (Profile, Notifications)
     useEffect(() => {
@@ -174,7 +211,9 @@ export default function RootLayout(): React.JSX.Element | null {
 
     useProtectedRoute(isPremium, isSubLoading);
 
-    if (!fontsLoaded || !isInitialized) return null;
+    // Render Guard: Keep native splash screen mounted until we are CERTAIN about routing
+    const isLoadingSub = user && isSubLoading;
+    if (!fontsLoaded || !isInitialized || isLoadingSub) return null;
 
     return (
         <ErrorBoundary>

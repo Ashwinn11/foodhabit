@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Pressable, Alert, Switch, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -85,6 +85,20 @@ export default function ProfileScreen(): React.JSX.Element {
     const [deleteVisible, setDeleteVisible] = useState(false);
     const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
+    // Track the ACTUAL OS permission status, not just the DB flag
+    const [notificationsGranted, setNotificationsGranted] = useState(false);
+
+    // On mount, check the real OS permission status
+    useEffect(() => {
+        Notifications.getPermissionsAsync().then(({ status }) => {
+            const granted = status === 'granted';
+            setNotificationsGranted(granted);
+            // Keep DB in sync with real OS state
+            if (!granted && profile?.notifications_enabled) {
+                updateProfile({ notifications_enabled: false }).catch(console.error);
+            }
+        });
+    }, []);
 
     const handleSignOut = async (): Promise<void> => {
         setActionLoading(true);
@@ -150,8 +164,32 @@ export default function ProfileScreen(): React.JSX.Element {
 
     const handleToggleNotifications = async (val: boolean): Promise<void> => {
         try {
-            await updateProfile({ notifications_enabled: val });
-            haptics.sliderTick();
+            if (val) {
+                // User wants to enable — request OS permission first
+                const { status } = await Notifications.requestPermissionsAsync();
+                if (status === 'granted') {
+                    setNotificationsGranted(true);
+                    await updateProfile({ notifications_enabled: true });
+                    haptics.sliderTick();
+                } else {
+                    // Permission was denied — OS won't ask again, open Settings
+                    setNotificationsGranted(false);
+                    Alert.alert(
+                        'Notifications Disabled',
+                        'You have previously denied notification permission. Please enable it in Settings to receive reminders.',
+                        [
+                            { text: 'Cancel', style: 'cancel' },
+                            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                        ]
+                    );
+                }
+            } else {
+                // User is turning notifications OFF — no permission needed
+                setNotificationsGranted(false);
+                await Notifications.cancelAllScheduledNotificationsAsync();
+                await updateProfile({ notifications_enabled: false });
+                haptics.sliderTick();
+            }
         } catch (error) {
             console.error('Toggle notifications error:', error);
         }
@@ -334,7 +372,7 @@ export default function ProfileScreen(): React.JSX.Element {
                                 <Text variant="body" color={colors.text1}>Notifications</Text>
                             </View>
                             <Switch
-                                value={profile?.notifications_enabled}
+                                value={notificationsGranted}
                                 onValueChange={handleToggleNotifications}
                                 trackColor={{ false: colors.stone, true: colors.primary.DEFAULT }}
                                 thumbColor="#FFFFFF"

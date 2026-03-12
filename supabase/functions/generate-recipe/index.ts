@@ -25,7 +25,29 @@ serve(async (req: Request) => {
         const { user_id, source, meal_type, context, available_ingredients } = await req.json();
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-        // Get user profile
+        // 1. Check for existing daily recipe to prevent duplicates
+        if (source === 'daily') {
+            const today = new Date().toISOString().split('T')[0];
+            const { data: existing } = await supabase
+                .from('recipes')
+                .select('*')
+                .eq('user_id', user_id)
+                .eq('meal_type', meal_type || 'dinner')
+                .eq('source', 'daily')
+                .gte('generated_at', `${today}T00:00:00`)
+                .order('generated_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (existing) {
+                console.log('Daily recipe already exists, returning existing one.');
+                return new Response(JSON.stringify(existing), {
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                });
+            }
+        }
+
+        // 2. Get user profile
         const { data: profile } = await supabase
             .from('profiles')
             .select('known_triggers, diagnosed_conditions, diet_type')

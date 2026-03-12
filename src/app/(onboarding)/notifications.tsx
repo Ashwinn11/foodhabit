@@ -24,11 +24,11 @@ export default function NotificationsScreen(): React.JSX.Element {
     const navigation = useNavigation();
     const { updateProfile } = useAuthStore();
     const [reminders, setReminders] = useState<ReminderTime[]>([
-        { label: 'Breakfast reminder', hour: 8, minute: 0, enabled: true },
-        { label: 'Lunch reminder', hour: 12, minute: 30, enabled: true },
-        { label: 'Dinner reminder', hour: 19, minute: 0, enabled: true },
+        { label: 'Breakfast reminder', hour: 8, minute: 0, enabled: false },
+        { label: 'Lunch reminder', hour: 12, minute: 30, enabled: false },
+        { label: 'Dinner reminder', hour: 19, minute: 0, enabled: false },
     ]);
-    const [eveningCheckin, setEveningCheckin] = useState(true);
+    const [eveningCheckin, setEveningCheckin] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const formatTime = (hour: number, minute: number): string => {
@@ -45,10 +45,9 @@ export default function NotificationsScreen(): React.JSX.Element {
 
             if (status === 'granted') {
                 await updateProfile({ notifications_enabled: true });
-                // Clean slate - remove any previously scheduled reminders to prevent duplicates
+                // Only schedule reminders the user explicitly toggled ON
                 await Notifications.cancelAllScheduledNotificationsAsync();
 
-                // Schedule meal reminders
                 for (const reminder of reminders) {
                     if (reminder.enabled) {
                         await Notifications.scheduleNotificationAsync({
@@ -65,7 +64,6 @@ export default function NotificationsScreen(): React.JSX.Element {
                     }
                 }
 
-                // Schedule evening check-in
                 if (eveningCheckin) {
                     await Notifications.scheduleNotificationAsync({
                         content: {
@@ -79,6 +77,9 @@ export default function NotificationsScreen(): React.JSX.Element {
                         },
                     });
                 }
+            } else {
+                // User denied — mark as disabled and move on, do not block
+                await updateProfile({ notifications_enabled: false });
             }
 
             router.push('/(onboarding)/plan');
@@ -117,10 +118,10 @@ export default function NotificationsScreen(): React.JSX.Element {
                     </View>
 
                     <Text variant="heading" color={colors.text1} style={{ marginTop: 20, textAlign: 'center' }}>
-                        Let us remind you to log.
+                        Stay on track with reminders
                     </Text>
                     <Text variant="label" color={colors.text2} style={{ marginTop: 8, textAlign: 'center', lineHeight: 18 }}>
-                        Consistent logging is what makes trigger detection work.
+                        Consistent logging helps detect your triggers. Enable reminders to make it easier — you can adjust these anytime.
                     </Text>
 
                     <View style={{ marginTop: 28, gap: 12 }}>
@@ -198,9 +199,9 @@ export default function NotificationsScreen(): React.JSX.Element {
                     <View style={{ flex: 1 }} />
 
                     <View style={{ gap: 12, marginTop: 32 }}>
-                        <Button title="Allow Notifications" onPress={handleAllow} loading={loading} fullWidth />
+                        <Button title="Enable Notifications" onPress={handleAllow} loading={loading} fullWidth />
                         <Button
-                            title="Skip"
+                            title="Not Now"
                             variant="ghost"
                             onPress={() => router.push('/(onboarding)/plan')}
                             fullWidth

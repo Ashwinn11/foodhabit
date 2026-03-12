@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, ScrollView, Pressable, RefreshControl, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -40,6 +40,7 @@ export default function HomeScreen(): React.JSX.Element {
     const [streak, setStreak] = useState<Streak | null>(null);
     const [latestInsight, setLatestInsight] = useState<AiInsight | null>(null);
     const [currentMealRecipe, setCurrentMealRecipe] = useState<any | null>(null);
+    const fetchingRecipeRef = useRef(false);
 
     // Gut score ring animation
     const scoreProgress = useSharedValue(0);
@@ -172,14 +173,19 @@ export default function HomeScreen(): React.JSX.Element {
             setCurrentMealRecipe(recipeData);
 
             // PROACTIVE GENERATION: If no recipe exists for current slot, trigger it in background
-            if (!recipeData) {
+            if (!recipeData && !fetchingRecipeRef.current) {
+                fetchingRecipeRef.current = true;
                 supabase.functions.invoke('generate-recipe', {
                     body: { user_id: user.id, source: 'daily', meal_type: currentMeal },
                 }).then(({ data: genData }) => {
                     if (genData && !genData.error) {
                         setCurrentMealRecipe(genData);
                     }
-                }).catch(e => console.error('Proactive recipe generation failed:', e));
+                })
+                .catch(e => console.error('Proactive recipe generation failed:', e))
+                .finally(() => {
+                    fetchingRecipeRef.current = false;
+                });
             }
 
         } catch (error) {
