@@ -10,7 +10,6 @@ import {
 } from 'lucide-react-native';
 import * as Notifications from 'expo-notifications';
 import Purchases from 'react-native-purchases';
-import RevenueCatUI from 'react-native-purchases-ui';
 
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
@@ -200,9 +199,11 @@ export default function ProfileScreen(): React.JSX.Element {
 
     const handleOpenPaywall = async (): Promise<void> => {
         try {
-            await RevenueCatUI.presentPaywall();
+            // Deep link to Apple's native Manage Subscriptions page
+            await Linking.openURL('itms-apps://apps.apple.com/account/subscriptions');
         } catch (error) {
-            console.error('Paywall error:', error);
+            // Fallback to web URL if the itms-apps scheme fails
+            Linking.openURL('https://apps.apple.com/account/subscriptions');
         }
     };
 
