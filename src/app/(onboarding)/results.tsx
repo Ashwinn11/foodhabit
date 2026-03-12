@@ -30,10 +30,25 @@ export default function ResultsScreen(): React.JSX.Element {
     const triggers = profile?.known_triggers || [];
     const conditions = profile?.diagnosed_conditions || [];
 
-    // Calculate a dynamic score based on triggers (simple mock logic for feel)
-    const baseScore = 92;
-    const penalty = Math.min(triggers.length * 8 + conditions.length * 5, 40);
-    const finalScore = baseScore - penalty;
+    // Condition-specific weights — heavier for diagnosed GI conditions
+    const conditionWeights: Record<string, number> = {
+        'IBS-D': 22,
+        'IBS-C': 22,
+        'IBS-M': 24,        // Mixed is harder to manage
+        'Crohn\'s': 28,
+        'Colitis': 26,
+        'SIBO': 20,
+        'Chronic Bloating': 14,
+        'Lactose Intolerance': 10,
+        'Gluten Sensitivity': 10,
+        'Not Diagnosed': 6,
+        'Other': 8,
+    };
+
+    const conditionPenalty = conditions.reduce((sum, c) => sum + (conditionWeights[c] ?? 8), 0);
+    const triggerPenalty = triggers.length * 5;
+    const totalPenalty = Math.min(conditionPenalty + triggerPenalty, 55);
+    const finalScore = Math.max(100 - totalPenalty, 38);
 
     useEffect(() => {
         progress.value = withDelay(500, withTiming(finalScore / 100, { duration: 2000, easing: Easing.out(Easing.exp) }));
