@@ -93,46 +93,58 @@ function MealSegment(): React.JSX.Element {
         if (!foodInput.trim() || !user?.id) return;
 
         setAnalyzing(true);
+        const itemsToScan = foodInput.split(',').map(i => i.trim()).filter(Boolean);
+        setFoodInput(''); // Clear immediately for better UX
+
         try {
-            const { data, error } = await supabase.functions.invoke('analyze-food', {
-                body: { mode: 'food', food_name: foodInput.trim(), user_id: user.id },
+            // Process all comma-separated items in parallel
+            const promises = itemsToScan.map(async (item) => {
+                try {
+                    const { data, error } = await supabase.functions.invoke('analyze-food', {
+                        body: { mode: 'food', food_name: item, user_id: user.id },
+                    });
+
+                    if (error) throw error;
+
+                    return {
+                        name: data.name || item,
+                        fodmap_risk: data.fodmap_risk || 'medium',
+                        personal_verdict: data.personal_verdict || 'caution',
+                        caution_action: data.caution_action,
+                        trigger_reasons: data.why || [],
+                        ingredients: data.ingredients || [],
+                        contains_user_triggers: data.contains_user_triggers || [],
+                        conflict_explanation: data.conflict_explanation,
+                    } as FoodItem;
+                } catch (error) {
+                    console.error('Food analysis error for:', item, error);
+                    return {
+                        name: item,
+                        fodmap_risk: 'medium',
+                        personal_verdict: 'caution',
+                        caution_action: "Couldn't analyse — try again",
+                        trigger_reasons: [],
+                    } as FoodItem;
+                }
             });
 
-            if (error) throw error;
+            const results = await Promise.all(promises);
 
-            const foodItem: FoodItem = {
-                name: data.name || foodInput.trim(),
-                fodmap_risk: data.fodmap_risk || 'medium',
-                personal_verdict: data.personal_verdict || 'caution',
-                caution_action: data.caution_action,
-                trigger_reasons: data.why || [],
-                ingredients: data.ingredients || [],
-                contains_user_triggers: data.contains_user_triggers || [],
-                conflict_explanation: data.conflict_explanation,
-            };
+            setFoods(prev => {
+                const nextFoods = [...prev, ...results];
+                // Auto-select all newly added items
+                const newIndices = results.map((_, idx) => prev.length + idx);
+                setSelectedFoods(prevSel => [...prevSel, ...newIndices]);
+                return nextFoods;
+            });
 
-            setFoods(prev => [...prev, foodItem]);
-            setSelectedFoods(prev => [...prev, foods.length]);
-            setFoodInput('');
-
-            if (foodItem.personal_verdict === 'avoid') {
+            if (results.some(r => r.personal_verdict === 'avoid')) {
                 haptics.triggerWarning();
             } else {
                 haptics.badgeRevealed();
             }
         } catch (error) {
-            console.error('Food analysis error:', error);
-            // Add food without analysis on failure
-            const newIndex = foods.length;
-            setFoods(prev => [...prev, {
-                name: foodInput.trim(),
-                fodmap_risk: 'medium',
-                personal_verdict: 'caution',
-                caution_action: "Couldn't analyse — try again",
-                trigger_reasons: [],
-            }]);
-            setSelectedFoods(prev => [...prev, newIndex]);
-            setFoodInput('');
+            console.error('Batch food analysis error:', error);
         } finally {
             setAnalyzing(false);
         }

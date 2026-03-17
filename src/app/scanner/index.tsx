@@ -169,10 +169,10 @@ export default function ScannerScreen(): React.JSX.Element {
                         />
                     </View>
 
-                    <Text variant="bodyBold" color="#FFFFFF" style={{ marginTop: 20, textAlign: 'center' }}>
+                    <Text variant="bodyBold" color="#000000" style={{ marginTop: 20, textAlign: 'center' }}>
                         {scanning ? 'Analysing menu...' : 'Point at any menu'}
                     </Text>
-                    <Text variant="caption" color="rgba(255,255,255,0.7)" style={{ marginTop: 6, textAlign: 'center' }}>
+                    <Text variant="caption" color="#000000" style={{ marginTop: 6, textAlign: 'center' }}>
                         Gut Buddy reads every dish and finds what's safe for you
                     </Text>
                 </View>

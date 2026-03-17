@@ -383,7 +383,7 @@ export default function ProfileScreen(): React.JSX.Element {
                         <ProfileRow
                             icon={<CreditCard size={18} color={colors.amber.DEFAULT} />}
                             label="Plan & Subscription"
-                            value="GutScan Pro"
+                            value="Premium"
                             onPress={handleOpenPaywall}
                         />
                         <ProfileRow

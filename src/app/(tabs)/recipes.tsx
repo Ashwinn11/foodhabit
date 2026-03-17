@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, ScrollView, Pressable, Modal } from 'react-native';
+import { View, ScrollView, Pressable, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -210,8 +210,12 @@ export default function RecipesScreen(): React.JSX.Element {
     return (
         <LinearGradient colors={['#FFFBF0', '#F0FDF5']} locations={[0, 1]} style={{ flex: 1 }}>
             <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-                <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-                    <Text variant="heading" color={colors.text1}>Recipes</Text>
+                <KeyboardAvoidingView 
+                    style={{ flex: 1 }} 
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                >
+                    <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+                        <Text variant="heading" color={colors.text1}>Recipes</Text>
 
                     {/* Today's Recipe - Only show if not saved */}
                     {todayRecipe && !todayRecipe.is_saved ? (
@@ -365,6 +369,7 @@ export default function RecipesScreen(): React.JSX.Element {
                         </View>
                     </View>
                 </ScrollView>
+                </KeyboardAvoidingView>
 
                 {/* Recipe Detail Modal */}
                 <Modal visible={!!detailRecipe} animationType="slide" presentationStyle="pageSheet">

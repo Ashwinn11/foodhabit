@@ -55,7 +55,7 @@ export default function PrivacyScreen(): React.JSX.Element {
                 </Text>
 
                 <Text variant="caption" color={colors.text3} style={{ textAlign: 'center', marginTop: 40, marginBottom: 20 }}>
-                    Last Updated: March 2024
+                    Last Updated: March 2026
                 </Text>
             </ScrollView>
         </SafeAreaView>

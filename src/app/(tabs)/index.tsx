@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, ScrollView, Pressable, RefreshControl, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -15,11 +15,10 @@ import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
 import AnimatedMascot from '@/components/AnimatedMascot';
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 import { colors, radii, shadows } from '@/theme';
-import type { MealLog, SymptomLog, Streak, AiInsight } from '@/lib/database.types';
+import type { Streak, AiInsight } from '@/lib/database.types';
 
 const AnimatedCircle = Animated.createAnimatedComponent(SvgCircle);
 
@@ -198,37 +197,14 @@ export default function HomeScreen(): React.JSX.Element {
         }
     }, [user?.id]);
 
-    useEffect(() => {
-        fetchHomeData();
-
-        // Subscribe to real-time updates
-        const streakSubscription = supabase
-            .channel('streak-updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'streaks', filter: `user_id=eq.${user?.id}` }, () => {
-                fetchHomeData();
-            })
-            .subscribe();
-
-        const insightsSubscription = supabase
-            .channel('insight-updates')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ai_insights', filter: `user_id=eq.${user?.id}` }, () => {
-                fetchHomeData();
-            })
-            .subscribe();
-
-        const logsSubscription = supabase
-            .channel('log-updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'meal_logs', filter: `user_id=eq.${user?.id}` }, () => {
-                fetchHomeData();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(streakSubscription);
-            supabase.removeChannel(insightsSubscription);
-            supabase.removeChannel(logsSubscription);
-        };
-    }, [user?.id, fetchHomeData]);
+    // Re-fetch data every time the user focuses on the Home tab. 
+    // This provides the "realtime" feel of updated data (like Streaks)
+    // without the massive performance cost of holding 3 persistent WebSocket connections open.
+    useFocusEffect(
+        useCallback(() => {
+            fetchHomeData();
+        }, [fetchHomeData])
+    );
 
     const onRefresh = async (): Promise<void> => {
         setRefreshing(true);
@@ -285,11 +261,25 @@ export default function HomeScreen(): React.JSX.Element {
                 >
                     {/* Top Row */}
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: 8 }}>
-                        <View>
+                        <View style={{ flex: 1 }}>
                             <Text variant="label" color={colors.text2}>{getGreeting()}</Text>
-                            <Text variant="heading" color={colors.text1}>{firstName}</Text>
+                            <Text variant="heading" color={colors.text1} numberOfLines={1}>{firstName}</Text>
                         </View>
-                        <Avatar name={profile?.full_name} url={profile?.avatar_url} size={40} />
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                            {/* Streak Header Badge */}
+                            <Pressable 
+                                onPress={() => router.push('/(tabs)/progress')}
+                                style={{
+                                    flexDirection: 'row', alignItems: 'center', gap: 4,
+                                    backgroundColor: '#FFF8E8', paddingHorizontal: 10, paddingVertical: 6,
+                                    borderRadius: 16, borderWidth: 1, borderColor: '#FFEDD5'
+                                }}
+                            >
+                                <Zap size={14} color="#EA580C" />
+                                <Text variant="labelBold" color="#EA580C">{streak?.current_streak ?? 0}</Text>
+                            </Pressable>
+                            <Avatar name={profile?.full_name} url={profile?.avatar_url} size={40} />
+                        </View>
                     </View>
 
                     {/* Mascot */}
@@ -408,12 +398,12 @@ export default function HomeScreen(): React.JSX.Element {
                                     </Text>
                                 </View>
                                 <Text variant="title" color={colors.text1} style={{ marginTop: 4 }}>
-                                    {currentMealRecipe ? currentMealRecipe.title : `Preparing your ${mealType}...`}
+                                    {currentMealRecipe ? currentMealRecipe.title : `No recipe for ${mealType}`}
                                 </Text>
                                 <Text variant="caption" color={colors.text2} style={{ marginTop: 2 }}>
                                     {currentMealRecipe
                                         ? currentMealRecipe.description.split('\n')[0]
-                                        : `Our AI is tailoring a gut-safe ${mealType} based on your triggers.`}
+                                        : `Tap to generate a gut-safe meal tailored to your triggers.`}
                                 </Text>
                             </View>
                             <Pressable
@@ -423,29 +413,6 @@ export default function HomeScreen(): React.JSX.Element {
                                 <ChevronRight size={24} color="#FFF" />
                             </Pressable>
                         </View>
-                    </Card>
-
-                    {/* Streak Bar */}
-                    <Card animated delay={320} style={{ marginTop: 16, backgroundColor: '#FFF8E8' }}>
-                        <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                            <View style={{
-                                width: 36, height: 36, borderRadius: 10,
-                                backgroundColor: '#FFEDD5', alignItems: 'center', justifyContent: 'center',
-                            }}>
-                                <Zap size={18} color="#EA580C" />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text variant="title" color={colors.text1}>
-                                    {streak?.current_streak ?? 0} Day Streak
-                                </Text>
-                                <Text variant="caption" color={colors.text2}>
-                                    {(streak?.current_streak ?? 0) > 0
-                                        ? 'Keep it going! Every log counts.'
-                                        : 'Start logging to build your streak!'}
-                                </Text>
-                            </View>
-                            <ChevronRight size={18} color={colors.text3} />
-                        </Pressable>
                     </Card>
 
                     {/* Latest Insight */}

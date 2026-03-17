@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, RefreshControl, Dimensions } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -106,21 +107,12 @@ function InsightsSegment(): React.JSX.Element {
         setRefreshing(false);
     };
 
-    useEffect(() => {
-        fetchInsights();
-
-        // Realtime Subscription for Insights
-        const sub = supabase
-            .channel('insight-progress-updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'ai_insights', filter: `user_id=eq.${user?.id}` }, () => {
-                fetchInsights();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(sub);
-        };
-    }, [fetchInsights, user?.id]);
+    // Re-fetch data every time user focuses on Insights tab.
+    useFocusEffect(
+        useCallback(() => {
+            fetchInsights();
+        }, [fetchInsights])
+    );
 
     // Only show skeleton on first load when NO data is present
     if (loading && insights.length === 0) {
@@ -199,6 +191,7 @@ function ProgressSegment(): React.JSX.Element {
     const [chartData, setChartData] = useState<any[]>([]);
     const [activeSymptom, setActiveSymptom] = useState<string>('Pain');
     const [heatmap, setHeatmap] = useState<boolean[]>(Array(90).fill(false));
+    const [refreshing, setRefreshing] = useState(false);
 
     // Improvement animation
     const improvementWidth = useSharedValue(0);
@@ -209,11 +202,6 @@ function ProgressSegment(): React.JSX.Element {
     const fetchProgress = useCallback(async () => {
         if (!user?.id) return;
         try {
-            // FIRE AND FORGET: Start calculation in background, don't await it to block UI paint
-            supabase.functions.invoke('calculate-progress', {
-                body: { user_id: user.id },
-            }).catch(e => console.error('Silent progress calc error:', e));
-
             // PROGRESSIVE FETCH: Request all data independently so the UI paints as soon as each piece arrives
 
             // 1. Snapshot
@@ -315,37 +303,28 @@ function ProgressSegment(): React.JSX.Element {
         }
     }, [rawTrendData, activeSymptom]);
 
-    useEffect(() => {
-        fetchProgress();
+    // Trigger edge function manually for deep analysis
+    const onRefresh = async (): Promise<void> => {
+        if (!user?.id) return;
+        setRefreshing(true);
+        try {
+            await supabase.functions.invoke('calculate-progress', {
+                body: { user_id: user.id },
+            });
+            await fetchProgress();
+        } catch (error) {
+            console.error('Manual progress calc error:', error);
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
-        // Realtime Subscription for Progress Data
-        const logsSub = supabase
-            .channel('progress-logs-updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'meal_logs', filter: `user_id=eq.${user?.id}` }, () => {
-                fetchProgress();
-            })
-            .subscribe();
-
-        const symptomSub = supabase
-            .channel('progress-symptoms-updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'symptom_logs', filter: `user_id=eq.${user?.id}` }, () => {
-                fetchProgress();
-            })
-            .subscribe();
-
-        const snapshotSub = supabase
-            .channel('progress-snapshot-updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'progress_snapshots', filter: `user_id=eq.${user?.id}` }, () => {
-                fetchProgress();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(logsSub);
-            supabase.removeChannel(symptomSub);
-            supabase.removeChannel(snapshotSub);
-        };
-    }, [fetchProgress, user?.id]);
+    // Re-fetch fast local snapshot data every time user focuses on Progress tab
+    useFocusEffect(
+        useCallback(() => {
+            fetchProgress();
+        }, [fetchProgress])
+    );
 
     // Only show skeleton on first load when NO data is present
     if (loading && !snapshot && chartData.length === 0) {
@@ -358,7 +337,10 @@ function ProgressSegment(): React.JSX.Element {
     }
 
     return (
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 40 }}>
+        <ScrollView 
+            contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 40 }}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary.DEFAULT} />}
+        >
             {/* Improvement Hero */}
             <LinearGradient colors={['#2D7A52', '#1A5C36']} style={{ borderRadius: radii.card, padding: 20 }}>
                 {snapshot && snapshot.improvement_vs_baseline > 0 ? (
