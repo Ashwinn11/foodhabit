@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, ScrollView, Pressable, Alert, Modal } from 'react-native';
+import { View, ScrollView, Pressable, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     Clock, UtensilsCrossed, Heart, Check, X, Share2,
-    RefreshCw, Lock as LockIcon,
+    RefreshCw, Sparkles,
 } from 'lucide-react-native';
-import * as Notifications from 'expo-notifications';
 
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
@@ -17,7 +16,7 @@ import { RecipeSkeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
-import { colors, radii, shadows } from '@/theme';
+import { colors, radii } from '@/theme';
 import type { Recipe, MealType } from '@/lib/database.types';
 
 export default function RecipesScreen(): React.JSX.Element {
@@ -28,12 +27,11 @@ export default function RecipesScreen(): React.JSX.Element {
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
     const [detailRecipe, setDetailRecipe] = useState<Recipe | null>(null);
-
-    // Generate form
     const [context, setContext] = useState('');
     const [ingredients, setIngredients] = useState('');
     const [genMealType, setGenMealType] = useState<MealType>('dinner');
     const fetchingRef = useRef(false);
+    const skipNextRealtimeFetch = useRef(false);
 
     const getCurrentMealType = (): MealType => {
         const hour = new Date().getHours();
@@ -48,8 +46,6 @@ export default function RecipesScreen(): React.JSX.Element {
 
         try {
             const today = new Date().toISOString().split('T')[0];
-
-            // Fetch everything we need in parallel to save time
             const [dailyRes, savedRes] = await Promise.all([
                 supabase
                     .from('recipes')
@@ -69,33 +65,14 @@ export default function RecipesScreen(): React.JSX.Element {
             ]);
 
             if (savedRes.data) setSavedRecipes(savedRes.data);
-
-            if (dailyRes.data) {
-                setTodayRecipe(dailyRes.data);
-                setLoading(false);
-            } else {
-                // If no daily recipe exists, we can still show saved recipes immediately
-                setLoading(false);
-
-                // Trigger auto-generation in background
-                setGenerating(true);
-                const currentSlot = getCurrentMealType();
-                const { data: genData } = await supabase.functions.invoke('generate-recipe', {
-                    body: { user_id: user.id, source: 'daily', meal_type: currentSlot },
-                });
-
-                if (genData && !genData.error) {
-                    setTodayRecipe(genData);
-                }
-                setGenerating(false);
-            }
+            if (dailyRes.data) setTodayRecipe(dailyRes.data);
         } catch (error) {
             console.error('Fetch recipes error:', error);
         } finally {
             setLoading(false);
             fetchingRef.current = false;
         }
-    }, [user?.id, supabase]);
+    }, [user?.id]);
 
     useEffect(() => {
         fetchRecipes();
@@ -104,6 +81,12 @@ export default function RecipesScreen(): React.JSX.Element {
         const sub = supabase
             .channel('recipe-updates')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'recipes', filter: `user_id=eq.${user?.id}` }, () => {
+                // Skip refetch if we just manually generated — prevents the insert event
+                // from overriding the custom recipe we just set in state
+                if (skipNextRealtimeFetch.current) {
+                    skipNextRealtimeFetch.current = false;
+                    return;
+                }
                 fetchRecipes();
             })
             .subscribe();
@@ -129,39 +112,18 @@ export default function RecipesScreen(): React.JSX.Element {
             });
 
             if (genError) throw genError;
-            if (genData && !genData.error) {
-                // Set as current recipe but don't auto-open
+            if (genData?.error) throw new Error(genData.error);
+
+            if (genData) {
                 setTodayRecipe(genData);
-
-                // CRITICAL: Cancel the notification for this specific meal if it exists
-                const allNotifications = await Notifications.getAllScheduledNotificationsAsync();
-                const targetTitle = genMealType.charAt(0).toUpperCase() + genMealType.slice(1);
-                const toCancel = allNotifications.filter((n: Notifications.NotificationRequest) =>
-                    n.content.title?.toLowerCase().includes(genMealType.toLowerCase()) ||
-                    n.content.body?.toLowerCase().includes(genMealType.toLowerCase())
-                );
-
-                for (const notification of toCancel) {
-                    await Notifications.cancelScheduledNotificationAsync(notification.identifier);
-                }
-            } else if (genData?.error) {
-                throw new Error(genData.error);
+                skipNextRealtimeFetch.current = true;
+                setContext('');
+                setIngredients('');
+                showToast({ title: 'Recipe Ready! 🍲', message: 'Your gut-safe meal is ready.', type: 'success' });
             }
-
-            setContext('');
-            setIngredients('');
-            showToast({
-                title: 'Recipe Ready! 🍲',
-                message: 'Your custom gut-safe meal planning is done.',
-                type: 'success'
-            });
         } catch (error) {
             console.error('Generate recipe error:', error);
-            showToast({
-                title: 'Error',
-                message: 'Failed to generate recipe. Please try again.',
-                type: 'error'
-            });
+            showToast({ title: 'Error', message: 'Failed to generate. Please try again.', type: 'error' });
         } finally {
             setGenerating(false);
         }
@@ -220,17 +182,6 @@ export default function RecipesScreen(): React.JSX.Element {
                     message: "Here's a fresh meal idea for you.",
                     type: 'success'
                 });
-
-                // Cancel scheduled notification for this slot
-                const currentSlot = getCurrentMealType();
-                const allNotifications = await Notifications.getAllScheduledNotificationsAsync();
-                const toCancel = allNotifications.filter((n: Notifications.NotificationRequest) =>
-                    n.content.title?.toLowerCase().includes(currentSlot.toLowerCase()) ||
-                    n.content.body?.toLowerCase().includes(currentSlot.toLowerCase())
-                );
-                for (const notification of toCancel) {
-                    await Notifications.cancelScheduledNotificationAsync(notification.identifier);
-                }
             }
         } catch (error) {
             console.error('Refresh recipe error:', error);
@@ -380,13 +331,23 @@ export default function RecipesScreen(): React.JSX.Element {
                         </View>
                     )}
 
-                    {/* Generate Recipe */}
+                    {/* No recipe yet — hint */}
+                    {!todayRecipe && !generating && (
+                        <Card animated delay={0} style={{ marginTop: 16, alignItems: 'center', padding: 20, gap: 8 }}>
+                            <Sparkles size={24} color={colors.primary.DEFAULT} />
+                            <Text variant="caption" color={colors.text2} style={{ textAlign: 'center' }}>
+                                No recipe yet for {getCurrentMealType()}. Use the form below to generate one.
+                            </Text>
+                        </Card>
+                    )}
+                    {generating && <RecipeSkeleton />}
+
+                    {/* Generate Recipe Form */}
                     <View style={{ marginTop: 24 }}>
                         <Text variant="title" color={colors.text1}>Generate a Recipe</Text>
-
                         <View style={{ marginTop: 12, gap: 12 }}>
                             <Input
-                                placeholder="What do you feel like eating?"
+                                placeholder="What do you feel like eating? (optional)"
                                 value={context}
                                 onChangeText={setContext}
                             />

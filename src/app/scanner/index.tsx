@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Pressable, ScrollView, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera, X, Star } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming, withSpring } from 'react-native-reanimated';
@@ -63,14 +64,25 @@ export default function ScannerScreen(): React.JSX.Element {
 
         setScanning(true);
         try {
-            const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.7 });
-            if (!photo?.base64) throw new Error('Failed to capture photo');
+            // Take photo at lower quality to reduce base64 size
+            const photo = await cameraRef.current.takePictureAsync({ base64: false, quality: 0.8 });
+            if (!photo?.uri) throw new Error('Failed to capture photo');
             setCapturedImage(photo.uri);
+
+            // Resize to max 1024px wide and re-encode at 0.5 quality
+            // This keeps the payload well under Supabase's 6MB body limit
+            const compressed = await ImageManipulator.manipulateAsync(
+                photo.uri,
+                [{ resize: { width: 1024 } }],
+                { compress: 0.5, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+            );
+
+            if (!compressed.base64) throw new Error('Failed to compress photo');
 
             const { data, error } = await supabase.functions.invoke('analyze-food', {
                 body: {
                     mode: 'menu',
-                    menu_image_base64: photo.base64,
+                    menu_image_base64: compressed.base64,
                     mime_type: 'image/jpeg',
                     user_id: user.id,
                 },

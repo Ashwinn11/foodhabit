@@ -188,22 +188,7 @@ export default function HomeScreen(): React.JSX.Element {
                 .maybeSingle();
 
             setCurrentMealRecipe(recipeData);
-
-            // PROACTIVE GENERATION: If no recipe exists for current slot, trigger it in background
-            if (!recipeData && !fetchingRecipeRef.current) {
-                fetchingRecipeRef.current = true;
-                supabase.functions.invoke('generate-recipe', {
-                    body: { user_id: user.id, source: 'daily', meal_type: currentMeal },
-                }).then(({ data: genData }) => {
-                    if (genData && !genData.error) {
-                        setCurrentMealRecipe(genData);
-                    }
-                })
-                .catch(e => console.error('Proactive recipe generation failed:', e))
-                .finally(() => {
-                    fetchingRecipeRef.current = false;
-                });
-            }
+            // Note: recipe generation is handled exclusively by recipes.tsx to prevent duplicates
 
         } catch (error) {
             console.error('Home data fetch error:', error);

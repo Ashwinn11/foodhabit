@@ -23,25 +23,34 @@ async function callGemini(prompt: string, imageBase64?: string, mimeType?: strin
         });
     }
 
-    const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts }],
-                generationConfig: {
-                    responseMimeType: 'application/json',
-                    temperature: 0.4,
-                },
-            }),
-        }
-    );
+    // 25s timeout — Supabase wall clock is 60s, fail fast so client gets a real error
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
 
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error('No response from Gemini');
-    return JSON.parse(text);
+    try {
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                signal: controller.signal,
+                body: JSON.stringify({
+                    contents: [{ parts }],
+                    generationConfig: {
+                        responseMimeType: 'application/json',
+                        temperature: 0.4,
+                    },
+                }),
+            }
+        );
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new Error('No response from Gemini');
+        return JSON.parse(text);
+    } finally {
+        clearTimeout(timeout);
+    }
 }
 
 serve(async (req: Request) => {
