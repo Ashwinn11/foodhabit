@@ -91,7 +91,7 @@ export default function RootLayout(): React.JSX.Element | null {
 
                 // 4. Identity Sync
                 const currentUser = useAuthStore.getState().user;
-                const { sync: syncSubscription, setLoading } = useSubscriptionStore.getState();
+                const { sync: syncSubscription, setLoading, loadCachedState } = useSubscriptionStore.getState();
 
                 if (currentUser?.id) {
                     // Check if identity changed since configuration
@@ -99,9 +99,16 @@ export default function RootLayout(): React.JSX.Element | null {
                         setLoading(true); // Re-enter loading state for new identity
                         await Purchases.logIn(currentUser.id);
                         await AsyncStorage.setItem('last_user_id', currentUser.id);
+                    } else {
+                        // Same identity, try to load cached premium state immediately!
+                        await loadCachedState();
                     }
-                    // Final verification of premium status for THIS user
-                    await syncSubscription();
+                    
+                    // Release the router guard immediately so app loads instantly
+                    setLoading(false);
+                    // Start true sync in the background (non-blocking)
+                    syncSubscription();
+
                 } else {
                     await AsyncStorage.removeItem('last_user_id');
                     // Logged-out: clear loading immediately so render guard doesn't block

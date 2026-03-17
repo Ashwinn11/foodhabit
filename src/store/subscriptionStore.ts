@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import Purchases, { type CustomerInfo } from 'react-native-purchases';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface PlanDetails {
     productIdentifier: string;
@@ -16,6 +17,7 @@ interface SubscriptionState {
     setLoading: (isLoading: boolean) => void;
     sync: () => Promise<void>;
     initializeListener: () => () => void;
+    loadCachedState: () => Promise<void>;
 }
 
 export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
@@ -26,6 +28,17 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
 
     setPremium: (isPremium) => set({ isPremium }),
     setLoading: (isLoading) => set({ isLoading }),
+
+    loadCachedState: async () => {
+        try {
+            const cached = await AsyncStorage.getItem('last_premium_state');
+            if (cached === 'true') {
+                set({ isPremium: true });
+            }
+        } catch (e) {
+            // silent fail on cache read
+        }
+    },
 
     sync: async () => {
         try {
@@ -38,6 +51,9 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
                 latestPurchaseDate: activeEntitlement.latestPurchaseDate,
                 expirationDate: activeEntitlement.expirationDate,
             } : null;
+
+            // Cache the result for next app launch
+            AsyncStorage.setItem('last_premium_state', hasPremium ? 'true' : 'false').catch(() => {});
 
             set({ isPremium: hasPremium, planDetails: details, isLoading: false, hasLoaded: true });
         } catch (e) {
@@ -57,6 +73,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
                 expirationDate: activeEntitlement.expirationDate,
             } : null;
 
+            AsyncStorage.setItem('last_premium_state', hasPremium ? 'true' : 'false').catch(() => {});
             set({ isPremium: hasPremium, planDetails: details, isLoading: false, hasLoaded: true });
         };
 
