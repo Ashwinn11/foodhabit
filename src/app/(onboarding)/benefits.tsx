@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/Card';
 import { ProgressDots } from '@/components/ui/ProgressDots';
 import AnimatedMascot from '@/components/AnimatedMascot';
 import { colors, shadows } from '@/theme';
+import { analytics } from '@/lib/posthog';
 
 const { width } = Dimensions.get('window');
 const columnWidth = (width - 48 - 12) / 2;
@@ -32,6 +33,10 @@ const features = [
 export default function BenefitsScreen(): React.JSX.Element {
     const router = useRouter();
     const navigation = useNavigation();
+
+    React.useEffect(() => {
+        analytics.benefitsViewed();
+    }, []);
 
     return (
         <LinearGradient

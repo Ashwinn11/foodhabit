@@ -110,6 +110,7 @@ export default function PaywallScreen(): React.JSX.Element {
 
     const handleRestore = async () => {
         setFinishing(true);
+        analytics.paywallRestoreAttempted();
         try {
             const customerInfo = await Purchases.restorePurchases();
             if (typeof customerInfo.entitlements.active['GutScan Pro'] !== 'undefined') {
@@ -132,7 +133,10 @@ export default function PaywallScreen(): React.JSX.Element {
             <SafeAreaView style={{ flex: 1 }}>
                 <View style={{ padding: 16, alignItems: 'flex-start' }}>
                     <Pressable
-                        onPress={() => navigation.canGoBack() ? router.back() : router.replace('/(onboarding)/plan')}
+                        onPress={() => {
+                            analytics.paywallDismissed();
+                            navigation.canGoBack() ? router.back() : router.replace('/(onboarding)/plan');
+                        }}
                         style={{ padding: 8 }}
                     >
                         <X size={24} color={colors.text2} />
@@ -266,8 +270,8 @@ export default function PaywallScreen(): React.JSX.Element {
                     </View>
 
                     <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 32, gap: 24 }}>
-                        <Pressable onPress={handleRestore}>
-                            <Text variant="label" color={colors.text2} style={{ textDecorationLine: 'underline' }}>Restore Purchases</Text>
+                        <Pressable onPress={handleRestore} disabled={finishing}>
+                            <Text variant="label" color={colors.text2} style={{ textDecorationLine: 'underline', opacity: finishing ? 0.5 : 1 }}>Restore Purchases</Text>
                         </Pressable>
                         <Pressable onPress={() => Linking.openURL('https://briefly.live/gutbuddy/terms-of-service')}>
                             <Text variant="label" color={colors.text2} style={{ textDecorationLine: 'underline' }}>Terms</Text>

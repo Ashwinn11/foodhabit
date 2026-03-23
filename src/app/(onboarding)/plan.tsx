@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ProgressDots } from '@/components/ui/ProgressDots';
 import { colors } from '@/theme';
+import { analytics } from '@/lib/posthog';
 
 const planSteps = [
     { title: 'Weeks 1-2: Detection', desc: 'Identify your 3 primary triggers with smart logging.', icon: Target },
@@ -20,6 +21,10 @@ const planSteps = [
 export default function PlanScreen(): React.JSX.Element {
     const router = useRouter();
     const navigation = useNavigation();
+
+    React.useEffect(() => {
+        analytics.planViewed();
+    }, []);
 
     return (
         <LinearGradient

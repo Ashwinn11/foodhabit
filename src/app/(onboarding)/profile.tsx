@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input';
 import { ProgressDots } from '@/components/ui/ProgressDots';
 import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme';
+import { analytics } from '@/lib/posthog';
 import type { BiologicalSex, DietType } from '@/lib/database.types';
 
 const sexOptions: { label: string; value: BiologicalSex }[] = [
@@ -37,6 +38,10 @@ export default function ProfileScreen(): React.JSX.Element {
     const [sex, setSex] = useState<BiologicalSex | null>(profile?.biological_sex as BiologicalSex || null);
     const [diet, setDiet] = useState<DietType | null>(profile?.diet_type as DietType || null);
     const [loading, setLoading] = useState(false);
+
+    React.useEffect(() => {
+        analytics.profileViewed();
+    }, []);
 
     // Sync from profile when it loads (e.g. on fresh app start)
     React.useEffect(() => {

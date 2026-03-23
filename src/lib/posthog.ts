@@ -8,30 +8,48 @@ export const posthog = new PostHog(
 // ─── Typed event helpers ──────────────────────────────────────────────────────
 
 export const analytics = {
-    // Onboarding
+    // ── Onboarding screen views (one unique name per screen) ──────────────────
     onboardingStarted: () =>
         posthog.capture('onboarding_started'),
 
-    onboardingStepCompleted: (step: string, data?: Record<string, unknown>) =>
-        posthog.capture('onboarding_step_completed', { step, ...data }),
+    benefitsViewed: () =>
+        posthog.capture('benefits_viewed'),
+
+    profileViewed: () =>
+        posthog.capture('profile_viewed'),
+
+    conditionsViewed: () =>
+        posthog.capture('conditions_viewed'),
 
     onboardingCompleted: (properties: { conditions: string[]; plan: string }) =>
         posthog.capture('onboarding_completed', properties),
 
-    // Auth
+    notificationsViewed: () =>
+        posthog.capture('notifications_viewed'),
+
+    planViewed: () =>
+        posthog.capture('plan_viewed'),
+
+    // ── Paywall ───────────────────────────────────────────────────────────────
+    paywallViewed: (source: string) =>
+        posthog.capture('paywall_viewed', { source }),
+
+    paywallDismissed: () =>
+        posthog.capture('paywall_dismissed'),
+
+    paywallRestoreAttempted: () =>
+        posthog.capture('paywall_restore_attempted'),
+
+    subscriptionStarted: (plan: string, price: number) =>
+        posthog.capture('subscription_started', { plan, price }),
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
     userIdentified: (userId: string, traits: { email?: string; name?: string; plan?: string }) =>
         posthog.identify(userId, traits),
 
     userSignedOut: () => posthog.reset(),
 
-    // Paywall
-    paywallViewed: (source: string) =>
-        posthog.capture('paywall_viewed', { source }),
-
-    subscriptionStarted: (plan: string, price: number) =>
-        posthog.capture('subscription_started', { plan, price }),
-
-    // Core features
+    // ── Core features ─────────────────────────────────────────────────────────
     foodLogged: (properties: { food_name: string; verdict: string; fodmap_risk: string; meal_type: string }) =>
         posthog.capture('food_logged', properties),
 
@@ -44,3 +62,4 @@ export const analytics = {
     triggerConfirmed: (trigger: string) =>
         posthog.capture('trigger_confirmed', { trigger }),
 };
+

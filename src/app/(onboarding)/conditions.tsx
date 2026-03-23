@@ -27,6 +27,10 @@ export default function ConditionsScreen(): React.JSX.Element {
     const [triggerText, setTriggerText] = useState(profile?.known_triggers?.join(', ') || '');
     const [loading, setLoading] = useState(false);
 
+    React.useEffect(() => {
+        analytics.conditionsViewed();
+    }, []);
+
     // Sync from profile when it loads (e.g. on fresh app start)
     React.useEffect(() => {
         if (profile) {
@@ -58,10 +62,6 @@ export default function ConditionsScreen(): React.JSX.Element {
             await updateProfile({
                 diagnosed_conditions: selectedConditions,
                 known_triggers: triggers,
-            });
-            analytics.onboardingStepCompleted('conditions', {
-                conditions: selectedConditions,
-                trigger_count: triggers.length,
             });
             router.push('/(onboarding)/analyzing');
         } catch (error) {

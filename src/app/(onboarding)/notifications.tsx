@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/Card';
 import { ProgressDots } from '@/components/ui/ProgressDots';
 import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme';
+import { analytics } from '@/lib/posthog';
 
 interface ReminderTime {
     label: string;
@@ -31,6 +32,10 @@ export default function NotificationsScreen(): React.JSX.Element {
     const [eveningCheckin, setEveningCheckin] = useState(false);
     const [loading, setLoading] = useState(false);
     const [permissionGranted, setPermissionGranted] = useState(false);
+
+    React.useEffect(() => {
+        analytics.notificationsViewed();
+    }, []);
 
     const formatTime = (hour: number, minute: number): string => {
         const h = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;

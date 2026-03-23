@@ -153,6 +153,17 @@ export default function RootLayout(): React.JSX.Element | null {
         return () => subscription.unsubscribe();
     }, []);
 
+    // PostHog: Re-identify whenever profile loads/changes (profile comes in after auth)
+    const { profile } = useAuthStore();
+    useEffect(() => {
+        if (!user?.id) return;
+        analytics.userIdentified(user.id, {
+            email: user.email,
+            name: profile?.full_name ?? undefined,
+            plan: isPremium ? 'premium' : 'free',
+        });
+    }, [user?.id, profile?.full_name, isPremium]);
+
     // NOTE: Subscription sync is handled inside runInit above.
     // A separate useEffect here would race against runInit and reset isLoading,
     // causing the blank screen render guard to block indefinitely.
