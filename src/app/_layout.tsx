@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -16,6 +17,8 @@ import { posthog, analytics } from '@/lib/posthog';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AnimatedMascot from '@/components/AnimatedMascot';
+import { Text } from '@/components/ui/Text';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -240,7 +243,16 @@ export default function RootLayout(): React.JSX.Element | null {
     useProtectedRoute(isPremium, isSubLoading);
 
     // Render Guard: Block until fonts + auth resolved + sub has attempted at least one sync
-    if (!fontsLoaded || !isInitialized || (user && !subHasLoaded)) return null;
+    if (!fontsLoaded || !isInitialized || (user && !subHasLoaded)) {
+        return (
+            <View style={{ flex: 1, backgroundColor: '#F8F7F4', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                <AnimatedMascot expression="happy" size={96} />
+                <Text variant="heading" color="#2D7A52" style={{ marginTop: 8 }}>Gut Buddy</Text>
+                <Text variant="caption" color="#6B7280">Finding your triggers...</Text>
+                <ActivityIndicator size="small" color="#2D7A52" style={{ marginTop: 8 }} />
+            </View>
+        );
+    }
 
     return (
         <PostHogProvider client={posthog} autocapture>
