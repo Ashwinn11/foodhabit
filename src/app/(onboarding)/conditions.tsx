@@ -91,7 +91,7 @@ export default function ConditionsScreen(): React.JSX.Element {
                         What are you dealing with?
                     </Text>
                     <Text variant="label" color={colors.text2} style={{ marginTop: 8, lineHeight: 18 }}>
-                        Select all that apply. This immediately personalises your food badges — even before you log anything.
+                        Pick what applies. This changes your food ratings from day one, before you've logged anything.
                     </Text>
 
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 24 }}>

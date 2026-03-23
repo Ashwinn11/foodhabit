@@ -45,10 +45,10 @@ export default function PlanScreen(): React.JSX.Element {
                             <Sparkles size={32} color={colors.purple.DEFAULT} fill={colors.purple.DEFAULT} fillOpacity={0.2} />
                         </View>
                         <Text variant="heading" color={colors.text1} style={{ textAlign: 'center', marginTop: 16 }}>
-                            Your 6-Week Custom Plan 📋
+                            Your plan
                         </Text>
                         <Text variant="body" color={colors.text2} style={{ textAlign: 'center', marginTop: 8 }}>
-                            Our AI has designed a roadmap specifically for your gut sensitivity.
+                            Based on your conditions, here's what the next 6 weeks look like.
                         </Text>
                     </View>
 
@@ -67,9 +67,9 @@ export default function PlanScreen(): React.JSX.Element {
                     </View>
 
                     <Card style={{ marginTop: 24, backgroundColor: colors.primary.DEFAULT, padding: 20 }}>
-                        <Text variant="bodyBold" color="#FFF">Goal: 90% Symptom Reduction</Text>
+                        <Text variant="bodyBold" color="#FFF">Most users see less bloating within 3 weeks.</Text>
                         <Text variant="caption" color="rgba(255,255,255,0.8)" style={{ marginTop: 4 }}>
-                            By following this plan, users typically see a massive improvement in bloating and discomfort within 21 days.
+                            The earlier you start logging, the faster we find your triggers.
                         </Text>
                     </Card>
 
@@ -77,7 +77,7 @@ export default function PlanScreen(): React.JSX.Element {
 
                     <View style={{ marginTop: 40 }}>
                         <Button
-                            title="Start your transformation"
+                            title="Start your trial"
                             onPress={() => router.push('/(onboarding)/paywall')}
                             fullWidth
                         />

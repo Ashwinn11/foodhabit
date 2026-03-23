@@ -10,7 +10,21 @@ interface AvatarProps {
 }
 
 export function Avatar({ name, url, size = 40 }: AvatarProps): React.JSX.Element {
-    const placeholder = '?';
+    const getInitial = () => {
+        if (!name) return '?';
+        const cleanName = name.replace(/@.*$/, '').trim(); 
+        if (!cleanName) return '?';
+        const parts = cleanName.split(/[\s_-]+/);
+        let res = '';
+        if (parts.length > 1) {
+            res = (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
+        } else {
+            res = cleanName[0] || '';
+        }
+        return res.toUpperCase() || '?';
+    };
+
+    const initial = getInitial();
 
     if (url) {
         return (
@@ -42,7 +56,7 @@ export function Avatar({ name, url, size = 40 }: AvatarProps): React.JSX.Element
                 color="#FFFFFF"
                 style={{ fontSize: size * 0.4 }}
             >
-                {placeholder}
+                {initial}
             </Text>
         </View>
     );

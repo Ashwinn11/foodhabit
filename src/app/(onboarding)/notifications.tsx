@@ -24,9 +24,9 @@ export default function NotificationsScreen(): React.JSX.Element {
     const navigation = useNavigation();
     const { updateProfile } = useAuthStore();
     const [reminders, setReminders] = useState<ReminderTime[]>([
-        { label: 'Breakfast reminder', hour: 8, minute: 0, enabled: false },
-        { label: 'Lunch reminder', hour: 12, minute: 30, enabled: false },
-        { label: 'Dinner reminder', hour: 19, minute: 0, enabled: false },
+        { label: 'Breakfast reminder', hour: 8, minute: 0, enabled: true },
+        { label: 'Lunch reminder', hour: 12, minute: 30, enabled: true },
+        { label: 'Dinner reminder', hour: 19, minute: 0, enabled: true },
     ]);
     const [eveningCheckin, setEveningCheckin] = useState(false);
     const [loading, setLoading] = useState(false);

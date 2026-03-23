@@ -9,11 +9,11 @@ import { Text } from '@/components/ui/Text';
 import { colors } from '@/theme';
 
 const steps = [
-    "Analyzing your gut profile...",
-    "Correlating symptoms and hidden patterns...",
-    "Learning your sensitivity to 32 common triggers...",
-    "Crafting your custom AI recipe engine...",
-    "Finalizing your 6-week gut health roadmap..."
+    "Reading your conditions and known triggers...",
+    "Mapping your food sensitivity profile...",
+    "Scoring 32 common gut triggers for you...",
+    "Loading your trigger database...",
+    "Building your personal food ratings..."
 ];
 
 export default function AnalyzingScreen(): React.JSX.Element {
@@ -47,7 +47,7 @@ export default function AnalyzingScreen(): React.JSX.Element {
                 <ActivityIndicator size="large" color={colors.primary.DEFAULT} style={{ marginBottom: 40 }} />
 
                 <Text variant="heading" color={colors.text1} style={{ textAlign: 'center', marginBottom: 32 }}>
-                    Personalizing Your Results
+                    Setting up your profile
                 </Text>
 
                 <View style={{ width: '100%', gap: 16 }}>

@@ -7,8 +7,16 @@ import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import AnimatedMascot from '@/components/AnimatedMascot';
 import { useAuthStore } from '@/store/authStore';
-import { colors } from '@/theme';
+import { colors, shadows } from '@/theme';
 import Svg, { Path, Rect } from 'react-native-svg';
+import { ScanLine, ChefHat, Zap, Activity } from 'lucide-react-native';
+
+const featurePills = [
+    { icon: ScanLine, label: 'Menu Scanner', color: '#2D7A52', bg: '#E8F5EE' },
+    { icon: Zap, label: 'Trigger Finder', color: '#EA580C', bg: '#FFF7ED' },
+    { icon: ChefHat, label: 'Safe Recipes', color: '#7C3AED', bg: '#F5F3FF' },
+    { icon: Activity, label: 'AI Insights', color: '#0369A1', bg: '#EFF6FF' },
+];
 
 // Google logo SVG
 function GoogleLogo(): React.JSX.Element {
@@ -71,11 +79,29 @@ export default function AuthScreen(): React.JSX.Element {
                     {/* Mascot */}
                     <AnimatedMascot size={140} />
 
+                    {/* Feature Pills */}
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 20 }}>
+                        {featurePills.map((pill) => (
+                            <View
+                                key={pill.label}
+                                style={{
+                                    flexDirection: 'row', alignItems: 'center', gap: 6,
+                                    backgroundColor: pill.color,
+                                    paddingHorizontal: 12, paddingVertical: 6,
+                                    borderRadius: 20,
+                                }}
+                            >
+                                <pill.icon size={13} color="#FFFFFF" strokeWidth={2.5} />
+                                <Text variant="caption" color="#FFFFFF" style={{ fontWeight: '700' }}>{pill.label}</Text>
+                            </View>
+                        ))}
+                    </View>
+
                     {/* App Name */}
                     <Text
                         variant="heading"
                         color={colors.text1}
-                        style={{ fontSize: 32, letterSpacing: -1, marginTop: 16, textAlign: 'center' }}
+                        style={{ fontSize: 32, letterSpacing: -1, marginTop: 20, textAlign: 'center' }}
                     >
                         Gut Buddy
                     </Text>
@@ -84,18 +110,9 @@ export default function AuthScreen(): React.JSX.Element {
                     <Text
                         variant="bodyBold"
                         color={colors.text1}
-                        style={{ fontSize: 16, marginTop: 12, textAlign: 'center' }}
+                        style={{ fontSize: 16, marginTop: 8, textAlign: 'center' }}
                     >
-                        Stop guessing why your stomach hurts.
-                    </Text>
-
-                    {/* Subtext */}
-                    <Text
-                        variant="label"
-                        color={colors.text2}
-                        style={{ marginTop: 8, textAlign: 'center', lineHeight: 18 }}
-                    >
-                        Log your meals. Find your triggers. Eat freely.
+                        Stop guessing. Find your triggers.
                     </Text>
 
                     {/* Auth Buttons */}

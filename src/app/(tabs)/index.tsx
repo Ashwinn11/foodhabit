@@ -278,7 +278,9 @@ export default function HomeScreen(): React.JSX.Element {
                                 <Zap size={14} color="#EA580C" />
                                 <Text variant="labelBold" color="#EA580C">{streak?.current_streak ?? 0}</Text>
                             </Pressable>
-                            <Avatar name={profile?.full_name} url={profile?.avatar_url} size={40} />
+                            <Pressable onPress={() => router.push('/(tabs)/profile')}>
+                                <Avatar name={profile?.full_name || user?.user_metadata?.full_name || user?.email} url={profile?.avatar_url} size={40} />
+                            </Pressable>
                         </View>
                     </View>
 

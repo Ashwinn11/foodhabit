@@ -180,17 +180,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     deleteAccount: async () => {
         set({ isLoading: true });
         try {
-            console.log('[deleteAccount] Step 1: Getting session from store state');
-            // Use in-memory store state — faster and avoids AsyncStorage timing issues
             const session = get().session;
-            console.log('[deleteAccount] Session exists:', !!session, 'Token:', session?.access_token?.slice(0, 20));
 
             if (!session?.access_token) {
-                console.error('[deleteAccount] No session token available');
                 throw new Error('No active session');
             }
 
-            console.log('[deleteAccount] Step 2: Invoking edge function');
             const { data, error } = await supabase.functions.invoke('delete-account', {
                 headers: {
                     Authorization: `Bearer ${session.access_token}`,
@@ -198,16 +193,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 body: { confirmed: true },
             });
 
-            console.log('[deleteAccount] Step 3: Response received', { data, error });
-
             if (error) throw new Error(error.message);
             if (data?.error) throw new Error(data.error);
 
-            console.log('[deleteAccount] Step 4: Signing out');
             await supabase.auth.signOut();
             set({ session: null, user: null, profile: null, isLoading: false });
         } catch (error) {
-            console.error('[deleteAccount] FAILED:', error);
             set({ isLoading: false });
             throw error;
         }

@@ -58,7 +58,7 @@ export default function WelcomeScreen(): React.JSX.Element {
                             color={colors.text2}
                             style={{ marginTop: 8, textAlign: 'center', lineHeight: 22 }}
                         >
-                            We're going to use advanced AI to find exactly what's causing your discomfort, discover your hidden triggers, and design a gut-safe life for you.
+                            You log what you eat and how you feel. We find what's actually hurting you — not generic FODMAP lists, but your specific triggers.
                         </Text>
                     </View>
 
@@ -86,8 +86,8 @@ export default function WelcomeScreen(): React.JSX.Element {
                                     <Sparkles size={24} color="#FFF" fill="#FFF" fillOpacity={0.2} />
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text variant="bodyBold" color={colors.text1} style={{ fontSize: 18 }}>Personalized for you</Text>
-                                    <Text variant="caption" color={colors.text2} style={{ fontSize: 14, marginTop: 2 }}>Ready for your 2-minute gut analysis?</Text>
+                                    <Text variant="bodyBold" color={colors.text1} style={{ fontSize: 18 }}>What's in your food?</Text>
+                                    <Text variant="caption" color={colors.text2} style={{ fontSize: 14, marginTop: 2 }}>Takes 2 minutes.</Text>
                                 </View>
                             </View>
                         </Card>
@@ -97,8 +97,8 @@ export default function WelcomeScreen(): React.JSX.Element {
 
                     <View style={{ marginTop: 32 }}>
                         <Button
-                            title="Start Analysis"
-                            onPress={() => router.push('/(onboarding)/profile')}
+                            title="Let's find your triggers"
+                            onPress={() => router.push('/(onboarding)/benefits')}
                             fullWidth
                         />
                     </View>

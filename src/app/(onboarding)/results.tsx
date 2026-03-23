@@ -97,10 +97,10 @@ export default function ResultsScreen(): React.JSX.Element {
                     <View style={{ alignItems: 'center', marginTop: 20 }}>
                         <AnimatedMascot expression="happy" size={120} />
                         <Text variant="heading" color={colors.text1} style={{ textAlign: 'center', marginTop: 16 }}>
-                            Analysis Complete 🧠
+                            Your gut profile
                         </Text>
                         <Text variant="body" color={colors.text2} style={{ textAlign: 'center', marginTop: 8 }}>
-                            Based on your profile, we've identified key patterns in your gut health.
+                            Based on what you told us, here's where you're starting from.
                         </Text>
                     </View>
 
@@ -134,7 +134,7 @@ export default function ResultsScreen(): React.JSX.Element {
                             </View>
                             <View style={{ flex: 1 }}>
                                 <Text variant="bodyBold" color={colors.text1}>{conditions.length > 0 ? conditions[0] : 'Digestive'} Profile</Text>
-                                <Text variant="caption" color={colors.text2}>Personalized plan generated for your gut.</Text>
+                                <Text variant="caption" color={colors.text2}>Based on what you told us.</Text>
                             </View>
                         </View>
                     </View>
@@ -144,7 +144,7 @@ export default function ResultsScreen(): React.JSX.Element {
                     <View style={{ marginTop: 40 }}>
                         <Button
                             title="See how we can help"
-                            onPress={() => router.push('/(onboarding)/benefits')}
+                            onPress={() => router.push('/(onboarding)/notifications')}
                             fullWidth
                         />
                     </View>

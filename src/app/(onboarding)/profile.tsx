@@ -139,7 +139,7 @@ export default function ProfileScreen(): React.JSX.Element {
                             title="Continue"
                             onPress={handleContinue}
                             loading={loading}
-                            disabled={!age && !sex && !diet}
+                            disabled={!sex || !diet}
                             fullWidth
                         />
                     </View>

@@ -231,9 +231,9 @@ export default function ProfileScreen(): React.JSX.Element {
                 <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
                     {/* Profile Header */}
                     <View style={{ alignItems: 'center', marginTop: 20 }}>
-                        <Avatar name={profile?.full_name} url={profile?.avatar_url} size={84} />
+                        <Avatar name={profile?.full_name || user?.user_metadata?.full_name || user?.email} url={profile?.avatar_url} size={84} />
                         <Text variant="heading" color={colors.text1} style={{ marginTop: 16 }}>
-                            {profile?.full_name || 'Gut Buddy User'}
+                            {profile?.full_name || user?.email?.split('@')[0] || 'My Profile'}
                         </Text>
                         <Text variant="caption" color={colors.text2} style={{ marginTop: 4 }}>
                             {profile?.email}
