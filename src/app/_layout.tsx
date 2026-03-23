@@ -10,6 +10,8 @@ import { supabase } from '@/lib/supabase';
 import Purchases from 'react-native-purchases';
 import * as Notifications from 'expo-notifications';
 import '../../global.css';
+import { PostHogProvider } from 'posthog-react-native';
+import { posthog, analytics } from '@/lib/posthog';
 
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -103,7 +105,15 @@ export default function RootLayout(): React.JSX.Element | null {
                         // Same identity, try to load cached premium state immediately!
                         await loadCachedState();
                     }
-                    
+
+                    // Identify user in PostHog
+                    const profile = useAuthStore.getState().profile;
+                    analytics.userIdentified(currentUser.id, {
+                        email: currentUser.email,
+                        name: profile?.full_name ?? undefined,
+                        plan: useSubscriptionStore.getState().isPremium ? 'premium' : 'free',
+                    });
+
                     // Release the router guard immediately so app loads instantly
                     setLoading(false);
                     // Start true sync in the background (non-blocking)
@@ -111,6 +121,7 @@ export default function RootLayout(): React.JSX.Element | null {
 
                 } else {
                     await AsyncStorage.removeItem('last_user_id');
+                    analytics.userSignedOut();
                     // Logged-out: clear loading immediately so render guard doesn't block
                     setLoading(false);
                     syncSubscription(); // background, non-blocking
@@ -221,20 +232,22 @@ export default function RootLayout(): React.JSX.Element | null {
     if (!fontsLoaded || !isInitialized || (user && !subHasLoaded)) return null;
 
     return (
-        <ErrorBoundary>
-            <GestureHandlerRootView style={{ flex: 1 }}>
-                <StatusBar style="dark" />
-                <ToastProvider>
-                    <Stack screenOptions={{ headerShown: false }}>
-                        <Stack.Screen name="(tabs)" />
-                        <Stack.Screen name="(auth)" />
-                        <Stack.Screen name="(onboarding)" />
-                        <Stack.Screen name="legal/privacy" options={{ presentation: 'modal' }} />
-                        <Stack.Screen name="legal/terms" options={{ presentation: 'modal' }} />
-                        <Stack.Screen name="scanner/index" />
-                    </Stack>
-                </ToastProvider>
-            </GestureHandlerRootView>
-        </ErrorBoundary>
+        <PostHogProvider client={posthog} autocapture>
+            <ErrorBoundary>
+                <GestureHandlerRootView style={{ flex: 1 }}>
+                    <StatusBar style="dark" />
+                    <ToastProvider>
+                        <Stack screenOptions={{ headerShown: false }}>
+                            <Stack.Screen name="(tabs)" />
+                            <Stack.Screen name="(auth)" />
+                            <Stack.Screen name="(onboarding)" />
+                            <Stack.Screen name="legal/privacy" options={{ presentation: 'modal' }} />
+                            <Stack.Screen name="legal/terms" options={{ presentation: 'modal' }} />
+                            <Stack.Screen name="scanner/index" />
+                        </Stack>
+                    </ToastProvider>
+                </GestureHandlerRootView>
+            </ErrorBoundary>
+        </PostHogProvider>
     );
 }

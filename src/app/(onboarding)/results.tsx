@@ -20,6 +20,7 @@ import { ProgressDots } from '@/components/ui/ProgressDots';
 import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme';
 import AnimatedMascot from '@/components/AnimatedMascot';
+import { analytics } from '@/lib/posthog';
 
 export default function ResultsScreen(): React.JSX.Element {
     const router = useRouter();
@@ -52,6 +53,11 @@ export default function ResultsScreen(): React.JSX.Element {
 
     useEffect(() => {
         progress.value = withDelay(500, withTiming(finalScore / 100, { duration: 2000, easing: Easing.out(Easing.exp) }));
+
+        analytics.onboardingCompleted({
+            conditions,
+            plan: 'free',
+        });
 
         // Strategic: Ask for review when they see their results
         const triggerReview = async () => {

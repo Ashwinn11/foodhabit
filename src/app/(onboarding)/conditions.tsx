@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input';
 import { ProgressDots } from '@/components/ui/ProgressDots';
 import { useAuthStore } from '@/store/authStore';
 import { colors } from '@/theme';
+import { analytics } from '@/lib/posthog';
 
 const conditionOptions = [
     'IBS-D', 'IBS-C', 'IBS-M', 'Chronic Bloating', 'SIBO',
@@ -57,6 +58,10 @@ export default function ConditionsScreen(): React.JSX.Element {
             await updateProfile({
                 diagnosed_conditions: selectedConditions,
                 known_triggers: triggers,
+            });
+            analytics.onboardingStepCompleted('conditions', {
+                conditions: selectedConditions,
+                trigger_count: triggers.length,
             });
             router.push('/(onboarding)/analyzing');
         } catch (error) {

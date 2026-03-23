@@ -10,13 +10,16 @@ import AnimatedMascot from '@/components/AnimatedMascot';
 import { Card } from '@/components/ui/Card';
 import { ProgressDots } from '@/components/ui/ProgressDots';
 import { colors } from '@/theme';
+import { analytics } from '@/lib/posthog';
 
 
 
 export default function WelcomeScreen(): React.JSX.Element {
     const router = useRouter();
 
-
+    React.useEffect(() => {
+        analytics.onboardingStarted();
+    }, []);
     return (
         <LinearGradient colors={[colors.gradient.start, colors.gradient.mid, colors.gradient.end]} style={{ flex: 1 }}>
             <SafeAreaView style={{ flex: 1 }}>

@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
 import { useSubscriptionStore } from '@/store/subscriptionStore';
 import { colors, radii } from '@/theme';
+import { analytics } from '@/lib/posthog';
 
 const features = [
     'Unlimited AI Meal Checks',
@@ -60,6 +61,7 @@ export default function PaywallScreen(): React.JSX.Element {
         };
 
         fetchOfferings();
+        analytics.paywallViewed('onboarding');
     }, []);
 
     const completeOnboarding = async (): Promise<void> => {
@@ -91,6 +93,10 @@ export default function PaywallScreen(): React.JSX.Element {
         try {
             const { customerInfo } = await Purchases.purchasePackage(selectedPackage);
             if (typeof customerInfo.entitlements.active['GutScan Pro'] !== 'undefined') {
+                analytics.subscriptionStarted(
+                    selectedPackage.identifier,
+                    selectedPackage.product.price
+                );
                 await completeOnboarding();
             }
         } catch (error: any) {
