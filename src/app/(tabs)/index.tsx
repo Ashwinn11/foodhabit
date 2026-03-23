@@ -318,10 +318,10 @@ export default function HomeScreen(): React.JSX.Element {
                             </View>
                             <View style={{ flex: 1 }}>
                                 <Text variant="title" color={colors.text1}>
-                                    {todayLogs.symptoms ? (gutScore! >= 70 ? 'Great Day' : gutScore! >= 40 ? 'Decent Day' : 'Tough Day') : 'Baseline Score'}
+                                    {todayLogs.symptoms ? (gutScore! >= 70 ? 'Great Day' : gutScore! >= 40 ? 'Decent Day' : 'Tough Day') : 'Gut Score'}
                                 </Text>
                                 <Text variant="caption" color={colors.text2} style={{ marginTop: 2 }}>
-                                    {todayLogs.symptoms ? 'Based on today\'s symptoms' : 'Initial score based on your profile'}
+                                    {todayLogs.symptoms ? 'Based on today\'s symptoms' : 'Track symptoms to update your score'}
                                 </Text>
                             </View>
                         </View>

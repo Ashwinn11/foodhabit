@@ -9,19 +9,22 @@
       "distribution": "internal",
       "env": {
         "USE_CCACHE": "0"
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
       "env": {
         "USE_CCACHE": "0"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "USE_CCACHE": "0"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {
