@@ -96,7 +96,7 @@ export default function RootLayout(): React.JSX.Element | null {
 
                 // 4. Identity Sync
                 const currentUser = useAuthStore.getState().user;
-                const { sync: syncSubscription, setLoading, loadCachedState } = useSubscriptionStore.getState();
+                const { sync: syncSubscription, setLoading, markLoaded, loadCachedState } = useSubscriptionStore.getState();
 
                 if (currentUser?.id) {
                     // Check if identity changed since configuration
@@ -118,7 +118,7 @@ export default function RootLayout(): React.JSX.Element | null {
                     });
 
                     // Release the router guard immediately so app loads instantly
-                    setLoading(false);
+                    markLoaded();
                     // Start true sync in the background (non-blocking)
                     syncSubscription();
 
@@ -126,13 +126,13 @@ export default function RootLayout(): React.JSX.Element | null {
                     await AsyncStorage.removeItem('last_user_id');
                     analytics.userSignedOut();
                     // Logged-out: clear loading immediately so render guard doesn't block
-                    setLoading(false);
+                    markLoaded();
                     syncSubscription(); // background, non-blocking
                 }
             } catch (error) {
                 console.error('[RootLayout] Initialization error:', error);
                 // SAFETY: Always clear loading so the render guard doesn't block forever
-                useSubscriptionStore.getState().setLoading(false);
+                useSubscriptionStore.getState().markLoaded();
             }
         }
 
@@ -245,10 +245,10 @@ export default function RootLayout(): React.JSX.Element | null {
     // Render Guard: Block until fonts + auth resolved + sub has attempted at least one sync
     if (!fontsLoaded || !isInitialized || (user && !subHasLoaded)) {
         return (
-            <View style={{ flex: 1, backgroundColor: '#F8F7F4', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            <View style={{ flex: 1, backgroundColor: '#F8F7F4', alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 32 }}>
                 <AnimatedMascot expression="happy" size={96} />
-                <Text variant="heading" color="#2D7A52" style={{ marginTop: 8 }}>Gut Buddy</Text>
-                <Text variant="caption" color="#6B7280">Finding your triggers...</Text>
+                <Text variant="heading" color="#2D7A52" style={{ marginTop: 8, textAlign: 'center', width: '100%' }}>Gut Buddy</Text>
+                <Text variant="caption" color="#6B7280" style={{ textAlign: 'center', width: '100%' }}>Finding your triggers...</Text>
                 <ActivityIndicator size="small" color="#2D7A52" style={{ marginTop: 8 }} />
             </View>
         );

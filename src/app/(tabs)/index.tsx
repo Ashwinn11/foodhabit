@@ -267,7 +267,7 @@ export default function HomeScreen(): React.JSX.Element {
                         </View>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                             {/* Streak Header Badge */}
-                            <Pressable 
+                            <Pressable
                                 onPress={() => router.push('/(tabs)/progress')}
                                 style={{
                                     flexDirection: 'row', alignItems: 'center', gap: 4,

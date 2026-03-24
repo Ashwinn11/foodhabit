@@ -37,7 +37,7 @@ const verdictColors: Record<Verdict, { bg: string; label: string }> = {
 
 export function FodmapBadge({ risk, animated = true }: FodmapBadgeProps): React.JSX.Element {
     const scale = useSharedValue(animated ? 0.5 : 1);
-    const style = fodmapColors[risk];
+    const style = fodmapColors[risk] ?? fodmapColors.medium;
 
     useEffect(() => {
         if (animated) {

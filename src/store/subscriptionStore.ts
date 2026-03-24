@@ -15,6 +15,7 @@ interface SubscriptionState {
     planDetails: PlanDetails | null;
     setPremium: (isPremium: boolean) => void;
     setLoading: (isLoading: boolean) => void;
+    markLoaded: () => void; // sets isLoading:false + hasLoaded:true atomically
     sync: () => Promise<void>;
     initializeListener: () => () => void;
     loadCachedState: () => Promise<void>;
@@ -28,6 +29,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
 
     setPremium: (isPremium) => set({ isPremium }),
     setLoading: (isLoading) => set({ isLoading }),
+    markLoaded: () => set({ isLoading: false, hasLoaded: true }),
 
     loadCachedState: async () => {
         try {

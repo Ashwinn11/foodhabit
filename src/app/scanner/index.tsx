@@ -101,11 +101,11 @@ export default function ScannerScreen(): React.JSX.Element {
     if (!permission?.granted) {
         return (
             <SafeAreaView style={{ flex: 1, backgroundColor: colors.dark, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
-                <Text variant="heading" color="#FFFFFF" style={{ textAlign: 'center' }}>Camera Access Required</Text>
-                <Text variant="label" color="#FFFFFF80" style={{ textAlign: 'center', marginTop: 8 }}>
+                <Text variant="heading" color="#FFFFFF" style={{ textAlign: 'center', width: '100%' }}>Camera Access Required</Text>
+                <Text variant="label" color="#FFFFFF80" style={{ textAlign: 'center', marginTop: 8, width: '100%' }}>
                     Gut Buddy needs camera access to scan restaurant menus.
                 </Text>
-                <View style={{ marginTop: 24, gap: 12 }}>
+                <View style={{ marginTop: 24, gap: 12, alignSelf: 'stretch' }}>
                     <Button title="Allow Camera" onPress={requestPermission} fullWidth />
                     <Button title="Go Back" variant="ghost" onPress={() => router.back()} fullWidth style={{ opacity: 0.7 }} />
                 </View>
