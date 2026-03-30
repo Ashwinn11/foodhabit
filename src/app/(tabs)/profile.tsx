@@ -459,7 +459,7 @@ export default function ProfileScreen(): React.JSX.Element {
 
                     {/* App version */}
                     <View style={{ alignItems: 'center', marginTop: 24 }}>
-                        <Text variant="caption" color={colors.text3}>Gut Buddy v3.0.0</Text>
+                        <Text variant="caption" color={colors.text3}>Gut Buddy v3</Text>
                     </View>
                 </ScrollView>
             </SafeAreaView>

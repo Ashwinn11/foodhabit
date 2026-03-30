@@ -505,6 +505,63 @@ function SymptomsSegment(): React.JSX.Element {
 
     const bristolLabels = ['Hard lumps', 'Lumpy', 'Cracked', 'Smooth', 'Soft blobs', 'Mushy', 'Watery'];
 
+    const maybeGenerateInsight = useCallback(async (): Promise<void> => {
+        if (!user?.id) return;
+
+        try {
+            const now = new Date();
+            const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString();
+            const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString();
+            const fourteenDaysAgo = new Date(now.getTime() - 14 * 86400000).toISOString();
+            const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
+
+            const [
+                recentMealRes,
+                mealCountRes,
+                symptomCountRes,
+                recentInsightRes,
+            ] = await Promise.all([
+                supabase
+                    .from('meal_logs')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('user_id', user.id)
+                    .gte('logged_at', sixHoursAgo)
+                    .lte('logged_at', twoHoursAgo)
+                    .limit(1),
+                supabase
+                    .from('meal_logs')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('user_id', user.id)
+                    .gte('logged_at', fourteenDaysAgo),
+                supabase
+                    .from('symptom_logs')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('user_id', user.id)
+                    .gte('logged_at', fourteenDaysAgo),
+                supabase
+                    .from('ai_insights')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('user_id', user.id)
+                    .gte('generated_at', twelveHoursAgo),
+            ]);
+
+            const hasRecentMealWindow = (recentMealRes.count || 0) > 0;
+            const hasEnoughMeals = (mealCountRes.count || 0) >= 3;
+            const hasEnoughSymptoms = (symptomCountRes.count || 0) >= 2;
+            const recentlyAnalyzed = (recentInsightRes.count || 0) > 0;
+
+            if (!hasRecentMealWindow || !hasEnoughMeals || !hasEnoughSymptoms || recentlyAnalyzed) {
+                return;
+            }
+
+            await supabase.functions.invoke('generate-insight', {
+                body: { user_id: user.id },
+            });
+        } catch (error) {
+            console.error('Background insight generation skipped:', error);
+        }
+    }, [user?.id]);
+
     const logSymptoms = async (): Promise<void> => {
         if (!user?.id) return;
         setLogging(true);
@@ -567,6 +624,8 @@ function SymptomsSegment(): React.JSX.Element {
             setFatigue(0);
             setStoolType(null);
             setNotes('');
+
+            void maybeGenerateInsight();
         } catch (error) {
             console.error('Log symptoms error:', error);
             showToast({
@@ -656,6 +715,10 @@ function SymptomsSegment(): React.JSX.Element {
             <View style={{ marginTop: 20 }}>
                 <Button title="Log Symptoms" icon={<Check size={18} color="#FFFFFF" />} onPress={logSymptoms} loading={logging} fullWidth />
             </View>
+
+            <Text variant="caption" color={colors.text2} style={{ marginTop: 10, lineHeight: 18 }}>
+                Trigger analysis updates after symptom check-ins when there is enough recent meal data to compare against.
+            </Text>
         </ScrollView>
     );
 }

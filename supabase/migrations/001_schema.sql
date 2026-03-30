@@ -66,7 +66,6 @@ CREATE TABLE IF NOT EXISTS public.meal_logs (
   meal_type TEXT NOT NULL CHECK (meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')),
   foods JSONB NOT NULL DEFAULT '[]',
   overall_meal_verdict TEXT CHECK (overall_meal_verdict IN ('avoid', 'caution', 'safest')),
-  meal_swap_suggestion TEXT,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -191,42 +190,6 @@ CREATE POLICY "Users can delete own recipes" ON public.recipes
 
 GRANT ALL ON public.recipes TO authenticated, service_role;
 
-
--- ===========================================
--- TABLE: progress_snapshots
--- ===========================================
-CREATE TABLE IF NOT EXISTS public.progress_snapshots (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  snapshot_date DATE NOT NULL,
-  avg_bloating_7d NUMERIC DEFAULT 0,
-  avg_pain_7d NUMERIC DEFAULT 0,
-  avg_urgency_7d NUMERIC DEFAULT 0,
-  avg_fatigue_7d NUMERIC DEFAULT 0,
-  good_days_count INTEGER DEFAULT 0,
-  bad_days_count INTEGER DEFAULT 0,
-  top_triggers TEXT[] DEFAULT '{}',
-  improvement_vs_baseline NUMERIC DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
-ALTER TABLE public.progress_snapshots ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own progress" ON public.progress_snapshots
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own progress" ON public.progress_snapshots
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own progress" ON public.progress_snapshots
-  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own progress" ON public.progress_snapshots
-  FOR DELETE USING (auth.uid() = user_id);
-
-GRANT ALL ON public.progress_snapshots TO authenticated, service_role;
-
-
 -- ===========================================
 -- TABLE: streaks
 -- ===========================================
@@ -263,4 +226,3 @@ CREATE INDEX IF NOT EXISTS idx_meal_logs_user_date ON public.meal_logs(user_id, 
 CREATE INDEX IF NOT EXISTS idx_symptom_logs_user_date ON public.symptom_logs(user_id, logged_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ai_insights_user_type ON public.ai_insights(user_id, insight_type, generated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_recipes_user_saved ON public.recipes(user_id, is_saved, generated_at DESC);
-CREATE INDEX IF NOT EXISTS idx_progress_user_date ON public.progress_snapshots(user_id, snapshot_date DESC);

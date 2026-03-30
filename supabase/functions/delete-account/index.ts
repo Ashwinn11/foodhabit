@@ -68,7 +68,6 @@ Deno.serve(async (req: Request) => {
       'symptom_logs',
       'ai_insights',
       'recipes',
-      'progress_snapshots',
       'streaks',
     ];
 

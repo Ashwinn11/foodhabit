@@ -97,7 +97,6 @@ export interface Database {
                     meal_type: string;
                     foods: Json;
                     overall_meal_verdict: string | null;
-                    meal_swap_suggestion: string | null;
                     notes: string | null;
                     created_at: string;
                 };
@@ -108,7 +107,6 @@ export interface Database {
                     meal_type: string;
                     foods: Json;
                     overall_meal_verdict?: string | null;
-                    meal_swap_suggestion?: string | null;
                     notes?: string | null;
                     created_at?: string;
                 };
@@ -119,7 +117,6 @@ export interface Database {
                     meal_type?: string;
                     foods?: Json;
                     overall_meal_verdict?: string | null;
-                    meal_swap_suggestion?: string | null;
                     notes?: string | null;
                     created_at?: string;
                 };
@@ -283,59 +280,6 @@ export interface Database {
                     }
                 ];
             };
-            progress_snapshots: {
-                Row: {
-                    id: string;
-                    user_id: string;
-                    snapshot_date: string;
-                    avg_bloating_7d: number;
-                    avg_pain_7d: number;
-                    avg_urgency_7d: number;
-                    avg_fatigue_7d: number;
-                    good_days_count: number;
-                    bad_days_count: number;
-                    top_triggers: string[];
-                    improvement_vs_baseline: number;
-                    created_at: string;
-                };
-                Insert: {
-                    id?: string;
-                    user_id: string;
-                    snapshot_date: string;
-                    avg_bloating_7d?: number;
-                    avg_pain_7d?: number;
-                    avg_urgency_7d?: number;
-                    avg_fatigue_7d?: number;
-                    good_days_count?: number;
-                    bad_days_count?: number;
-                    top_triggers?: string[];
-                    improvement_vs_baseline?: number;
-                    created_at?: string;
-                };
-                Update: {
-                    id?: string;
-                    user_id?: string;
-                    snapshot_date?: string;
-                    avg_bloating_7d?: number;
-                    avg_pain_7d?: number;
-                    avg_urgency_7d?: number;
-                    avg_fatigue_7d?: number;
-                    good_days_count?: number;
-                    bad_days_count?: number;
-                    top_triggers?: string[];
-                    improvement_vs_baseline?: number;
-                    created_at?: string;
-                };
-                Relationships: [
-                    {
-                        foreignKeyName: "progress_snapshots_user_id_fkey";
-                        columns: ["user_id"];
-                        isOneToOne: false;
-                        referencedRelation: "profiles";
-                        referencedColumns: ["id"];
-                    }
-                ];
-            };
             streaks: {
                 Row: {
                     id: string;
@@ -397,5 +341,4 @@ export type MealLog = Tables<'meal_logs'>;
 export type SymptomLog = Tables<'symptom_logs'>;
 export type AiInsight = Tables<'ai_insights'>;
 export type Recipe = Tables<'recipes'>;
-export type ProgressSnapshot = Tables<'progress_snapshots'>;
 export type Streak = Tables<'streaks'>;
