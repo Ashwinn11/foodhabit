@@ -48,14 +48,6 @@ serve(async (req: Request) => {
             .gte('logged_at', fourteenDaysAgo)
             .order('logged_at', { ascending: false });
 
-        // Get daily factors
-        const { data: dailyFactors } = await supabase
-            .from('daily_factors')
-            .select('*')
-            .eq('user_id', user_id)
-            .gte('date', fourteenDaysAgo.split('T')[0])
-            .order('date', { ascending: false });
-
         // Get existing insight types to avoid duplicates
         const { data: existingInsights } = await supabase
             .from('ai_insights')
@@ -82,9 +74,6 @@ ${JSON.stringify(mealLogs, null, 1)}
 Recent Symptom Logs (last 14 days):
 ${JSON.stringify(symptomLogs, null, 1)}
 
-Daily Factors:
-${JSON.stringify(dailyFactors, null, 1)}
-
 Existing Insights (avoid duplicating):
 ${JSON.stringify(existingInsights, null, 1)}
 
@@ -92,7 +81,7 @@ Generate 1-3 NEW insights. Each insight must be one of these types:
 - trigger_watching: A food that appeared before symptoms but needs more data (confidence: low)
 - trigger_likely: A food that consistently appears before symptom spikes (confidence: medium)
 - trigger_confirmed: Strong correlation confirmed over multiple logs (confidence: high)
-- pattern: A non-food pattern (sleep, stress, timing) affecting symptoms
+- pattern: A non-food pattern (meal timing, symptom timing, repetition) affecting symptoms
 - recommendation: A specific, actionable suggestion
 - weekly_summary: An overview of the week's gut health
 
@@ -111,7 +100,6 @@ Rules:
 - Do NOT repeat insights that already exist
 - Be specific — reference actual meals and dates from the data
 - Correlate meal timing with symptom timing (symptoms 2-6h after meals)
-- Consider daily factors (stress, sleep) as confounding variables
 - If insufficient data, say "Keep logging" rather than guessing`;
 
         const response = await fetch(

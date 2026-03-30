@@ -250,18 +250,6 @@ TABLE: symptom_logs
 - notes (text, nullable)
 - created_at (timestamptz)
 
-TABLE: daily_factors
-- id (uuid, PK)
-- user_id (uuid, FK → profiles.id)
-- date (date, unique per user)
-- sleep_hours (numeric, nullable)
-- sleep_quality (int, nullable) — 1–5
-- stress_level (int, nullable) — 1–5
-- exercise (boolean, default false)
-- exercise_type (text, nullable)
-- menstrual_phase (text, nullable) — only for female users
-- water_intake (int, nullable) — glasses
-- created_at (timestamptz)
 
 TABLE: ai_insights
 - id (uuid, PK)
@@ -382,7 +370,7 @@ EDGE FUNCTION: generate-insight
 Trigger: once per day on app open if no insight for today.
 Input: { user_id: string }
 
-Fetch: last 14 days meal_logs + symptom_logs + daily_factors + profiles row + existing confirmed triggers.
+Fetch: last 14 days meal_logs + symptom_logs + profiles row + existing confirmed triggers.
 
 Cross-correlation logic before calling Gemini:
 For each food eaten 3+ times, calculate:
@@ -458,7 +446,7 @@ Upsert into progress_snapshots. Return snapshot.
 EDGE FUNCTION: delete-account
 ─────────────────────────────
 Uses service role key (Supabase secret).
-Delete order: recipes → ai_insights → progress_snapshots → symptom_logs → meal_logs → daily_factors → streaks → profiles → auth.users row.
+Delete order: recipes → ai_insights → progress_snapshots → symptom_logs → meal_logs →  streaks → profiles → auth.users row.
 Return: { success: true }
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

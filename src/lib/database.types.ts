@@ -98,7 +98,6 @@ export interface Database {
                     foods: Json;
                     overall_meal_verdict: string | null;
                     meal_swap_suggestion: string | null;
-                    stress_level: number;
                     notes: string | null;
                     created_at: string;
                 };
@@ -110,7 +109,6 @@ export interface Database {
                     foods: Json;
                     overall_meal_verdict?: string | null;
                     meal_swap_suggestion?: string | null;
-                    stress_level?: number;
                     notes?: string | null;
                     created_at?: string;
                 };
@@ -122,7 +120,6 @@ export interface Database {
                     foods?: Json;
                     overall_meal_verdict?: string | null;
                     meal_swap_suggestion?: string | null;
-                    stress_level?: number;
                     notes?: string | null;
                     created_at?: string;
                 };
@@ -179,56 +176,6 @@ export interface Database {
                 Relationships: [
                     {
                         foreignKeyName: "symptom_logs_user_id_fkey";
-                        columns: ["user_id"];
-                        isOneToOne: false;
-                        referencedRelation: "profiles";
-                        referencedColumns: ["id"];
-                    }
-                ];
-            };
-            daily_factors: {
-                Row: {
-                    id: string;
-                    user_id: string;
-                    date: string;
-                    sleep_hours: number | null;
-                    sleep_quality: number | null;
-                    stress_level: number | null;
-                    exercise: boolean;
-                    exercise_type: string | null;
-                    menstrual_phase: string | null;
-                    water_intake: number | null;
-                    created_at: string;
-                };
-                Insert: {
-                    id?: string;
-                    user_id: string;
-                    date: string;
-                    sleep_hours?: number | null;
-                    sleep_quality?: number | null;
-                    stress_level?: number | null;
-                    exercise?: boolean;
-                    exercise_type?: string | null;
-                    menstrual_phase?: string | null;
-                    water_intake?: number | null;
-                    created_at?: string;
-                };
-                Update: {
-                    id?: string;
-                    user_id?: string;
-                    date?: string;
-                    sleep_hours?: number | null;
-                    sleep_quality?: number | null;
-                    stress_level?: number | null;
-                    exercise?: boolean;
-                    exercise_type?: string | null;
-                    menstrual_phase?: string | null;
-                    water_intake?: number | null;
-                    created_at?: string;
-                };
-                Relationships: [
-                    {
-                        foreignKeyName: "daily_factors_user_id_fkey";
                         columns: ["user_id"];
                         isOneToOne: false;
                         referencedRelation: "profiles";
@@ -448,7 +395,6 @@ export type UpdateTables<T extends keyof Database['public']['Tables']> = Databas
 export type Profile = Tables<'profiles'>;
 export type MealLog = Tables<'meal_logs'>;
 export type SymptomLog = Tables<'symptom_logs'>;
-export type DailyFactor = Tables<'daily_factors'>;
 export type AiInsight = Tables<'ai_insights'>;
 export type Recipe = Tables<'recipes'>;
 export type ProgressSnapshot = Tables<'progress_snapshots'>;

@@ -67,7 +67,6 @@ CREATE TABLE IF NOT EXISTS public.meal_logs (
   foods JSONB NOT NULL DEFAULT '[]',
   overall_meal_verdict TEXT CHECK (overall_meal_verdict IN ('avoid', 'caution', 'safest')),
   meal_swap_suggestion TEXT,
-  stress_level INTEGER DEFAULT 1 CHECK (stress_level BETWEEN 1 AND 5),
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -123,39 +122,6 @@ CREATE POLICY "Users can delete own symptom logs" ON public.symptom_logs
 GRANT ALL ON public.symptom_logs TO authenticated, service_role;
 
 
--- ===========================================
--- TABLE: daily_factors
--- ===========================================
-CREATE TABLE IF NOT EXISTS public.daily_factors (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  date DATE NOT NULL,
-  sleep_hours NUMERIC,
-  sleep_quality INTEGER CHECK (sleep_quality BETWEEN 1 AND 5),
-  stress_level INTEGER CHECK (stress_level BETWEEN 1 AND 5),
-  exercise BOOLEAN DEFAULT false,
-  exercise_type TEXT,
-  menstrual_phase TEXT,
-  water_intake INTEGER,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE (user_id, date)
-);
-
-ALTER TABLE public.daily_factors ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own daily factors" ON public.daily_factors
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own daily factors" ON public.daily_factors
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own daily factors" ON public.daily_factors
-  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own daily factors" ON public.daily_factors
-  FOR DELETE USING (auth.uid() = user_id);
-
-GRANT ALL ON public.daily_factors TO authenticated, service_role;
 
 
 -- ===========================================
@@ -295,7 +261,6 @@ GRANT ALL ON public.streaks TO authenticated, service_role;
 -- ===========================================
 CREATE INDEX IF NOT EXISTS idx_meal_logs_user_date ON public.meal_logs(user_id, logged_at DESC);
 CREATE INDEX IF NOT EXISTS idx_symptom_logs_user_date ON public.symptom_logs(user_id, logged_at DESC);
-CREATE INDEX IF NOT EXISTS idx_daily_factors_user_date ON public.daily_factors(user_id, date DESC);
 CREATE INDEX IF NOT EXISTS idx_ai_insights_user_type ON public.ai_insights(user_id, insight_type, generated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_recipes_user_saved ON public.recipes(user_id, is_saved, generated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_progress_user_date ON public.progress_snapshots(user_id, snapshot_date DESC);

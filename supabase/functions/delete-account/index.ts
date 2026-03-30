@@ -66,7 +66,6 @@ Deno.serve(async (req: Request) => {
     const tables = [
       'meal_logs',
       'symptom_logs',
-      'daily_factors',
       'ai_insights',
       'recipes',
       'progress_snapshots',

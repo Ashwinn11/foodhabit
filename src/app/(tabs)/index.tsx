@@ -17,6 +17,8 @@ import AnimatedMascot from '@/components/AnimatedMascot';
 import { Skeleton, SkeletonCard } from '@/components/ui/Skeleton';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
+import { calculateGutScore } from '@/lib/gutScore';
+import { calculateOnboardingBaselineScore } from '@/lib/onboardingScore';
 import { colors, radii, shadows } from '@/theme';
 import type { Streak, AiInsight } from '@/lib/database.types';
 
@@ -46,6 +48,7 @@ export default function HomeScreen(): React.JSX.Element {
     const [refreshing, setRefreshing] = useState(false);
     const [todayLogs, setTodayLogs] = useState<DayLog>({ breakfast: false, lunch: false, dinner: false, symptoms: false });
     const [gutScore, setGutScore] = useState<number | null>(null);
+    const [gutSeverity, setGutSeverity] = useState<'minimal' | 'mild' | 'moderate' | 'severe' | null>(null);
     const [streak, setStreak] = useState<Streak | null>(null);
     const [latestInsight, setLatestInsight] = useState<AiInsight | null>(null);
     const [currentMealRecipe, setCurrentMealRecipe] = useState<any | null>(null);
@@ -115,7 +118,8 @@ export default function HomeScreen(): React.JSX.Element {
             ]);
 
             const mealTypes = (mealLogs || []).map(l => l.meal_type);
-            const hasSymptomsLogged = Boolean(symptomLogs && symptomLogs.length > 0);
+            const latestSymptomLog = symptomLogs?.[0] ?? null;
+            const hasSymptomsLogged = Boolean(latestSymptomLog);
 
             setTodayLogs({
                 breakfast: mealTypes.includes('breakfast'),
@@ -124,45 +128,32 @@ export default function HomeScreen(): React.JSX.Element {
                 symptoms: hasSymptomsLogged,
             });
 
-            if (hasSymptomsLogged) {
-                const log = symptomLogs[0];
-                const symptoms = [log.bloating, log.pain, log.urgency, log.nausea, log.fatigue];
-                const avg = symptoms.reduce((a, b) => a + b, 0) / symptoms.length;
-                const max = Math.max(...symptoms);
-
-                const weightedAvg = (avg * 0.6) + (max * 0.4);
-                const score = Math.max(0, Math.round(100 - weightedAvg * 10));
+            if (latestSymptomLog) {
+                const log = latestSymptomLog;
+                const { score, severity } = calculateGutScore({
+                    bloating: log.bloating,
+                    pain: log.pain,
+                    urgency: log.urgency,
+                    nausea: log.nausea,
+                    fatigue: log.fatigue,
+                    stoolType: log.stool_type,
+                });
 
                 setGutScore(score);
+                setGutSeverity(severity);
                 scoreProgress.value = withTiming(score, { duration: 1200, easing: Easing.out(Easing.ease) });
             } else if (profile) {
-                const triggers = profile.known_triggers || [];
-                const conditions = profile.diagnosed_conditions || [];
-
-                // Condition-specific weights (matching onboarding logic)
-                const conditionWeights: Record<string, number> = {
-                    'IBS-D': 22,
-                    'IBS-C': 22,
-                    'IBS-M': 24,
-                    'Crohn\'s': 28,
-                    'Colitis': 26,
-                    'SIBO': 20,
-                    'Chronic Bloating': 14,
-                    'Lactose Intolerance': 10,
-                    'Gluten Sensitivity': 10,
-                    'Not Diagnosed': 6,
-                    'Other': 8,
-                };
-
-                const conditionPenalty = conditions.reduce((sum, c) => sum + (conditionWeights[c] ?? 8), 0);
-                const triggerPenalty = triggers.length * 5;
-                const totalPenalty = Math.min(conditionPenalty + triggerPenalty, 55);
-                const baselineScore = Math.max(100 - totalPenalty, 38);
+                const baselineScore = calculateOnboardingBaselineScore(
+                    profile.diagnosed_conditions || [],
+                    profile.known_triggers || []
+                );
 
                 setGutScore(baselineScore);
-                scoreProgress.value = withTiming(baselineScore, { duration: 1200, easing: Easing.out(Easing.ease) });
+                setGutSeverity(null);
+                scoreProgress.value = withTiming(baselineScore, { duration: 800, easing: Easing.out(Easing.ease) });
             } else {
                 setGutScore(null);
+                setGutSeverity(null);
                 scoreProgress.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.ease) });
             }
 
@@ -331,10 +322,18 @@ export default function HomeScreen(): React.JSX.Element {
                             </View>
                             <View style={{ flex: 1 }}>
                                 <Text variant="title" color={colors.text1}>
-                                    {todayLogs.symptoms ? (gutScore! >= 70 ? 'Great Day' : gutScore! >= 40 ? 'Decent Day' : 'Tough Day') : 'Gut Score'}
+                                    {todayLogs.symptoms
+                                        ? gutSeverity === 'minimal'
+                                            ? 'Minimal Symptoms'
+                                            : gutSeverity === 'mild'
+                                                ? 'Mild Symptoms'
+                                                : gutSeverity === 'moderate'
+                                                    ? 'Moderate Symptoms'
+                                                    : 'Severe Symptoms'
+                                        : 'Gut Sensitivity'}
                                 </Text>
                                 <Text variant="caption" color={colors.text2} style={{ marginTop: 2 }}>
-                                    {todayLogs.symptoms ? 'Based on today\'s symptoms' : 'Track symptoms to update your score'}
+                                    {todayLogs.symptoms ? 'Based on today\'s symptom burden' : 'Baseline from your onboarding profile'}
                                 </Text>
                             </View>
                         </View>
