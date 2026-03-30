@@ -6,9 +6,212 @@ const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+const PANTRY_BASICS = [
+    'salt',
+    'black pepper',
+    'pepper',
+    'olive oil',
+    'avocado oil',
+    'neutral oil',
+    'water',
+    'lemon juice',
+    'lime juice',
+    'vinegar',
+    'cumin',
+    'paprika',
+    'turmeric',
+    'cinnamon',
+    'basil',
+    'parsley',
+    'dill',
+    'mint',
+    'oregano',
+    'thyme',
+    'rosemary',
+    'ginger',
+    'chili flakes',
+];
+
+const UNREQUESTED_CENTERPIECE_INGREDIENTS = [
+    'chicken',
+    'beef',
+    'pork',
+    'lamb',
+    'turkey',
+    'fish',
+    'salmon',
+    'tuna',
+    'shrimp',
+    'prawn',
+    'crab',
+    'lobster',
+    'egg',
+    'eggs',
+    'tofu',
+    'paneer',
+    'cheese',
+    'milk',
+    'cream',
+];
+
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const normalizeText = (value: string) =>
+    value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+const containsWholeTerm = (text: string, term: string) => ` ${text} `.includes(` ${term} `);
+
+const detectIngredientViolations = (ingredients: any[], availableIngredients: string[]) => {
+    const availableNormalized = availableIngredients.map(normalizeText);
+    return [
+        ...new Set(
+            (ingredients || [])
+                .map((ingredient: any) => normalizeText(String(ingredient?.name || '')))
+                .flatMap((ingredientName: string) => {
+                    if (!ingredientName) return [];
+                    return UNREQUESTED_CENTERPIECE_INGREDIENTS.filter(term => {
+                        if (!containsWholeTerm(ingredientName, term)) return false;
+                        return !availableNormalized.some(userIngredient =>
+                            containsWholeTerm(userIngredient, term) ||
+                            containsWholeTerm(term, userIngredient)
+                        );
+                    });
+                })
+        ),
+    ];
+};
+
+const buildPrompt = ({
+    uniqueTriggers,
+    profile,
+    safeFoods,
+    recentTitles,
+    meal_type,
+    context,
+    available_ingredients,
+}: {
+    uniqueTriggers: string[];
+    profile: any;
+    safeFoods: string[];
+    recentTitles: string[];
+    meal_type?: string;
+    context?: string;
+    available_ingredients?: string[];
+}) => {
+    const hasIngredients = Boolean(available_ingredients?.length);
+    const contextPart = context ? `\nUser wants: ${context}` : '';
+    const ingredientsPart = hasIngredients
+        ? `\nAvailable ingredients (use these as the base, not as an exhaustive list): ${available_ingredients!.join(', ')}`
+        : '';
+    const ingredientRules = hasIngredients
+        ? `\nIngredient-first mode rules:
+1. Build the recipe around the user's listed ingredients.
+2. You may add only safe pantry basics and seasonings from this list: ${PANTRY_BASICS.join(', ')}.
+3. Do NOT introduce any new main protein or centerpiece ingredient unless the user explicitly listed it.
+4. It is fine to add small supporting items like citrus, herbs, oil, salt, and spices.
+5. Do NOT add chicken, beef, pork, fish, eggs, tofu, paneer, or similar mains just to "complete" the dish.`
+        : '';
+
+    return `You are an expert gut health nutritionist and chef. Generate a premium, safe, and delicious recipe tailored to this user's unique biology.
+
+User Profile:
+- Triggers to AVOID: ${uniqueTriggers.join(', ') || 'none identified yet'}
+- Conditions: ${(profile?.diagnosed_conditions || []).join(', ') || 'none'}
+- Diet Preference: ${profile?.diet_type || 'omnivore'}
+- Safe Foods They Like: ${[...new Set(safeFoods)].join(', ') || 'not enough data yet'}
+- RECENT RECIPES GENERATED (Avoid these titles/ingredients): ${recentTitles.join(', ') || 'none'}
+${contextPart}${ingredientsPart}
+
+Meal Type: ${meal_type || 'dinner'}
+${ingredientRules}
+
+Respond with a strictly formatted JSON object:
+{
+  "title": "Creative & Appetizing Recipe Name",
+  "description": "A very appetising 2-sentence description of the flavor profile.",
+  "why_is_safe": "A personalized explanation of why this is perfect for their ${profile?.diagnosed_conditions?.[0] || 'gut health'} and avoids their specific triggers like ${uniqueTriggers.slice(0, 2).join(' and ') || 'common irritants'}.",
+  "servings": 2,
+  "calories_per_serving": 450,
+  "ingredients": [
+    {
+      "name": "ingredient name",
+      "amount": "1",
+      "unit": "cup",
+      "fodmap_risk": "low" | "medium" | "high",
+      "is_safe_substitute": boolean (true if this replaces a common trigger like onion/garlic)
+    }
+  ],
+  "steps": [
+    { "step_number": 1, "instruction": "Clear, professional culinary instruction" }
+  ],
+  "prep_time_mins": 25,
+  "difficulty": "easy" | "medium" | "hard",
+  "trigger_free": ["trigger1", "trigger2"]
+}
+
+Rules:
+1. STRICT ADHERENCE: Never use ${uniqueTriggers.join(', ')}.
+2. DIET MATCH: If user is ${profile?.diet_type}, the recipe MUST be ${profile?.diet_type}.
+3. LOW FODMAP: Prioritize Low FODMAP ingredients.
+4. VARIETY: Do NOT repeat flavor profiles from the recent list. Explore diverse global cuisines that fit the user's constraints.
+5. TASTE: Use a wide array of gut-safe fresh herbs and spices to ensure high-end culinary quality. Do not be repetitive with flavor bases.
+6. NO PLACEHOLDERS: Provide specific amounts.`;
+};
+
+const fetchRecipeText = async (prompt: string) => {
+    const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: 'application/json', temperature: 0.7 },
+            }),
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        console.error('Gemini API error:', data);
+        throw new Error(`Gemini API failed with status ${response.status}`);
+    }
+
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+        console.error('Empty Gemini response. Candidate:', data.candidates?.[0]);
+        throw new Error('No response content from Gemini');
+    }
+
+    console.log('Successfully received recipe from Gemini. Text length:', text.length);
+    return text;
+};
+
+const parseRecipe = (text: string) => {
+    let recipe = JSON.parse(text);
+
+    // Smart Extraction: Handle arrays or common nesting patterns
+    if (Array.isArray(recipe) && recipe.length > 0) {
+        recipe = recipe[0];
+    } else if (!recipe.title && (recipe.recipe || recipe.data || recipe.output)) {
+        recipe = recipe.recipe || recipe.data || recipe.output;
+    }
+
+    console.log('Parsed recipe keys:', Object.keys(recipe));
+
+    const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : (recipe.recipe?.ingredients || []);
+    const steps = Array.isArray(recipe.steps) ? recipe.steps : (recipe.recipe?.steps || []);
+    const trigger_free = Array.isArray(recipe.trigger_free) ? recipe.trigger_free : (recipe.recipe?.trigger_free || []);
+
+    return { recipe, ingredients, steps, trigger_free };
 };
 
 serve(async (req: Request) => {
@@ -24,6 +227,9 @@ serve(async (req: Request) => {
 
         const { user_id, source, meal_type, context, available_ingredients } = await req.json();
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const ingredientList = Array.isArray(available_ingredients)
+            ? available_ingredients.map((item: string) => String(item).trim()).filter(Boolean)
+            : [];
 
         // 1. Check for existing daily recipe to prevent duplicates
         if (source === 'daily') {
@@ -94,96 +300,31 @@ serve(async (req: Request) => {
 
         const recentTitles = (recentRecipes || []).map(r => r.title);
 
-        const contextPart = context ? `\nUser wants: ${context}` : '';
-        const ingredientsPart = available_ingredients?.length
-            ? `\nAvailable ingredients: ${available_ingredients.join(', ')}`
-            : '';
+        const prompt = buildPrompt({
+            uniqueTriggers,
+            profile,
+            safeFoods,
+            recentTitles,
+            meal_type,
+            context,
+            available_ingredients: ingredientList,
+        });
 
-        const prompt = `You are an expert gut health nutritionist and chef. Generate a premium, safe, and delicious recipe tailored to this user's unique biology.
+        let text = await fetchRecipeText(prompt);
+        let parsed = parseRecipe(text);
 
-User Profile:
-- Triggers to AVOID: ${uniqueTriggers.join(', ') || 'none identified yet'}
-- Conditions: ${(profile?.diagnosed_conditions || []).join(', ') || 'none'}
-- Diet Preference: ${profile?.diet_type || 'omnivore'}
-- Safe Foods They Like: ${[...new Set(safeFoods)].join(', ') || 'not enough data yet'}
-- RECENT RECIPES GENERATED (Avoid these titles/ingredients): ${recentTitles.join(', ') || 'none'}
-${contextPart}${ingredientsPart}
+        if (ingredientList.length > 0) {
+            const violations = detectIngredientViolations(parsed.ingredients, ingredientList);
 
-Meal Type: ${meal_type || 'dinner'}
-
-Respond with a strictly formatted JSON object:
-{
-  "title": "Creative & Appetizing Recipe Name",
-  "description": "A very appetising 2-sentence description of the flavor profile.",
-  "why_is_safe": "A personalized explanation of why this is perfect for their ${profile?.diagnosed_conditions?.[0] || 'gut health'} and avoids their specific triggers like ${uniqueTriggers.slice(0, 2).join(' and ') || 'common irritants'}.",
-  "servings": 2,
-  "calories_per_serving": 450,
-  "ingredients": [
-    {
-      "name": "ingredient name",
-      "amount": "1",
-      "unit": "cup",
-      "fodmap_risk": "low" | "medium" | "high",
-      "is_safe_substitute": boolean (true if this replaces a common trigger like onion/garlic)
-    }
-  ],
-  "steps": [
-    { "step_number": 1, "instruction": "Clear, professional culinary instruction" }
-  ],
-  "prep_time_mins": 25,
-  "difficulty": "easy" | "medium" | "hard",
-  "trigger_free": ["trigger1", "trigger2"]
-}
-
-Rules:
-1. STRICT ADHERENCE: Never use ${uniqueTriggers.join(', ')}.
-2. DIET MATCH: If user is ${profile?.diet_type}, the recipe MUST be ${profile?.diet_type}.
-3. LOW FODMAP: Prioritize Low FODMAP ingredients.
-4. VARIETY: Do NOT repeat flavor profiles from the recent list. Explore diverse global cuisines that fit the user's constraints.
-5. TASTE: Use a wide array of gut-safe fresh herbs and spices to ensure high-end culinary quality. Do not be repetitive with flavor bases.
-6. NO PLACEHOLDERS: Provide specific amounts.`;
-
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: 'application/json', temperature: 0.7 },
-                }),
+            if (violations.length > 0) {
+                console.log('Ingredient constraint violation detected, retrying once:', violations.join(', '));
+                const correctivePrompt = `${prompt}\n\nIMPORTANT FIX: The previous recipe violated the ingredient constraint by introducing these unrequested centerpiece ingredients: ${violations.join(', ')}.\nRe-generate the recipe using only the user ingredients plus pantry basics and seasonings. Do not add new meat, fish, eggs, tofu, paneer, or other mains unless they were explicitly listed.`;
+                text = await fetchRecipeText(correctivePrompt);
+                parsed = parseRecipe(text);
             }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            console.error('Gemini API error:', data);
-            throw new Error(`Gemini API failed with status ${response.status}`);
         }
 
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) {
-            console.error('Empty Gemini response. Candidate:', data.candidates?.[0]);
-            throw new Error('No response content from Gemini');
-        }
-
-        console.log('Successfully received recipe from Gemini. Text length:', text.length);
-        let recipe = JSON.parse(text);
-
-        // Smart Extraction: Handle arrays or common nesting patterns
-        if (Array.isArray(recipe) && recipe.length > 0) {
-            recipe = recipe[0];
-        } else if (!recipe.title && (recipe.recipe || recipe.data || recipe.output)) {
-            recipe = recipe.recipe || recipe.data || recipe.output;
-        }
-
-        console.log('Parsed recipe keys:', Object.keys(recipe));
-
-        // Validate structure and apply smart defaults
-        const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : (recipe.recipe?.ingredients || []);
-        const steps = Array.isArray(recipe.steps) ? recipe.steps : (recipe.recipe?.steps || []);
-        const trigger_free = Array.isArray(recipe.trigger_free) ? recipe.trigger_free : (recipe.recipe?.trigger_free || []);
+        const { recipe, ingredients, steps, trigger_free } = parsed;
 
         // Merge premium fields into description since they don't have dedicated columns yet
         const fullDescription = `${recipe.description || ''}\n\n💡 Why it's safe: ${recipe.why_is_safe || ''}\n\n🍴 Servings: ${recipe.servings || 2} | 🔥 Calories: ${recipe.calories_per_serving || 0} | 👨‍🍳 Difficulty: ${recipe.difficulty || 'easy'}`;

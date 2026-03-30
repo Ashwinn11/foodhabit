@@ -568,12 +568,12 @@ export default function ProgressScreen(): React.JSX.Element {
             <SafeAreaView edges={['top']} style={{ flex: 1 }}>
                 <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
                     <SegmentedControl
-                        segments={['Insights', 'Progress']}
+                        segments={['Progress', 'Insights']}
                         selectedIndex={segmentIndex}
                         onSelect={setSegmentIndex}
                     />
                 </View>
-                {segmentIndex === 0 ? <InsightsSegment /> : <ProgressSegment />}
+                {segmentIndex === 0 ? <ProgressSegment /> : <InsightsSegment />}
             </SafeAreaView>
         </LinearGradient>
     );

@@ -73,6 +73,9 @@ export default function RootLayout(): React.JSX.Element | null {
     const { sync: syncSubscription, initializeListener, isLoading: isSubLoading, hasLoaded: subHasLoaded, isPremium } = useSubscriptionStore();
     const segments = useSegments();
     const segmentsRef = React.useRef(segments);
+    const [fontFallbackReady, setFontFallbackReady] = React.useState(false);
+
+    const fontsReady = fontsLoaded || fontFallbackReady;
 
     // Unified Initialization
     useEffect(() => {
@@ -143,8 +146,30 @@ export default function RootLayout(): React.JSX.Element | null {
             SplashScreen.hideAsync().catch(() => { });
         }, 6000);
 
+        // Fail open if startup state stalls. Better to render with fallback state
+        // than block the app behind auth/subscription/font loading indefinitely.
+        const startupTimeout = setTimeout(() => {
+            if (!useAuthStore.getState().isInitialized) {
+                useAuthStore.setState({
+                    session: null,
+                    user: null,
+                    profile: null,
+                    isLoading: false,
+                    isInitialized: true,
+                });
+            }
+
+            if (useSubscriptionStore.getState().isLoading) {
+                useSubscriptionStore.getState().markLoaded();
+            }
+
+            setFontFallbackReady(true);
+            SplashScreen.hideAsync().catch(() => { });
+        }, 9000);
+
         return () => {
             clearTimeout(timeout);
+            clearTimeout(startupTimeout);
         };
     }, []);
 
@@ -179,10 +204,10 @@ export default function RootLayout(): React.JSX.Element | null {
     // Handle Splash Screen Hiding
     // Unblock once: fonts loaded + auth resolved + sub has had at least one sync attempt
     useEffect(() => {
-        const isReady = fontsLoaded && isInitialized && (!user || subHasLoaded);
+        const isReady = fontsReady && isInitialized && (!user || subHasLoaded);
         if (!isReady) return;
         SplashScreen.hideAsync().catch(() => { });
-    }, [fontsLoaded, isInitialized, subHasLoaded, user]);
+    }, [fontsReady, isInitialized, subHasLoaded, user]);
 
     // Subscriptions (Profile, Notifications)
     useEffect(() => {
@@ -243,7 +268,7 @@ export default function RootLayout(): React.JSX.Element | null {
     useProtectedRoute(isPremium, isSubLoading);
 
     // Render Guard: Block until fonts + auth resolved + sub has attempted at least one sync
-    if (!fontsLoaded || !isInitialized || (user && !subHasLoaded)) {
+    if (!fontsReady || !isInitialized || (user && !subHasLoaded)) {
         return (
             <View style={{ flex: 1, backgroundColor: '#F8F7F4', alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 32 }}>
                 <AnimatedMascot expression="happy" size={96} />

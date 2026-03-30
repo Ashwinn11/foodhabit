@@ -361,7 +361,7 @@ export default function RecipesScreen(): React.JSX.Element {
                                 ))}
                             </View>
                             <Input
-                                placeholder="What's in your fridge? (optional, comma-separated)"
+                                placeholder="What's in your fridge? (we'll add basics)"
                                 value={ingredients}
                                 onChangeText={setIngredients}
                             />

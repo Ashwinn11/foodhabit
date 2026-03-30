@@ -2,6 +2,21 @@ import { create } from 'zustand';
 import Purchases, { type CustomerInfo } from 'react-native-purchases';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const SUBSCRIPTION_TIMEOUT_MS = 5000;
+
+const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+    });
+
+    try {
+        return await Promise.race([promise, timeoutPromise]);
+    } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+    }
+};
+
 export interface PlanDetails {
     productIdentifier: string;
     latestPurchaseDate: string;
@@ -44,7 +59,11 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
 
     sync: async () => {
         try {
-            const customerInfo = await Purchases.getCustomerInfo();
+            const customerInfo = await withTimeout(
+                Purchases.getCustomerInfo(),
+                SUBSCRIPTION_TIMEOUT_MS,
+                'RevenueCat sync'
+            );
             const activeEntitlement = customerInfo.entitlements.active['GutScan Pro'];
             const hasPremium = !!activeEntitlement;
 

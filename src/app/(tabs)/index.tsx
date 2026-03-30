@@ -29,6 +29,16 @@ interface DayLog {
     symptoms: boolean;
 }
 
+function getLocalDayBounds(): { start: string; end: string } {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    return {
+        start: start.toISOString(),
+        end: end.toISOString(),
+    };
+}
+
 export default function HomeScreen(): React.JSX.Element {
     const router = useRouter();
     const { profile, user } = useAuthStore();
@@ -85,38 +95,36 @@ export default function HomeScreen(): React.JSX.Element {
         if (!user?.id) return;
 
         try {
-            const today = new Date().toISOString().split('T')[0];
-            const todayStart = `${today}T00:00:00`;
-            const todayEnd = `${today}T23:59:59`;
+            const { start: todayStart, end: todayEnd } = getLocalDayBounds();
 
-            // Fetch today's meal logs
-            const { data: mealLogs } = await supabase
-                .from('meal_logs')
-                .select('meal_type')
-                .eq('user_id', user.id)
-                .gte('logged_at', todayStart)
-                .lte('logged_at', todayEnd);
+            const [{ data: mealLogs }, { data: symptomLogs }] = await Promise.all([
+                supabase
+                    .from('meal_logs')
+                    .select('meal_type')
+                    .eq('user_id', user.id)
+                    .gte('logged_at', todayStart)
+                    .lte('logged_at', todayEnd),
+                supabase
+                    .from('symptom_logs')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .gte('logged_at', todayStart)
+                    .lte('logged_at', todayEnd)
+                    .order('logged_at', { ascending: false })
+                    .limit(1),
+            ]);
 
             const mealTypes = (mealLogs || []).map(l => l.meal_type);
+            const hasSymptomsLogged = Boolean(symptomLogs && symptomLogs.length > 0);
+
             setTodayLogs({
                 breakfast: mealTypes.includes('breakfast'),
                 lunch: mealTypes.includes('lunch'),
                 dinner: mealTypes.includes('dinner'),
-                symptoms: false,
+                symptoms: hasSymptomsLogged,
             });
 
-            // Fetch today's symptom logs
-            const { data: symptomLogs } = await supabase
-                .from('symptom_logs')
-                .select('*')
-                .eq('user_id', user.id)
-                .gte('logged_at', todayStart)
-                .lte('logged_at', todayEnd)
-                .order('logged_at', { ascending: false })
-                .limit(1);
-
-            if (symptomLogs && symptomLogs.length > 0) {
-                setTodayLogs(prev => ({ ...prev, symptoms: true }));
+            if (hasSymptomsLogged) {
                 const log = symptomLogs[0];
                 const symptoms = [log.bloating, log.pain, log.urgency, log.nausea, log.fatigue];
                 const avg = symptoms.reduce((a, b) => a + b, 0) / symptoms.length;
@@ -153,6 +161,9 @@ export default function HomeScreen(): React.JSX.Element {
 
                 setGutScore(baselineScore);
                 scoreProgress.value = withTiming(baselineScore, { duration: 1200, easing: Easing.out(Easing.ease) });
+            } else {
+                setGutScore(null);
+                scoreProgress.value = withTiming(0, { duration: 400, easing: Easing.out(Easing.ease) });
             }
 
             // Fetch streak

@@ -7,6 +7,21 @@ import * as Crypto from 'expo-crypto';
 import { makeRedirectUri } from 'expo-auth-session';
 import { openAuthSessionAsync } from 'expo-web-browser';
 
+const AUTH_TIMEOUT_MS = 5000;
+
+const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+    });
+
+    try {
+        return await Promise.race([promise, timeoutPromise]);
+    } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+    }
+};
+
 interface AuthState {
     session: Session | null;
     user: User | null;
@@ -33,9 +48,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     initialize: async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await withTimeout(
+                supabase.auth.getSession(),
+                AUTH_TIMEOUT_MS,
+                'Auth session fetch'
+            );
             if (session?.user) {
-                const profile = await get().fetchProfile(session.user.id);
+                const profile = await withTimeout(
+                    get().fetchProfile(session.user.id),
+                    AUTH_TIMEOUT_MS,
+                    'Profile fetch'
+                );
                 set({ session, user: session.user, profile, isLoading: false, isInitialized: true });
             } else {
                 set({ session: null, user: null, profile: null, isLoading: false, isInitialized: true });
