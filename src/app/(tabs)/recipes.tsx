@@ -198,7 +198,7 @@ export default function RecipesScreen(): React.JSX.Element {
     // Only show skeleton on first load when NO data is present
     if (loading && !todayRecipe && savedRecipes.length === 0) {
         return (
-            <LinearGradient colors={['#FFFBF0', '#F0FDF5']} style={{ flex: 1 }}>
+            <LinearGradient colors={[colors.gradient.start, colors.gradient.mid, colors.gradient.end]} locations={[0, 0.6, 1]} style={{ flex: 1 }}>
                 <SafeAreaView edges={['top']} style={{ flex: 1, padding: 20, gap: 12 }}>
                     <RecipeSkeleton />
                     <RecipeSkeleton />
@@ -208,7 +208,7 @@ export default function RecipesScreen(): React.JSX.Element {
     }
 
     return (
-        <LinearGradient colors={['#FFFBF0', '#F0FDF5']} locations={[0, 1]} style={{ flex: 1 }}>
+        <LinearGradient colors={[colors.gradient.start, colors.gradient.mid, colors.gradient.end]} locations={[0, 0.6, 1]} style={{ flex: 1 }}>
             <SafeAreaView edges={['top']} style={{ flex: 1 }}>
                 <KeyboardAvoidingView 
                     style={{ flex: 1 }} 

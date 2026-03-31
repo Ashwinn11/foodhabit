@@ -226,7 +226,7 @@ export default function ProfileScreen(): React.JSX.Element {
     };
 
     return (
-        <LinearGradient colors={[colors.gradient.start, colors.gradient.mid]} style={{ flex: 1 }}>
+        <LinearGradient colors={[colors.gradient.start, colors.gradient.mid, colors.gradient.end]} locations={[0, 0.6, 1]} style={{ flex: 1 }}>
             <SafeAreaView edges={['top']} style={{ flex: 1 }}>
                 <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
                     {/* Profile Header */}
@@ -459,7 +459,7 @@ export default function ProfileScreen(): React.JSX.Element {
 
                     {/* App version */}
                     <View style={{ alignItems: 'center', marginTop: 24 }}>
-                        <Text variant="caption" color={colors.text3}>Gut Buddy v3</Text>
+                        <Text variant="caption" color={colors.text3}>Gut Buddy v3.2</Text>
                     </View>
                 </ScrollView>
             </SafeAreaView>

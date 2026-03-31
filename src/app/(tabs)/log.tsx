@@ -4,29 +4,33 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
     ZoomIn,
+    FadeIn,
     useSharedValue,
     useAnimatedStyle,
     withSpring,
     withSequence,
+    runOnJS,
 } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     Search, Camera, Sunrise, Sun, Moon, Apple, Utensils,
     AlertTriangle, CheckCircle, Clock, Check,
-    Trash2, Wind, Zap, Droplets, Brain, BatteryLow,
+    Trash2, Wind, Zap, Droplets, Brain, BatteryLow, ChevronRight,
+    Sparkles, ShieldAlert,
 } from 'lucide-react-native';
 import * as Notifications from 'expo-notifications';
 
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Modal } from 'react-native'; // For the High-Five overlay
 import { Chip } from '@/components/ui/Chip';
 import { Input } from '@/components/ui/Input';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { DualBadge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
 import { FoodSkeleton } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 import { colors, radii } from '@/theme';
@@ -50,6 +54,7 @@ function MealSegment(): React.JSX.Element {
     const [notes, setNotes] = useState('');
     const [logging, setLogging] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
+    const [inputFocused, setInputFocused] = useState(false);
 
     useEffect(() => {
         if (prefill && foodInput === prefill) {
@@ -134,13 +139,8 @@ function MealSegment(): React.JSX.Element {
 
             const results = await Promise.all(promises);
 
-            setFoods(prev => {
-                const nextFoods = [...prev, ...results];
-                // Auto-select all newly added items
-                const newIndices = results.map((_, idx) => prev.length + idx);
-                setSelectedFoods(prevSel => [...prevSel, ...newIndices]);
-                return nextFoods;
-            });
+            setFoods(results);
+            setSelectedFoods(results.map((_, idx) => idx));
 
             if (results.some(r => r.personal_verdict === 'avoid')) {
                 haptics.triggerWarning();
@@ -306,27 +306,50 @@ function MealSegment(): React.JSX.Element {
                             value={foodInput}
                             onChangeText={setFoodInput}
                             onSubmitEditing={analyzeFood}
+                            onFocus={() => setInputFocused(true)}
+                            onBlur={() => setInputFocused(false)}
                             returnKeyType="go"
                         />
                     </View>
-                    <Animated.View
-                        entering={ZoomIn.duration(250)}
-                        style={{
-                            width: 48, height: 48, borderRadius: radii.input,
-                            backgroundColor: colors.dark,
-                            alignItems: 'center', justifyContent: 'center',
-                        }}
-                    >
-                        <Pressable
-                            onPress={() => router.push('/scanner')}
+
+                    {/* Camera → Chevron swap */}
+                    {(inputFocused || foodInput.length > 0) ? (
+                        <Animated.View
+                            entering={FadeIn.duration(180)}
                             style={{
-                                width: '100%', height: '100%',
+                                width: 48, height: 48, borderRadius: radii.input,
+                                backgroundColor: colors.primary.DEFAULT,
                                 alignItems: 'center', justifyContent: 'center',
                             }}
                         >
-                            <Camera size={20} color="#FFFFFF" />
-                        </Pressable>
-                    </Animated.View>
+                            <Pressable
+                                onPress={analyzeFood}
+                                style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                                <ChevronRight size={22} color="#FFFFFF" strokeWidth={2.5} />
+                            </Pressable>
+                        </Animated.View>
+                    ) : (
+                        <Animated.View
+                            entering={FadeIn.duration(180)}
+                            style={{
+                                width: 48, height: 48, borderRadius: radii.input,
+                                backgroundColor: colors.dark,
+                                alignItems: 'center', justifyContent: 'center',
+                            }}
+                        >
+                            <Pressable
+                                onPress={() => {
+                                    setFoods([]);
+                                    setSelectedFoods([]);
+                                    router.push('/scanner');
+                                }}
+                                style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                                <Camera size={20} color="#FFFFFF" />
+                            </Pressable>
+                        </Animated.View>
+                    )}
                 </View>
                 <Text variant="caption" color={colors.text3} style={{ marginTop: 4 }}>
                     Both check every item against your gut profile
@@ -343,7 +366,7 @@ function MealSegment(): React.JSX.Element {
             {/* Food Cards */}
             {foods.map((food, index) => {
                 const isSelected = selectedFoods.includes(index);
-                const dotColor = food.personal_verdict === 'avoid' ? colors.red.DEFAULT
+                const verdictColor = food.personal_verdict === 'avoid' ? colors.red.DEFAULT
                     : food.personal_verdict === 'caution' ? colors.amber.DEFAULT
                         : colors.primary.DEFAULT;
 
@@ -351,24 +374,41 @@ function MealSegment(): React.JSX.Element {
                     <Pressable key={`${food.name}-${index}`} onPress={() => toggleSelection(index)}>
                         <Card
                             animated
-                            delay={0}
+                            delay={index * 50}
+                            accent={verdictColor}
                             style={{
                                 marginTop: 12,
                                 borderWidth: 2,
-                                borderColor: isSelected ? colors.primary.DEFAULT : 'transparent',
+                                borderColor: isSelected ? colors.primary.DEFAULT : colors.border,
                                 backgroundColor: isSelected ? colors.primary.light : colors.surface
                             }}
                         >
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                {/* Verdict Icon / Status */}
                                 <View style={{
-                                    width: 36, height: 36, borderRadius: 10,
-                                    backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center',
+                                    width: 38, height: 38, borderRadius: 12,
+                                    backgroundColor: isSelected ? colors.primary.DEFAULT : colors.cream,
+                                    alignItems: 'center', justifyContent: 'center',
                                 }}>
-                                    {isSelected ? <Check size={16} color={colors.primary.DEFAULT} /> : <Utensils size={16} color={colors.text2} />}
+                                    {isSelected ? (
+                                        <Check size={18} color="#FFFFFF" strokeWidth={3} />
+                                    ) : (
+                                        <Utensils size={18} color={colors.text2} />
+                                    )}
                                 </View>
+
                                 <View style={{ flex: 1, marginRight: 8 }}>
-                                    <Text variant="foodName" color={colors.text1} numberOfLines={2}>{food.name}</Text>
+                                    <Text variant="bodyBold" color={colors.text1} numberOfLines={2}>
+                                        {food.name}
+                                    </Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                                        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: verdictColor }} />
+                                        <Text variant="caption" color={colors.text3} style={{ textTransform: 'uppercase', letterSpacing: 0.5, fontSize: 9 }}>
+                                            {food.personal_verdict === 'avoid' ? 'Avoid' : food.personal_verdict === 'caution' ? 'Caution' : 'Safe'}
+                                        </Text>
+                                    </View>
                                 </View>
+
                                 <DualBadge
                                     fodmapRisk={food.fodmap_risk}
                                     personalVerdict={food.personal_verdict}
@@ -377,23 +417,44 @@ function MealSegment(): React.JSX.Element {
                                 />
                             </View>
 
+                            {/* Trigger Reasons & Ingredients */}
                             {food.trigger_reasons.length > 0 && (
-                                <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.stone, gap: 6 }}>
+                                <View style={{ 
+                                    marginTop: 12, 
+                                    paddingLeft: 12, 
+                                    paddingTop: 12, 
+                                    borderTopWidth: 1, 
+                                    borderTopColor: colors.stone, 
+                                    gap: 8 
+                                }}>
                                     {food.personal_verdict === 'avoid' && food.contains_user_triggers && food.contains_user_triggers.length > 0 && (
-                                        <View style={{ backgroundColor: colors.red.light, padding: 8, borderRadius: 8, marginBottom: 4 }}>
-                                            <Text variant="caption" color={colors.red.DEFAULT} style={{ fontWeight: '700' }}>
-                                                ⚠️ TRIGGER DETECTED: {food.contains_user_triggers.join(', ')}
+                                        <View style={{ 
+                                            backgroundColor: colors.red.light, 
+                                            flexDirection: 'row', 
+                                            alignItems: 'center', 
+                                            gap: 6, 
+                                            paddingHorizontal: 8, 
+                                            paddingVertical: 6, 
+                                            borderRadius: 8, 
+                                        }}>
+                                            <AlertTriangle size={12} color={colors.red.DEFAULT} />
+                                            <Text variant="caption" color={colors.red.DEFAULT} style={{ fontWeight: '800', flex: 1 }}>
+                                                TRIGGER: {food.contains_user_triggers.join(', ')}
                                             </Text>
                                         </View>
                                     )}
+                                    
                                     {food.trigger_reasons.map((reason, i) => (
                                         <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                                            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: dotColor, marginTop: 5 }} />
-                                            <Text variant="caption" color={colors.text2} style={{ flex: 1, lineHeight: 14 }}>{reason}</Text>
+                                            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: verdictColor, marginTop: 5 }} />
+                                            <Text variant="caption" color={colors.text2} style={{ flex: 1, lineHeight: 14 }}>
+                                                {reason}
+                                            </Text>
                                         </View>
                                     ))}
+                                    
                                     {food.ingredients && food.ingredients.length > 0 && (
-                                        <Text variant="caption" color={colors.text3} style={{ marginTop: 4, fontStyle: 'italic' }}>
+                                        <Text variant="caption" color={colors.text3} style={{ marginTop: 4, fontStyle: 'italic', fontSize: 10 }}>
                                             Ingredients: {food.ingredients.join(', ')}
                                         </Text>
                                     )}
@@ -401,9 +462,18 @@ function MealSegment(): React.JSX.Element {
                             )}
 
                             {food.conflict_explanation && (
-                                <View style={{ marginTop: 6, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.primary.DEFAULT, marginTop: 5 }} />
-                                    <Text variant="caption" color={colors.primary.DEFAULT} style={{ flex: 1, lineHeight: 14 }}>
+                                <View style={{ 
+                                    marginTop: 8, 
+                                    paddingLeft: 12, 
+                                    flexDirection: 'row', 
+                                    alignItems: 'center', 
+                                    gap: 8,
+                                    backgroundColor: colors.primary.light + '40',
+                                    padding: 6,
+                                    borderRadius: 6,
+                                }}>
+                                    <Sparkles size={12} color={colors.primary.DEFAULT} />
+                                    <Text variant="caption" color={colors.primary.DEFAULT} style={{ flex: 1, lineHeight: 14, fontWeight: '600' }}>
                                         {food.conflict_explanation}
                                     </Text>
                                 </View>
@@ -413,47 +483,82 @@ function MealSegment(): React.JSX.Element {
                 );
             })}
 
-            {/* Overall Meal Verdict */}
+            {/* Overall Gut Report */}
             {overallVerdict && activeFoods.length > 0 && (
-                <Card animated delay={0} style={{
-                    marginTop: 12,
-                    backgroundColor: overallVerdict === 'avoid' ? colors.red.light
-                        : overallVerdict === 'caution' ? colors.amber.light
-                            : colors.primary.light,
-                    borderWidth: 1,
-                    borderColor: overallVerdict === 'avoid' ? colors.red.DEFAULT
+                <Card 
+                    animated 
+                    delay={0} 
+                    accent={
+                        overallVerdict === 'avoid' ? colors.red.DEFAULT
                         : overallVerdict === 'caution' ? colors.amber.DEFAULT
-                            : colors.primary.DEFAULT,
-                }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        {overallVerdict === 'avoid' ? (
-                            <AlertTriangle size={20} color={colors.red.DEFAULT} />
-                        ) : (
-                            <CheckCircle size={20} color={overallVerdict === 'caution' ? colors.amber.DEFAULT : colors.primary.DEFAULT} />
-                        )}
-                        <Text variant="bodyBold" color={colors.text1}>
-                            {overallVerdict === 'avoid' ? 'Contains triggers — consider a swap'
-                                : overallVerdict === 'caution' ? 'Proceed with caution'
-                                    : 'Safe meal for you'}
-                        </Text>
+                        : colors.primary.DEFAULT
+                    }
+                    style={{
+                        marginTop: 24,
+                        padding: 18,
+                        backgroundColor: overallVerdict === 'avoid' ? colors.red.light
+                            : overallVerdict === 'caution' ? colors.amber.light
+                                : colors.primary.light,
+                        borderWidth: 2,
+                        borderColor: overallVerdict === 'avoid' ? colors.red.DEFAULT
+                            : overallVerdict === 'caution' ? colors.amber.DEFAULT
+                                : colors.primary.DEFAULT,
+                    }}
+                >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                        <View style={{
+                            width: 44, height: 44, borderRadius: 22,
+                            backgroundColor: '#FFFFFF',
+                            alignItems: 'center', justifyContent: 'center',
+                            shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4,
+                        }}>
+                            {overallVerdict === 'avoid' ? (
+                                <AlertTriangle size={24} color={colors.red.DEFAULT} />
+                            ) : overallVerdict === 'caution' ? (
+                                <ShieldAlert size={24} color={colors.amber.DEFAULT} />
+                            ) : (
+                                <CheckCircle size={24} color={colors.primary.DEFAULT} />
+                            )}
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text variant="title" color={colors.text1} style={{ fontSize: 18 }}>
+                                {overallVerdict === 'avoid' ? 'Swap suggested'
+                                    : overallVerdict === 'caution' ? 'Handle with care'
+                                        : 'Gut-safe meal'}
+                            </Text>
+                            <Text variant="caption" color={colors.text2}>
+                                {overallVerdict === 'avoid' ? 'Detected triggers in this meal'
+                                    : overallVerdict === 'caution' ? 'Some items need moderation'
+                                        : 'Matches your personal gut profile'}
+                            </Text>
+                        </View>
                     </View>
 
-                    {overallVerdict === 'avoid' && avoidItems.length > 0 && (
-                        <View style={{ marginTop: 8, paddingLeft: 30, gap: 4 }}>
+                    {/* Breakdown details */}
+                    {(avoidItems.length > 0 || cautionItems.length > 0) && (
+                        <View style={{ 
+                            marginTop: 16, 
+                            padding: 12, 
+                            backgroundColor: '#FFFFFF80', 
+                            borderRadius: 12,
+                            gap: 10
+                        }}>
                             {avoidItems.map((item, i) => (
-                                <Text key={i} variant="caption" color={colors.red.DEFAULT} style={{ fontWeight: '700' }}>
-                                    • {item.name}: Trigger detected
-                                </Text>
+                                <View key={`avoid-${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.red.DEFAULT }} />
+                                    <Text variant="caption" color={colors.red.DEFAULT} style={{ fontWeight: '800', flex: 1 }}>
+                                        {item.name}: Trigger detected
+                                    </Text>
+                                </View>
                             ))}
-                        </View>
-                    )}
 
-                    {overallVerdict === 'caution' && cautionItems.length > 0 && (
-                        <View style={{ marginTop: 8, paddingLeft: 30, gap: 4 }}>
                             {cautionItems.map((item, i) => (
-                                <Text key={i} variant="caption" color={colors.amber.DEFAULT} style={{ fontWeight: '600' }}>
-                                    • {item.name}: {item.caution_action}
-                                </Text>
+                                <View key={`caution-${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.amber.DEFAULT }} />
+                                    <Text variant="caption" color={colors.amber.DEFAULT} style={{ fontWeight: '700', flex: 1 }}>
+                                        {item.name}: {item.caution_action}
+                                    </Text>
+                                </View>
                             ))}
                         </View>
                     )}
@@ -509,7 +614,7 @@ const BRISTOL_COLORS = [
 ];
 const BRISTOL_LABELS = ['Hard\nlumps', 'Lumpy', 'Cracked', 'Smooth\n(ideal)', 'Soft\nblobs', 'Mushy', 'Watery'];
 
-// A single animated symptom bar row
+// A single drag-slider symptom row
 function SymptomRow({
     label,
     icon: Icon,
@@ -521,109 +626,152 @@ function SymptomRow({
     value: number;
     onSet: (v: number) => void;
 }) {
+    const MAX = 10;
+    const TRACK_HEIGHT = 36;
+    const THUMB_SIZE   = 28;
+
+    const trackWidth = useSharedValue(0);
+    const isDragging = useSharedValue(false);
+    const dragX      = useSharedValue(0);
+    const lastStep   = useSharedValue(value);
     const scoreScale = useSharedValue(1);
-    const barWidth = useSharedValue(0);
     const scoreColor = getSeverityColor(value);
 
     useEffect(() => {
-        // Animate the fill bar width
-        barWidth.value = withSpring(value / 10, { damping: 18, stiffness: 240, mass: 0.7 });
-        // Pulse the score number on change
+        if (!isDragging.value) {
+            dragX.value = withSpring((value / MAX) * (trackWidth.value || 0), {
+                damping: 18, stiffness: 240,
+            });
+        }
         scoreScale.value = withSequence(
-            withSpring(1.35, { damping: 8, stiffness: 300 }),
-            withSpring(1, { damping: 12, stiffness: 280 })
+            withSpring(1.3, { damping: 8,  stiffness: 300 }),
+            withSpring(1,   { damping: 12, stiffness: 280 })
         );
     }, [value]);
 
-    const barStyle = useAnimatedStyle(() => ({
-        width: `${barWidth.value * 100}%`,
+    const fireHaptic = () => haptics.sliderTick();
+
+    const gesture = Gesture.Pan()
+        .minDistance(0)
+        .onBegin((e) => {
+            isDragging.value = true;
+            const clamped = Math.max(0, Math.min(e.x, trackWidth.value));
+            dragX.value = clamped;
+        })
+        .onUpdate((e) => {
+            const clamped = Math.max(0, Math.min(e.x, trackWidth.value));
+            dragX.value = clamped;
+            const step = Math.round((clamped / Math.max(1, trackWidth.value)) * MAX);
+            if (step !== lastStep.value) {
+                lastStep.value = step;
+                runOnJS(fireHaptic)();
+                runOnJS(onSet)(step);
+            }
+        })
+        .onEnd((e) => {
+            isDragging.value = false;
+            const clamped = Math.max(0, Math.min(e.x, trackWidth.value));
+            const step = Math.round((clamped / Math.max(1, trackWidth.value)) * MAX);
+            runOnJS(onSet)(step);
+            dragX.value = withSpring((step / MAX) * trackWidth.value, {
+                damping: 20, stiffness: 280,
+            });
+        });
+
+    const fillStyle = useAnimatedStyle(() => ({
+        width: Math.max(0, dragX.value),
     }));
+
+    const thumbStyle = useAnimatedStyle(() => ({
+        transform: [{ translateX: Math.max(0, dragX.value - THUMB_SIZE / 2) }],
+    }));
+
     const scoreStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scoreScale.value }],
     }));
 
-    const SEGMENTS = 10;
-
     return (
         <View style={{ gap: 10 }}>
-            {/* Header: icon + label + animated score */}
+            {/* Header: icon + label + score */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                {/* Icon circle */}
                 <View style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 17,
+                    width: 34, height: 34, borderRadius: 17,
                     backgroundColor: scoreColor + '18',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    alignItems: 'center', justifyContent: 'center',
                 }}>
                     <Icon size={16} color={scoreColor} strokeWidth={2} />
                 </View>
 
                 <Text variant="bodyBold" color={colors.text1} style={{ flex: 1 }}>{label}</Text>
 
-                {/* Large animated score */}
                 <Animated.View style={scoreStyle}>
-                    <Text
-                        style={{
-                            fontFamily: 'Figtree_800ExtraBold',
-                            fontSize: 22,
-                            color: scoreColor,
-                            minWidth: 28,
-                            textAlign: 'right',
-                        }}
-                    >
+                    <Text style={{
+                        fontFamily: 'Figtree_800ExtraBold',
+                        fontSize: 22,
+                        color: scoreColor,
+                        minWidth: 28,
+                        textAlign: 'right',
+                    }}>
                         {value}
                     </Text>
                 </Animated.View>
                 <Text variant="label" color={colors.text3} style={{ marginLeft: 1 }}>/10</Text>
             </View>
 
-            {/* Segmented tap bar */}
-            <View style={{ gap: 3 }}>
-                {/* Background track */}
-                <View style={{
-                    height: 32,
-                    borderRadius: 10,
-                    backgroundColor: colors.primary.light,
-                    overflow: 'hidden',
-                    position: 'relative',
-                }}>
-                    {/* Animated fill */}
-                    <Animated.View
-                        style={[
-                            {
-                                position: 'absolute',
-                                left: 0,
-                                top: 0,
-                                bottom: 0,
-                                borderRadius: 10,
-                                backgroundColor: scoreColor,
-                                opacity: 0.85,
-                            },
-                            barStyle,
-                        ]}
-                    />
-                    {/* Invisible tap zones overlaid */}
-                    <View style={{
-                        position: 'absolute',
-                        left: 0, right: 0, top: 0, bottom: 0,
-                        flexDirection: 'row',
-                    }}>
-                        {Array.from({ length: SEGMENTS }).map((_, i) => (
-                            <Pressable
-                                key={i}
-                                onPress={() => {
-                                    // tapping segment i sets value to i+1; tapping active last segment → 0
-                                    const next = value === i + 1 && i === 0 ? 0 : i + 1;
-                                    onSet(next);
-                                    haptics.sliderTick();
-                                }}
-                                style={{ flex: 1, height: '100%' }}
-                            />
-                        ))}
+            {/* Slider track */}
+            <View style={{ gap: 4 }}>
+                <GestureDetector gesture={gesture}>
+                    <View
+                        onLayout={(e) => {
+                            trackWidth.value = e.nativeEvent.layout.width;
+                            // Set initial thumb position
+                            dragX.value = (value / MAX) * e.nativeEvent.layout.width;
+                        }}
+                        style={{
+                            height: TRACK_HEIGHT,
+                            borderRadius: TRACK_HEIGHT / 2,
+                            backgroundColor: colors.stone,
+                            justifyContent: 'center',
+                            overflow: 'visible', // thumb needs to stick out top/bottom
+                        }}
+                    >
+                        {/* Fill */}
+                        <Animated.View
+                            style={[
+                                {
+                                    position: 'absolute',
+                                    left: 0, top: 0, bottom: 0,
+                                    borderRadius: TRACK_HEIGHT / 2,
+                                    backgroundColor: scoreColor,
+                                    opacity: 0.8,
+                                },
+                                fillStyle,
+                            ]}
+                        />
+
+                        {/* Thumb */}
+                        <Animated.View
+                            style={[
+                                {
+                                    position: 'absolute',
+                                    width: THUMB_SIZE,
+                                    height: THUMB_SIZE,
+                                    borderRadius: THUMB_SIZE / 2,
+                                    backgroundColor: '#FFFFFF',
+                                    borderWidth: 2.5,
+                                    borderColor: scoreColor,
+                                    shadowColor: scoreColor,
+                                    shadowOffset: { width: 0, height: 2 },
+                                    shadowOpacity: 0.35,
+                                    shadowRadius: 6,
+                                    elevation: 4,
+                                    top: (TRACK_HEIGHT - THUMB_SIZE) / 2,
+                                },
+                                thumbStyle,
+                            ]}
+                        />
                     </View>
-                </View>
+                </GestureDetector>
 
                 {/* Scale labels */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 2 }}>
@@ -648,6 +796,25 @@ function SymptomsSegment(): React.JSX.Element {
     const [stoolType, setStoolType] = useState<number | null>(null);
     const [notes, setNotes] = useState('');
     const [logging, setLogging] = useState(false);
+    
+    // Achievement & Progress States
+    const [counts, setCounts] = useState({ meals: 0, symptoms: 0 });
+    const [showAchievement, setShowAchievement] = useState<{ type: 'streak' | 'insight', value: number } | null>(null);
+
+    // Fetch counts for the progress bar
+    const fetchProgress = useCallback(async () => {
+        if (!user?.id) return;
+        const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
+        const [{ count: mealCount }, { count: symptomCount }] = await Promise.all([
+            supabase.from('meal_logs').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gt('logged_at', fourteenDaysAgo),
+            supabase.from('symptom_logs').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gt('logged_at', fourteenDaysAgo)
+        ]);
+        setCounts({ meals: mealCount || 0, symptoms: symptomCount || 0 });
+    }, [user?.id]);
+
+    useEffect(() => {
+        fetchProgress();
+    }, [fetchProgress]);
 
     const symptoms: { label: string; icon: React.ComponentType<any>; value: number; setter: (v: number) => void }[] = [
         { label: 'Bloating',      icon: Wind,       value: bloating, setter: setBloating },
@@ -758,11 +925,16 @@ function SymptomsSegment(): React.JSX.Element {
 
                 if (newStreak > existingStreak.current_streak) {
                     haptics.streakMilestone();
-                    showToast({
-                        title: 'Symptoms Logged! 🔥',
-                        message: `Nicely done! You're on a ${finalStreak} day streak.`,
-                        type: 'success'
-                    });
+                    // SHOW HIGH-FIVE CARD ON DAY 3 (Review Bait)
+                    if (newStreak === 3) {
+                        setShowAchievement({ type: 'streak', value: 3 });
+                    } else {
+                        showToast({
+                            title: 'Symptoms Logged! 🔥',
+                            message: `Nicely done! You're on a ${finalStreak} day streak.`,
+                            type: 'success'
+                        });
+                    }
                 }
             } else {
                 showToast({
@@ -771,6 +943,9 @@ function SymptomsSegment(): React.JSX.Element {
                     type: 'success'
                 });
             }
+            
+            // Re-fetch progress after logging
+            fetchProgress();
 
             setBloating(0);
             setPain(0);
@@ -805,7 +980,6 @@ function SymptomsSegment(): React.JSX.Element {
                 </Text>
             </View>
 
-            {/* ── Symptom rows ─────────────────────────────── */}
             <View style={{ marginTop: 24, gap: 24 }}>
                 {symptoms.map(s => (
                     <SymptomRow
@@ -912,6 +1086,63 @@ function SymptomsSegment(): React.JSX.Element {
                 AI trigger analysis runs after check-ins when enough recent meal data exists.
             </Text>
 
+            {/* Achievement Modal (The High-Five) */}
+            <Modal
+                visible={showAchievement !== null}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowAchievement(null)}
+            >
+                <View style={{ 
+                    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', 
+                    alignItems: 'center', justifyContent: 'center', padding: 20 
+                }}>
+                    <Animated.View 
+                        entering={ZoomIn.duration(400)}
+                        style={{ 
+                            width: '100%', backgroundColor: '#FFFFFF', borderRadius: 24, 
+                            padding: 24, alignItems: 'center',
+                            shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20,
+                        }}
+                    >
+                        <View style={{ 
+                            width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primary.light,
+                            alignItems: 'center', justifyContent: 'center', marginBottom: 16
+                        }}>
+                            <Sparkles size={40} color={colors.primary.DEFAULT} />
+                        </View>
+                        
+                        <Text variant="title" color={colors.text1} style={{ textAlign: 'center', fontSize: 24 }}>
+                            {showAchievement?.value} Day Streak! 🔥
+                        </Text>
+                        
+                        <Text variant="body" color={colors.text2} style={{ textAlign: 'center', marginTop: 12, lineHeight: 22 }}>
+                            You're absolutely crushing it. 70% of people quit before Day 3, but you're consistent. 
+                            That's how we find your triggers!
+                        </Text>
+
+                        <View style={{ width: '100%', gap: 12, marginTop: 24 }}>
+                            <Button 
+                                title="Leave a Quick Review" 
+                                variant="primary" 
+                                onPress={() => {
+                                    setShowAchievement(null);
+                                    // In production, we'd use StoreReview.requestReview()
+                                    Alert.alert("Awesome!", "Thank you for supporting an independent developer. Please leave your review in the App Store!");
+                                }}
+                                fullWidth
+                            />
+                            <Button 
+                                title="Keep Logging" 
+                                variant="ghost" 
+                                onPress={() => setShowAchievement(null)}
+                                fullWidth
+                            />
+                        </View>
+                    </Animated.View>
+                </View>
+            </Modal>
+
         </ScrollView>
     );
 }
@@ -921,7 +1152,7 @@ export default function LogScreen(): React.JSX.Element {
     const [segmentIndex, setSegmentIndex] = useState(0);
 
     return (
-        <LinearGradient colors={[colors.gradient.start, colors.gradient.mid]} style={{ flex: 1 }}>
+        <LinearGradient colors={[colors.gradient.start, colors.gradient.mid, colors.gradient.end]} locations={[0, 0.6, 1]} style={{ flex: 1 }}>
             <SafeAreaView edges={['top']} style={{ flex: 1 }}>
                 <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
                     <SegmentedControl

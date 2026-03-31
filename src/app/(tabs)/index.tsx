@@ -51,6 +51,7 @@ export default function HomeScreen(): React.JSX.Element {
     const [gutSeverity, setGutSeverity] = useState<'minimal' | 'mild' | 'moderate' | 'severe' | null>(null);
     const [streak, setStreak] = useState<Streak | null>(null);
     const [latestInsight, setLatestInsight] = useState<AiInsight | null>(null);
+    const [counts, setCounts] = useState({ meals: 0, symptoms: 0 }); // Added for sync
     const [currentMealRecipe, setCurrentMealRecipe] = useState<any | null>(null);
     const fetchingRecipeRef = useRef(false);
 
@@ -167,14 +168,22 @@ export default function HomeScreen(): React.JSX.Element {
             if (streakData) setStreak(streakData);
 
             // Fetch latest insight
-            const { data: insights } = await supabase
+            const { data: insightData } = await supabase
                 .from('ai_insights')
                 .select('*')
                 .eq('user_id', user.id)
                 .order('generated_at', { ascending: false })
                 .limit(1);
 
-            if (insights && insights.length > 0) setLatestInsight(insights[0]);
+            if (insightData && insightData.length > 0) setLatestInsight(insightData[0]);
+
+            // Fetch counts for progress sync
+            const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
+            const [{ count: mealCount }, { count: symptomCount }] = await Promise.all([
+                supabase.from('meal_logs').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gt('logged_at', fourteenDaysAgo),
+                supabase.from('symptom_logs').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gt('logged_at', fourteenDaysAgo)
+            ]);
+            setCounts({ meals: mealCount || 0, symptoms: symptomCount || 0 });
 
             // Fetch current meal recipe
             const currentMeal = getCurrentMealType();
@@ -296,7 +305,7 @@ export default function HomeScreen(): React.JSX.Element {
                         />
                     </View>
 
-                    {/* Gut Score Card */}
+                    {/* 1. Gut Score Card */}
                     <Card animated delay={0} style={{ marginTop: 20 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                             <View style={{ width: 60, height: 60, alignItems: 'center', justifyContent: 'center' }}>
@@ -339,7 +348,49 @@ export default function HomeScreen(): React.JSX.Element {
                         </View>
                     </Card>
 
-                    {/* Today's Log Grid */}
+                    {/* 2. Latest Insight / Progress Card */}
+                    {latestInsight ? (
+                        <Card animated delay={200} style={{ marginTop: 16, borderLeftWidth: 3.5, borderLeftColor: insightBorderColor }}>
+                            <Text variant="title" color={colors.text1} numberOfLines={1}>{latestInsight.title}</Text>
+                            <Text variant="caption" color={colors.text2} numberOfLines={2} style={{ marginTop: 4, lineHeight: 14 }}>
+                                {latestInsight.body}
+                            </Text>
+                            <Pressable
+                                onPress={() => router.push('/(tabs)/progress')}
+                                style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}
+                            >
+                                <Text variant="labelBold" color={colors.primary.DEFAULT}>See all insights</Text>
+                                <ArrowRight size={14} color={colors.primary.DEFAULT} />
+                            </Pressable>
+                        </Card>
+                    ) : (
+                        <Card animated delay={200} style={{ 
+                            marginTop: 16,
+                            backgroundColor: counts.meals >= 3 && counts.symptoms >= 2 ? colors.primary.light : colors.surface 
+                        }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                {counts.meals >= 3 && counts.symptoms >= 2 && <Zap size={14} color={colors.primary.DEFAULT} />}
+                                <Text variant="bodyBold" color={colors.text1}>
+                                    {counts.meals >= 3 && counts.symptoms >= 2 ? 'AI Analysis in Progress' : 'Insights coming soon'}
+                                </Text>
+                            </View>
+                            <Text variant="caption" color={colors.text2} style={{ marginTop: 4 }}>
+                                {counts.meals >= 3 && counts.symptoms >= 2 
+                                    ? "Your gut patterns are being calculated. Check back in a few minutes!"
+                                    : "Log your food and symptoms to unlock personalized AI insights."}
+                            </Text>
+                            <View style={{ marginTop: 10, height: 6, borderRadius: 3, backgroundColor: colors.stone, overflow: 'hidden' }}>
+                                <View style={{ 
+                                    height: 6, 
+                                    borderRadius: 3, 
+                                    backgroundColor: colors.primary.DEFAULT, 
+                                    width: `${Math.min(100, ((counts.meals/3 + counts.symptoms/2) / 2) * 100)}%` 
+                                }} />
+                            </View>
+                        </Card>
+                    )}
+
+                    {/* 3. Today's Log Grid */}
                     <View style={{ marginTop: 16 }}>
                         <Text variant="labelBold" color={colors.text2} style={{ marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                             Today
@@ -350,7 +401,7 @@ export default function HomeScreen(): React.JSX.Element {
                                     <Card
                                         key={tile.label}
                                         animated
-                                        delay={index * 80}
+                                        delay={400 + (index * 80)}
                                         style={{
                                             width: '48%',
                                             flexGrow: 1,
@@ -397,8 +448,8 @@ export default function HomeScreen(): React.JSX.Element {
                         </View>
                     </View>
 
-                    {/* Daily Meal Plan */}
-                    <Card animated delay={360} style={{ marginTop: 16, backgroundColor: colors.primary.light + '40', borderColor: colors.primary.DEFAULT, borderWidth: 1 }}>
+                    {/* 4. Daily Meal Plan */}
+                    <Card animated delay={800} style={{ marginTop: 16, backgroundColor: colors.primary.light + '40', borderColor: colors.primary.DEFAULT, borderWidth: 1 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                             <View style={{ flex: 1 }}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -426,33 +477,6 @@ export default function HomeScreen(): React.JSX.Element {
                             </Pressable>
                         </View>
                     </Card>
-
-                    {/* Latest Insight */}
-                    {latestInsight ? (
-                        <Card animated delay={400} style={{ marginTop: 16, borderLeftWidth: 3.5, borderLeftColor: insightBorderColor }}>
-                            <Text variant="title" color={colors.text1} numberOfLines={1}>{latestInsight.title}</Text>
-                            <Text variant="caption" color={colors.text2} numberOfLines={2} style={{ marginTop: 4, lineHeight: 14 }}>
-                                {latestInsight.body}
-                            </Text>
-                            <Pressable
-                                onPress={() => router.push('/(tabs)/progress')}
-                                style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}
-                            >
-                                <Text variant="labelBold" color={colors.primary.DEFAULT}>See all insights</Text>
-                                <ArrowRight size={14} color={colors.primary.DEFAULT} />
-                            </Pressable>
-                        </Card>
-                    ) : (
-                        <Card animated delay={400} style={{ marginTop: 16 }}>
-                            <Text variant="bodyBold" color={colors.text1}>Insights coming soon</Text>
-                            <Text variant="caption" color={colors.text2} style={{ marginTop: 4 }}>
-                                Log for a few more days to unlock your first insight.
-                            </Text>
-                            <View style={{ marginTop: 10, height: 6, borderRadius: 3, backgroundColor: colors.primary.light }}>
-                                <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.primary.DEFAULT, width: '14%' }} />
-                            </View>
-                        </Card>
-                    )}
                 </ScrollView>
             </SafeAreaView>
         </LinearGradient>

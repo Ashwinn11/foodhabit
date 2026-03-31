@@ -47,9 +47,11 @@ export function Card({ animated = true, delay = 0, elevated = false, accent, sty
             style={[
                 {
                     backgroundColor: colors.surface,
-                    borderRadius: radii.card + 2, // slightly puffier
+                    borderRadius: radii.card + 2,
                     padding: 16,
                     overflow: 'hidden',
+                    borderWidth: 1,
+                    borderColor: colors.border,
                     ...(elevated ? shadows.elevated : shadows.card),
                     ...(accent ? {
                         borderLeftWidth: 4,

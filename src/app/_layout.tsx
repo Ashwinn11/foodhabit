@@ -146,19 +146,9 @@ export default function RootLayout(): React.JSX.Element | null {
             SplashScreen.hideAsync().catch(() => { });
         }, 6000);
 
-        // Fail open if startup state stalls. Better to render with fallback state
-        // than block the app behind auth/subscription/font loading indefinitely.
+        // Only release non-auth blockers here. Auth controls routing, so if it is
+        // still unresolved we keep waiting rather than forcing a signed-out state.
         const startupTimeout = setTimeout(() => {
-            if (!useAuthStore.getState().isInitialized) {
-                useAuthStore.setState({
-                    session: null,
-                    user: null,
-                    profile: null,
-                    isLoading: false,
-                    isInitialized: true,
-                });
-            }
-
             if (useSubscriptionStore.getState().isLoading) {
                 useSubscriptionStore.getState().markLoaded();
             }
