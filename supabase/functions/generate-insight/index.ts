@@ -53,26 +53,30 @@ serve(async (req: Request) => {
             });
         }
 
-        // 3. Simplified "Unified Discovery" Prompt
-        const prompt = `You are a gut health AI coach. Analyse the logs and find the SINGLE most important health discovery for this user right now.
+        // 3. Simplified "Pattern Discovery" Prompt
+        const prompt = `You are a gut health pattern detective. Analyse the logs and find the SINGLE most important trigger pattern for this user right now.
 
 USER LOGS (Last 14d):
 Meals: ${JSON.stringify(mealLogs, null, 1)}
 Symptoms: ${JSON.stringify(symptomLogs, null, 1)}
 
 INSTRUCTIONS:
-- Identify one major trigger or pattern.
-- Combine the finding, the evidence, and a specific solution into a single discovery.
-- Use a 1-100 Confidence Score based on frequency and severity (e.g., 90+ if severe pain happened multiple times).
-- Match meals to symptoms that occurred 2-6 hours LATER.
-- FOR THE FIX: If confidence is >70, propose a specific "3-Day Challenge" (e.g. "3-Day Lactose-Free Test").
+- Identify one major trigger pattern by linking three dots:
+  1. The Meal (What was eaten)
+  2. The Symptoms (What happened 2-6 hours later)
+  3. The Bristol Stool Score (The effect seen in the next 24 hours)
+- THE LAW OF PROOF: Do NOT guess. Only identify a pattern if you see it at least TWICE in the history (e.g., the same food led to the same symptom twice).
+- EXCEPTIONS: If a single event had 10/10 severity pain/bloating, you can flag it as "Highly Likely" but NOT "Confirmed."
+- EVIDENCE COUNTING: Start every discovery body with: "I've seen this pattern [X] times..." where X is the actual frequency in the logs.
+- SPECIAL CASE: Look for "Safe-Food Irritation" (reactions to Low-FODMAP meals).
+- Combine these into a single, cohesive discovery story.
+- Use a 1-100 Confidence Score (90+ = Confirmed 3+ times, 70-80 = Highly Likely 2 times, <50 = Under Review 1 time).
+- Bristol Scale Reference: 1-2 (Constipation/Hard), 4 (Ideal), 6-7 (Irritation/Loose).
 
 JSON RESPONSE FORMAT:
 {
-  "title": "Short descriptive title",
-  "body": "A short 2-3 sentence story explaining the trigger and the specific dinner/lunch date it happened.",
-  "buddy_tip": "One clear actionable solution (e.g., replace yogurt with almond yogurt).",
-  "active_protocol": "A 3-Day Challenge title (e.g., '3-Day Lactose-Free Test') or null if confidence < 70",
+  "title": "Short descriptive title (e.g. 'Dairy Trigger Pattern')",
+  "body": "A 2-3 sentence story linking the specific meal date/time, the symptoms that followed, and any Bristol stool changes observed.",
   "related_foods": ["food1"],
   "confidence_score": 1-100
 }`;
@@ -95,26 +99,34 @@ JSON RESPONSE FORMAT:
 
         const discovery = JSON.parse(text);
 
-        // 4. Map Discovery to DB (Mapping to existing types for backward compat but unified logic)
+        // 4. Map Discovery to DB
         if (discovery && discovery.title) {
             const mappedType = discovery.confidence_score >= 80 ? 'trigger_confirmed' : 
                                discovery.confidence_score >= 50 ? 'trigger_likely' : 'trigger_watching';
             
-            // Append the buddy tip and protocol to the body text for now
-            const fullBody = `${discovery.body}\n\n💡 Buddy Tip: ${discovery.buddy_tip}${discovery.active_protocol ? `\n\n🎯 Protocol: ${discovery.active_protocol}` : ''}`;
-
             const insightRow = {
                 user_id,
                 insight_type: mappedType,
                 title: discovery.title,
-                body: fullBody,
+                body: discovery.body,
                 related_foods: discovery.related_foods || [],
                 confidence: discovery.confidence_score >= 80 ? 'high' : 
                              discovery.confidence_score >= 50 ? 'medium' : 'low',
-                 // Note: If you want a dedicated 'active_protocol' column in the DB, we can add it later.
             };
 
             await supabase.from('ai_insights').insert([insightRow]);
+
+            // 5. AUTO-UPDATE PROFILE: If confirmed, add to known_triggers
+            if (mappedType === 'trigger_confirmed' && discovery.related_foods?.length > 0) {
+                const currentTriggers = profile?.known_triggers || [];
+                // Merge and remove duplicates
+                const updatedTriggers = Array.from(new Set([...currentTriggers, ...discovery.related_foods]));
+                
+                await supabase
+                    .from('profiles')
+                    .update({ known_triggers: updatedTriggers })
+                    .eq('id', user_id);
+            }
         }
 
         return new Response(JSON.stringify({ discovery }), {

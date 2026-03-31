@@ -351,49 +351,7 @@ export default function HomeScreen(): React.JSX.Element {
                         </View>
                     </Card>
 
-                    {/* 2. AI Detective Status (Transparency) */}
-                    {!insights.find(i => i.insight_type === 'trigger_confirmed' || i.insight_type === 'trigger_likely') && (
-                        <Card animated delay={200} style={{ 
-                            marginTop: 16,
-                            backgroundColor: (() => {
-                                if (!lastMeal) return colors.surface;
-                                const mealTime = new Date(lastMeal.logged_at).getTime();
-                                const now = Date.now();
-                                if (now >= mealTime + 2 * 3600000 && now <= mealTime + 6 * 3600000) return colors.primary.light;
-                                return colors.surface;
-                            })()
-                        }}>
-                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary.DEFAULT }} />
-                                <Text variant="bodyBold" color={colors.text1}>
-                                    {(() => {
-                                        if (!lastMeal) return "Detective: Awaiting Evidence";
-                                        const mealTime = new Date(lastMeal.logged_at).getTime();
-                                        const now = Date.now();
-                                        if (now < mealTime + 2 * 3600000) return `Investigating your ${lastMeal.meal_type}...`;
-                                        if (now <= mealTime + 6 * 3600000) return "Evidence Window Open!";
-                                        return "No Active Investigations";
-                                    })()}
-                                </Text>
-                            </View>
 
-                            <Text variant="caption" color={colors.text2} style={{ marginTop: 6, lineHeight: 16 }}>
-                                {(() => {
-                                    if (!lastMeal) return "Log your first meal to start the investigation.";
-                                    const mealTime = new Date(lastMeal.logged_at).getTime();
-                                    const windowStart = new Date(mealTime + 2 * 3600000);
-                                    const windowEnd = new Date(mealTime + 6 * 3600000);
-                                    const now = Date.now();
-
-                                    const startStr = windowStart.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-
-                                    if (now < mealTime + 2 * 3600000) return `Logged ${lastMeal.meal_type} at ${new Date(mealTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}. Check in around ${startStr} to complete this analysis.`;
-                                    if (now <= mealTime + 6 * 3600000) return `The 2-6 hour window is open! Log how you feel right now to help the AI detect triggers.`;
-                                    return `Last investigation closed. Log your next meal/snack to try again!`;
-                                })()}
-                            </Text>
-                        </Card>
-                    )}
 
                     {/* 3. The SINGLE Most Important Insight Card */}
                     {insights.length > 0 && (
@@ -605,29 +563,6 @@ export default function HomeScreen(): React.JSX.Element {
                                         ))}
                                     </View>
                                 </View>
-                            )}
-
-                            {/* Buddy Correlation: Find matching recommendations */}
-                            {selectedInsight && selectedInsight.insight_type !== 'recommendation' && (
-                                (() => {
-                                    const relatedTip = insights.find(i => 
-                                        i.insight_type === 'recommendation' && 
-                                        i.related_foods?.some(f => selectedInsight.related_foods?.includes(f))
-                                    );
-
-                                    if (!relatedTip) return null;
-
-                                    return (
-                                        <View style={{ marginTop: 24, padding: 16, backgroundColor: colors.purple.light, borderRadius: 16, borderWidth: 1, borderColor: colors.purple.DEFAULT }}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                                                <Brain size={16} color={colors.purple.DEFAULT} />
-                                                <Text variant="labelBold" color={colors.purple.DEFAULT}>Suggested Next Step</Text>
-                                            </View>
-                                            <Text variant="bodyBold" color={colors.purple.DEFAULT} style={{ marginBottom: 4 }}>{relatedTip.title}</Text>
-                                            <Text variant="caption" color={colors.purple.DEFAULT} style={{ lineHeight: 16 }}>{relatedTip.body}</Text>
-                                        </View>
-                                    );
-                                })()
                             )}
 
                             <Card style={{ marginTop: 24, backgroundColor: colors.primary.light, borderColor: colors.primary.mid }}>

@@ -229,6 +229,28 @@ function MealSegment(): React.JSX.Element {
                 haptics.mealLogged();
             }
 
+            // --- PROACTIVE: Schedule the "Detective Window" Reminder ---
+            try {
+                // Cancel any pending symptom reminders first
+                await Notifications.cancelAllScheduledNotificationsAsync();
+                
+                // Re-schedule based on this meal
+                await Notifications.scheduleNotificationAsync({
+                    content: {
+                        title: "Evidence Window Open! 🔍",
+                        body: `It's been 2 hours since your ${mealType}. How is your gut feeling right now?`,
+                        data: { type: 'symptom_reminder' },
+                    },
+                    trigger: {
+                        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                        seconds: 2 * 3600, // 2 hours later
+                        repeats: false,
+                    },
+                });
+            } catch (notifyErr) {
+                console.error('Failed to schedule Detective reminder:', notifyErr);
+            }
+
             if (finalStreak > (existingStreak?.current_streak ?? 0)) {
                 showToast({
                     title: 'Meal Logged! 🔥',
@@ -1149,7 +1171,8 @@ function SymptomsSegment(): React.JSX.Element {
 
 // ========================== MAIN LOG TAB ==========================
 export default function LogScreen(): React.JSX.Element {
-    const [segmentIndex, setSegmentIndex] = useState(0);
+    const { tab } = useLocalSearchParams();
+    const [segmentIndex, setSegmentIndex] = useState(tab === 'symptoms' ? 1 : 0);
 
     return (
         <LinearGradient colors={[colors.gradient.start, colors.gradient.mid, colors.gradient.end]} locations={[0, 0.6, 1]} style={{ flex: 1 }}>
