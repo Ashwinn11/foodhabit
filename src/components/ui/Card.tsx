@@ -1,30 +1,44 @@
 import React, { useEffect } from 'react';
 import { View, type ViewProps } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming, Easing } from 'react-native-reanimated';
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withDelay,
+    withSpring,
+    withTiming,
+} from 'react-native-reanimated';
 import { shadows, radii, colors } from '@/theme';
 
 interface CardProps extends ViewProps {
     animated?: boolean;
     delay?: number;
     elevated?: boolean;
+    /** Adds a fun colored left-accent stripe */
+    accent?: string;
 }
 
-export function Card({ animated = true, delay = 0, elevated = false, style, children, ...props }: CardProps): React.JSX.Element {
-    const translateY = useSharedValue(animated ? 16 : 0);
+export function Card({ animated = true, delay = 0, elevated = false, accent, style, children, ...props }: CardProps): React.JSX.Element {
+    const translateY = useSharedValue(animated ? 22 : 0);
     const opacity = useSharedValue(animated ? 0 : 1);
+    const scale = useSharedValue(animated ? 0.97 : 1);
 
     useEffect(() => {
         if (animated) {
+            // Spring overshoot → feels alive
             translateY.value = withDelay(
                 delay,
-                withTiming(0, { duration: 300, easing: Easing.bezier(0.34, 1.56, 0.64, 1) })
+                withSpring(0, { damping: 14, stiffness: 180, mass: 0.8 })
             );
-            opacity.value = withDelay(delay, withTiming(1, { duration: 300 }));
+            opacity.value = withDelay(delay, withTiming(1, { duration: 220 }));
+            scale.value = withDelay(
+                delay,
+                withSpring(1, { damping: 14, stiffness: 200, mass: 0.8 })
+            );
         }
     }, [animated, delay]);
 
     const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: translateY.value }],
+        transform: [{ translateY: translateY.value }, { scale: scale.value }],
         opacity: opacity.value,
     }));
 
@@ -33,9 +47,14 @@ export function Card({ animated = true, delay = 0, elevated = false, style, chil
             style={[
                 {
                     backgroundColor: colors.surface,
-                    borderRadius: radii.card,
+                    borderRadius: radii.card + 2, // slightly puffier
                     padding: 16,
+                    overflow: 'hidden',
                     ...(elevated ? shadows.elevated : shadows.card),
+                    ...(accent ? {
+                        borderLeftWidth: 4,
+                        borderLeftColor: accent,
+                    } : {}),
                 },
                 animatedStyle,
                 style,

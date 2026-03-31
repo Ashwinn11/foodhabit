@@ -5,15 +5,14 @@ import Animated, {
     useAnimatedStyle,
     withSpring,
     withTiming,
-    FadeIn,
-    FadeOut,
+    withSequence,
     ZoomIn,
 } from 'react-native-reanimated';
 import { Text } from './Text';
 import { Button } from './Button';
 import { colors, radii, shadows } from '@/theme';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 interface DialogProps {
     visible: boolean;
@@ -40,6 +39,8 @@ export function Dialog({
 }: DialogProps): React.JSX.Element {
     if (!visible) return <></>;
 
+    const emoji = type === 'danger' ? '⚠️' : '👋';
+
     return (
         <Modal
             transparent
@@ -47,22 +48,24 @@ export function Dialog({
             animationType="none"
             onRequestClose={loading ? undefined : onCancel}
         >
-            {/* Layer 1: Full-screen backdrop — receives taps that MISS the card */}
+            {/* Blurred backdrop */}
             <Pressable
-                style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(28, 43, 32, 0.4)' }]}
+                style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(28, 43, 32, 0.45)' }]}
                 onPress={loading ? undefined : onCancel}
                 disabled={loading}
             />
 
-            {/* Layer 2: Centering wrapper — box-none so it doesn't intercept touches */}
-            <View
-                style={styles.overlay}
-                pointerEvents="box-none"
-            >
+            {/* Centering wrapper */}
+            <View style={styles.overlay} pointerEvents="box-none">
                 <Animated.View
-                    entering={ZoomIn.duration(250)}
+                    entering={ZoomIn.springify().damping(14).stiffness(200)}
                     style={styles.content}
                 >
+                    {/* Fun emoji header */}
+                    <View style={styles.emojiCircle}>
+                        <Text style={{ fontSize: 28 }}>{emoji}</Text>
+                    </View>
+
                     <Text variant="title" color={colors.text1} style={styles.title}>
                         {title}
                     </Text>
@@ -73,7 +76,7 @@ export function Dialog({
                     <View style={styles.footer}>
                         <Button
                             title={cancelLabel}
-                            variant="ghost"
+                            variant="outline"
                             onPress={onCancel}
                             style={styles.button}
                             disabled={loading}
@@ -98,7 +101,6 @@ export function Dialog({
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: 'rgba(28, 43, 32, 0.4)',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
@@ -106,22 +108,34 @@ const styles = StyleSheet.create({
     content: {
         width: '100%',
         backgroundColor: colors.surface,
-        borderRadius: 24,
-        padding: 24,
+        borderRadius: 28, // rounder = friendlier
+        padding: 28,
+        alignItems: 'center',
         ...shadows.elevated,
     },
+    emojiCircle: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: colors.primary.light,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
+    },
     title: {
-        marginBottom: 8,
         fontSize: 20,
+        textAlign: 'center',
+        marginBottom: 8,
     },
     description: {
         marginBottom: 24,
-        lineHeight: 20,
+        lineHeight: 22,
+        textAlign: 'center',
     },
     footer: {
         flexDirection: 'row',
         gap: 12,
-        justifyContent: 'flex-end',
+        width: '100%',
     },
     button: {
         flex: 1,

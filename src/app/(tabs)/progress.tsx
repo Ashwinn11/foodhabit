@@ -1,33 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, RefreshControl, Dimensions } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, ScrollView, RefreshControl, Modal, Pressable } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-    AlertCircle, CheckCircle2,
+    AlertCircle, CheckCircle2, Moon, Sun, Sunrise, Apple, Sparkles, ChevronRight, X,
 } from 'lucide-react-native';
-import { LineChart } from "react-native-gifted-charts";
-import { haptics } from '@/theme/haptics';
 
 import { Text } from '@/components/ui/Text';
 import { Card } from '@/components/ui/Card';
-import { Chip } from '@/components/ui/Chip';
 import { useToast } from '@/components/ui/Toast';
 import { InsightSkeleton } from '@/components/ui/Skeleton';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/theme';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-type SymptomTrendLog = {
-    logged_at: string;
-    pain: number;
-    bloating: number;
-    urgency: number;
-    fatigue: number;
-    nausea: number;
-};
 
 type SymptomSummary = {
     avg_bloating_7d: number;
@@ -38,7 +24,26 @@ type SymptomSummary = {
     bad_days_count: number;
 };
 
-function buildSymptomSummary(logs: SymptomTrendLog[]): SymptomSummary | null {
+type SymptomSummaryLog = {
+    bloating: number;
+    pain: number;
+    urgency: number;
+    fatigue: number;
+    nausea: number;
+    logged_at: string;
+    stool_type?: number | null;
+    notes?: string | null;
+};
+
+type RecentMealLog = {
+    id: string;
+    meal_type: string;
+    logged_at: string;
+    overall_meal_verdict: string | null;
+    foods: unknown;
+};
+
+function buildSymptomSummary(logs: SymptomSummaryLog[]): SymptomSummary | null {
     if (logs.length === 0) return null;
 
     const avgBloating = logs.reduce((sum, log) => sum + log.bloating, 0) / logs.length;
@@ -46,7 +51,7 @@ function buildSymptomSummary(logs: SymptomTrendLog[]): SymptomSummary | null {
     const avgUrgency = logs.reduce((sum, log) => sum + log.urgency, 0) / logs.length;
     const avgFatigue = logs.reduce((sum, log) => sum + log.fatigue, 0) / logs.length;
 
-    const dayMap = new Map<string, SymptomTrendLog[]>();
+    const dayMap = new Map<string, SymptomSummaryLog[]>();
     logs.forEach(log => {
         const day = log.logged_at.split('T')[0];
         const existing = dayMap.get(day) || [];
@@ -84,17 +89,46 @@ function buildSymptomSummary(logs: SymptomTrendLog[]): SymptomSummary | null {
     };
 }
 
+function getMealIcon(mealType: string): React.JSX.Element {
+    const iconProps = { size: 14, color: colors.text1 };
+    if (mealType === 'breakfast') return <Sunrise {...iconProps} />;
+    if (mealType === 'lunch') return <Sun {...iconProps} />;
+    if (mealType === 'dinner') return <Moon {...iconProps} />;
+    return <Apple {...iconProps} />;
+}
+
+function getSymptomStatus(entry: SymptomSummaryLog): { title: string; color: string; bg: string; detail: string } {
+    const symptomPairs = [
+        { label: 'Pain', value: entry.pain },
+        { label: 'Bloating', value: entry.bloating },
+        { label: 'Urgency', value: entry.urgency },
+        { label: 'Nausea', value: entry.nausea },
+        { label: 'Fatigue', value: entry.fatigue },
+    ].sort((a, b) => b.value - a.value);
+
+    const strongest = symptomPairs[0];
+    const detail = strongest && strongest.value > 0 ? `${strongest.label} was highest` : 'No symptoms recorded';
+
+    if (!strongest || strongest.value <= 2) {
+        return { title: 'Calm check-in', color: colors.primary.DEFAULT, bg: colors.primary.light, detail };
+    }
+    if (strongest.value <= 5) {
+        return { title: 'Okay check-in', color: colors.amber.DEFAULT, bg: colors.amber.light, detail };
+    }
+    return { title: 'Rough check-in', color: colors.red.DEFAULT, bg: colors.red.light, detail };
+}
+
 export default function ProgressScreen(): React.JSX.Element {
     const { user, profile } = useAuthStore();
     const { showToast } = useToast();
     const [summary, setSummary] = useState<SymptomSummary | null>(null);
     const [safeFoods, setSafeFoods] = useState<string[]>([]);
     const [topTriggers, setTopTriggers] = useState<any[]>([]);
+    const [recentMeals, setRecentMeals] = useState<RecentMealLog[]>([]);
+    const [recentSymptoms, setRecentSymptoms] = useState<SymptomSummaryLog[]>([]);
     const [loading, setLoading] = useState(true);
-    const [rawTrendData, setRawTrendData] = useState<SymptomTrendLog[]>([]);
-    const [chartData, setChartData] = useState<any[]>([]);
-    const [activeSymptom, setActiveSymptom] = useState<string>('Pain');
     const [refreshing, setRefreshing] = useState(false);
+    const [historyModal, setHistoryModal] = useState<'meals' | 'symptoms' | null>(null);
 
     const fetchProgress = useCallback(async () => {
         if (!user?.id) return;
@@ -120,35 +154,40 @@ export default function ProgressScreen(): React.JSX.Element {
                     setTopTriggers([...manualTriggers, ...(insightsRes.data || [])]);
                 });
 
-            // 2. Safe Foods
+            // 2. Safe Foods + recent meals
             supabase
                 .from('meal_logs')
-                .select('foods')
+                .select('id, foods, meal_type, overall_meal_verdict, logged_at')
                 .eq('user_id', user.id)
-                .eq('overall_meal_verdict', 'safest')
+                .order('logged_at', { ascending: false })
                 .limit(40)
                 .then(mealRes => {
                     if (mealRes.data) {
+                        setRecentMeals(mealRes.data.slice(0, 3) as RecentMealLog[]);
                         const allFoods = mealRes.data.flatMap((ml: any) =>
-                            (ml.foods as any[]).filter(f => f.personal_verdict === 'safest').map(f => f.name)
+                            ml.overall_meal_verdict === 'safest'
+                                ? (ml.foods as any[]).filter(f => f.personal_verdict === 'safest').map(f => f.name)
+                                : []
                         );
                         setSafeFoods([...new Set(allFoods)]);
+                    } else {
+                        setRecentMeals([]);
                     }
                 });
 
-            // 3. Trends + summary
+            // 3. Symptoms + summary
             supabase
                 .from('symptom_logs')
-                .select('logged_at, pain, bloating, urgency, fatigue, nausea')
+                .select('logged_at, pain, bloating, urgency, fatigue, nausea, stool_type, notes')
                 .eq('user_id', user.id)
                 .order('logged_at', { ascending: false })
                 .limit(20)
                 .then(trendRes => {
                     if (trendRes.data) {
-                        setRawTrendData(trendRes.data);
+                        setRecentSymptoms(trendRes.data.slice(0, 3));
                         setSummary(buildSymptomSummary(trendRes.data));
                     } else {
-                        setRawTrendData([]);
+                        setRecentSymptoms([]);
                         setSummary(null);
                     }
                     setLoading(false);
@@ -159,17 +198,6 @@ export default function ProgressScreen(): React.JSX.Element {
             setLoading(false);
         }
     }, [user?.id, profile?.known_triggers]);
-
-    // Fast local re-render for symptom switching
-    useEffect(() => {
-        if (rawTrendData.length > 0) {
-            const reversed = [...rawTrendData].reverse();
-            setChartData(reversed.map(d => ({
-                value: activeSymptom === 'Pain' ? d.pain : activeSymptom === 'Bloating' ? d.bloating : d.urgency,
-                label: new Date(d.logged_at).toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
-            })));
-        }
-    }, [rawTrendData, activeSymptom]);
 
     const onRefresh = async (): Promise<void> => {
         if (!user?.id) return;
@@ -191,7 +219,7 @@ export default function ProgressScreen(): React.JSX.Element {
     );
 
     // Only show skeleton on first load when NO data is present
-    if (loading && !summary && chartData.length === 0) {
+    if (loading && !summary) {
         return (
             <LinearGradient colors={[colors.gradient.start, colors.gradient.mid]} style={{ flex: 1 }}>
                 <SafeAreaView edges={['top']} style={{ flex: 1 }}>
@@ -211,79 +239,113 @@ export default function ProgressScreen(): React.JSX.Element {
                     contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 40 }}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary.DEFAULT} />}
                 >
-                    <Card>
-                        <Text variant="title" color={colors.text1}>Progress</Text>
-                        <Text variant="caption" color={colors.text2} style={{ marginTop: 6, lineHeight: 18 }}>
-                            This screen shows three things from your recent logs: how symptoms are moving, which foods look risky, and which foods keep feeling safe.
-                        </Text>
-                    </Card>
+                    <Text variant="heading" color={colors.text1}>Progress</Text>
 
-                    {/* Symptom Chart */}
                     <Card>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                            <Text variant="title" color={colors.text1}>Symptom Trends</Text>
-                            <View style={{ flexDirection: 'row', gap: 6 }}>
-                                {['Pain', 'Bloating', 'Urgency'].map(s => (
-                                    <Chip
-                                        key={s}
-                                        label={s}
-                                        selected={activeSymptom === s}
-                                        onPress={() => { setActiveSymptom(s); haptics.buttonTap(); }}
-                                        style={{ paddingHorizontal: 10, paddingVertical: 4 }}
-                                    />
-                                ))}
+                        <Text variant="title" color={colors.text1} style={{ marginBottom: 12 }}>Recent Activity</Text>
+
+                        <View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Text variant="labelBold" color={colors.text2}>Recent Meals</Text>
+                                <Pressable onPress={() => setHistoryModal('meals')} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                                    <Text variant="caption" color={colors.text2}>See all</Text>
+                                    <ChevronRight size={14} color={colors.text2} />
+                                </Pressable>
                             </View>
-                        </View>
-                        <Text variant="caption" color={colors.text2} style={{ marginBottom: 12, lineHeight: 18 }}>
-                            Trends show whether a symptom has been getting better, worse, or staying flat across your most recent check-ins.
-                        </Text>
-                        {chartData.length > 1 ? (
-                            <View style={{ paddingRight: 20 }}>
-                                <LineChart
-                                    areaChart
-                                    data={chartData}
-                                    width={SCREEN_WIDTH - 80}
-                                    height={140}
-                                    curvature={0.4}
-                                    spacing={38}
-                                    color={colors.primary.DEFAULT}
-                                    thickness={3}
-                                    startFillColor={colors.primary.DEFAULT}
-                                    endFillColor={colors.primary.light}
-                                    startOpacity={0.2}
-                                    endOpacity={0.01}
-                                    initialSpacing={20}
-                                    noOfSections={2}
-                                    maxValue={10}
-                                    yAxisThickness={0}
-                                    xAxisThickness={1}
-                                    xAxisColor={colors.stone}
-                                    yAxisColor="transparent"
-                                    yAxisTextStyle={{ color: colors.text3, fontSize: 10 }}
-                                    xAxisLabelTextStyle={{ color: colors.text3, fontSize: 10 }}
-                                    dataPointsColor={colors.primary.DEFAULT}
-                                    dataPointsRadius={4}
-                                    showValuesAsDataPointsText={false}
-                                    pointerConfig={{
-                                        pointerStripColor: colors.primary.mid,
-                                        pointerStripWidth: 2,
-                                        pointerColor: colors.primary.DEFAULT,
-                                        radius: 6,
-                                        pointerLabelComponent: (items: any) => {
-                                            return (
-                                                <View style={{ backgroundColor: colors.dark, padding: 8, borderRadius: 8 }}>
-                                                    <Text variant="badge" color="#FFFFFF">{activeSymptom}: {items[0].value}</Text>
+                            {recentMeals.length > 0 ? (
+                                <View style={{ marginTop: 8, gap: 8 }}>
+                                    {recentMeals.slice(0, 2).map((meal) => {
+                                        const foods = Array.isArray(meal.foods) ? meal.foods : [];
+                                        const foodNames = foods
+                                            .map(food => food?.name)
+                                            .filter(Boolean)
+                                            .slice(0, 2);
+
+                                        return (
+                                            <View
+                                                key={meal.id}
+                                                style={{
+                                                    backgroundColor: '#FFFFFF',
+                                                    borderWidth: 1,
+                                                    borderColor: colors.border,
+                                                    borderRadius: 16,
+                                                    padding: 12,
+                                                }}
+                                            >
+                                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                                        <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center' }}>
+                                                            {getMealIcon(meal.meal_type)}
+                                                        </View>
+                                                        <Text variant="bodyBold" color={colors.text1}>
+                                                            {meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)}
+                                                        </Text>
+                                                    </View>
+                                                    <Text variant="caption" color={colors.text3}>
+                                                        {new Date(meal.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {new Date(meal.logged_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                                    </Text>
                                                 </View>
-                                            );
-                                        },
-                                    }}
-                                />
+                                                <Text variant="caption" color={colors.text2} style={{ marginTop: 4 }}>
+                                                    {foodNames.join(', ') || 'Meal logged'}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            ) : (
+                                <Text variant="caption" color={colors.text3} style={{ marginTop: 6 }}>No meals logged yet.</Text>
+                            )}
+                        </View>
+
+                        <View style={{ marginTop: 16 }}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Text variant="labelBold" color={colors.text2}>Recent Symptoms</Text>
+                                <Pressable onPress={() => setHistoryModal('symptoms')} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                                    <Text variant="caption" color={colors.text2}>See all</Text>
+                                    <ChevronRight size={14} color={colors.text2} />
+                                </Pressable>
                             </View>
-                        ) : (
-                            <View style={{ height: 120, alignItems: 'center', justifyContent: 'center' }}>
-                                <Text variant="caption" color={colors.text3}>Not enough data for at least 2 days</Text>
-                            </View>
-                        )}
+                            {recentSymptoms.length > 0 ? (
+                                <View style={{ marginTop: 8, gap: 8 }}>
+                                    {recentSymptoms.slice(0, 2).map((entry, index) => {
+                                        const status = getSymptomStatus(entry);
+
+                                        return (
+                                            <View
+                                                key={`${entry.logged_at}-${index}`}
+                                                style={{
+                                                    backgroundColor: '#FFFFFF',
+                                                    borderWidth: 1,
+                                                    borderColor: colors.border,
+                                                    borderRadius: 16,
+                                                    padding: 12,
+                                                }}
+                                            >
+                                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                                        <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: status.bg, alignItems: 'center', justifyContent: 'center' }}>
+                                                            <Sparkles size={14} color={status.color} />
+                                                        </View>
+                                                        <Text variant="bodyBold" color={colors.text1}>
+                                                            {status.title}
+                                                        </Text>
+                                                    </View>
+                                                    <Text variant="caption" color={colors.text3}>
+                                                        {new Date(entry.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {new Date(entry.logged_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                                    </Text>
+                                                </View>
+                                                <Text variant="caption" color={colors.text2} style={{ marginTop: 4 }}>
+                                                    {status.detail}
+                                                    {entry.stool_type ? ` • Stool ${entry.stool_type}` : ''}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            ) : (
+                                <Text variant="caption" color={colors.text3} style={{ marginTop: 6 }}>No symptom check-ins yet.</Text>
+                            )}
+                        </View>
                     </Card>
 
                     {/* Symptom Averages */}
@@ -291,7 +353,7 @@ export default function ProgressScreen(): React.JSX.Element {
                         <Card>
                             <Text variant="title" color={colors.text1} style={{ marginBottom: 6 }}>7-Day Symptom Averages</Text>
                             <Text variant="caption" color={colors.text2} style={{ marginBottom: 12, lineHeight: 18 }}>
-                                Use these averages to judge your overall week, not just one bad day.
+                                A quick read on your past week.
                             </Text>
                             {[
                                 { label: 'Bloating', value: summary.avg_bloating_7d },
@@ -328,7 +390,7 @@ export default function ProgressScreen(): React.JSX.Element {
                             <Text variant="title" color={colors.text1}>Likely Triggers</Text>
                         </View>
                         <Text variant="caption" color={colors.text2} style={{ marginBottom: 12, lineHeight: 18 }}>
-                            These foods have shown up before tougher symptom check-ins. They are signals to watch, not hard bans.
+                            Foods to watch.
                         </Text>
                         {topTriggers.length > 0 ? (
                             topTriggers.map((trigger, i) => (
@@ -359,7 +421,7 @@ export default function ProgressScreen(): React.JSX.Element {
                             <Text variant="title" color={colors.text1}>Safe Foods</Text>
                         </View>
                         <Text variant="caption" color={colors.text2} style={{ marginBottom: 12, lineHeight: 18 }}>
-                            These are foods that have repeatedly appeared in meals marked safest for your gut.
+                            Foods that usually feel safe.
                         </Text>
                         {safeFoods.length > 0 ? (
                             <>
@@ -379,6 +441,72 @@ export default function ProgressScreen(): React.JSX.Element {
                         )}
                     </Card>
                 </ScrollView>
+
+                <Modal visible={historyModal !== null} animationType="slide" presentationStyle="pageSheet">
+                    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingBottom: 8 }}>
+                            <Text variant="heading" color={colors.text1}>
+                                {historyModal === 'meals' ? 'Meal History' : 'Symptom History'}
+                            </Text>
+                            <Pressable onPress={() => setHistoryModal(null)} style={{ padding: 4 }}>
+                                <X size={22} color={colors.text1} />
+                            </Pressable>
+                        </View>
+
+                        <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 8, gap: 10, paddingBottom: 40 }}>
+                            {historyModal === 'meals' && recentMeals.map((meal) => {
+                                const foods = Array.isArray(meal.foods) ? meal.foods : [];
+                                const foodNames = foods.map(food => food?.name).filter(Boolean).slice(0, 5);
+
+                                return (
+                                    <Card key={`meal-history-${meal.id}`} animated={false}>
+                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                                <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center' }}>
+                                                    {getMealIcon(meal.meal_type)}
+                                                </View>
+                                                <Text variant="bodyBold" color={colors.text1}>
+                                                    {meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)}
+                                                </Text>
+                                            </View>
+                                            <Text variant="caption" color={colors.text3}>
+                                                {new Date(meal.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {new Date(meal.logged_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                            </Text>
+                                        </View>
+                                        <Text variant="caption" color={colors.text2} style={{ marginTop: 6 }}>
+                                            {foodNames.join(', ') || 'Meal logged'}
+                                        </Text>
+                                    </Card>
+                                );
+                            })}
+
+                            {historyModal === 'symptoms' && recentSymptoms.map((entry, index) => {
+                                const status = getSymptomStatus(entry);
+
+                                return (
+                                    <Card key={`symptom-history-${entry.logged_at}-${index}`} animated={false}>
+                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                                <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: status.bg, alignItems: 'center', justifyContent: 'center' }}>
+                                                    <Sparkles size={14} color={status.color} />
+                                                </View>
+                                                <Text variant="bodyBold" color={colors.text1}>
+                                                    {status.title}
+                                                </Text>
+                                            </View>
+                                            <Text variant="caption" color={colors.text3}>
+                                                {new Date(entry.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {new Date(entry.logged_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                            </Text>
+                                        </View>
+                                        <Text variant="caption" color={colors.text2} style={{ marginTop: 6 }}>
+                                            {status.detail}{entry.stool_type ? ` • Stool ${entry.stool_type}` : ''}
+                                        </Text>
+                                    </Card>
+                                );
+                            })}
+                        </ScrollView>
+                    </SafeAreaView>
+                </Modal>
             </SafeAreaView>
         </LinearGradient>
     );
