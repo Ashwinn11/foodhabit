@@ -32,12 +32,13 @@ Notifications.setNotificationHandler({
 });
 
 function useProtectedRoute(isPremium: boolean, isSubLoading: boolean): void {
-    const { session, profile, isInitialized, user } = useAuthStore();
+    const { session, profile, isInitialized, user, profileHydrated } = useAuthStore();
     const segments = useSegments();
     const router = useRouter();
 
     useEffect(() => {
         if (!isInitialized) return;
+        if (session && !profileHydrated) return;
 
         // Only wait for subscription sync if we have a user (to decide between tabs and paywall)
         if (user && isSubLoading) return;
@@ -64,12 +65,12 @@ function useProtectedRoute(isPremium: boolean, isSubLoading: boolean): void {
                 router.replace('/(tabs)');
             }
         }
-    }, [session, profile?.onboarding_complete, isInitialized, segments, isPremium, isSubLoading]);
+    }, [session, profile?.onboarding_complete, isInitialized, segments, isPremium, isSubLoading, profileHydrated]);
 }
 
 export default function RootLayout(): React.JSX.Element | null {
     const fontsLoaded = useFontLoader();
-    const { initialize, setSession, isInitialized, user } = useAuthStore();
+    const { initialize, setSession, isInitialized, user, profileHydrated } = useAuthStore();
     const { sync: syncSubscription, initializeListener, isLoading: isSubLoading, hasLoaded: subHasLoaded, isPremium } = useSubscriptionStore();
     const segments = useSegments();
     const segmentsRef = React.useRef(segments);
@@ -258,7 +259,7 @@ export default function RootLayout(): React.JSX.Element | null {
     useProtectedRoute(isPremium, isSubLoading);
 
     // Render Guard: Block until fonts + auth resolved + sub has attempted at least one sync
-    if (!fontsReady || !isInitialized || (user && !subHasLoaded)) {
+    if (!fontsReady || !isInitialized || (user && !profileHydrated) || (user && !subHasLoaded)) {
         return (
             <View style={{ flex: 1, backgroundColor: '#F8F7F4', alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 32 }}>
                 <AnimatedMascot expression="happy" size={96} />

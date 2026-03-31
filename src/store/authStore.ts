@@ -13,6 +13,7 @@ interface AuthState {
     profile: Profile | null;
     isLoading: boolean;
     isInitialized: boolean;
+    profileHydrated: boolean;
 
     initialize: () => Promise<void>;
     fetchProfile: (userId: string) => Promise<Profile | null>;
@@ -30,15 +31,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     profile: null,
     isLoading: true,
     isInitialized: false,
+    profileHydrated: false,
 
     initialize: async () => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
-                const profile = await get().fetchProfile(session.user.id);
-                set({ session, user: session.user, profile, isLoading: false, isInitialized: true });
+                set({ session, user: session.user, isLoading: false, isInitialized: true, profileHydrated: false });
+
+                get().fetchProfile(session.user.id)
+                    .then(profile => {
+                        if (get().user?.id === session.user.id) {
+                            set({ profile, profileHydrated: true });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Profile hydration error:', error);
+                        if (get().user?.id === session.user.id) {
+                            set({ profileHydrated: true });
+                        }
+                    });
             } else {
-                set({ session: null, user: null, profile: null, isLoading: false, isInitialized: true });
+                set({ session: null, user: null, profile: null, isLoading: false, isInitialized: true, profileHydrated: true });
             }
         } catch (error) {
             console.error('Auth initialize error:', error);
@@ -59,10 +73,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     setSession: async (session: Session | null) => {
         if (session?.user) {
-            const profile = await get().fetchProfile(session.user.id);
-            set({ session, user: session.user, profile, isLoading: false });
+            set({ session, user: session.user, isLoading: false, isInitialized: true, profileHydrated: false });
+
+            get().fetchProfile(session.user.id)
+                .then(profile => {
+                    if (get().user?.id === session.user.id) {
+                        set({ profile, profileHydrated: true });
+                    }
+                })
+                .catch(error => {
+                    console.error('Profile hydration error:', error);
+                    if (get().user?.id === session.user.id) {
+                        set({ profileHydrated: true });
+                    }
+                });
         } else {
-            set({ session: null, user: null, profile: null, isLoading: false });
+            set({ session: null, user: null, profile: null, isLoading: false, isInitialized: true, profileHydrated: true });
         }
     },
 
