@@ -5,8 +5,7 @@ import Animated, {
     useAnimatedStyle,
     withSpring,
     withTiming,
-    withSequence,
-    ZoomIn,
+    FadeIn,
 } from 'react-native-reanimated';
 import { Text } from './Text';
 import { Button } from './Button';
@@ -58,7 +57,7 @@ export function Dialog({
             {/* Centering wrapper */}
             <View style={styles.overlay} pointerEvents="box-none">
                 <Animated.View
-                    entering={ZoomIn.springify().damping(14).stiffness(200)}
+                    entering={FadeIn.duration(200)}
                     style={styles.content}
                 >
                     {/* Fun emoji header */}

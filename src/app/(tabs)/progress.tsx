@@ -349,37 +349,56 @@ export default function ProgressScreen(): React.JSX.Element {
                     </Card>
 
                     {/* Symptom Averages */}
-                    {summary && (
-                        <Card>
-                            <Text variant="title" color={colors.text1} style={{ marginBottom: 6 }}>7-Day Symptom Averages</Text>
-                            <Text variant="caption" color={colors.text2} style={{ marginBottom: 12, lineHeight: 18 }}>
-                                A quick read on your past week.
-                            </Text>
-                            {[
-                                { label: 'Bloating', value: summary.avg_bloating_7d },
-                                { label: 'Pain', value: summary.avg_pain_7d },
-                                { label: 'Urgency', value: summary.avg_urgency_7d },
-                                { label: 'Fatigue', value: summary.avg_fatigue_7d },
-                            ].map(s => (
-                                <View key={s.label} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
-                                    <Text variant="body" color={colors.text1}>{s.label}</Text>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                        <View style={{ width: 80, height: 6, borderRadius: 3, backgroundColor: colors.primary.light }}>
-                                            <View style={{ width: `${Math.min(100, Number(s.value) * 10)}%`, height: 6, borderRadius: 3, backgroundColor: Number(s.value) > 6 ? colors.red.DEFAULT : Number(s.value) > 3 ? colors.amber.DEFAULT : colors.primary.DEFAULT }} />
-                                        </View>
-                                        <Text variant="labelBold" color={colors.text1}>{Number(s.value).toFixed(1)}</Text>
+                    <Card>
+                        <Text variant="title" color={colors.text1} style={{ marginBottom: 6 }}>7-Day Symptom Averages</Text>
+                        <Text variant="caption" color={colors.text2} style={{ marginBottom: 12, lineHeight: 18 }}>
+                            A quick read on your past week.
+                        </Text>
+                        {[
+                            { label: 'Bloating', value: summary?.avg_bloating_7d ?? null },
+                            { label: 'Pain', value: summary?.avg_pain_7d ?? null },
+                            { label: 'Urgency', value: summary?.avg_urgency_7d ?? null },
+                            { label: 'Fatigue', value: summary?.avg_fatigue_7d ?? null },
+                        ].map(s => (
+                            <View key={s.label} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
+                                <Text variant="body" color={colors.text1}>{s.label}</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                    <View style={{ width: 80, height: 6, borderRadius: 3, backgroundColor: colors.primary.light }}>
+                                        <View
+                                            style={{
+                                                width: s.value !== null ? `${Math.min(100, Number(s.value) * 10)}%` : '0%',
+                                                height: 6,
+                                                borderRadius: 3,
+                                                backgroundColor: s.value !== null
+                                                    ? Number(s.value) > 6
+                                                        ? colors.red.DEFAULT
+                                                        : Number(s.value) > 3
+                                                            ? colors.amber.DEFAULT
+                                                            : colors.primary.DEFAULT
+                                                    : 'transparent'
+                                            }}
+                                        />
                                     </View>
+                                    <Text variant="labelBold" color={colors.text1}>
+                                        {s.value !== null ? Number(s.value).toFixed(1) : '--'}
+                                    </Text>
                                 </View>
-                            ))}
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.stone }}>
-                                <Text variant="caption" color={colors.primary.DEFAULT}>Good days: {summary.good_days_count}</Text>
-                                <Text variant="caption" color={colors.red.DEFAULT}>Bad days: {summary.bad_days_count}</Text>
                             </View>
+                        ))}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.stone }}>
+                            <Text variant="caption" color={colors.primary.DEFAULT}>Good days: {summary ? summary.good_days_count : '--'}</Text>
+                            <Text variant="caption" color={colors.red.DEFAULT}>Bad days: {summary ? summary.bad_days_count : '--'}</Text>
+                        </View>
+                        {summary ? (
                             <Text variant="caption" color={colors.text3} style={{ textAlign: 'center', marginTop: 8, fontStyle: 'italic' }}>
                                 *Good days: all symptom severities ≤ 3. Bad days: ANY symptom ≥ 6.
                             </Text>
-                        </Card>
-                    )}
+                        ) : (
+                            <Text variant="caption" color={colors.text3} style={{ marginTop: 8 }}>
+                                Log a few symptom check-ins to start filling this in.
+                            </Text>
+                        )}
+                    </Card>
 
                     {/* Likely Triggers */}
                     <Card>
