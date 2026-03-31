@@ -6,7 +6,7 @@
     "version": "3.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "scheme": "foodhabit",
     "newArchEnabled": true,
     "splash": {
@@ -71,12 +71,6 @@
     },
     "updates": {
       "url": "https://u.expo.dev/a729b1be-9c50-4ae8-a28a-96cbe598b18a"
-    },
-    "android": {
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ]
     }
   }
 }

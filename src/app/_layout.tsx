@@ -80,6 +80,8 @@ export default function RootLayout(): React.JSX.Element | null {
 
     // Unified Initialization
     useEffect(() => {
+        let listenerCleanup: (() => void) | undefined;
+
         async function runInit() {
             try {
                 // 1. Get last known user for RevenueCat instant hydration
@@ -92,7 +94,7 @@ export default function RootLayout(): React.JSX.Element | null {
                         apiKey: rcKey,
                         appUserID: lastUserId || undefined
                     });
-                    initializeListener();
+                    listenerCleanup = initializeListener();
                 }
 
                 // 3. Await Auth (crucial for routing)
@@ -100,38 +102,43 @@ export default function RootLayout(): React.JSX.Element | null {
 
                 // 4. Identity Sync
                 const currentUser = useAuthStore.getState().user;
-                const { sync: syncSubscription, setLoading, markLoaded, loadCachedState } = useSubscriptionStore.getState();
+                const {
+                    sync: syncSubscription,
+                    setLoading,
+                    markLoaded,
+                    loadCachedState,
+                    hydrateCustomerInfo,
+                    reset,
+                } = useSubscriptionStore.getState();
 
                 if (currentUser?.id) {
                     // Check if identity changed since configuration
                     if (currentUser.id !== lastUserId) {
                         setLoading(true); // Re-enter loading state for new identity
-                        await Purchases.logIn(currentUser.id);
+                        const loginResult = await Purchases.logIn(currentUser.id);
+                        hydrateCustomerInfo(loginResult.customerInfo);
                         await AsyncStorage.setItem('last_user_id', currentUser.id);
                     } else {
                         // Same identity, try to load cached premium state immediately!
                         await loadCachedState();
+                        markLoaded();
+                        void syncSubscription();
                     }
-
-                    // Identify user in PostHog
-                    const profile = useAuthStore.getState().profile;
-                    analytics.userIdentified(currentUser.id, {
-                        email: currentUser.email,
-                        name: profile?.full_name ?? undefined,
-                        plan: useSubscriptionStore.getState().isPremium ? 'premium' : 'free',
-                    });
-
-                    // Release the router guard immediately so app loads instantly
-                    markLoaded();
-                    // Start true sync in the background (non-blocking)
-                    syncSubscription();
 
                 } else {
                     await AsyncStorage.removeItem('last_user_id');
                     analytics.userSignedOut();
-                    // Logged-out: clear loading immediately so render guard doesn't block
-                    markLoaded();
-                    syncSubscription(); // background, non-blocking
+                    if (rcKey) {
+                        try {
+                            const customerInfo = await Purchases.logOut();
+                            hydrateCustomerInfo(customerInfo);
+                        } catch (error) {
+                            console.error('[RootLayout] RevenueCat logout error:', error);
+                            reset();
+                        }
+                    } else {
+                        reset();
+                    }
                 }
             } catch (error) {
                 console.error('[RootLayout] Initialization error:', error);
@@ -161,6 +168,7 @@ export default function RootLayout(): React.JSX.Element | null {
         return () => {
             clearTimeout(timeout);
             clearTimeout(startupTimeout);
+            listenerCleanup?.();
         };
     }, []);
 

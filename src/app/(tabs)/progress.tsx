@@ -160,7 +160,8 @@ export default function ProgressScreen(): React.JSX.Element {
     const [recentSymptoms, setRecentSymptoms] = useState<SymptomSummaryLog[]>([]);
     const [loading, setLoading]               = useState(true);
     const [refreshing, setRefreshing]         = useState(false);
-    const [historyModal, setHistoryModal]     = useState<'meals' | 'symptoms' | null>(null);
+    const [historyModal, setHistoryModal] = useState<'meals' | 'symptoms' | null>(null);
+    const [selectedInsight, setSelectedInsight] = useState<any | null>(null); // Detail view for Progress screen
 
     const fetchProgress = useCallback(async () => {
         if (!user?.id) return;
@@ -169,16 +170,10 @@ export default function ProgressScreen(): React.JSX.Element {
                 .from('ai_insights')
                 .select('*')
                 .eq('user_id', user.id)
-                .in('insight_type', ['trigger_confirmed', 'trigger_likely'])
-                .order('confidence', { ascending: false })
-                .limit(10)
+                .order('generated_at', { ascending: false })
+                .limit(30)
                 .then(res => {
-                    const manual = (profile?.known_triggers || []).map((t, i) => ({
-                        id: `manual-${i}`, title: t,
-                        body: 'Identified during onboarding',
-                        insight_type: 'manual', confidence: 'high',
-                    }));
-                    setTopTriggers([...manual, ...(res.data || [])]);
+                    setTopTriggers(res.data || []);
                 });
 
             supabase
@@ -354,70 +349,98 @@ export default function ProgressScreen(): React.JSX.Element {
                         </View>
                     </Card>
 
-                    {/* ── Triggers ──────────────────────────────────── */}
-                    <Card animated delay={60}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                            <AlertCircle size={16} color={colors.red.DEFAULT} strokeWidth={2} />
-                            <Text variant="title" color={colors.text1}>Likely Triggers</Text>
-                        </View>
-                        <Text variant="caption" color={colors.text3} style={{ marginBottom: 14 }}>
-                            Foods to watch based on your history.
-                        </Text>
-
-                        {topTriggers.length > 0 ? (
-                            <View style={{ gap: 0 }}>
-                                {topTriggers.map((trigger, i) => {
-                                    const isManual    = trigger.insight_type === 'manual';
-                                    const isConfirmed = trigger.insight_type === 'trigger_confirmed';
-                                    const tagColor    = isManual ? colors.primary.DEFAULT : isConfirmed ? colors.red.DEFAULT : colors.amber.DEFAULT;
-                                    const tagBg       = isManual ? colors.primary.light   : isConfirmed ? colors.red.light   : colors.amber.light;
-                                    const tagLabel    = isManual ? 'YOU SET' : isConfirmed ? 'CONFIRMED' : 'LIKELY';
-
-                                    return (
-                                        <View
-                                            key={trigger.id}
-                                            style={{
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
-                                                gap: 12,
-                                                paddingVertical: 11,
-                                                borderBottomWidth: i < topTriggers.length - 1 ? 1 : 0,
-                                                borderBottomColor: colors.stone,
-                                                // colored left accent
-                                                paddingLeft: 10,
-                                                marginLeft: -10,
-                                                borderLeftWidth: 3,
-                                                borderLeftColor: tagColor,
-                                            }}
-                                        >
-                                            {/* Index */}
-                                            <Text style={{ fontFamily: 'Figtree_800ExtraBold', fontSize: 13, color: colors.text3, width: 18 }}>
-                                                {i + 1}
-                                            </Text>
-
-                                            {/* Content */}
-                                            <View style={{ flex: 1 }}>
-                                                <Text variant="bodyBold" color={colors.text1}>{trigger.title}</Text>
-                                                <Text variant="caption" color={colors.text2} numberOfLines={1}>{trigger.body}</Text>
-                                            </View>
-
-                                            {/* Tag */}
-                                            <View style={{
-                                                backgroundColor: tagBg,
-                                                paddingHorizontal: 8,
-                                                paddingVertical: 3,
-                                                borderRadius: 999,
-                                            }}>
-                                                <Text variant="badge" color={tagColor}>{tagLabel}</Text>
-                                            </View>
-                                        </View>
-                                    );
-                                })}
+                    {/* ── Triggers & Insights ──────────────────────────────────── */}
+                    <View style={{ gap: 24 }}>
+                        {/* 1. Confirmed / Likely Triggers */}
+                        <View>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                                <AlertCircle size={18} color={colors.red.DEFAULT} strokeWidth={2} />
+                                <Text variant="title" color={colors.text1}>Trigger Analysis</Text>
                             </View>
-                        ) : (
-                            <Text variant="label" color={colors.text3}>No triggers detected yet. Keep logging!</Text>
+
+                            {topTriggers.filter(t => ['trigger_confirmed', 'trigger_likely', 'manual'].includes(t.insight_type)).length > 0 ? (
+                                <View style={{ gap: 12 }}>
+                                    {topTriggers.filter(t => ['trigger_confirmed', 'trigger_likely', 'manual'].includes(t.insight_type)).map((trigger) => {
+                                        const labels: Record<string, { title: string; color: string; bg: string }> = {
+                                            trigger_confirmed: { title: 'Confirmed Trigger', color: colors.red.DEFAULT, bg: colors.red.light },
+                                            trigger_likely: { title: 'Highly Likely', color: colors.red.DEFAULT, bg: colors.red.light },
+                                            manual: { title: 'Manual Entry', color: colors.primary.DEFAULT, bg: colors.primary.light },
+                                        };
+                                        const meta = labels[trigger.insight_type] || { title: 'Confirmed Trigger', color: colors.red.DEFAULT, bg: colors.red.light };
+
+                                        return (
+                                            <Pressable key={trigger.id} onPress={() => setSelectedInsight(trigger)}>
+                                                <Card style={{ 
+                                                    borderLeftWidth: 4, 
+                                                    borderLeftColor: meta.color,
+                                                    padding: 16
+                                                }}>
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                                        <Text variant="bodyBold" color={colors.text1}>{trigger.title}</Text>
+                                                        <View style={{ backgroundColor: meta.bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12 }}>
+                                                            <Text variant="badge" color={meta.color}>{meta.title.toUpperCase()}</Text>
+                                                        </View>
+                                                    </View>
+                                                    <Text variant="caption" color={colors.text2} numberOfLines={2}>{trigger.body}</Text>
+                                                    <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                                        <Text variant="labelBold" color={colors.primary.DEFAULT}>Read Full Analysis</Text>
+                                                        <ChevronRight size={14} color={colors.primary.DEFAULT} />
+                                                    </View>
+                                                </Card>
+                                            </Pressable>
+                                        );
+                                    })}
+                                </View>
+                            ) : (
+                                <Card style={{ padding: 20, alignItems: 'center', backgroundColor: colors.surface }}>
+                                    <Text variant="caption" color={colors.text3}>Your confirmed triggers will appear here.</Text>
+                                </Card>
+                            )}
+                        </View>
+
+                        {/* 2. Foods to Watch */}
+                        {topTriggers.filter(t => t.insight_type === 'trigger_watching').length > 0 && (
+                            <View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                                    <Sparkles size={18} color={colors.amber.DEFAULT} strokeWidth={2} />
+                                    <Text variant="title" color={colors.text1}>Under Review</Text>
+                                </View>
+                                <Text variant="caption" color={colors.text3} style={{ marginBottom: 12, marginTop: -8 }}>
+                                    Suspected foods that the AI is currently watching.
+                                </Text>
+                                <View style={{ gap: 10 }}>
+                                    {topTriggers.filter(t => t.insight_type === 'trigger_watching').map((trigger) => (
+                                        <Pressable key={trigger.id} onPress={() => setSelectedInsight(trigger)}>
+                                            <Card style={{ padding: 14 }}>
+                                                <Text variant="bodyBold" color={colors.text1}>{trigger.title}</Text>
+                                                <Text variant="caption" color={colors.text2} numberOfLines={1} style={{ marginTop: 2 }}>{trigger.body}</Text>
+                                            </Card>
+                                        </Pressable>
+                                    ))}
+                                </View>
+                            </View>
                         )}
-                    </Card>
+
+                         {/* 3. AI Recommendations */}
+                        {topTriggers.filter(t => t.insight_type === 'recommendation').length > 0 && (
+                            <View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                                    <Brain size={18} color={colors.purple.DEFAULT} strokeWidth={2} />
+                                    <Text variant="title" color={colors.text1}>Health Recommendations</Text>
+                                </View>
+                                <View style={{ gap: 10 }}>
+                                    {topTriggers.filter(t => t.insight_type === 'recommendation').map((trigger) => (
+                                        <Pressable key={trigger.id} onPress={() => setSelectedInsight(trigger)}>
+                                            <Card style={{ backgroundColor: colors.purple.light, borderColor: colors.purple.DEFAULT, borderWidth: 1 }}>
+                                                <Text variant="bodyBold" color={colors.purple.DEFAULT}>{trigger.title}</Text>
+                                                <Text variant="caption" color={colors.purple.DEFAULT} numberOfLines={2} style={{ marginTop: 2 }}>{trigger.body}</Text>
+                                            </Card>
+                                        </Pressable>
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+                    </View>
 
                     {/* ── Safe Foods ────────────────────────────────── */}
                     <Card animated delay={120}>
@@ -620,6 +643,53 @@ export default function ProgressScreen(): React.JSX.Element {
 
                         </ScrollView>
                     </SafeAreaView>
+                </Modal>
+
+                {/* ── Insight Detail Modal ───────────────────────── */}
+                <Modal visible={selectedInsight !== null} animationType="slide" transparent={true}>
+                    <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+                        <View style={{ backgroundColor: colors.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40, maxHeight: '80%' }}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                                {(() => {
+                                    const labels: Record<string, { title: string; color: string; bg: string }> = {
+                                        trigger_confirmed: { title: 'Confirmed Trigger', color: colors.red.DEFAULT, bg: colors.red.light },
+                                        trigger_likely: { title: 'Highly Likely', color: colors.red.DEFAULT, bg: colors.red.light },
+                                        trigger_watching: { title: 'Under Review', color: colors.amber.DEFAULT, bg: colors.amber.light },
+                                        recommendation: { title: 'Buddy Tip', color: colors.purple.DEFAULT, bg: colors.purple.light },
+                                        manual: { title: 'Manual Entry', color: colors.primary.DEFAULT, bg: colors.primary.light },
+                                    };
+                                    const meta = selectedInsight ? (labels[selectedInsight.insight_type] || { title: 'Insight', color: colors.primary.DEFAULT, bg: colors.primary.light }) : { title: 'Insight', color: colors.primary.DEFAULT, bg: colors.primary.light };
+                                    return (
+                                        <View style={{ backgroundColor: meta.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                                            <Text variant="badge" color={meta.color}>{meta.title.toUpperCase()}</Text>
+                                        </View>
+                                    );
+                                })()}
+                                <Pressable onPress={() => setSelectedInsight(null)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.stone, alignItems: 'center', justifyContent: 'center' }}>
+                                    <X size={18} color={colors.text1} />
+                                </Pressable>
+                            </View>
+                            <Text variant="heading" color={colors.text1} style={{ marginBottom: 12 }}>{selectedInsight?.title}</Text>
+                            <ScrollView>
+                                <Text variant="body" color={colors.text1} style={{ lineHeight: 22 }}>{selectedInsight?.body}</Text>
+                                {selectedInsight?.related_foods && (
+                                    <View style={{ marginTop: 20, flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                                        {selectedInsight.related_foods.map((f: string) => (
+                                            <View key={f} style={{ backgroundColor: colors.surface, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
+                                                <Text variant="caption" color={colors.text1}>{f}</Text>
+                                            </View>
+                                        ))}
+                                    </View>
+                                )}
+                            </ScrollView>
+                            <Pressable 
+                                onPress={() => setSelectedInsight(null)}
+                                style={{ backgroundColor: colors.primary.DEFAULT, height: 50, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
+                            >
+                                <Text variant="bodyBold" color="#FFF">Close</Text>
+                            </Pressable>
+                        </View>
+                    </View>
                 </Modal>
 
             </SafeAreaView>

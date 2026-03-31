@@ -24,14 +24,14 @@ serve(async (req: Request) => {
         const { user_id } = await req.json();
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-        // Get user profile
+        // 1. Get user context
         const { data: profile } = await supabase
             .from('profiles')
             .select('known_triggers, diagnosed_conditions')
             .eq('id', user_id)
             .single();
 
-        // Get last 14 days of meal logs
+        // 2. Get last 14 days of history
         const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
         const { data: mealLogs } = await supabase
             .from('meal_logs')
@@ -40,7 +40,6 @@ serve(async (req: Request) => {
             .gte('logged_at', fourteenDaysAgo)
             .order('logged_at', { ascending: false });
 
-        // Get last 14 days of symptom logs
         const { data: symptomLogs } = await supabase
             .from('symptom_logs')
             .select('*')
@@ -48,59 +47,35 @@ serve(async (req: Request) => {
             .gte('logged_at', fourteenDaysAgo)
             .order('logged_at', { ascending: false });
 
-        // Get existing insight types to avoid duplicates
-        const { data: existingInsights } = await supabase
-            .from('ai_insights')
-            .select('insight_type, title, related_foods')
-            .eq('user_id', user_id)
-            .gte('generated_at', fourteenDaysAgo)
-            .order('generated_at', { ascending: false });
-
         if (!mealLogs || mealLogs.length < 3) {
-            return new Response(JSON.stringify({ message: 'Not enough data for insights. Keep logging!' }), {
+            return new Response(JSON.stringify({ message: 'Awaiting more evidence. Keep logging your meals!' }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             });
         }
 
-        const prompt = `You are a gut health AI analyst. Analyse this user's recent food and symptom data to generate personalised insights.
+        // 3. Simplified "Unified Discovery" Prompt
+        const prompt = `You are a gut health AI coach. Analyse the logs and find the SINGLE most important health discovery for this user right now.
 
-User Profile:
-- Known triggers: ${(profile?.known_triggers || []).join(', ') || 'none'}
-- Conditions: ${(profile?.diagnosed_conditions || []).join(', ') || 'none'}
+USER LOGS (Last 14d):
+Meals: ${JSON.stringify(mealLogs, null, 1)}
+Symptoms: ${JSON.stringify(symptomLogs, null, 1)}
 
-Recent Meal Logs (last 14 days):
-${JSON.stringify(mealLogs, null, 1)}
+INSTRUCTIONS:
+- Identify one major trigger or pattern.
+- Combine the finding, the evidence, and a specific solution into a single discovery.
+- Use a 1-100 Confidence Score based on frequency and severity (e.g., 90+ if severe pain happened multiple times).
+- Match meals to symptoms that occurred 2-6 hours LATER.
+- FOR THE FIX: If confidence is >70, propose a specific "3-Day Challenge" (e.g. "3-Day Lactose-Free Test").
 
-Recent Symptom Logs (last 14 days):
-${JSON.stringify(symptomLogs, null, 1)}
-
-Existing Insights (avoid duplicating):
-${JSON.stringify(existingInsights, null, 1)}
-
-Generate 1-3 NEW insights. Each insight must be one of these types:
-- trigger_watching: A food that appeared before symptoms but needs more data (confidence: low)
-- trigger_likely: A food that consistently appears before symptom spikes (confidence: medium)
-- trigger_confirmed: Strong correlation confirmed over multiple logs (confidence: high)
-- pattern: A non-food pattern (meal timing, symptom timing, repetition) affecting symptoms
-- recommendation: A specific, actionable suggestion
-- weekly_summary: An overview of the week's gut health
-
-Respond with a JSON array:
-[
-  {
-    "insight_type": "trigger_watching" | "trigger_likely" | "trigger_confirmed" | "pattern" | "recommendation" | "weekly_summary",
-    "title": "short descriptive title",
-    "body": "detailed explanation with specific data references",
-    "related_foods": ["food1", "food2"],
-    "confidence": "low" | "medium" | "high"
-  }
-]
-
-Rules:
-- Do NOT repeat insights that already exist
-- Be specific — reference actual meals and dates from the data
-- Correlate meal timing with symptom timing (symptoms 2-6h after meals)
-- If insufficient data, say "Keep logging" rather than guessing`;
+JSON RESPONSE FORMAT:
+{
+  "title": "Short descriptive title",
+  "body": "A short 2-3 sentence story explaining the trigger and the specific dinner/lunch date it happened.",
+  "buddy_tip": "One clear actionable solution (e.g., replace yogurt with almond yogurt).",
+  "active_protocol": "A 3-Day Challenge title (e.g., '3-Day Lactose-Free Test') or null if confidence < 70",
+  "related_foods": ["food1"],
+  "confidence_score": 1-100
+}`;
 
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
@@ -109,32 +84,40 @@ Rules:
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: 'application/json', temperature: 0.3 },
+                    generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
                 }),
             }
         );
 
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) throw new Error('No response from Gemini');
+        if (!text) throw new Error('AI Engine is currently resting.');
 
-        const insights = JSON.parse(text);
+        const discovery = JSON.parse(text);
 
-        // Store the insights
-        if (Array.isArray(insights) && insights.length > 0) {
-            const insightRows = insights.map((insight: any) => ({
+        // 4. Map Discovery to DB (Mapping to existing types for backward compat but unified logic)
+        if (discovery && discovery.title) {
+            const mappedType = discovery.confidence_score >= 80 ? 'trigger_confirmed' : 
+                               discovery.confidence_score >= 50 ? 'trigger_likely' : 'trigger_watching';
+            
+            // Append the buddy tip and protocol to the body text for now
+            const fullBody = `${discovery.body}\n\n💡 Buddy Tip: ${discovery.buddy_tip}${discovery.active_protocol ? `\n\n🎯 Protocol: ${discovery.active_protocol}` : ''}`;
+
+            const insightRow = {
                 user_id,
-                insight_type: insight.insight_type,
-                title: insight.title,
-                body: insight.body,
-                related_foods: insight.related_foods || [],
-                confidence: insight.confidence || 'low',
-            }));
+                insight_type: mappedType,
+                title: discovery.title,
+                body: fullBody,
+                related_foods: discovery.related_foods || [],
+                confidence: discovery.confidence_score >= 80 ? 'high' : 
+                             discovery.confidence_score >= 50 ? 'medium' : 'low',
+                 // Note: If you want a dedicated 'active_protocol' column in the DB, we can add it later.
+            };
 
-            await supabase.from('ai_insights').insert(insightRows);
+            await supabase.from('ai_insights').insert([insightRow]);
         }
 
-        return new Response(JSON.stringify({ insights }), {
+        return new Response(JSON.stringify({ discovery }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     } catch (error: any) {

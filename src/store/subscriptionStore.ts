@@ -1,8 +1,11 @@
 import { create } from 'zustand';
 import Purchases, { type CustomerInfo } from 'react-native-purchases';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSubscriptionStateFromCustomerInfo, type PlanDetails } from '@/lib/subscription';
 
 const SUBSCRIPTION_TIMEOUT_MS = 5000;
+
+let customerInfoListener: ((info: CustomerInfo) => void) | null = null;
 
 const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -17,12 +20,6 @@ const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, label: st
     }
 };
 
-export interface PlanDetails {
-    productIdentifier: string;
-    latestPurchaseDate: string;
-    expirationDate: string | null;
-}
-
 interface SubscriptionState {
     isPremium: boolean;
     isLoading: boolean;
@@ -31,6 +28,8 @@ interface SubscriptionState {
     setPremium: (isPremium: boolean) => void;
     setLoading: (isLoading: boolean) => void;
     markLoaded: () => void; // sets isLoading:false + hasLoaded:true atomically
+    hydrateCustomerInfo: (customerInfo: CustomerInfo) => void;
+    reset: () => void;
     sync: () => Promise<void>;
     initializeListener: () => () => void;
     loadCachedState: () => Promise<void>;
@@ -45,12 +44,21 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
     setPremium: (isPremium) => set({ isPremium }),
     setLoading: (isLoading) => set({ isLoading }),
     markLoaded: () => set({ isLoading: false, hasLoaded: true }),
+    hydrateCustomerInfo: (customerInfo) => {
+        const nextState = getSubscriptionStateFromCustomerInfo(customerInfo);
+        AsyncStorage.setItem('last_premium_state', nextState.isPremium ? 'true' : 'false').catch(() => {});
+        set({ ...nextState, isLoading: false, hasLoaded: true });
+    },
+    reset: () => {
+        AsyncStorage.removeItem('last_premium_state').catch(() => {});
+        set({ isPremium: false, isLoading: false, hasLoaded: true, planDetails: null });
+    },
 
     loadCachedState: async () => {
         try {
             const cached = await AsyncStorage.getItem('last_premium_state');
-            if (cached === 'true') {
-                set({ isPremium: true });
+            if (cached === 'true' || cached === 'false') {
+                set({ isPremium: cached === 'true' });
             }
         } catch (e) {
             // silent fail on cache read
@@ -64,19 +72,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
                 SUBSCRIPTION_TIMEOUT_MS,
                 'RevenueCat sync'
             );
-            const activeEntitlement = customerInfo.entitlements.active['GutScan Pro'];
-            const hasPremium = !!activeEntitlement;
-
-            const details: PlanDetails | null = activeEntitlement ? {
-                productIdentifier: activeEntitlement.productIdentifier,
-                latestPurchaseDate: activeEntitlement.latestPurchaseDate,
-                expirationDate: activeEntitlement.expirationDate,
-            } : null;
-
-            // Cache the result for next app launch
-            AsyncStorage.setItem('last_premium_state', hasPremium ? 'true' : 'false').catch(() => {});
-
-            set({ isPremium: hasPremium, planDetails: details, isLoading: false, hasLoaded: true });
+            get().hydrateCustomerInfo(customerInfo);
         } catch (e) {
             console.error('Subscription sync error:', e);
             // Always mark as loaded so render guard doesn't block forever
@@ -85,20 +81,18 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
     },
 
     initializeListener: () => {
-        const listener = (info: CustomerInfo) => {
-            const activeEntitlement = info.entitlements.active['GutScan Pro'];
-            const hasPremium = !!activeEntitlement;
-            const details: PlanDetails | null = activeEntitlement ? {
-                productIdentifier: activeEntitlement.productIdentifier,
-                latestPurchaseDate: activeEntitlement.latestPurchaseDate,
-                expirationDate: activeEntitlement.expirationDate,
-            } : null;
+        if (!customerInfoListener) {
+            customerInfoListener = (info: CustomerInfo) => {
+                get().hydrateCustomerInfo(info);
+            };
+            Purchases.addCustomerInfoUpdateListener(customerInfoListener);
+        }
 
-            AsyncStorage.setItem('last_premium_state', hasPremium ? 'true' : 'false').catch(() => {});
-            set({ isPremium: hasPremium, planDetails: details, isLoading: false, hasLoaded: true });
+        return () => {
+            if (customerInfoListener) {
+                Purchases.removeCustomerInfoUpdateListener(customerInfoListener);
+                customerInfoListener = null;
+            }
         };
-
-        Purchases.addCustomerInfoUpdateListener(listener);
-        return () => { };
     }
 }));

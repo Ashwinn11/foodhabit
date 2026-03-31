@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, ScrollView, Pressable, RefreshControl, Image } from 'react-native';
+import { View, ScrollView, Pressable, RefreshControl, Image, Modal } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     Sunrise, Sun, Moon, Heart, CheckCircle2, ChevronRight,
-    Zap, ArrowRight, TrendingDown, TrendingUp,
+    Zap, ArrowRight, TrendingDown, TrendingUp, Sparkles, X, ShieldCheck, Brain,
 } from 'lucide-react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
 import Animated, { useAnimatedProps, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
@@ -50,9 +50,11 @@ export default function HomeScreen(): React.JSX.Element {
     const [gutScore, setGutScore] = useState<number | null>(null);
     const [gutSeverity, setGutSeverity] = useState<'minimal' | 'mild' | 'moderate' | 'severe' | null>(null);
     const [streak, setStreak] = useState<Streak | null>(null);
-    const [latestInsight, setLatestInsight] = useState<AiInsight | null>(null);
-    const [counts, setCounts] = useState({ meals: 0, symptoms: 0 }); // Added for sync
+    const [insights, setInsights] = useState<AiInsight[]>([]); // Changed from single latestInsight
+    const [lastMeal, setLastMeal] = useState<any | null>(null);
+    const [counts, setCounts] = useState({ meals: 0, symptoms: 0 });
     const [currentMealRecipe, setCurrentMealRecipe] = useState<any | null>(null);
+    const [selectedInsight, setSelectedInsight] = useState<AiInsight | null>(null); // For detail view
     const fetchingRecipeRef = useRef(false);
 
     // Gut score ring animation
@@ -167,15 +169,25 @@ export default function HomeScreen(): React.JSX.Element {
 
             if (streakData) setStreak(streakData);
 
-            // Fetch latest insight
+            // Fetch latest insights (last 5)
             const { data: insightData } = await supabase
                 .from('ai_insights')
                 .select('*')
                 .eq('user_id', user.id)
                 .order('generated_at', { ascending: false })
-                .limit(1);
+                .limit(5);
 
-            if (insightData && insightData.length > 0) setLatestInsight(insightData[0]);
+            setInsights(insightData || []);
+
+            // Fetch last meal for window calculation
+            const { data: lastMealData } = await supabase
+                .from('meal_logs')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('logged_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            setLastMeal(lastMealData);
 
             // Fetch counts for progress sync
             const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
@@ -230,17 +242,8 @@ export default function HomeScreen(): React.JSX.Element {
         { label: 'Symptoms', emoji: '🤒', done: todayLogs.symptoms, mealType: 'symptoms', color: colors.red.DEFAULT, bgColor: '#FDE8E6' },
     ];
 
-    const insightBorderColor = latestInsight ? {
-        trigger_watching: colors.red.DEFAULT,
-        trigger_likely: colors.red.DEFAULT,
-        trigger_confirmed: colors.red.DEFAULT,
-        pattern: colors.amber.DEFAULT,
-        recommendation: colors.purple.DEFAULT,
-        weekly_summary: colors.primary.DEFAULT,
-    }[latestInsight.insight_type] : colors.primary.DEFAULT;
-
     // Only show skeleton if we have NO data at all
-    if (loading && !streak && !latestInsight && gutScore === null) {
+    if (loading && !streak && insights.length === 0 && gutScore === null) {
         return (
             <LinearGradient colors={[colors.gradient.start, colors.gradient.mid, colors.gradient.end]} style={{ flex: 1 }}>
                 <SafeAreaView edges={['top']} style={{ flex: 1, paddingHorizontal: 20, gap: 16, paddingTop: 16 }}>
@@ -348,46 +351,100 @@ export default function HomeScreen(): React.JSX.Element {
                         </View>
                     </Card>
 
-                    {/* 2. Latest Insight / Progress Card */}
-                    {latestInsight ? (
-                        <Card animated delay={200} style={{ marginTop: 16, borderLeftWidth: 3.5, borderLeftColor: insightBorderColor }}>
-                            <Text variant="title" color={colors.text1} numberOfLines={1}>{latestInsight.title}</Text>
-                            <Text variant="caption" color={colors.text2} numberOfLines={2} style={{ marginTop: 4, lineHeight: 14 }}>
-                                {latestInsight.body}
-                            </Text>
-                            <Pressable
-                                onPress={() => router.push('/(tabs)/progress')}
-                                style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}
-                            >
-                                <Text variant="labelBold" color={colors.primary.DEFAULT}>See all insights</Text>
-                                <ArrowRight size={14} color={colors.primary.DEFAULT} />
-                            </Pressable>
-                        </Card>
-                    ) : (
+                    {/* 2. AI Detective Status (Transparency) */}
+                    {!insights.find(i => i.insight_type === 'trigger_confirmed' || i.insight_type === 'trigger_likely') && (
                         <Card animated delay={200} style={{ 
                             marginTop: 16,
-                            backgroundColor: counts.meals >= 3 && counts.symptoms >= 2 ? colors.primary.light : colors.surface 
+                            backgroundColor: (() => {
+                                if (!lastMeal) return colors.surface;
+                                const mealTime = new Date(lastMeal.logged_at).getTime();
+                                const now = Date.now();
+                                if (now >= mealTime + 2 * 3600000 && now <= mealTime + 6 * 3600000) return colors.primary.light;
+                                return colors.surface;
+                            })()
                         }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                {counts.meals >= 3 && counts.symptoms >= 2 && <Zap size={14} color={colors.primary.DEFAULT} />}
+                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary.DEFAULT }} />
                                 <Text variant="bodyBold" color={colors.text1}>
-                                    {counts.meals >= 3 && counts.symptoms >= 2 ? 'AI Analysis in Progress' : 'Insights coming soon'}
+                                    {(() => {
+                                        if (!lastMeal) return "Detective: Awaiting Evidence";
+                                        const mealTime = new Date(lastMeal.logged_at).getTime();
+                                        const now = Date.now();
+                                        if (now < mealTime + 2 * 3600000) return `Investigating your ${lastMeal.meal_type}...`;
+                                        if (now <= mealTime + 6 * 3600000) return "Evidence Window Open!";
+                                        return "No Active Investigations";
+                                    })()}
                                 </Text>
                             </View>
-                            <Text variant="caption" color={colors.text2} style={{ marginTop: 4 }}>
-                                {counts.meals >= 3 && counts.symptoms >= 2 
-                                    ? "Your gut patterns are being calculated. Check back in a few minutes!"
-                                    : "Log your food and symptoms to unlock personalized AI insights."}
+
+                            <Text variant="caption" color={colors.text2} style={{ marginTop: 6, lineHeight: 16 }}>
+                                {(() => {
+                                    if (!lastMeal) return "Log your first meal to start the investigation.";
+                                    const mealTime = new Date(lastMeal.logged_at).getTime();
+                                    const windowStart = new Date(mealTime + 2 * 3600000);
+                                    const windowEnd = new Date(mealTime + 6 * 3600000);
+                                    const now = Date.now();
+
+                                    const startStr = windowStart.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+                                    if (now < mealTime + 2 * 3600000) return `Logged ${lastMeal.meal_type} at ${new Date(mealTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}. Check in around ${startStr} to complete this analysis.`;
+                                    if (now <= mealTime + 6 * 3600000) return `The 2-6 hour window is open! Log how you feel right now to help the AI detect triggers.`;
+                                    return `Last investigation closed. Log your next meal/snack to try again!`;
+                                })()}
                             </Text>
-                            <View style={{ marginTop: 10, height: 6, borderRadius: 3, backgroundColor: colors.stone, overflow: 'hidden' }}>
-                                <View style={{ 
-                                    height: 6, 
-                                    borderRadius: 3, 
-                                    backgroundColor: colors.primary.DEFAULT, 
-                                    width: `${Math.min(100, ((counts.meals/3 + counts.symptoms/2) / 2) * 100)}%` 
-                                }} />
-                            </View>
                         </Card>
+                    )}
+
+                    {/* 3. The SINGLE Most Important Insight Card */}
+                    {insights.length > 0 && (
+                        <View style={{ marginTop: 16 }}>
+                             <Text variant="labelBold" color={colors.text2} style={{ marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                Active Trigger Watch
+                            </Text>
+                            {(() => {
+                                // Find the most critical insight (Confirmed/Likely first)
+                                const insight = insights.find(i => ['trigger_confirmed', 'trigger_likely'].includes(i.insight_type)) || insights[0];
+                                
+                                const labels: Record<string, { title: string; color: string }> = {
+                                    trigger_confirmed: { title: 'Confirmed Trigger', color: colors.red.DEFAULT },
+                                    trigger_likely: { title: 'Highly Likely', color: colors.red.DEFAULT },
+                                    trigger_watching: { title: 'Under Review', color: colors.amber.DEFAULT },
+                                    recommendation: { title: 'Buddy Tip', color: colors.purple.DEFAULT },
+                                    pattern: { title: 'Trend Alert', color: colors.amber.DEFAULT },
+                                    weekly_summary: { title: 'Weekly Recap', color: colors.primary.DEFAULT },
+                                };
+                                const meta = labels[insight.insight_type] || { title: 'Insight', color: colors.primary.DEFAULT };
+
+                                return (
+                                    <Pressable key={insight.id} onPress={() => setSelectedInsight(insight)}>
+                                        <Card 
+                                            animated 
+                                            delay={300} 
+                                            style={{ 
+                                                borderLeftWidth: 4, 
+                                                borderLeftColor: meta.color,
+                                                padding: 20
+                                            }}
+                                        >
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                                                <Sparkles size={14} color={meta.color} />
+                                                <Text variant="badge" color={meta.color} style={{ textTransform: 'uppercase' }}>
+                                                    {meta.title}
+                                                </Text>
+                                            </View>
+                                            <Text variant="title" color={colors.text1} numberOfLines={2}>{insight.title}</Text>
+                                            <Text variant="caption" color={colors.text2} numberOfLines={2} style={{ marginTop: 6, lineHeight: 15 }}>
+                                                {insight.body}
+                                            </Text>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 14 }}>
+                                                <Text variant="labelBold" color={colors.primary.DEFAULT}>Read Full Analysis</Text>
+                                                <ArrowRight size={14} color={colors.primary.DEFAULT} />
+                                            </View>
+                                        </Card>
+                                    </Pressable>
+                                );
+                            })()}
+                        </View>
                     )}
 
                     {/* 3. Today's Log Grid */}
@@ -479,6 +536,129 @@ export default function HomeScreen(): React.JSX.Element {
                     </Card>
                 </ScrollView>
             </SafeAreaView>
+
+            {/* ── Insight Detail Modal ────────────────────────────────────────────────── */}
+            <Modal
+                visible={selectedInsight !== null}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setSelectedInsight(null)}
+            >
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+                    <View style={{ 
+                        backgroundColor: colors.bg, 
+                        borderTopLeftRadius: 24, 
+                        borderTopRightRadius: 24, 
+                        maxHeight: '85%',
+                        padding: 24,
+                        paddingBottom: 40,
+                        gap: 20
+                    }}>
+                        {/* Header */}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            {(() => {
+                                 const labels: Record<string, { title: string; color: string; bg: string }> = {
+                                    trigger_confirmed: { title: 'Confirmed Trigger', color: colors.red.DEFAULT, bg: colors.red.light },
+                                    trigger_likely: { title: 'Highly Likely', color: colors.red.DEFAULT, bg: colors.red.light },
+                                    trigger_watching: { title: 'Under Review', color: colors.amber.DEFAULT, bg: colors.amber.light },
+                                    recommendation: { title: 'Buddy Tip', color: colors.purple.DEFAULT, bg: colors.purple.light },
+                                    pattern: { title: 'Trend Alert', color: colors.amber.DEFAULT, bg: colors.amber.light },
+                                    weekly_summary: { title: 'Weekly Recap', color: colors.primary.DEFAULT, bg: colors.primary.light },
+                                };
+                                const typeKey = selectedInsight?.insight_type || 'recommendation';
+                                const meta = labels[typeKey] || { title: 'Insight', color: colors.primary.DEFAULT, bg: colors.primary.light };
+                                
+                                return (
+                                    <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: meta.bg }}>
+                                        <Text variant="badge" color={meta.color}>{meta.title.toUpperCase()}</Text>
+                                    </View>
+                                );
+                            })()}
+                           <Pressable onPress={() => setSelectedInsight(null)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.stone, alignItems: 'center', justifyContent: 'center' }}>
+                               <X size={18} color={colors.text1} />
+                           </Pressable>
+                        </View>
+
+                        <View>
+                            <Text variant="heading" color={colors.text1}>{selectedInsight?.title}</Text>
+                            <Text variant="caption" color={colors.text3} style={{ marginTop: 4 }}>
+                                Generated on {selectedInsight ? new Date(selectedInsight.generated_at).toLocaleDateString() : ''}
+                            </Text>
+                        </View>
+
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <Text variant="body" color={colors.text1} style={{ lineHeight: 22 }}>
+                                {selectedInsight?.body}
+                            </Text>
+
+                            {selectedInsight?.related_foods && selectedInsight.related_foods.length > 0 && (
+                                <View style={{ marginTop: 24 }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                                        <Heart size={16} color={colors.text1} />
+                                        <Text variant="labelBold" color={colors.text1}>Related Foods</Text>
+                                    </View>
+                                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                                        {selectedInsight.related_foods.map(food => (
+                                            <View key={food} style={{ backgroundColor: colors.surface, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
+                                                <Text variant="body" color={colors.text1}>{food}</Text>
+                                            </View>
+                                        ))}
+                                    </View>
+                                </View>
+                            )}
+
+                            {/* Buddy Correlation: Find matching recommendations */}
+                            {selectedInsight && selectedInsight.insight_type !== 'recommendation' && (
+                                (() => {
+                                    const relatedTip = insights.find(i => 
+                                        i.insight_type === 'recommendation' && 
+                                        i.related_foods?.some(f => selectedInsight.related_foods?.includes(f))
+                                    );
+
+                                    if (!relatedTip) return null;
+
+                                    return (
+                                        <View style={{ marginTop: 24, padding: 16, backgroundColor: colors.purple.light, borderRadius: 16, borderWidth: 1, borderColor: colors.purple.DEFAULT }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                                                <Brain size={16} color={colors.purple.DEFAULT} />
+                                                <Text variant="labelBold" color={colors.purple.DEFAULT}>Suggested Next Step</Text>
+                                            </View>
+                                            <Text variant="bodyBold" color={colors.purple.DEFAULT} style={{ marginBottom: 4 }}>{relatedTip.title}</Text>
+                                            <Text variant="caption" color={colors.purple.DEFAULT} style={{ lineHeight: 16 }}>{relatedTip.body}</Text>
+                                        </View>
+                                    );
+                                })()
+                            )}
+
+                            <Card style={{ marginTop: 24, backgroundColor: colors.primary.light, borderColor: colors.primary.mid }}>
+                                <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+                                    <ShieldCheck size={20} color={colors.primary.DEFAULT} />
+                                    <View style={{ flex: 1 }}>
+                                        <Text variant="bodyBold" color={colors.primary.DEFAULT}>Confidence: {selectedInsight?.confidence?.toUpperCase() || 'LOW'}</Text>
+                                        <Text variant="caption" color={colors.primary.DEFAULT} style={{ opacity: 0.8 }}>
+                                            Analysis based on your last 14 days of personal logs and medical guidelines.
+                                        </Text>
+                                    </View>
+                                </View>
+                            </Card>
+                        </ScrollView>
+
+                        <Pressable 
+                            onPress={() => setSelectedInsight(null)}
+                            style={{ 
+                                backgroundColor: colors.primary.DEFAULT, 
+                                height: 54, 
+                                borderRadius: 16, 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                marginTop: 10
+                            }}
+                        >
+                            <Text variant="bodyBold" color="#FFF">Got it, thanks!</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal>
         </LinearGradient>
     );
 }
