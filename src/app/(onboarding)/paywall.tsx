@@ -32,25 +32,34 @@ export default function PaywallScreen(): React.JSX.Element {
     const [selectedPackage, setSelectedPackage] = useState<PurchasesPackage | null>(null);
     const [loading, setLoading] = useState(true);
     const [finishing, setFinishing] = useState(false);
-
+    const [eligibility, setEligibility] = useState<Record<string, number>>({});
+    
     useEffect(() => {
         const fetchOfferings = async () => {
             try {
                 const offerings = await Purchases.getOfferings();
                 if (offerings.current !== null && offerings.current.availablePackages.length !== 0) {
-                    // Handle both custom identifiers and default identifiers
                     const targetIds = ['rc_annual', 'rc_monthly', 'rc_weekly', 'annual', 'monthly', 'weekly', '$rc_annual', '$rc_monthly', '$rc_weekly'];
-                    const validPackages = offerings.current.availablePackages.filter(pkg => 
+                    const pkgsToUse = offerings.current.availablePackages.filter(pkg => 
                         targetIds.includes(pkg.identifier) || targetIds.includes(pkg.identifier.toLowerCase())
                     );
                     
-                    const pkgsToUse = validPackages.length > 0 ? validPackages : offerings.current.availablePackages;
+                    const finalPkgs = pkgsToUse.length > 0 ? pkgsToUse : offerings.current.availablePackages;
                     
-                    if (pkgsToUse.length > 0) {
-                        setPackages(pkgsToUse);
-                        // Default to annual first
-                        const annual = pkgsToUse.find(p => p.identifier.toLowerCase().includes('annual'));
-                        setSelectedPackage(annual || pkgsToUse[0]);
+                    if (finalPkgs.length > 0) {
+                        setPackages(finalPkgs);
+                        const annual = finalPkgs.find(p => p.identifier.toLowerCase().includes('annual'));
+                        setSelectedPackage(annual || finalPkgs[0]);
+
+                        // CHECK ELIGIBILITY
+                        const productIds = finalPkgs.map(p => p.product.identifier);
+                        const result = await Purchases.checkTrialOrIntroductoryPriceEligibility(productIds);
+                        // Convert result to simple ID -> Status map
+                        const statusMap: Record<string, number> = {};
+                        Object.keys(result).forEach(key => {
+                            statusMap[key] = result[key].status;
+                        });
+                        setEligibility(statusMap);
                     }
                 }
             } catch (error) {
@@ -63,6 +72,11 @@ export default function PaywallScreen(): React.JSX.Element {
         fetchOfferings();
         analytics.paywallViewed('onboarding');
     }, []);
+
+    const isTrialEligible = (pkg: PurchasesPackage) => {
+        // Status 0 represents ELIGIBLE
+        return eligibility[pkg.product.identifier] === 0;
+    };
 
     const completeOnboarding = async (): Promise<void> => {
         try {
@@ -189,10 +203,8 @@ export default function PaywallScreen(): React.JSX.Element {
                                 if (isAnnual) weeklyPriceNum = pkg.product.price / 52;
                                 if (isMonthly) weeklyPriceNum = (pkg.product.price * 12) / 52;
                                 
-                                // Safe extraction of currency symbol
                                 const symbolMatch = pkg.product.priceString.match(/^[^\d\s]+/);
                                 const currencySymbol = symbolMatch ? symbolMatch[0] : '$';
-                                const formattedWeekly = `${currencySymbol}${weeklyPriceNum.toFixed(2)} / week`;
                                 
                                 return (
                                     <Pressable
@@ -252,11 +264,12 @@ export default function PaywallScreen(): React.JSX.Element {
                                 const intro = selectedPackage.product.introPrice;
                                 const suffix = isAnnual ? '/year' : isMonthly ? '/month' : '/week';
                                 const priceString = selectedPackage.product.priceString || '';
+                                const eligible = isTrialEligible(selectedPackage);
                                 
-                                if (intro && intro.periodNumberOfUnits && intro.periodUnit) {
+                                if (eligible && intro && intro.periodNumberOfUnits && intro.periodUnit) {
                                     return `Try ${intro.periodNumberOfUnits} ${intro.periodUnit.toLowerCase()}s free, then ${priceString}${suffix}`;
                                 }
-                                return `Continue with ${priceString}${suffix}`;
+                                return `Continue for ${priceString}${suffix}`;
                             })()}
                             onPress={handlePurchase}
                             loading={finishing}
@@ -291,4 +304,3 @@ export default function PaywallScreen(): React.JSX.Element {
         </LinearGradient>
     );
 }
-

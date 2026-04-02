@@ -104,10 +104,20 @@ function getSymptomStatus(entry: SymptomSummaryLog): { title: string; color: str
     ].sort((a, b) => b.value - a.value);
 
     const top = pairs[0];
-    const detail = top && top.value > 0 ? `${top.label} was highest` : 'No symptoms recorded';
-    if (!top || top.value <= 2) return { title: 'Calm check-in',  color: colors.primary.DEFAULT, bg: colors.primary.light, detail };
-    if (top.value <= 5)         return { title: 'Okay check-in',  color: colors.amber.DEFAULT,   bg: colors.amber.light,   detail };
+    const detail = top && top.value > 0 
+        ? `${getNameForSeverity(top.value)} ${top.label}`
+        : 'No symptoms recorded';
+        
+    if (!top || top.value <= 3) return { title: 'Calm check-in',  color: colors.primary.DEFAULT, bg: colors.primary.light, detail };
+    if (top.value <= 7)         return { title: 'Okay check-in',  color: colors.amber.DEFAULT,   bg: colors.amber.light,   detail };
     return                             { title: 'Rough check-in', color: colors.red.DEFAULT,     bg: colors.red.light,     detail };
+}
+
+function getNameForSeverity(v: number): string {
+    if (v >= 8) return 'Extreme';
+    if (v >= 5) return 'Severe';
+    if (v >= 3) return 'Moderate';
+    return 'Mild';
 }
 
 function severityColor(v: number) {
@@ -314,15 +324,20 @@ export default function ProgressScreen(): React.JSX.Element {
                             <Pressable onPress={() => setHistoryModal('meals')}><Text variant="caption" color={colors.primary.DEFAULT}>See all</Text></Pressable>
                         </View>
                         <View style={{ gap: 10 }}>
-                            {recentMeals.slice(0, 3).map(meal => (
-                                <View key={meal.id} style={{ flexDirection: 'row', gap: 12, backgroundColor: colors.bg, padding: 12, borderRadius: 14 }}>
-                                    <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary.light, alignItems: 'center', justifyContent: 'center' }}>
-                                        {getMealIcon(meal.meal_type)}
+                            {recentMeals.slice(0, 3).map(meal => {
+                                const foodList = (meal.foods as any[] || []).map(f => f.name).join(', ');
+                                return (
+                                    <View key={meal.id} style={{ flexDirection: 'row', gap: 12, backgroundColor: colors.bg, padding: 12, borderRadius: 14 }}>
+                                        <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary.light, alignItems: 'center', justifyContent: 'center' }}>
+                                            {getMealIcon(meal.meal_type)}
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text variant="bodyBold" numberOfLines={1}>{foodList || meal.meal_type}</Text>
+                                            <Text variant="caption" color={colors.text3}>{meal.meal_type.toUpperCase()} • {fmtTime(meal.logged_at)}</Text>
+                                        </View>
                                     </View>
-                                    <Text variant="bodyBold" style={{ flex: 1 }}>{meal.meal_type}</Text>
-                                    <Text variant="caption" color={colors.text3}>{fmtTime(meal.logged_at)}</Text>
-                                </View>
-                            ))}
+                                );
+                            })}
                         </View>
                     </Card>
 
@@ -335,12 +350,27 @@ export default function ProgressScreen(): React.JSX.Element {
                         <View style={{ gap: 10 }}>
                             {recentSymptoms.slice(0, 3).map((entry, index) => {
                                 const status = getSymptomStatus(entry);
+                                const symptomDetail = [
+                                    entry.pain > 0 ? { label: 'Pain', val: entry.pain } : null,
+                                    entry.bloating > 0 ? { label: 'Bloat', val: entry.bloating } : null,
+                                    entry.urgency > 0 ? { label: 'Urgency', val: entry.urgency } : null,
+                                ].filter(Boolean).slice(0, 2);
+
                                 return (
                                     <View key={index} style={{ flexDirection: 'row', gap: 12, backgroundColor: colors.bg, padding: 12, borderRadius: 14 }}>
                                         <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: status.bg, alignItems: 'center', justifyContent: 'center' }}>
                                             <Sparkles size={14} color={status.color} />
                                         </View>
-                                        <Text variant="bodyBold" style={{ flex: 1 }}>{status.title}</Text>
+                                        <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+                                            {symptomDetail.map((s, i) => (
+                                                <View key={i} style={{ backgroundColor: s!.val >= 8 ? colors.red.light : colors.stone, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                                                    <Text key={i} variant="badge" color={s!.val >= 8 ? colors.red.DEFAULT : colors.text2}>
+                                                        {getNameForSeverity(s!.val).toUpperCase()} {s!.label}
+                                                    </Text>
+                                                </View>
+                                            ))}
+                                            {symptomDetail.length === 0 && <Text variant="bodyBold">No symptoms</Text>}
+                                        </View>
                                         <Text variant="caption" color={colors.text3}>{fmtTime(entry.logged_at)}</Text>
                                     </View>
                                 );
@@ -359,27 +389,45 @@ export default function ProgressScreen(): React.JSX.Element {
                             </Pressable>
                         </View>
                         <ScrollView contentContainerStyle={{ padding: 20, gap: 12, paddingBottom: 40 }}>
-                            {historyModal === 'meals' && recentMeals.map(meal => (
-                                <Card key={meal.id} elevated={false} style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-                                    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary.light, alignItems: 'center', justifyContent: 'center' }}>
-                                        {getMealIcon(meal.meal_type)}
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text variant="bodyBold">{meal.meal_type}</Text>
-                                        <Text variant="caption" color={colors.text3}>{fmtTime(meal.logged_at)}</Text>
-                                    </View>
-                                </Card>
-                            ))}
+                            {historyModal === 'meals' && recentMeals.map(meal => {
+                                const foodList = (meal.foods as any[] || []).map(f => f.name).join(', ');
+                                return (
+                                    <Card key={meal.id} elevated={false} style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+                                        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.primary.light, alignItems: 'center', justifyContent: 'center' }}>
+                                            {getMealIcon(meal.meal_type)}
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text variant="bodyBold">{foodList || meal.meal_type}</Text>
+                                            <Text variant="caption" color={colors.text3}>{meal.meal_type.toUpperCase()} • {fmtTime(meal.logged_at)}</Text>
+                                        </View>
+                                    </Card>
+                                );
+                            })}
                             {historyModal === 'symptoms' && recentSymptoms.map((entry, index) => {
                                 const status = getSymptomStatus(entry);
+                                const symptoms = [
+                                    { label: 'Pain', val: entry.pain },
+                                    { label: 'Bloat', val: entry.bloating },
+                                    { label: 'Urgency', val: entry.urgency },
+                                ].filter(s => s.val > 0);
+                                
                                 return (
                                     <Card key={index} elevated={false} style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
                                         <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: status.bg, alignItems: 'center', justifyContent: 'center' }}>
                                             <Sparkles size={14} color={status.color} />
                                         </View>
                                         <View style={{ flex: 1 }}>
-                                            <Text variant="bodyBold">{status.title}</Text>
-                                            <Text variant="caption" color={colors.text3}>{fmtTime(entry.logged_at)}</Text>
+                                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                                                {symptoms.map((s, i) => (
+                                                    <View key={i} style={{ backgroundColor: s.val >= 8 ? colors.red.light : colors.stone, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                                                        <Text variant="badge" color={s.val >= 8 ? colors.red.DEFAULT : colors.text2}>
+                                                            {getNameForSeverity(s.val).toUpperCase()} {s.label}
+                                                        </Text>
+                                                    </View>
+                                                ))}
+                                                {symptoms.length === 0 && <Text variant="bodyBold">No symptoms</Text>}
+                                            </View>
+                                            <Text variant="caption" color={colors.text3}>{status.title.toUpperCase()} • {fmtTime(entry.logged_at)}</Text>
                                         </View>
                                     </Card>
                                 );
