@@ -222,15 +222,15 @@ export default function PaywallScreen(): React.JSX.Element {
                                                     )}
                                                 </View>
                                                 <Text variant="caption" color={colors.text2} style={{ marginTop: 4 }}>
-                                                    Billed as {pkg.product.priceString}{isAnnual ? '/year' : isMonthly ? '/month' : '/week'}
+                                                    Just {currencySymbol}{weeklyPriceNum.toFixed(2)} / week
                                                 </Text>
                                             </View>
                                             <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
-                                                <Text variant="title" color={colors.text1} style={{ fontSize: 20 }}>
-                                                    {currencySymbol}{weeklyPriceNum.toFixed(2)}
+                                                <Text variant="title" color={colors.text1} style={{ fontSize: 24 }}>
+                                                    {pkg.product.priceString}
                                                 </Text>
-                                                <Text variant="caption" color={colors.text3}>
-                                                    / week
+                                                <Text variant="caption" color={colors.text2} style={{ marginTop: 2 }}>
+                                                    {isAnnual ? 'per year' : isMonthly ? 'per month' : 'per week'}
                                                 </Text>
                                             </View>
                                         </Card>

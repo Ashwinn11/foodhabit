@@ -108,35 +108,29 @@ const buildPrompt = ({
     const hasIngredients = Boolean(available_ingredients?.length);
     const contextPart = context ? `\nUser wants: ${context}` : '';
     const ingredientsPart = hasIngredients
-        ? `\nAvailable ingredients (use these as the base, not as an exhaustive list): ${available_ingredients!.join(', ')}`
+        ? `\nAvailable ingredients: ${available_ingredients!.join(', ')}`
         : '';
-    const ingredientRules = hasIngredients
-        ? `\nIngredient-first mode rules:
-1. Build the recipe around the user's listed ingredients.
-2. You may add only safe pantry basics and seasonings from this list: ${PANTRY_BASICS.join(', ')}.
-3. Do NOT introduce any new main protein or centerpiece ingredient unless the user explicitly listed it.
-4. It is fine to add small supporting items like citrus, herbs, oil, salt, and spices.
-5. Do NOT add chicken, beef, pork, fish, eggs, tofu, paneer, or similar mains just to "complete" the dish.`
-        : '';
-
-    return `You are an expert gut health nutritionist and chef. Generate a premium, safe, and delicious recipe tailored to this user's unique biology.
+    
+    return `You are a Scientific Chef. Your mission is to generate a premium, high-end culinary recipe that is 100% gut-safe but tastes like a professional restaurant dish.
 
 User Profile:
 - Triggers to AVOID: ${uniqueTriggers.join(', ') || 'none identified yet'}
-- Conditions: ${(profile?.diagnosed_conditions || []).join(', ') || 'none'}
-- Diet Preference: ${profile?.diet_type || 'omnivore'}
 - Safe Foods They Like: ${[...new Set(safeFoods)].join(', ') || 'not enough data yet'}
-- RECENT RECIPES GENERATED (Avoid these titles/ingredients): ${recentTitles.join(', ') || 'none'}
+- Diet Preference: ${profile?.diet_type || 'omnivore'}
 ${contextPart}${ingredientsPart}
 
-Meal Type: ${meal_type || 'dinner'}
-${ingredientRules}
+THE CHEF'S RULES:
+1. DISH INTEGRITY & SURGERY: If the user asks for a dish that is a known trigger (e.g. "Biryani"), do NOT just swap it for a different dish. Instead, perform "Deconstructive Surgery." Identify the likely irritants within that specific dish (e.g. Garlic/Onion, high-fat oils, or specific grains) and swap them for safe alternatives.
+2. TRANSPARENT SAFETY: In the "why_is_safe" section, you MUST explicitly explain how you deconstructed the dish to remove the triggers while keeping the flavor alive. Be honest about what you replaced (e.g., "I know Biryani is a trigger, so I swapped the high-fodmap onion bases for scallion greens and ginger").
+3. CULINARY MATCHING: Only use the user's "Safe Foods" if they are a natural culinary fit. Do NOT force bananas into savory dishes.
+4. NO GENERIC "WELLNESS" FOOD: Focus on diverse, global, high-flavor profiles.
+5. LOW FODMAP: Prioritize Low FODMAP ingredients.
 
-Respond with a strictly formatted JSON object:
+JSON RESPONSE FORMAT:
 {
-  "title": "Creative & Appetizing Recipe Name",
-  "description": "A very appetising 2-sentence description of the flavor profile.",
-  "why_is_safe": "A personalized explanation of why this is perfect for their ${profile?.diagnosed_conditions?.[0] || 'gut health'} and avoids their specific triggers like ${uniqueTriggers.slice(0, 2).join(' and ') || 'common irritants'}.",
+  "title": "Professional Recipe Title",
+  "description": "A concise, appetizing 2-sentence description of the flavor profile.",
+  "why_is_safe": "A clear, professional summary (max 2 sentences) of precisely which triggers from ${uniqueTriggers.join(', ')} were removed and what they were swapped with.",
   "servings": 2,
   "calories_per_serving": 450,
   "ingredients": [
@@ -145,24 +139,16 @@ Respond with a strictly formatted JSON object:
       "amount": "1",
       "unit": "cup",
       "fodmap_risk": "low" | "medium" | "high",
-      "is_safe_substitute": boolean (true if this replaces a common trigger like onion/garlic)
+      "is_safe_substitute": boolean (true if this replaces a common trigger)
     }
   ],
   "steps": [
-    { "step_number": 1, "instruction": "Clear, professional culinary instruction" }
+    { "step_number": 1, "instruction": "Professional culinary instruction" }
   ],
   "prep_time_mins": 25,
   "difficulty": "easy" | "medium" | "hard",
-  "trigger_free": ["trigger1", "trigger2"]
-}
-
-Rules:
-1. STRICT ADHERENCE: Never use ${uniqueTriggers.join(', ')}.
-2. DIET MATCH: If user is ${profile?.diet_type}, the recipe MUST be ${profile?.diet_type}.
-3. LOW FODMAP: Prioritize Low FODMAP ingredients.
-4. VARIETY: Do NOT repeat flavor profiles from the recent list. Explore diverse global cuisines that fit the user's constraints.
-5. TASTE: Use a wide array of gut-safe fresh herbs and spices to ensure high-end culinary quality. Do not be repetitive with flavor bases.
-6. NO PLACEHOLDERS: Provide specific amounts.`;
+  "trigger_free": ["trigger1"]
+}`;
 };
 
 const fetchRecipeText = async (prompt: string) => {
